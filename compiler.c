@@ -28,6 +28,7 @@ int arrsize(char * arr[])
 void arrlstrip(char * line[])
 {
     int position, c, n;
+    position = 0;
     n = arrsize(line);
     for (c = position - 1; c < n - 1; c++)
         line[c] = line[c + 1];
@@ -153,7 +154,6 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     else if (strcmp(line[0], "print") == 0)
     {
         if (len < 2) strcat(r, "print(pop(pt));");
-        else if (len > 2) error("print action received too many arguments", num);
         else
         {
             arrlstrip(line);
@@ -166,7 +166,6 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     else if (strcmp(line[0], "println") == 0)
     {
         if (len < 2) strcat(r, "println(pop(pt));");
-        else if (len > 2) error("println action received too many arguments", num);
         else
         {
             arrlstrip(line);

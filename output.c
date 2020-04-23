@@ -25,4 +25,4 @@ int peek(struct stack*pt){if (!isEmpty(pt))return pt->items[pt->top];else return
 int pop(struct stack*pt){if(isEmpty(pt))return 0;return pt->items[pt->top--];}
 int CONDITIONAL_FLAG=1;
 struct stack*pt;
-int main(int argc, char ** argv){pt=newStack(4096);pointer words;words.value="hey there";int num;num=10000;println(words.value);println(num);}
+int main(){pt=newStack(4096);push(pt,10);push(pt,110);push(pt,101);push(pt,100);push(pt,105);push(pt,97);print((char)pop(pt));print((char)pop(pt));print((char)pop(pt));print((char)pop(pt));print((char)pop(pt));print((char)pop(pt));}

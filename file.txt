@@ -1,9 +1,18 @@
-proc;main;int argc, char ** argv
+proc;main
 
-pointer;words;"hey there"
-int;num;10000
-println;words
-println;num
+push;10
+push;110
+push;101
+push;100
+push;105
+push;97
+
+print;ch;pop
+print;ch;pop
+print;ch;pop
+print;ch;pop
+print;ch;pop
+print;ch;pop
 
 end
 
