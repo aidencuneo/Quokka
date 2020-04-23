@@ -1,9 +1,53 @@
-proc;main
-    println;argc
-    if;argc < 3
-        ret;0
-    end
-    println;call;ptrindex;argv,argc-1
+def|char *|compileline|char ** line, int i, int something, int isInline
+    ret|"yeah\n"
 end
 
-EOF
+:main
+    println|"--T-START--"
+
+    if|argc < 3
+        ret|0
+    end
+
+    pointer|fname|call|ptrindex|argv,1
+    pointer|output|call|ptrindex|argv,2
+
+    pointer|code|call|readfile|fname
+
+    char*[]|tokens|1024
+    call|ntokenise|tokens, code.value, "\n"
+
+    char[]|compiled|4096
+    for|int|i|0|i < arrsize(tokens)|i++
+        pointer|t|call|ptrindex|tokens,i
+        if|t.value == NULL
+            continue
+        end
+
+        char*[]|line|512
+        call|tokenise|line, t.value, " "
+
+        if|arrsize(line) < 1
+            continue
+        end
+
+        print|"SIZE "
+        println|call|arrsize|line
+
+        var|char *|result|compileline(line, i, -1, 0)
+        call|strcat|compiled, result
+
+        for|int|p|0|line[p] != NULL|p++
+            print|"<"
+            print|call|ptrindex|line,p
+            println|">"
+        end
+
+    end
+
+    println|compiled
+
+    println|"--T-END--"
+
+    ret|0
+end

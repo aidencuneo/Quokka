@@ -1,14 +1,62 @@
 #define C_HEADERS "\
 #include <stdio.h>\n\
 #include <string.h>\n\
-#include <stdlib.h>\n"
+#include <stdlib.h>\n\
+#include <ctype.h>\n\
+\n\
+int _FORVARNAME;\n"
 
 #define C_STANDARD_FUNCS "\
 char*cptrindex(char**value,int index){return value[index];}\n\
-"
+\n\
+int carrsize(char*arr[])\n\
+{int i=0;long j=(long)arr[0];while(j!='\\0'){i++;j=(long)arr[i];}return i;}\n\
+\n\
+int iarrsize(int*arr)\n\
+{return sizeof(arr) / sizeof(int);}\n\
+\n\
+char*readfile(char*fname)\n\
+{char*buffer=0;long length;FILE*f=fopen(fname,\"rb\");if(f){\n\
+fseek(f,0,SEEK_END);length=ftell(f);fseek(f,0,SEEK_SET);\n\
+buffer=malloc(length);if(buffer)fread(buffer,1,length,f);\n\
+fclose(f);}return buffer;}\n\
+\n\
+char*strstrip(char*s)\n\
+{if(!s)return s;size_t size;char*end;size=strlen(s);\n\
+if(!size)return s;end=s+size-1;while(end>=s&&isspace(*end))\n\
+end--;*(end+1)='\\0';while(*s&&isspace(*s))s++;return s;}\n\
+\n\
+char*nstrtok(char*string,char const*delimiter)\n\
+{static char*source=NULL;char*p,*ret=0;if(string!=NULL)source=string;\n\
+if(source==NULL)return NULL;if((p=strpbrk(source,delimiter))!=NULL)\n\
+{*p=0;ret=source;source=++p;}return ret;}\n\
+\n\
+void tokenise(char*arr[],char*buffer,char*tokAt)\n\
+{\n\
+    int i = 0;\n\
+    arr[0] = strtok(buffer, tokAt);\n\
+    while (arr[i] != NULL)\n\
+    {\n\
+        i++;\n\
+        arr[i] = strstrip(strtok(NULL, tokAt));\n\
+    }\n\
+}\n\
+\n\
+void ntokenise(char*arr[],char*buffer,char*tokAt)\n\
+{\n\
+    int i = 0;\n\
+    arr[0] = nstrtok(buffer, tokAt);\n\
+    while (arr[i] != NULL)\n\
+    {\n\
+        i++;\n\
+        arr[i] = strstrip(nstrtok(NULL, tokAt));\n\
+    }\n\
+}\n\
+\n"
 
 #define C_STANDARD_MANAGE "\
-#define ptrindex(value, index) _Generic((value) + (index), char ** : cptrindex)(value, index)\n"
+#define ptrindex(value, index) _Generic((value, index), char ** : cptrindex, default : cptrindex)(value, index)\n\
+#define arrsize(value) _Generic((value), char ** : carrsize, int * : iarrsize, default : carrsize)(value)\n"
 
 #define C_DATATYPES "\
 typedef struct {\n\

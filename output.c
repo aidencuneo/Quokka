@@ -1,8 +1,57 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
+
+int _FORVARNAME;
 char*cptrindex(char**value,int index){return value[index];}
-#define ptrindex(value, index) _Generic((value) + (index), char ** : cptrindex)(value, index)
+
+int carrsize(char*arr[])
+{int i=0;long j=(long)arr[0];while(j!='\0'){i++;j=(long)arr[i];}return i;}
+
+int iarrsize(int*arr)
+{return sizeof(arr) / sizeof(int);}
+
+char*readfile(char*fname)
+{char*buffer=0;long length;FILE*f=fopen(fname,"rb");if(f){
+fseek(f,0,SEEK_END);length=ftell(f);fseek(f,0,SEEK_SET);
+buffer=malloc(length);if(buffer)fread(buffer,1,length,f);
+fclose(f);}return buffer;}
+
+char*strstrip(char*s)
+{if(!s)return s;size_t size;char*end;size=strlen(s);
+if(!size)return s;end=s+size-1;while(end>=s&&isspace(*end))
+end--;*(end+1)='\0';while(*s&&isspace(*s))s++;return s;}
+
+char*nstrtok(char*string,char const*delimiter)
+{static char*source=NULL;char*p,*ret=0;if(string!=NULL)source=string;
+if(source==NULL)return NULL;if((p=strpbrk(source,delimiter))!=NULL)
+{*p=0;ret=source;source=++p;}return ret;}
+
+void tokenise(char*arr[],char*buffer,char*tokAt)
+{
+    int i = 0;
+    arr[0] = strtok(buffer, tokAt);
+    while (arr[i] != NULL)
+    {
+        i++;
+        arr[i] = strstrip(strtok(NULL, tokAt));
+    }
+}
+
+void ntokenise(char*arr[],char*buffer,char*tokAt)
+{
+    int i = 0;
+    arr[0] = nstrtok(buffer, tokAt);
+    while (arr[i] != NULL)
+    {
+        i++;
+        arr[i] = strstrip(nstrtok(NULL, tokAt));
+    }
+}
+
+#define ptrindex(value, index) _Generic((value, index), char ** : cptrindex, default : cptrindex)(value, index)
+#define arrsize(value) _Generic((value), char ** : carrsize, int * : iarrsize, default : carrsize)(value)
 typedef struct {
     void * value;
 } pointer;
@@ -27,4 +76,4 @@ int peek(struct stack*pt){if (!isEmpty(pt))return pt->items[pt->top];else return
 int pop(struct stack*pt){if(isEmpty(pt))return 0;return pt->items[pt->top--];}
 int CONDITIONAL_FLAG=1;
 struct stack*pt;
-int main(int argc,char**argv){pt=newStack(4096);println(argc);if(argc < 3){return 0;}println(ptrindex(argv,argc-1));}
+int main(int argc,char**argv){pt=newStack(4096);println("Hello, World!");}
