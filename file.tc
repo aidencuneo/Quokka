@@ -1,0 +1,9 @@
+proc;main
+    println;argc
+    if;argc < 3
+        ret;0
+    end
+    println;call;ptrindex;argv,argc-1
+end
+
+EOF

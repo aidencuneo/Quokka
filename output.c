@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+char*cptrindex(char**value,int index){return value[index];}
+#define ptrindex(value, index) _Generic((value) + (index), char ** : cptrindex)(value, index)
 typedef struct {
     void * value;
 } pointer;
@@ -25,4 +27,4 @@ int peek(struct stack*pt){if (!isEmpty(pt))return pt->items[pt->top];else return
 int pop(struct stack*pt){if(isEmpty(pt))return 0;return pt->items[pt->top--];}
 int CONDITIONAL_FLAG=1;
 struct stack*pt;
-int main(){pt=newStack(4096);push(pt,10);push(pt,110);push(pt,101);push(pt,100);push(pt,105);push(pt,97);print((char)pop(pt));print((char)pop(pt));print((char)pop(pt));print((char)pop(pt));print((char)pop(pt));print((char)pop(pt));}
+int main(int argc,char**argv){pt=newStack(4096);println(argc);if(argc < 3){return 0;}println(ptrindex(argv,argc-1));}

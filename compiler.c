@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 int scope = 0;
 char * pointers[512];
@@ -34,15 +35,28 @@ void arrlstrip(char * line[])
         line[c] = line[c + 1];
 }
 
-void lstrip(char * s, char stripChar)
+char * strstrip(char * s)
 {
-    for ( ; *s != '\0'; ++s )
-    {
-        if (* s == stripChar)
-            * s = * (s + 1);
-        else
-            break;
-    }
+    if (!s)
+        return s;
+
+    size_t size;
+    char * end;
+
+    size = strlen(s);
+
+    if (!size)
+        return s;
+
+    end = s + size - 1;
+    while (end >= s && isspace(* end))
+        end--;
+    * (end + 1) = '\0';
+
+    while (* s && isspace(* s))
+        s++;
+
+    return s;
 }
 
 int startswith(const char * a, const char * b)
@@ -184,7 +198,8 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         {
             strcat(r, "if(");
             strcat(r, line[1]);
-            strcat(r, ")CONDITIONAL_FLAG=1;else CONDITIONAL_FLAG=0;");
+            strcat(r, "){");
+            scope++;
         }
     }
     else if (strcmp(line[0], "int") == 0)
@@ -278,15 +293,30 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         {
             strcat(r, "int ");
             strcat(r, line[1]);
-            strcat(r, "(){");
+            strcat(r, "(");
+            if (strcmp(line[1], "main") == 0)
+            {
+                strcat(r, "int argc,char**argv");
+                values[arrsize(values)] = "argc";
+                pointers[arrsize(pointers)] = "argv";
+            }
+            strcat(r, "){");
         }
         else if (len > 3) error("proc action received too many arguments", num);
         else
         {
+            if (strcmp(line[1], "main") == 0 && len > 2)
+                error("main proc can not be given arguments as they are given by default", num);
             strcat(r, "int ");
             strcat(r, line[1]);
             strcat(r, "(");
-            strcat(r, line[2]);
+            if (strcmp(line[1], "main") == 0)
+            {
+                strcat(r, "int argc,char**argv");
+                values[arrsize(values)] = "argc";
+                pointers[arrsize(pointers)] = "argv";
+            }
+            else strcat(r, line[2]);
             strcat(r, "){");
         }
         if (strcmp(line[1], "main") == 0)
@@ -381,7 +411,8 @@ int main(int argc, char ** argv)
     while (tokens[i] != NULL)
     {
         i++;
-        tokens[i] = nstrtok(NULL, "\n");
+        tokens[i] = strstrip(nstrtok(NULL, "\n"));
+        //printf("-->%s\n", );
     }
 
     char compiled[4096] = {0};
@@ -414,6 +445,8 @@ int main(int argc, char ** argv)
 
     FILE * fp = fopen(argv[2], "w");
     fprintf(fp, "%s", C_HEADERS);
+    fprintf(fp, "%s", C_STANDARD_FUNCS);
+    fprintf(fp, "%s", C_STANDARD_MANAGE);
     fprintf(fp, "%s", C_DATATYPES);
     fprintf(fp, "%s", C_INPUT_FUNCS);
     fprintf(fp, "%s", C_PRINT_FUNCS);

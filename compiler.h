@@ -3,6 +3,13 @@
 #include <string.h>\n\
 #include <stdlib.h>\n"
 
+#define C_STANDARD_FUNCS "\
+char*cptrindex(char**value,int index){return value[index];}\n\
+"
+
+#define C_STANDARD_MANAGE "\
+#define ptrindex(value, index) _Generic((value) + (index), char ** : cptrindex)(value, index)\n"
+
 #define C_DATATYPES "\
 typedef struct {\n\
     void * value;\n\
