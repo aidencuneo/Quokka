@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+int scope = 0;
+char * pointers[512];
+char * values[512];
+
 void error(char * text, int line)
 {
     printf("\nProgram compilation terminated:\nLine %d -> %s\n\n", line + 1, text);
@@ -12,13 +16,340 @@ void error(char * text, int line)
 int arrsize(char * arr[])
 {
     int i = 0;
-    char * j = arr[0];
+    long j = (long)arr[0];
     while (j != '\0')
     {
         i++;
-        j = arr[i];
+        j = (long)arr[i];
     }
     return i;
+}
+
+void arrlstrip(char * line[])
+{
+    int position, c, n;
+    n = arrsize(line);
+    for (c = position - 1; c < n - 1; c++)
+        line[c] = line[c + 1];
+}
+
+void lstrip(char * s, char stripChar)
+{
+    for ( ; *s != '\0'; ++s )
+    {
+        if (* s == stripChar)
+            * s = * (s + 1);
+        else
+            break;
+    }
+}
+
+int startswith(const char * a, const char * b)
+{
+    if (strncmp(a, b, strlen(b)) == 0) return 1;
+    return 0;
+}
+
+int endswith(const char * str, const char * suffix)
+{
+    if (!str || !suffix)
+        return 0;
+    size_t lenstr = strlen(str);
+    size_t lensuffix = strlen(suffix);
+    if (lensuffix >  lenstr)
+        return 0;
+    return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+}
+
+int stringIsInt(char * s)
+{
+    for (int i = 0; i < strlen(s); ++i)
+    {
+        if (s[i] != '0' &&
+            s[i] != '1' &&
+            s[i] != '2' &&
+            s[i] != '3' &&
+            s[i] != '4' &&
+            s[i] != '5' &&
+            s[i] != '6' &&
+            s[i] != '7' &&
+            s[i] != '8' &&
+            s[i] != '9')
+            return 0;
+    }
+    return 1;
+}
+
+int stringInList(char * arr[], char * key)
+{
+    for (int n = 0; n < arrsize(arr); ++n)
+    {
+        if (strcmp(arr[n], key) == 0)
+            return 1;
+    }
+    return 0;
+}
+
+char * nstrtok(char * string, char const * delimiter)
+{
+    static char *source = NULL;
+    char *p, *ret = 0;
+    if (string != NULL) source = string;
+    if (source == NULL) return NULL;
+
+    if ((p = strpbrk(source, delimiter)) != NULL)
+    {
+        *p = 0;
+        ret = source;
+        source = ++p;
+    }
+    return ret;
+}
+
+char * compileline(char * line[], int num, int lineLen, int isInline)
+{
+    char r[512] = {0};
+    char * r_ptr = r;
+    int len;
+    if (lineLen == -1) len = arrsize(line);
+    else len = lineLen;
+
+    if (strcmp(line[0], "?") == 0)
+    {
+        if (isInline) error("'?' conditional must be at start of line", num);
+        if (len < 2) error("'?' conditional missing code to run", num);
+        arrlstrip(line);
+        len--;
+        strcat(r, "if(CONDITIONAL_FLAG){");
+        strcat(r, compileline(line, num, len, 1));
+        strcat(r, "}");
+    }
+    else if (strcmp(line[0], ":") == 0)
+    {
+        if (isInline) error("':' conditional must be at start of line", num);
+        if (len < 2) error("':' conditional missing code to run", num);
+        arrlstrip(line);
+        len--;
+        strcat(r, "while(CONDITIONAL_FLAG){");
+        strcat(r, compileline(line, num, len - 1, 1));
+        strcat(r, "}");
+    }
+    else if (strcmp(line[0], "push") == 0)
+    {
+        if (isInline) error("push action must be at start of line", num);
+        if (len < 2) error("push action missing argument", num);
+        arrlstrip(line);
+        len--;
+        strcat(r, "push(pt,");
+        strcat(r, compileline(line, num, len, 1));
+        strcat(r, ");");
+    }
+    else if (strcmp(line[0], "pop") == 0)
+    {
+        if (!isInline) error("pop action must not be at start of line", num);
+        if (len > 1) error("pop action received too many arguments", num);
+        strcat(r, "pop(pt)");
+    }
+    else if (strcmp(line[0], "print") == 0)
+    {
+        if (len < 2) strcat(r, "print(pop(pt));");
+        else if (len > 2) error("print action received too many arguments", num);
+        else
+        {
+            arrlstrip(line);
+            len--;
+            strcat(r, "print(");
+            strcat(r, compileline(line, num, len, 1));
+            strcat(r, ");");
+        }
+    }
+    else if (strcmp(line[0], "println") == 0)
+    {
+        if (len < 2) strcat(r, "println(pop(pt));");
+        else if (len > 2) error("println action received too many arguments", num);
+        else
+        {
+            arrlstrip(line);
+            len--;
+            strcat(r, "println(");
+            strcat(r, compileline(line, num, len, 1));
+            strcat(r, ");");
+        }
+    }
+    else if (strcmp(line[0], "if") == 0)
+    {
+        if (isInline) error("if statement must be at start of line", num);
+        if (len < 2) error("if statement missing condition", num);
+        else if (len > 2) error("if statement received too many conditions", num);
+        else
+        {
+            strcat(r, "if(");
+            strcat(r, line[1]);
+            strcat(r, ")CONDITIONAL_FLAG=1;else CONDITIONAL_FLAG=0;");
+        }
+    }
+    else if (strcmp(line[0], "int") == 0)
+    {
+        if (isInline) error("int declaration must be at start of line", num);
+        if (len < 2) error("int declaration missing arguments", num);
+        if (len < 3)
+        {
+            strcat(r, "int ");
+            strcat(r, line[1]);
+            strcat(r, ";");
+        }
+        else
+        {
+            strcat(r, "int ");
+            strcat(r, line[1]);
+            strcat(r, ";");
+            strcat(r, line[1]);
+            strcat(r, "=");
+            values[arrsize(values)] = line[1];
+            arrlstrip(line);
+            arrlstrip(line);
+            len -= 2;
+            strcat(r, compileline(line, num, len, 1));
+            strcat(r, ";");
+        }
+    }
+    else if (strcmp(line[0], "pointer") == 0)
+    {
+        if (isInline) error("pointer declaration must be at start of line", num);
+        if (len < 2) error("pointer declaration missing arguments", num);
+        if (len < 3)
+        {
+            strcat(r, "pointer ");
+            strcat(r, line[1]);
+            strcat(r, ";");
+        }
+        else
+        {
+            strcat(r, "pointer ");
+            strcat(r, line[1]);
+            strcat(r, ";");
+            strcat(r, line[1]);
+            strcat(r, ".value=");
+            pointers[arrsize(pointers)] = line[1];
+            arrlstrip(line);
+            arrlstrip(line);
+            len -= 2;
+            strcat(r, compileline(line, num, len, 1));
+            strcat(r, ";");
+        }
+    }
+    else if (strcmp(line[0], "call") == 0)
+    {
+        if (len < 2) error("call action missing arguments", num);
+        else if (len < 3)
+        {
+            strcat(r, line[1]);
+            strcat(r, "()");
+        }
+        else
+        {
+            strcat(r, line[1]);
+            strcat(r, "(");
+            strcat(r, line[2]);
+            strcat(r, ")");
+        }
+        if (!isInline)
+            strcat(r, ";");
+    }
+    else if (strcmp(line[0], "ch") == 0)
+    {
+        if (len < 2) strcat(r, "(char)0");
+        else if (len > 3) error("ch action received too many arguments", num);
+        else
+        {
+            strcat(r, "(char)");
+            arrlstrip(line);
+            len--;
+            strcat(r, compileline(line, num, len, 1));
+        }
+        if (!isInline)
+                strcat(r, ";");
+    }
+    else if (strcmp(line[0], "proc") == 0)
+    {
+        if (isInline) error("proc action must be at start of line", num);
+        if (scope > 0) error("proc action can not be in a scope greater than 1", num);
+        if (len < 2) error("proc action missing arguments", num);
+        else if (len < 3)
+        {
+            strcat(r, "int ");
+            strcat(r, line[1]);
+            strcat(r, "(){");
+        }
+        else if (len > 3) error("proc action received too many arguments", num);
+        else
+        {
+            strcat(r, "int ");
+            strcat(r, line[1]);
+            strcat(r, "(");
+            strcat(r, line[2]);
+            strcat(r, "){");
+        }
+        if (strcmp(line[1], "main") == 0)
+            strcat(r, "pt=newStack(4096);");
+        scope++;
+    }
+    else if (strcmp(line[0], "end") == 0)
+    {
+        if (isInline) error("end action must be at start of line", num);
+        if (scope < 1) error("end action has nothing to end, program is already at minimum scope", num);
+        if (len > 1) error("end action received too many arguments", num);
+        strcat(r, "}");
+        scope--;
+    }
+    else if (strcmp(line[0], "ret") == 0)
+    {
+        if (isInline) error("ret action must be at start of line", num);
+        if (scope < 1) error("ret action can not return a value at minimum scope", num);
+        if (len < 2) error("ret action missing argument", num);
+        else if (len > 2) error("ret action received too many arguments", num);
+        else
+        {
+            strcat(r, "return ");
+            strcat(r, line[1]);
+            strcat(r, ";");
+        }
+    }
+    else if (startswith(line[0], "\"") && endswith(line[0], "\""))
+    {
+        strcat(r, line[0]);
+        if (!isInline)
+            strcat(r, ";");
+    }
+    else if (stringIsInt(line[0]))
+    {
+        strcat(r, line[0]);
+        if (!isInline)
+            strcat(r, ";");
+    }
+    else if (stringInList(pointers, line[0]))
+    {
+        strcat(r, line[0]);
+        strcat(r, ".value");
+        if (!isInline)
+            strcat(r, ";");
+    }
+    else if (stringInList(values, line[0]))
+    {
+        strcat(r, line[0]);
+        if (!isInline)
+            strcat(r, ";");
+    }
+    else
+    {
+        char err[128] = {0};
+        strcat(err, "undefined token '");
+        strcat(err, line[0]);
+        strcat(err, "'");
+        error(err, num);
+    }
+
+    return r_ptr;
 }
 
 int main(int argc, char ** argv)
@@ -47,11 +378,11 @@ int main(int argc, char ** argv)
 
     int i = 0;
     char * tokens[1024];
-    tokens[0] = strtok(buffer, "\n");
+    tokens[0] = nstrtok(buffer, "\n");
     while (tokens[i] != NULL)
     {
         i++;
-        tokens[i] = strtok(NULL, "\n");
+        tokens[i] = nstrtok(NULL, "\n");
     }
 
     char compiled[4096] = {0};
@@ -59,7 +390,7 @@ int main(int argc, char ** argv)
     {
         if (tokens[i] == NULL)
             continue;
-        else if (strcmp(tokens[i], "end") == 0)
+        else if (strcmp(tokens[i], "EOF") == 0)
             break;
 
         char * line[512];
@@ -71,58 +402,28 @@ int main(int argc, char ** argv)
             line[j] = strtok(NULL, ";");
         }
 
-        printf("SIZE %d\n", arrsize(line));
         if (arrsize(line) < 1) continue;
-        else if (strcmp(line[0], "push") == 0)
-        {
-            if (arrsize(line) < 2) error("push action missing argument", i);
-            else if (arrsize(line) > 2) error("push action received too many arguments", i);
-            strcat(compiled, "push(pt,");
-            strcat(compiled, line[1]);
-            strcat(compiled, ");");
-        }
-        else if (strcmp(line[0], "pop") == 0)
-        {
-            if (arrsize(line) > 1) error("pop action received too many arguments", i);
-            strcat(compiled, "ptr=pop(pt);");
-        }
-        else if (strcmp(line[0], "print") == 0)
-        {
-            if (arrsize(line) < 2) strcat(compiled, "print((char)10);");
-            else if (arrsize(line) > 2) error("print action received too many arguments", i);
-            else
-            {
-                strcat(compiled, "print(");
-                strcat(compiled, line[1]);
-                strcat(compiled, ");");
-            }
-        }
-        else error("undefined token", i);
+        printf("SIZE %d\n", arrsize(line));
+
+        char * result = compileline(line, i, -1, 0);
+        strcat(compiled, result);
 
         printf("-%s-\n", tokens[i]);
         for (int p = 0; line[p] != NULL; p++)
             printf("<%s>\n", line[p]);
     }
 
-    const char * fileHeaders;
-    const char * printFunction;
-    const char * fileStackStruct;
-    const char * fileStart;
-    const char * fileEnd;
-
-    fileHeaders = "#include <stdio.h>\n#include <string.h>\n#include <stdlib.h>\n";
-    printFunction = "int iprint(int value){printf(\"%d\",value);return value;}\nchar cprint(char value){printf(\"%c\",value);return value;}\nchar*sprint(char*value){printf(\"%s\",value);return value;}\n#define print(value) _Generic((value),int:iprint,char:cprint,char*:sprint,default:sprint)(value)\n";
-    fileStackStruct = "struct stack{int maxsize;int top;int*items;};struct stack*newStack(int capacity){struct stack*pt=(struct stack*)malloc(sizeof(struct stack));pt->maxsize=capacity;pt->top=-1;pt->items=(int*)malloc(sizeof(int)*capacity);return pt;}int size(struct stack*pt){return pt->top+1;}\nint isEmpty(struct stack*pt){return pt->top==-1;}\nint isFull(struct stack*pt){return pt->top==pt->maxsize-1;}\nvoid push(struct stack*pt,int x){if(isFull(pt))exit(EXIT_FAILURE);pt->items[++pt->top]=x;}\nint peek(struct stack*pt){if (!isEmpty(pt))return pt->items[pt->top];else return 0;}\nint pop(struct stack*pt){if(isEmpty(pt))return 0;return pt->items[pt->top--];}\n";
-    fileStart = "int main(int argc,char**argv){struct stack*pt=newStack(4096);\n";
-    fileEnd = "return 0;}";
-
     FILE * fp = fopen(argv[2], "w");
-    fprintf(fp, "%s", fileHeaders);
-    fprintf(fp, "%s", printFunction);
-    fprintf(fp, "%s", fileStackStruct);
-    fprintf(fp, "%s", fileStart);
+    fprintf(fp, "%s", C_HEADERS);
+    fprintf(fp, "%s", C_DATATYPES);
+    fprintf(fp, "%s", C_INPUT_FUNCS);
+    fprintf(fp, "%s", C_PRINT_FUNCS);
+    fprintf(fp, "%s", C_PRINT_MANAGE);
+    fprintf(fp, "%s", C_PRINTLN_FUNCS);
+    fprintf(fp, "%s", C_PRINTLN_MANAGE);
+    fprintf(fp, "%s", C_STACK_STRUCT);
+    fprintf(fp, "%s", C_FILE_START);
     fprintf(fp, "%s", compiled);
-    fprintf(fp, "%s", fileEnd);
     fclose(fp);
 
     printf("--END--\n");

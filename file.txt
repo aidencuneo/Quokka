@@ -1,6 +1,10 @@
-print;15
-print
+proc;main;int argc, char ** argv
 
-print;"aiden\n"
+pointer;words;"hey there"
+int;num;10000
+println;words
+println;num
 
 end
+
+EOF

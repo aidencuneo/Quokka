@@ -1,3 +1,50 @@
+#define C_HEADERS "\
+#include <stdio.h>\n\
+#include <string.h>\n\
+#include <stdlib.h>\n"
+
+#define C_DATATYPES "\
+typedef struct {\n\
+    void * value;\n\
+} pointer;\n"
+
+#define C_INPUT_FUNCS "\
+char readchar(){return getchar();}\n\
+int readint(){int out;scanf(\"%d\",&out);return out;}\n\
+float readfloat(){float out;scanf(\"%f\",&out);return out;}\n"
+
+#define C_PRINT_FUNCS "\
+int iprint(int value){printf(\"%d\",value);return value;}\n\
+long lprint(long value){printf(\"%ld\",value);return value;}\n\
+char cprint(char value){printf(\"%c\",value);return value;}\n\
+char*sprint(char*value){printf(\"%s\",value);return value;}\n"
+
+#define C_PRINT_MANAGE "\
+#define print(value) _Generic((value), int : iprint, long : lprint, char : cprint, char * : sprint, default : sprint)(value)\n"
+
+#define C_PRINTLN_FUNCS "\
+int iprintln(int value){printf(\"%d\\n\",value);return value;}\n\
+long lprintln(long value){printf(\"%ld\\n\",value);return value;}\n\
+char cprintln(char value){printf(\"%c\\n\",value);return value;}\n\
+char*sprintln(char*value){printf(\"%s\\n\",value);return value;}\n"
+
+#define C_PRINTLN_MANAGE "\
+#define println(value) _Generic((value), int : iprintln, long : lprintln, char : cprintln, char * : sprintln, default : sprintln)(value)\n"
+
+#define C_STACK_STRUCT "\
+struct stack{int maxsize;int top;int*items;};struct stack*newStack(int capacity){struct stack*pt=(struct stack*)malloc(sizeof(struct stack));pt->maxsize=capacity;pt->top=-1;pt->items=(int*)malloc(sizeof(int)*capacity);return pt;}int size(struct stack*pt){return pt->top+1;}\n\
+int isEmpty(struct stack*pt){return pt->top==-1;}\n\
+int isFull(struct stack*pt){return pt->top==pt->maxsize-1;}\n\
+void push(struct stack*pt,int x){if(isFull(pt))exit(EXIT_FAILURE);pt->items[++pt->top]=x;}\n\
+int peek(struct stack*pt){if (!isEmpty(pt))return pt->items[pt->top];else return 0;}\n\
+int pop(struct stack*pt){if(isEmpty(pt))return 0;return pt->items[pt->top--];}\n"
+
+#define C_FILE_START "\
+int CONDITIONAL_FLAG=1;\n\
+struct stack*pt;\n"
+
+// I need to remove the code below this eventually, it's not being used anywhere.
+
 #define C_0 "c=0;"
 #define C_1 "++c;"
 #define C_2 "c+=2;"
