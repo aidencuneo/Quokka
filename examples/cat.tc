@@ -1,11 +1,15 @@
 // Demonstrates string concatenation
 
 :main
-    string | first  | "Hello "
-    string | second | "World"
-    string | third  | "! "
-    string | fourth | "EOF"
+    // Create four strings which will be concatenated:
+    string | first  | "Hello"
+    string | second | ","
+    string | third  | " World"
+    string | fourth | "!"
 
-    string | cat | stringcat | (first, second, third, fourth, "")
+    // Concatenate them into one new string, note that the stringcat function
+    // requires an empty string as it's final argument to successfully
+    // end string concatenation and avoid a segmentation fault.
+    string  | cat | stringcat | (first, second, third, fourth, "")
     println | cat
 end
