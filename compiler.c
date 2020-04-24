@@ -173,11 +173,6 @@ void ntokenise(char * arr[], char * buffer, char * tokAt)
     }
 }
 
-void t_tokenise(char * arr[], char * buffer)
-{
-
-}
-
 char * compileline(char * line[], int num, int lineLen, int isInline)
 {
     char r[512] = {0};
@@ -358,6 +353,31 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         strcat(r, "]={0};");
         values[arrsize(values)] = line[1];
     }
+    else if (strcmp(line[0], "string") == 0)
+    {
+        if (isInline) error("string declaration must be at start of line", num);
+        else if (len < 2) error("string declaration missing variable name", num);
+        else if (len < 3)
+        {
+            strcat(r, "string ");
+            strcat(r, line[1]);
+            strcat(r, ";");
+            pointers[arrsize(pointers)] = line[1];
+        }
+        else
+        {
+            if (!stringInList(pointers, line[1]))
+                strcat(r, "string ");
+            strcat(r, line[1]);
+            strcat(r, "=");
+            pointers[arrsize(pointers)] = line[1];
+            arrlstrip(line);
+            arrlstrip(line);
+            len -= 2;
+            strcat(r, compileline(line, num, len, 1));
+            strcat(r, ";");
+        }
+    }
     else if (strcmp(line[0], "pointer") == 0)
     {
         if (isInline) error("pointer declaration must be at start of line", num);
@@ -422,7 +442,6 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     {
         char * name = line[0];
         name++;
-        name[strlen(name) - 1] = 0;
         if (isInline) error("proc `:` action must be at start of line", num);
         if (scope > 0) error("proc `:` action can not be in a scope greater than 1", num);
         if (len < 1) error("proc `:` action missing arguments", num);
@@ -524,7 +543,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             strcat(r, "+=");
             strcat(r, line[2]);
             strcat(r, ";");
-        } // Later, take integer input and add it to the var
+        }
         else
         {
             strcat(r, "++");
@@ -543,7 +562,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             strcat(r, "-=");
             strcat(r, line[2]);
             strcat(r, ";");
-        } // Later, take integer input and add it to the var
+        }
         else
         {
             strcat(r, "--");
@@ -553,7 +572,9 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     }
     else if (startswith(line[0], "\"") && endswith(line[0], "\""))
     {
+        strcat(r, "String(");
         strcat(r, line[0]);
+        strcat(r, ")");
         if (!isInline)
             strcat(r, ";");
     }
@@ -612,6 +633,8 @@ int main(int argc, char ** argv)
 
         char * line[512];
         tokenise(line, tokens[i], "|");
+        for (int p = 0; line[p] != NULL; p++)
+            line[p] = strstrip(line[p]);
 
         if (arrsize(line) < 1) continue;
         printf("SIZE %d\n", arrsize(line));
@@ -626,9 +649,10 @@ int main(int argc, char ** argv)
 
     FILE * fp = fopen(argv[2], "w");
     fprintf(fp, "%s", C_HEADERS);
+    fprintf(fp, "%s", C_STRING);
+    fprintf(fp, "%s", C_STRING_MANAGE);
     fprintf(fp, "%s", C_STANDARD_FUNCS);
     fprintf(fp, "%s", C_STANDARD_MANAGE);
-    fprintf(fp, "%s", C_DATATYPES);
     fprintf(fp, "%s", C_INPUT_FUNCS);
     fprintf(fp, "%s", C_PRINT_FUNCS);
     fprintf(fp, "%s", C_PRINT_MANAGE);
