@@ -1,5 +1,5 @@
-#include "t.h"
-#include "headers/compiler.h"
+#include "../headers/t.h"
+#include "../headers/compiler.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
