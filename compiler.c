@@ -1,3 +1,4 @@
+#include "t.h"
 #include "compiler.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,18 +15,6 @@ void error(char * text, int line)
     exit(EXIT_FAILURE);
 }
 
-int arrsize(char * arr[])
-{
-    int i = 0;
-    long j = (long)arr[0];
-    while (j != '\0')
-    {
-        i++;
-        j = (long)arr[i];
-    }
-    return i;
-}
-
 void arrlstrip(char * line[])
 {
     int position, c, n;
@@ -33,30 +22,6 @@ void arrlstrip(char * line[])
     n = arrsize(line);
     for (c = position - 1; c < n - 1; c++)
         line[c] = line[c + 1];
-}
-
-char * strstrip(char * s)
-{
-    if (!s)
-        return s;
-
-    size_t size;
-    char * end;
-
-    size = strlen(s);
-
-    if (!size)
-        return s;
-
-    end = s + size - 1;
-    while (end >= s && isspace(* end))
-        end--;
-    * (end + 1) = '\0';
-
-    while (* s && isspace(* s))
-        s++;
-
-    return s;
 }
 
 int startswith(const char * a, const char * b)
@@ -113,64 +78,6 @@ int stringInList(char * arr[], char * key)
             return 1;
     }
     return 0;
-}
-
-char * readfile(char * fname)
-{
-    char * buffer = 0;
-    long length;
-    FILE * f = fopen(fname, "rb");
-
-    if (f)
-    {
-        fseek(f, 0, SEEK_END);
-        length = ftell (f);
-        fseek(f, 0, SEEK_SET);
-        buffer = malloc (length);
-        if (buffer)
-            fread (buffer, 1, length, f);
-        fclose(f);
-    }
-
-    return buffer;
-}
-
-char * nstrtok(char * string, char const * delimiter)
-{
-    static char *source = NULL;
-    char *p, *ret = 0;
-    if (string != NULL) source = string;
-    if (source == NULL) return NULL;
-
-    if ((p = strpbrk(source, delimiter)) != NULL)
-    {
-        *p = 0;
-        ret = source;
-        source = ++p;
-    }
-    return ret;
-}
-
-void tokenise(char * arr[], char * buffer, char * tokAt)
-{
-    int i = 0;
-    arr[0] = strtok(buffer, tokAt);
-    while (arr[i] != NULL)
-    {
-        i++;
-        arr[i] = strstrip(strtok(NULL, tokAt));
-    }
-}
-
-void ntokenise(char * arr[], char * buffer, char * tokAt)
-{
-    int i = 0;
-    arr[0] = nstrtok(buffer, tokAt);
-    while (arr[i] != NULL)
-    {
-        i++;
-        arr[i] = strstrip(nstrtok(NULL, tokAt));
-    }
 }
 
 char * compileline(char * line[], int num, int lineLen, int isInline)
@@ -613,7 +520,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
 
 int main(int argc, char ** argv)
 {
-    printf("--START--\n");
+    println("--START--");
 
     if (argc < 3) return 1;
 
@@ -634,7 +541,9 @@ int main(int argc, char ** argv)
         char * line[512];
         tokenise(line, tokens[i], "|");
         for (int p = 0; line[p] != NULL; p++)
-            line[p] = strstrip(line[p]);
+        {
+            line[p] = cpstrip(line[p]);
+        }
 
         if (arrsize(line) < 1) continue;
         printf("SIZE %d\n", arrsize(line));
@@ -649,16 +558,6 @@ int main(int argc, char ** argv)
 
     FILE * fp = fopen(argv[2], "w");
     fprintf(fp, "%s", C_HEADERS);
-    fprintf(fp, "%s", C_STRING);
-    fprintf(fp, "%s", C_STRING_MANAGE);
-    fprintf(fp, "%s", C_STANDARD_FUNCS);
-    fprintf(fp, "%s", C_STANDARD_MANAGE);
-    fprintf(fp, "%s", C_INPUT_FUNCS);
-    fprintf(fp, "%s", C_PRINT_FUNCS);
-    fprintf(fp, "%s", C_PRINT_MANAGE);
-    fprintf(fp, "%s", C_PRINTLN_FUNCS);
-    fprintf(fp, "%s", C_PRINTLN_MANAGE);
-    fprintf(fp, "%s", C_STACK_STRUCT);
     fprintf(fp, "%s", C_FILE_START);
     fprintf(fp, "%s", compiled);
     fclose(fp);

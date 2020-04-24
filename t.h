@@ -139,7 +139,7 @@ int carrsize(char * arr[])
 {
     int i = 0;
     long j = (long) arr[0];
-    while (j != '0')
+    while (j != '\0')
     {
         i++;
         j = (long) arr[i];
