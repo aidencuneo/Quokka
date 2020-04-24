@@ -1,6 +1,16 @@
+// Demonstrates easy whitespace stripping on strings.
+
 :main
+    // A string is created:
     string  | hello | "   Hello, World!     "
+
+    // The string is reassigned as a new stripped string:
     set     | hello | stringstrip | (hello)
+
+    // Print the string
     print   | hello
+
+    // Print EOF to show that the string has been
+    // stripped on both sides
     println | "EOF"
 end

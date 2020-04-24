@@ -88,6 +88,9 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     if (lineLen == -1) len = arrsize(line);
     else len = lineLen;
 
+    if (startswith(line[0], "//"))
+        return r_ptr;
+
     if (line[1] == NULL)
         line[1] = "";
 
