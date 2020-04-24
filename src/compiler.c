@@ -273,8 +273,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         }
         else
         {
-            if (!stringInList(pointers, line[1]))
-                strcat(r, "string ");
+            strcat(r, "string ");
             strcat(r, line[1]);
             strcat(r, "=");
             pointers[arrsize(pointers)] = line[1];
@@ -309,6 +308,21 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             strcat(r, compileline(line, num, len, 1));
             strcat(r, ";");
         }
+    }
+    else if (strcmp(line[0], "set") == 0)
+    {
+        if (isInline) error("set action must be at start of line", num);
+        if (len < 2) error("set action missing variable name", num);
+        if (len < 3) error("set action missing new variable value", num);
+        if (!stringInList(pointers, line[1]) && !stringInList(values, line[1]))
+            error("set action attempting to set undeclared variable", num);
+        strcat(r, line[1]);
+        strcat(r, "=");
+        arrlstrip(line);
+        arrlstrip(line);
+        len -= 2;
+        strcat(r, compileline(line, num, len, 1));
+        strcat(r, ";");
     }
     else if (strcmp(line[0], "var") == 0)
     {

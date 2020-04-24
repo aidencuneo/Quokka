@@ -1,6 +1,6 @@
 :main
     string  | hello | "   Hello, World!     "
-    string  | hello | stringstrip | (hello)
+    set     | hello | stringstrip | (hello)
     print   | hello
     println | "EOF"
 end
