@@ -1,5 +1,5 @@
 #define C_HEADERS "\
-#include \"t.h\"\n\
+#include \"../headers/t.h\"\n\
 #include <stdio.h>\n\
 #include <string.h>\n\
 #include <stdlib.h>\n\
