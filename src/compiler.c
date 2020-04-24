@@ -452,7 +452,9 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         else
         {
             strcat(r, "return ");
-            strcat(r, line[1]);
+            arrlstrip(line);
+            len--;
+            strcat(r, compileline(line, num, len, 1));
             strcat(r, ";");
         }
     }

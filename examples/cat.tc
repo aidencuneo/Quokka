@@ -1,0 +1,11 @@
+// Demonstrates string concatenation
+
+:main
+    string | first  | "Hello "
+    string | second | "World"
+    string | third  | "! "
+    string | fourth | "EOF"
+
+    string | cat | stringcat | (first, second, third, fourth, "")
+    println | cat
+end

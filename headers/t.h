@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -128,6 +129,31 @@ string stringstrip(string st)
     *(end + 1) = '\0';
 
     return String(stringlstrip(String(s)));
+}
+
+string stringcat(string arg1, ...)
+{
+    va_list ap;
+
+    char * x = (char *)malloc(2048 * sizeof(char));
+    strcat(x, arg1.value);
+
+    char * y;
+
+    va_start(ap, arg1);
+
+    string last = va_arg(ap, string);
+    strcat(x, last.value);
+
+    while (last.length)
+    {
+        last = va_arg(ap, string);
+        printf("[%s]\n", last.value);
+        strcat(x, last.value);
+    }
+
+    va_end(ap);
+    return String(x);
 }
 
 char * cptrindex(char ** value, int index)
