@@ -1,5 +1,6 @@
 main:
-    string[]   | array   | {'word number one', '\0'}
-    println    | array
-    println    | sarradd | (array, 'word number two')
+    string[] | array   | {'word number one', '\0'}
+    println  | array
+    println  | sarradd | (array, 'word number two')
+    println  | sarradd | (array, 'word again?')
 end

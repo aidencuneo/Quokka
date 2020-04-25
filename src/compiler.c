@@ -391,17 +391,15 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         char * tempstr[512];
         tokenise(tempstr, stringslice(String(line[1]), 1, 1).value, ",");
         if (verbose) println("START");
-        int templen = 0;
         for (int p = 0; p < arrsize(tempstr); p++)
         {
             tempstr[p] = cpstrip(tempstr[p]);
-            templen++;
             if (verbose) println(tempstr[p]);
         }
         if (verbose) println("END");
         strcat(r, line[0]);
         strcat(r, "(");
-        strcat(r, compileline(tempstr, num, templen, 1));
+        strcat(r, compileline(tempstr, num, arrsize(tempstr), 1));
         strcat(r, ")");
         if (!isInline)
             strcat(r, ";");
@@ -558,8 +556,6 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     {
         char * tempstr[512];
         tokenise(tempstr, stringslice(String(line[0]), 1, 1).value, ",");
-        for (int p = 0; p < arrsize(tempstr); p++)
-            println(tempstr[p]);
         if (verbose) println("START");
         for (int p = 0; p < arrsize(tempstr); p++)
         {
@@ -572,7 +568,6 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         strcat(r, "}");
         if (!isInline)
             strcat(r, ";");
-        println(r);
     }
     else if (stringIsInt(line[0]))
     {
