@@ -4,6 +4,32 @@
 #include <string.h>
 #include <ctype.h>
 
+// Structs
+typedef struct
+{
+    void * value;
+} pointer;
+
+typedef struct
+{
+    char * value;
+    int length;
+} string;
+
+// Function declarations
+int carrsize(char * arr[]);
+
+int iarrsize(int * arr);
+
+int sarrsize(string * arr);
+
+// Definitions
+#define arrsize(value) _Generic((value),\
+    char ** : carrsize,\
+    int * : iarrsize,\
+    string * : sarrsize,\
+    default : carrsize)(value)
+
 int startswith(const char * a, const char * b)
 {
     if (strncmp(a, b, strlen(b)) == 0) return 1;
@@ -20,17 +46,6 @@ int endswith(const char * str, const char * suffix)
         return 0;
     return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 }
-
-typedef struct
-{
-    void * value;
-} pointer;
-
-typedef struct
-{
-    char * value;
-    int length;
-} string;
 
 string StringFromString(string value)
 {
@@ -285,6 +300,21 @@ string stringreplace(string st, string strep, string repwith) {
     return out;
 }
 
+string * sarradd(string lst[], string newstr)
+{
+    int len = arrsize(lst);
+
+    string * newlst = (string *)malloc(len + 2 * sizeof(newstr));
+
+    for (int i = 0; i < len; i++)
+        newlst[i] = lst[i];
+
+    newlst[len + 1] = String("\0");
+    newlst[len] = newstr;
+
+    return newlst;
+}
+
 char * cptrindex(char ** value, int index)
 {
     return value[index];
@@ -405,11 +435,6 @@ void ntokenise(char * arr[], char * buffer, char * tokAt)
 }
 
 #define ptrindex(value, index) _Generic((value, index), char ** : cptrindex, default : cptrindex)(value, index)
-#define arrsize(value) _Generic((value),\
-    char ** : carrsize,\
-    int * : iarrsize,\
-    string * : sarrsize,\
-    default : carrsize)(value)
 
 char readchar(){return getchar();}
 int readint(){int out;scanf("%d",&out);return out;}

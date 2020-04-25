@@ -82,6 +82,18 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     if (line[1] == NULL)
         line[1] = "";
 
+    for (int p = 0; p < len; p++)
+    {
+        if (startswith(line[p], "'") && endswith(line[p], "'"))
+        {
+            char * temp = (char *)malloc(strlen(line[p]) * sizeof(char));
+            strcat(temp, "\"");
+            strcat(temp, stringreplace(stringslice(String(line[p]), 1, 1), String("\""), String("\\\"")).value);
+            strcat(temp, "\"");
+            strcpy(line[p], temp);
+        }
+    }
+
     if (strcmp(line[0], "push") == 0)
     {
         if (isInline) error("push action must be at start of line", num);
@@ -375,13 +387,21 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     }
     else if (startswith(line[1], "(") && endswith(line[1], ")"))
     {
-        char * args = line[1];
-        args++;
-        args[strlen(args) - 1] = 0;
-        if (len > 3) error("function call can not take arguments after initial arguments", num);
+        if (len > 3) error("function call can not take arguments after itself", num);
+        char * tempstr[512];
+        tokenise(tempstr, stringslice(String(line[1]), 1, 1).value, ",");
+        if (verbose) println("START");
+        int templen = 0;
+        for (int p = 0; p < arrsize(tempstr); p++)
+        {
+            tempstr[p] = cpstrip(tempstr[p]);
+            templen++;
+            if (verbose) println(tempstr[p]);
+        }
+        if (verbose) println("END");
         strcat(r, line[0]);
         strcat(r, "(");
-        strcat(r, args);
+        strcat(r, compileline(tempstr, num, templen, 1));
         strcat(r, ")");
         if (!isInline)
             strcat(r, ";");
@@ -534,52 +554,25 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             strcat(r, ";");
         }
     }
-    else if (startswith(line[0], "\"") && endswith(line[0], "\""))
-    {
-        for (int p = 0; p < len; p++)
-        {
-            if (!(startswith(line[p], "\"") && endswith(line[p], "\"")))
-                break;
-            strcat(r, "String(");
-            strcat(r, line[p]);
-            strcat(r, ")");
-            if (!isInline)
-                strcat(r, ";");
-        }
-    }
-    else if (startswith(line[0], "'") && endswith(line[0], "'"))
-    {
-        int tempnum = 0;
-        for (int p = 0; p < len; p++)
-        {
-            if (!(startswith(line[p], "'") && endswith(line[p], "'")))
-                break;
-            strcat(r, "String(\"");
-            strcat(r, stringslice(stringreplace(String(line[p]), String("\""), String("\\\"")), 1, 1).value);
-            strcat(r, "\")");
-            if (!isInline)
-                strcat(r, ";");
-            else strcat(r, ",");
-        }
-    }
     else if (startswith(line[0], "{") && endswith(line[0], "}"))
     {
         char * tempstr[512];
         tokenise(tempstr, stringslice(String(line[0]), 1, 1).value, ",");
-        println("START");
-        int templen = 0;
+        for (int p = 0; p < arrsize(tempstr); p++)
+            println(tempstr[p]);
+        if (verbose) println("START");
         for (int p = 0; p < arrsize(tempstr); p++)
         {
             tempstr[p] = cpstrip(tempstr[p]);
-            templen++;
-            println(tempstr[p]);
+            if (verbose) println(tempstr[p]);
         }
-        println("END");
+        if (verbose) println("END");
         strcat(r, "{");
-        strcat(r, compileline(tempstr, num, templen, 1));
+        strcat(r, compileline(tempstr, num, arrsize(tempstr), 1));
         strcat(r, "}");
         if (!isInline)
             strcat(r, ";");
+        println(r);
     }
     else if (stringIsInt(line[0]))
     {
@@ -600,15 +593,37 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         if (!isInline)
             strcat(r, ";");
     }
-    else if (stringHasChar(line[0], ','))
-    {
-        strcat(r, line[0]);
-        if (!isInline)
-            strcat(r, ";");
-    }
     else
     {
-        strcat(r, line[0]);
+        for (int p = 0; p < len; p++)
+        {
+            if (startswith(line[p], "\"") && endswith(line[p], "\""))
+            {
+                strcat(r, "String(");
+                strcat(r, line[p]);
+                strcat(r, ")");
+                if (!isInline)
+                    strcat(r, ";");
+                else strcat(r, ",");
+            }
+            else if (stringHasChar(line[0], ','))
+            {
+                strcat(r, line[p]);
+                if (!isInline)
+                    strcat(r, ";");
+            }
+            else
+            {
+                strcat(r, line[p]);
+                if (isInline)
+                    strcat(r, ",");
+                else strcat(r, ";");
+                while (endswith(r, ",,"))
+                    strcpy(r, stringslice(String(r), 0, 1).value);
+            }
+        }
+        while (endswith(r, ","))
+            strcpy(r, stringslice(String(r), 0, 1).value);
     }
 
     return r_ptr;

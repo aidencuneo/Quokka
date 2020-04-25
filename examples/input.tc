@@ -1,0 +1,5 @@
+main:
+    string[]   | array   | {'word number one', '\0'}
+    println    | array
+    println    | sarradd | (array, 'word number two')
+end
