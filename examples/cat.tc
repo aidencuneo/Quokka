@@ -7,9 +7,9 @@
     string | third  | " World"
     string | fourth | "!"
 
-    // Concatenate them into one new string, note that the stringcat function
-    // requires an empty string as it's final argument to successfully
-    // end string concatenation and avoid a segmentation fault.
-    string  | cat | stringcat | (first, second, third, fourth, "")
+    // Concatenate them into one new string. Note that the stringcat
+    // function requires a single \0 string as it's final argument to
+    // successfully end the string and avoid a segmentation fault.
+    string  | cat | stringcat | (first, second, third, fourth, "\0")
     println | cat
 end

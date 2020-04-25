@@ -4,6 +4,23 @@
 #include <string.h>
 #include <ctype.h>
 
+int startswith(const char * a, const char * b)
+{
+    if (strncmp(a, b, strlen(b)) == 0) return 1;
+    return 0;
+}
+
+int endswith(const char * str, const char * suffix)
+{
+    if (!str || !suffix)
+        return 0;
+    size_t lenstr = strlen(str);
+    size_t lensuffix = strlen(suffix);
+    if (lensuffix >  lenstr)
+        return 0;
+    return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+}
+
 typedef struct
 {
     void * value;
@@ -38,26 +55,22 @@ string StringFromCharArray(char value[])
 
 string StringFromInt(int value)
 {
-    string out;
-    char newval[11];
+    char * newval = malloc(11);
     sprintf(newval, "%d", value);
     return StringFromCharPointer(newval);
 }
 
 string StringFromLong(long value)
 {
-    string out;
-    char newval[20];
+    char * newval = malloc(21);
     sprintf(newval, "%ld", value);
-    out.value = newval;
-    out.length = strlen(out.value);
-    return out;
+    return StringFromCharPointer(newval);
 }
 
 string StringFromChar(char value)
 {
     string out;
-    char newval[2] = "0";
+    char newval[2] = "\0";
     newval[0] = value;
     out.value = newval;
     out.length = strlen(out.value);
@@ -144,7 +157,7 @@ string stringcat(string arg1, ...)
 
     string last = va_arg(ap, string);
 
-    while (strlen(last.value))
+    while (last.value != "\0")
     {
         strcat(x, last.value);
         last = va_arg(ap, string);
@@ -153,6 +166,122 @@ string stringcat(string arg1, ...)
     va_end(ap);
     string out = String(x);
     free(x);
+    return out;
+}
+
+string stringupper(string st)
+{
+    char * x = (char *)malloc(st.length * sizeof(char));
+
+    for (int i = 0; i < st.length; i++)
+    {
+        char letter[2] = {0};
+        letter[0] = toupper(st.value[i]);
+        strcat(x, letter);
+    }
+
+    return String(x);
+}
+
+string stringlower(string st)
+{
+    char * x = (char *)malloc(st.length * sizeof(char));
+
+    for (int i = 0; i < st.length; i++)
+    {
+        char letter[2] = {0};
+        letter[0] = tolower(st.value[i]);
+        strcat(x, letter);
+    }
+
+    return String(x);
+}
+
+string stringslice(string st, int start, int stop)
+{
+    char * x = (char *)malloc(st.length + 1 * sizeof(char));
+    strcpy(x, st.value);
+
+    if (!st.value || !st.length)
+        return st;
+
+    char * end;
+
+    end = x + st.length - 1;
+    end -= stop;
+    *(end + 1) = '\0';
+
+    x += start;
+
+    return String(x);
+}
+
+string stringreorder(string st, int step)
+{
+    char * x = (char *)malloc(st.length * sizeof(char));
+
+    if (step < 1) step = 1;
+    if (step > st.length) step = st.length;
+    for (int i = 0; i < st.length; i += step)
+    {
+        char * letter = malloc(2 * sizeof(char));
+        letter[0] = st.value[i];
+        strcat(x, letter);
+    }
+
+    return String(x);
+}
+
+string stringreplace(string st, string strep, string repwith) {
+    char * orig = st.value;
+    char * rep = strep.value;
+    char * with = repwith.value;
+
+    char * result; // the return string
+    char * ins;    // the next insert point
+    char * tmp;    // varies
+    int len_rep;  // length of rep (the string to remove)
+    int len_with; // length of with (the string to replace rep with)
+    int len_front; // distance between rep and end of last rep
+    int count;    // number of replacements
+
+    // sanity checks and initialization
+    if (!orig || !rep)
+        return String("");
+    len_rep = strlen(rep);
+    if (len_rep == 0)
+        return String(""); // empty rep causes infinite loop during count
+    if (!with)
+        with = "";
+    len_with = strlen(with);
+
+    // count the number of replacements needed
+    ins = orig;
+    for (count = 0; tmp = strstr(ins, rep); ++count) {
+        ins = tmp + len_rep;
+    }
+
+    tmp = result = malloc(strlen(orig) + (len_with - len_rep) * count + 1);
+
+    if (!result)
+        return String("");
+
+    // first time through the loop, all the variable are set correctly
+    // from here on,
+    //    tmp points to the end of the result string
+    //    ins points to the next occurrence of rep in orig
+    //    orig points to the remainder of orig after "end of rep"
+    while (count--) {
+        ins = strstr(orig, rep);
+        len_front = ins - orig;
+        tmp = strncpy(tmp, orig, len_front) + len_front;
+        tmp = strcpy(tmp, with) + len_with;
+        orig += len_front + len_rep; // move to next "end of rep"
+    }
+
+    strcpy(tmp, orig);
+    string out;
+    out = String(result);
     return out;
 }
 
@@ -232,7 +361,8 @@ char * cpstrip(char * s)
 
     end = s + size - 1;
     while (end >= s && isspace(* end))
-        end--;*(end + 1) = '\0';
+        end--;
+    *(end + 1) = '\0';
 
     while (* s && isspace( * s))
         s++;

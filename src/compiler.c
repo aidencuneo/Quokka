@@ -24,23 +24,6 @@ void arrlstrip(char * line[])
         line[c] = line[c + 1];
 }
 
-int startswith(const char * a, const char * b)
-{
-    if (strncmp(a, b, strlen(b)) == 0) return 1;
-    return 0;
-}
-
-int endswith(const char * str, const char * suffix)
-{
-    if (!str || !suffix)
-        return 0;
-    size_t lenstr = strlen(str);
-    size_t lensuffix = strlen(suffix);
-    if (lensuffix >  lenstr)
-        return 0;
-    return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
-}
-
 int stringIsInt(char * s)
 {
     for (int i = 0; i < strlen(s); ++i)
@@ -214,31 +197,6 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         values[arrsize(values)] = line[2];
         scope++;
     }
-    else if (strcmp(line[0], "int") == 0)
-    {
-        if (isInline) error("int declaration must be at start of line", num);
-        if (len < 2) error("int declaration missing arguments", num);
-        if (len < 3)
-        {
-            strcat(r, "int ");
-            strcat(r, line[1]);
-            strcat(r, ";");
-        }
-        else
-        {
-            strcat(r, "int ");
-            strcat(r, line[1]);
-            strcat(r, ";");
-            strcat(r, line[1]);
-            strcat(r, "=");
-            values[arrsize(values)] = line[1];
-            arrlstrip(line);
-            arrlstrip(line);
-            len -= 2;
-            strcat(r, compileline(line, num, len, 1));
-            strcat(r, ";");
-        }
-    }
     else if (strcmp(line[0], "char*[]") == 0)
     {
         if (isInline) error("char*[] declaration must be at start of line", num);
@@ -280,6 +238,40 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             strcat(r, line[1]);
             strcat(r, "=");
             pointers[arrsize(pointers)] = line[1];
+            arrlstrip(line);
+            arrlstrip(line);
+            len -= 2;
+            char * stringvalue = compileline(line, num, len, 1);
+            if (!startswith(stringvalue, "String("))
+            {
+                char newstring[1024] = {0};
+                strcpy(newstring, "String(");
+                strcat(newstring, stringvalue);
+                strcat(newstring, ")");
+                strcat(r, newstring);
+            } else strcat(r, stringvalue);
+            strcat(r, ";");
+        }
+    }
+    else if (strcmp(line[0], "int") == 0)
+    {
+        if (isInline) error("int declaration must be at start of line", num);
+        else if (len < 2) error("int declaration missing arguments", num);
+        else if (len < 3)
+        {
+            strcat(r, "int ");
+            strcat(r, line[1]);
+            strcat(r, ";");
+            values[arrsize(values)] = line[1];
+        }
+        else
+        {
+            strcat(r, "int ");
+            strcat(r, line[1]);
+            strcat(r, ";");
+            strcat(r, line[1]);
+            strcat(r, "=");
+            values[arrsize(values)] = line[1];
             arrlstrip(line);
             arrlstrip(line);
             len -= 2;
@@ -501,6 +493,14 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         strcat(r, "String(");
         strcat(r, line[0]);
         strcat(r, ")");
+        if (!isInline)
+            strcat(r, ";");
+    }
+    else if (startswith(line[0], "'") && endswith(line[0], "'"))
+    {
+        strcat(r, "String(\"");
+        strcat(r, stringslice(stringreplace(String(line[0]), String("\""), String("\\\"")), 1, 1).value);
+        strcat(r, "\")");
         if (!isInline)
             strcat(r, ";");
     }

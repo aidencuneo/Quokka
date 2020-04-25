@@ -1,9 +1,9 @@
 #include "../headers/t.h"
+#include <stdio.h>
 
 int main()
 {
-    string s = String("  Print.  ");
-    s = stringstrip(s);
-    print(s);
-    println("|");
+    int num = 15;
+    string strnum = String(num);
+    println(strnum);
 }
