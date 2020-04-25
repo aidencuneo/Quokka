@@ -307,6 +307,18 @@ int iarrsize(int * arr)
     return sizeof(arr) / sizeof(int);
 }
 
+int sarrsize(string * arr)
+{
+    int i = 0;
+    string j = arr[0];
+    while (j.value != "\0")
+    {
+        i++;
+        j = arr[i];
+    }
+    return i;
+}
+
 char * readfile(char * fname)
 {
     char * buffer = 0;
@@ -393,17 +405,58 @@ void ntokenise(char * arr[], char * buffer, char * tokAt)
 }
 
 #define ptrindex(value, index) _Generic((value, index), char ** : cptrindex, default : cptrindex)(value, index)
-#define arrsize(value) _Generic((value), char ** : carrsize, int * : iarrsize, default : carrsize)(value)
+#define arrsize(value) _Generic((value),\
+    char ** : carrsize,\
+    int * : iarrsize,\
+    string * : sarrsize,\
+    default : carrsize)(value)
 
 char readchar(){return getchar();}
 int readint(){int out;scanf("%d",&out);return out;}
 float readfloat(){float out;scanf("%f",&out);return out;}
 
-int iprint(int value){printf("%d",value);return value;}
-long lprint(long value){printf("%ld",value);return value;}
-char cprint(char value){printf("%c",value);return value;}
-char*cpprint(char*value){printf("%s",value);return value;}
-string sprint(string value){printf("%s",value.value);return value;}
+int iprint(int value)
+{
+    printf("%d", value);
+    return value;
+}
+
+long lprint(long value)
+{
+    printf("%ld", value);
+    return value;
+}
+
+char cprint(char value)
+{
+    printf("%c", value);
+    return value;
+}
+
+char * cpprint(char * value)
+{
+    printf("%s", value);
+    return value;
+}
+
+string sprint(string value)
+{
+    printf("%s", value.value);
+    return value;
+}
+
+string * saprint(string value[])
+{
+    printf("{");
+    for (int i = 0; i < arrsize(value); i++)
+    {
+        if (i > 0)
+            printf(", ");
+        printf("%s", value[i].value);
+    }
+    printf("}");
+    return value;
+}
 
 #define print(value) _Generic((value),\
     int : iprint,\
@@ -411,13 +464,51 @@ string sprint(string value){printf("%s",value.value);return value;}
     char : cprint,\
     char * : cpprint,\
     string : sprint,\
+    string * : saprint,\
     default : sprint)(value)
 
-int iprintln(int value){printf("%d\n",value);return value;}
-long lprintln(long value){printf("%ld\n",value);return value;}
-char cprintln(char value){printf("%c\n",value);return value;}
-char*cpprintln(char*value){printf("%s\n",value);return value;}
-string sprintln(string value){printf("%s\n",value.value);return value;}
+int iprintln(int value)
+{
+    printf("%d\n", value);
+    return value;
+}
+
+long lprintln(long value)
+{
+    printf("%ld\n", value);
+    return value;
+}
+
+char cprintln(char value)
+{
+    printf("%c\n", value);
+    return value;
+}
+
+char * cpprintln(char * value)
+{
+    printf("%s\n", value);
+    return value;
+}
+
+string sprintln(string value)
+{
+    printf("%s\n", value.value);
+    return value;
+}
+
+string * saprintln(string value[])
+{
+    printf("{");
+    for (int i = 0; i < arrsize(value); i++)
+    {
+        if (i > 0)
+            printf(", ");
+        printf("%s", value[i].value);
+    }
+    printf("}\n");
+    return value;
+}
 
 #define println(value) _Generic((value),\
     int : iprintln,\
@@ -425,6 +516,7 @@ string sprintln(string value){printf("%s\n",value.value);return value;}
     char : cprintln,\
     char * : cpprintln,\
     string : sprintln,\
+    string * : saprintln,\
     default : sprintln)(value)
 
 struct stack{int maxsize;int top;int*items;};struct stack*newStack(int capacity){struct stack*pt=(struct stack*)malloc(sizeof(struct stack));pt->maxsize=capacity;pt->top=-1;pt->items=(int*)malloc(sizeof(int)*capacity);return pt;}int size(struct stack*pt){return pt->top+1;}

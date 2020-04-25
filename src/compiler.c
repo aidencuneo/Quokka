@@ -8,6 +8,7 @@
 int scope = 0;
 char * pointers[512];
 char * values[512];
+char * arrptrs[512];
 
 void error(char * text, int line)
 {
@@ -65,6 +66,8 @@ int stringInList(char * arr[], char * key)
 
 char * compileline(char * line[], int num, int lineLen, int isInline)
 {
+    // num is current line number
+
     char r[512] = {0};
     char * r_ptr = r;
     int len;
@@ -253,6 +256,31 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             strcat(r, ";");
         }
     }
+    else if (strcmp(line[0], "string[]") == 0)
+    {
+        if (isInline) error("string[] declaration must be at start of line", num);
+        else if (len < 2) error("string[] declaration missing variable name", num);
+        else if (len < 3)
+        {
+            strcat(r, "string ");
+            strcat(r, line[1]);
+            strcat(r, "[1];");
+            arrptrs[arrsize(arrptrs)] = line[1];
+        }
+        else
+        {
+            strcat(r, "string ");
+            strcat(r, line[1]);
+            strcat(r, "[]=");
+            arrptrs[arrsize(arrptrs)] = line[1];
+            arrlstrip(line);
+            arrlstrip(line);
+            len -= 2;
+            char * stringvalue = compileline(line, num, len, 1);
+            strcat(r, stringvalue);
+            strcat(r, ";");
+        }
+    }
     else if (strcmp(line[0], "int") == 0)
     {
         if (isInline) error("int declaration must be at start of line", num);
@@ -354,10 +382,24 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         if (!isInline)
             strcat(r, ";");
     }
-    else if (startswith(line[0], ":"))
+    else if (startswith(line[1], "[") && endswith(line[1], "]"))
     {
-        char * name = line[0];
-        name++;
+        if (len > 3) error("index can not take arguments", num);
+        strcat(r, line[0]);
+        strcat(r, "[");
+        strcat(r, stringslice(String(line[1]), 1, 1).value);
+        strcat(r, "]");
+        if (stringInList(arrptrs, line[0]))
+        {
+            strcat(r, ".value");
+        }
+        
+        if (!isInline)
+            strcat(r, ";");
+    }
+    else if (endswith(line[0], ":"))
+    {
+        char * name = stringslice(String(line[0]), 0, 1).value;
         if (isInline) error("proc `:` action must be at start of line", num);
         if (scope > 0) error("proc `:` action can not be in a scope greater than 1", num);
         if (len < 1) error("proc `:` action missing arguments", num);
@@ -490,17 +532,48 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     }
     else if (startswith(line[0], "\"") && endswith(line[0], "\""))
     {
-        strcat(r, "String(");
-        strcat(r, line[0]);
-        strcat(r, ")");
-        if (!isInline)
-            strcat(r, ";");
+        for (int p = 0; p < len; p++)
+        {
+            if (!(startswith(line[p], "\"") && endswith(line[p], "\"")))
+                break;
+            strcat(r, "String(");
+            strcat(r, line[p]);
+            strcat(r, ")");
+            if (!isInline)
+                strcat(r, ";");
+        }
     }
     else if (startswith(line[0], "'") && endswith(line[0], "'"))
     {
-        strcat(r, "String(\"");
-        strcat(r, stringslice(stringreplace(String(line[0]), String("\""), String("\\\"")), 1, 1).value);
-        strcat(r, "\")");
+        int tempnum = 0;
+        for (int p = 0; p < len; p++)
+        {
+            if (!(startswith(line[p], "'") && endswith(line[p], "'")))
+                break;
+            strcat(r, "String(\"");
+            strcat(r, stringslice(stringreplace(String(line[p]), String("\""), String("\\\"")), 1, 1).value);
+            strcat(r, "\")");
+            if (!isInline)
+                strcat(r, ";");
+            else strcat(r, ",");
+        }
+    }
+    else if (startswith(line[0], "{") && endswith(line[0], "}"))
+    {
+        char * tempstr[512];
+        tokenise(tempstr, stringslice(String(line[0]), 1, 1).value, ",");
+        println("START");
+        int templen = 0;
+        for (int p = 0; p < arrsize(tempstr); p++)
+        {
+            tempstr[p] = cpstrip(tempstr[p]);
+            templen++;
+            println(tempstr[p]);
+        }
+        println("END");
+        strcat(r, "{");
+        strcat(r, compileline(tempstr, num, templen, 1));
+        strcat(r, "}");
         if (!isInline)
             strcat(r, ";");
     }

@@ -1,6 +1,6 @@
 // Demonstrates the creation of strings
 
-:main
+main:
     // Declare integer named 'number' with value of 10:
     int     | number | 15
 
