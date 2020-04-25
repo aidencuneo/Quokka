@@ -3,7 +3,7 @@
 
 int main()
 {
-    int num = 15;
-    string strnum = String(num);
-    println(strnum);
+    string x[] = {String("potatoes"), String("more potatoes")};
+    println(x[0]);
+    println(x[1]);
 }

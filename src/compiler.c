@@ -5,6 +5,8 @@
 #include <string.h>
 #include <ctype.h>
 
+int verbose = 0;
+
 int scope = 0;
 char * pointers[512];
 char * values[512];
@@ -245,6 +247,8 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             arrlstrip(line);
             len -= 2;
             char * stringvalue = compileline(line, num, len, 1);
+            if (endswith(stringvalue, ","))
+                strcpy(stringvalue, stringslice(String(stringvalue), 0, 1).value);
             if (!startswith(stringvalue, "String("))
             {
                 char newstring[1024] = {0};
@@ -612,7 +616,13 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
 
 int main(int argc, char ** argv)
 {
-    println("--START--");
+    if (argc > 3)
+    {
+        if (strcmp(argv[3], "-v") == 0)
+            verbose = 1;
+    }
+
+    if (verbose) println("--START--");
 
     if (argc < 3) return 1;
 
@@ -638,14 +648,16 @@ int main(int argc, char ** argv)
         }
 
         if (arrsize(line) < 1) continue;
-        printf("SIZE %d\n", arrsize(line));
+        if (verbose) printf("SIZE %d\n", arrsize(line));
 
         char * result = compileline(line, i, -1, 0);
         strcat(compiled, result);
 
-        printf("-%s-\n", tokens[i]);
+        if (verbose) printf("-%s-\n", tokens[i]);
         for (int p = 0; line[p] != NULL; p++)
-            printf("<%s>\n", line[p]);
+        {
+            if (verbose) printf("<%s>\n", line[p]);
+        }
     }
 
     FILE * fp = fopen(argv[2], "w");
@@ -654,7 +666,7 @@ int main(int argc, char ** argv)
     fprintf(fp, "%s", compiled);
     fclose(fp);
 
-    printf("--END--\n");
+    if (verbose) printf("--END--\n");
 
     return 0;
 }
