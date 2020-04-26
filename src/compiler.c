@@ -84,13 +84,20 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
 
     for (int p = 0; p < len; p++)
     {
+        print("ITEM: ");
+        println(line[p]);
         if (startswith(line[p], "'") && endswith(line[p], "'"))
         {
-            char * temp = (char *)malloc(strlen(line[p]) * sizeof(char));
+            char * temp = (char *)malloc(strlen(line[p]));
             strcat(temp, "\"");
             strcat(temp, stringreplace(stringslice(String(line[p]), 1, 1), String("\""), String("\\\"")).value);
             strcat(temp, "\"");
+            println("poop");
+            println(line[p]);
             strcpy(line[p], temp);
+            free(temp);
+            println(temp);
+            println(line[p]);
         }
     }
 
@@ -278,30 +285,25 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         else if (len < 2) error("string[] declaration missing variable name", num);
         else if (len < 3)
         {
+            arrptrs[arrsize(arrptrs)] = line[1];
             strcat(r, "string ");
             strcat(r, line[1]);
             strcat(r, "[1];");
-            arrptrs[arrsize(arrptrs)] = line[1];
         }
         else
         {
-            strcat(r, "string * ");
-            strcat(r, line[1]);
-            strcat(r, "=(string *)malloc(2 * sizeof(string));");
-            strcat(r, line[1]);
-            strcat(r, "[0]=String(\"\\0\");");
-            strcat(r, "sarrappend(");
-            strcat(r, line[1]);
-            strcat(r, ",");
             arrptrs[arrsize(arrptrs)] = line[1];
+            strcat(r, "string ");
+            strcat(r, line[1]);
+            strcat(r, "[]=");
             arrlstrip(line);
             arrlstrip(line);
             len -= 2;
+            println(line[0]);
             char * stringvalue = compileline(line, num, len, 1);
-            if (startswith(stringvalue, "{") && endswith(stringvalue, "}"))
-                stringvalue = stringslice(String(stringvalue), 1, 1).value;
+            println(stringvalue);
             strcat(r, stringvalue);
-            strcat(r, ",String(\"\\0\"));");
+            strcat(r, ";");
         }
     }
     else if (strcmp(line[0], "int") == 0)
