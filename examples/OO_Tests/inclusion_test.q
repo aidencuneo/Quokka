@@ -1,4 +1,4 @@
-// Demonstrates string replacement
+// Demonstrates object instances
 include:
     potato.h
 
@@ -7,10 +7,7 @@ main:
     object | potato_1 | potato
     object | potato_2 | potato
 
-    // Create and print the original string:
-    println | potato_1 | x | y
-    println | potato_2 | x | y
-
-    // Print new string
-    println | nstr
+    // Print all values of the potatoes:
+    println | potato_1 | 'Potato 1' | x | ',' | y
+    println | potato_2 | 'Potato 2' | x | ',' | y
 end
