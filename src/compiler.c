@@ -285,16 +285,23 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         }
         else
         {
-            strcat(r, "string ");
+            strcat(r, "string * ");
             strcat(r, line[1]);
-            strcat(r, "[]=");
+            strcat(r, "=(string *)malloc(2 * sizeof(string));");
+            strcat(r, line[1]);
+            strcat(r, "[0]=String(\"\\0\");");
+            strcat(r, "sarrappend(");
+            strcat(r, line[1]);
+            strcat(r, ",");
             arrptrs[arrsize(arrptrs)] = line[1];
             arrlstrip(line);
             arrlstrip(line);
             len -= 2;
             char * stringvalue = compileline(line, num, len, 1);
+            if (startswith(stringvalue, "{") && endswith(stringvalue, "}"))
+                stringvalue = stringslice(String(stringvalue), 1, 1).value;
             strcat(r, stringvalue);
-            strcat(r, ";");
+            strcat(r, ",String(\"\\0\"));");
         }
     }
     else if (strcmp(line[0], "int") == 0)
@@ -353,8 +360,6 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         if (isInline) error("set action must be at start of line", num);
         if (len < 2) error("set action missing variable name", num);
         if (len < 3) error("set action missing new variable value", num);
-        if (!stringInList(pointers, line[1]) && !stringInList(values, line[1]))
-            error("set action attempting to set undeclared variable", num);
         strcat(r, line[1]);
         strcat(r, "=");
         arrlstrip(line);

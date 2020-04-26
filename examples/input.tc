@@ -1,6 +1,8 @@
 main:
-    string[] | array   | {'word number one', '\0'}
+    string[] | array   | {'aiden', 'another word'}
     println  | array
-    println  | sarradd | (array, 'word number two')
-    println  | sarradd | (array, 'word again?')
+    println  | arrsize | (array)
+
+    println  | array
+    println  | arrsize | (array)
 end

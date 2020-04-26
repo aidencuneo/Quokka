@@ -16,12 +16,14 @@ typedef struct
     int length;
 } string;
 
+
 // Function declarations
+
+// arrsize
 int carrsize(char * arr[]);
-
 int iarrsize(int * arr);
-
 int sarrsize(string * arr);
+
 
 // Definitions
 #define arrsize(value) _Generic((value),\
@@ -98,7 +100,7 @@ string StringFromChar(char value)
     char : StringFromChar,\
     char * : StringFromCharPointer,\
     string : StringFromString,\
-    default : StringFromString)(value)
+    default : StringFromCharPointer)(value)
 
 string stringlstrip(string s)
 {
@@ -300,17 +302,64 @@ string stringreplace(string st, string strep, string repwith) {
     return out;
 }
 
-string * sarradd(string lst[], string newstr)
+void sarrappend(string * lst, string arg1, ...)
 {
+    printf("<%s>\n", lst[0].value);
+
+    va_list ap;
+
     int len = arrsize(lst);
 
-    string * newlst = (string *)malloc(len + 2 * sizeof(newstr));
+    lst = (string *)realloc(lst, (len + 2) * sizeof(string));
+    lst[len + 1] = String("\0");
+    lst[len] = arg1;
+    len++;
+
+    va_start(ap, arg1);
+
+    string last = va_arg(ap, string);
+
+    while (strcmp(last.value, "\0") != 0)
+    {
+        printf("[%s]\n", last.value);
+        lst = (string *)realloc(lst, (len + 2) * sizeof(string));
+        lst[len + 1] = String("\0");
+        lst[len] = last;
+        len++;
+        last = va_arg(ap, string);
+    }
+
+    va_end(ap);
+
+    printf("<%s>\n", lst[0].value);
+}
+
+string * sarradd(string * lst, string arg1, ...)
+{
+    va_list ap;
+
+    int len = arrsize(lst);
+    string * newlst = (string *)malloc(len + 1024 * sizeof(string));
 
     for (int i = 0; i < len; i++)
         newlst[i] = lst[i];
 
     newlst[len + 1] = String("\0");
-    newlst[len] = newstr;
+    newlst[len] = arg1;
+
+    va_start(ap, arg1);
+
+    string last = va_arg(ap, string);
+
+    while (last.value != "\0")
+    {
+        newlst[len + 1] = String("\0");
+        newlst[len] = last;
+        len++;
+        last = va_arg(ap, string);
+    }
+
+    va_end(ap);
 
     return newlst;
 }
