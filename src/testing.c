@@ -1,4 +1,4 @@
-#include "../headers/t.h"
+#include "../include/t.h"
 
 int main()
 {
