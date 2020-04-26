@@ -115,7 +115,7 @@ string stringlstrip(string s)
 
 string stringrstrip(string st)
 {
-    char s[st.length];
+    char * s = (char *)malloc(st.length + 1);
     strcpy(s, st.value);
 
     if (!s)
@@ -139,7 +139,7 @@ string stringrstrip(string st)
 
 string stringstrip(string st)
 {
-    char s[st.length];
+    char * s = (char *)malloc(st.length + 1);
     strcpy(s, st.value);
 
     if (!s)
@@ -539,7 +539,7 @@ string * saprint(string value[])
     char * : cpprint,\
     string : sprint,\
     string * : saprint,\
-    default : sprint)(value)
+    default : cpprint)(value)
 
 int iprintln(int value)
 {
@@ -591,7 +591,7 @@ string * saprintln(string value[])
     char * : cpprintln,\
     string : sprintln,\
     string * : saprintln,\
-    default : sprintln)(value)
+    default : cpprintln)(value)
 
 struct stack{int maxsize;int top;int*items;};struct stack*newStack(int capacity){struct stack*pt=(struct stack*)malloc(sizeof(struct stack));pt->maxsize=capacity;pt->top=-1;pt->items=(int*)malloc(sizeof(int)*capacity);return pt;}int size(struct stack*pt){return pt->top+1;}
 int isEmpty(struct stack*pt){return pt->top==-1;}
