@@ -1,12 +1,12 @@
 // Demonstrates object instances
 include:
-    potato.q
+    potato
 end
 
 main:
     // Instantiate two Potatoes, with their default position (x : 0, y : 0)
-    object | potato | potato_1
-    object | potato | potato_2
+    new | potato | potato_1
+    new | potato | potato_2
 
     // Print all values of the potatoes:
     print   | 'Potato 1 '
