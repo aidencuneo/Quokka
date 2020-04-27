@@ -5,16 +5,58 @@
 #include <string.h>
 #include <ctype.h>
 
+// Function declarations
+void error(char * text, int line);
+void arrlstrip(char * line[]);
+int stringIsInt(char * s);
+int stringHasChar(char * s, char c);
+int stringInList(char * arr[], char * key);
+
+char * compileline(char * line[], int num, int lineLen, int isInline);
+char * compile_tokens(char ** tokens);
+char * compile_raw(char * rawtext, int maxtokensize);
+char * quokka_compile(char * filename);
+
+// Bools
 int verbose = 0;
 
+// Ints
 int scope = 0;
+
+// Strings
+char * current_file;
+
+// String arrays
 char * pointers[512];
 char * values[512];
 char * arrptrs[512];
 
 void error(char * text, int line)
 {
-    printf("\nProgram compilation terminated:\nLine %d -> %s\n\n", line + 1, text);
+    int MAXLINE = 256;
+
+    char * fullfile = readfile(current_file);
+    char * linepreview = (char *)malloc(MAXLINE);
+    strcpy(linepreview, "");
+
+    int c = 0;
+    for (int i = 0; i < strlen(fullfile) - 1; i++)
+    {
+        if (fullfile[i] == '\n')
+            c++;
+        else if (c == line && strlen(linepreview) < MAXLINE && fullfile[i] != 10 && fullfile[i] != 13)
+            strcat(linepreview, String(fullfile[i]).value);
+        if (c > line)
+            break;
+    }
+
+    line++;
+
+    println("\nProgram compilation terminated:");
+    printf("At %s:%d\n", current_file, line);
+    printf("--> %s\n", text);
+    printf("  %d | %s |\n\n", line, linepreview);
+    free(linepreview);
     exit(EXIT_FAILURE);
 }
 
@@ -97,6 +139,37 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         }
     }
 
+    if (scope == -1)
+    {
+        if (strcmp(line[0], "end") == 0)
+        {
+            if (len > 1) error("end action received too many arguments", num);
+            scope++;
+        }
+        else if (len > 1)
+            error("invalid syntax, headers must be included on separate lines", num);
+        else
+        {
+            char * oldfile = current_file;
+            current_file = line[0];
+            scope = 0;
+            char * header_data = quokka_compile(line[0]);
+            current_file = oldfile;
+            scope = -1;
+            if (strlen(header_data) <= 0)
+            {
+                char * err = (char *)malloc(strlen(line[0]) + 73);
+                strcpy(err, "'");
+                strcat(err, line[0]);
+                strcat(err, "' is an invalid header file, make sure the file exists and is not empty");
+                error(err, num);
+            }
+            strcat(r, header_data);
+        }
+
+        return r_ptr;
+    }
+
     if (strcmp(line[0], "push") == 0)
     {
         if (isInline) error("push action must be at start of line", num);
@@ -111,7 +184,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     {
         if (!isInline) error("pop action must not be at start of line", num);
         if (len > 1) error("pop action received too many arguments", num);
-        strcat(r, "pop(pt)");
+        strcat(r, "pop(pt);");
     }
     else if (strcmp(line[0], "print") == 0)
     {
@@ -424,9 +497,9 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     {
         char * name = stringslice(String(line[0]), 0, 1).value;
         if (isInline) error("proc `:` action must be at start of line", num);
-        if (scope > 0) error("proc `:` action can not be in a scope greater than 1", num);
-        if (len < 1) error("proc `:` action missing arguments", num);
-        else if (len < 2)
+        else if (scope > 0) error("proc `:` action can not be in a scope greater than 1", num);
+        else if (len < 1) error("proc `:` action missing arguments", num);
+        else if (len < 2 && strcmp(name, "include") != 0)
         {
             strcat(r, "int ");
             strcat(r, name);
@@ -440,7 +513,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             strcat(r, "){");
         }
         else if (len > 3) error("proc `:` action received too many arguments", num);
-        else
+        else if (strcmp(name, "include") != 0)
         {
             if (strcmp(name, "main") == 0 && len > 2)
                 error("main proc can not be given arguments as they are given by default", num);
@@ -458,7 +531,10 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         }
         if (strcmp(name, "main") == 0)
             strcat(r, "pt=newStack(4096);");
-        scope++;
+        if (strcmp(name, "include") == 0)
+            scope = -1;
+        else
+            scope++;
     }
     else if (strcmp(line[0], "def") == 0)
     {
@@ -625,27 +701,11 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     return r_ptr;
 }
 
-int main(int argc, char ** argv)
+char * compile_tokens(char ** tokens)
 {
-    if (argc > 3)
-    {
-        if (strcmp(argv[3], "-v") == 0)
-            verbose = 1;
-    }
+    // Keep watch of this in case the files start to get bigger than 6000 characters
+    char * compiled = (char *)malloc(6000);
 
-    if (verbose) println("--START--");
-
-    if (argc < 3) return 1;
-
-    char * buffer = readfile(argv[1]);
-
-    if (!buffer)
-        return 0;
-
-    char * tokens[1024];
-    ntokenise(tokens, buffer, "\n");
-
-    char compiled[6000] = {0}; // Keep watch of this in case the files start to get bigger than 6000 characters
     for (int i = 0; i < arrsize(tokens); i++)
     {
         if (tokens[i] == NULL)
@@ -670,6 +730,69 @@ int main(int argc, char ** argv)
             if (verbose) printf("<%s>\n", line[p]);
         }
     }
+
+    return compiled;
+}
+
+char * compile_raw(char * rawtext, int maxtokensize)
+{
+    if (maxtokensize == -1)
+        maxtokensize = 1024;
+    char * tokens[maxtokensize];
+    ntokenise(tokens, rawtext, "\n");
+
+    return compile_tokens(tokens);
+}
+
+char * quokka_compile(char * filename)
+{
+    char * buffer = readfile(filename);
+
+    if (!buffer)
+        return "";
+
+    return compile_raw(buffer, -1);
+}
+
+int main(int argc, char ** argv)
+{
+    if (argc > 3)
+    {
+        if (strcmp(argv[3], "-v") == 0)
+            verbose = 1;
+    }
+
+    if (verbose) println("--START--");
+
+    if (argc < 2)
+    {
+        println("Input file path not given, no data to compile.");
+        return 1;
+    }
+    else if (argc < 3)
+    {
+        println("Output file path not given.");
+        return 1;
+    }
+
+    // Full path directing to first file to compile
+    char * fullname = getrealpath(argv[1]);
+
+    // Dirname of first file to compile
+    char * dirname = strndup(fullname, strlen(fullname) - strlen(strrchr(fullname, '/')));
+
+    // File name of first file to compile (no dirname)
+    char * fname = strrchr(fullname, '/') + 1;
+
+    current_file = fname;
+
+    // Move CWD to dirname
+    chdir(dirname);
+
+    char * compiled = quokka_compile(fname);
+
+    if (!compiled)
+        return 0;
 
     FILE * fp = fopen(argv[2], "w");
     fprintf(fp, "%s", C_HEADERS);

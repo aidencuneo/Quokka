@@ -4,6 +4,24 @@
 #include <string.h>
 #include <ctype.h>
 
+// OS-related definitions
+#ifdef _WIN32
+    #include <direct.h>
+    #define chdir(value) _chdir(value)
+    #define realpath(first, second) _fullpath(first, second, _MAX_PATH)
+
+    char *strndup(const char *s1, size_t n)
+    {
+    	char *copy = (char *)malloc(n + 1);
+    	memcpy(copy, s1, n);
+    	copy[n] = 0;
+    	return copy;
+    }
+#else
+    #include <unistd.h>
+#endif
+
+
 // Structs
 typedef struct
 {
@@ -516,6 +534,11 @@ void ntokenise(char * arr[], char * buffer, char * tokAt)
         i++;
         arr[i] = cpstrip(nstrtok(NULL, tokAt));
     }
+}
+
+char * getrealpath(char * path)
+{
+    return stringreplace(String(realpath(path, NULL)), String('\\'), String('/')).value;
 }
 
 #define ptrindex(value, index) _Generic((value, index), char ** : cptrindex, default : cptrindex)(value, index)

@@ -1,13 +1,23 @@
 // Demonstrates object instances
 include:
-    potato.h
+    nonexistentheader.q
+    potato.q
+    thing.q
+end
 
 main:
     // Instantiate two Potatoes, with their default position (x : 0, y : 0)
-    object | potato_1 | potato
-    object | potato_2 | potato
+    object | potato | potato_1
+    object | potato | potato_2
 
     // Print all values of the potatoes:
-    println | potato_1 | 'Potato 1' | x | ',' | y
-    println | potato_2 | 'Potato 2' | x | ',' | y
+    print   | 'Potato 1 '
+    print   | potato_1.x
+    print   | ', '
+    println | potato_1.y
+
+    print   | 'Potato 2 '
+    print   | potato_2.x
+    print   | ', '
+    println | potato_2.y
 end
