@@ -24,13 +24,48 @@ int carrsize(char * arr[]);
 int iarrsize(int * arr);
 int sarrsize(string * arr);
 
+// println
+int iprintln(int value);
+long lprintln(long value);
+char cprintln(char value);
+char * cpprintln(char * value);
+string sprintln(string value);
+string * saprintln(string value[]);
+
+// print
+int iprint(int value);
+long lprint(long value);
+char cprint(char value);
+char * cpprint(char * value);
+string sprint(string value);
+string * saprint(string value[]);
+
 
 // Definitions
 #define arrsize(value) _Generic((value),\
-    char ** : carrsize,\
-    int * : iarrsize,\
+    char **  : carrsize,\
+    int *    : iarrsize,\
     string * : sarrsize,\
-    default : carrsize)(value)
+    default  : carrsize)(value)
+
+#define print(value) _Generic((value),\
+    int      : iprint,\
+    long     : lprint,\
+    char     : cprint,\
+    char *   : cpprint,\
+    string   : sprint,\
+    string * : saprint,\
+    default  : cpprint)(value)
+
+#define println(value) _Generic((value),\
+    int      : iprintln,\
+    long     : lprintln,\
+    char     : cprintln,\
+    char *   : cpprintln,\
+    string   : sprintln,\
+    string * : saprintln,\
+    default  : cpprintln)(value)
+
 
 int startswith(const char * a, const char * b)
 {
@@ -532,15 +567,6 @@ string * saprint(string value[])
     return value;
 }
 
-#define print(value) _Generic((value),\
-    int : iprint,\
-    long : lprint,\
-    char : cprint,\
-    char * : cpprint,\
-    string : sprint,\
-    string * : saprint,\
-    default : cpprint)(value)
-
 int iprintln(int value)
 {
     printf("%d\n", value);
@@ -583,15 +609,6 @@ string * saprintln(string value[])
     printf("}\n");
     return value;
 }
-
-#define println(value) _Generic((value),\
-    int : iprintln,\
-    long : lprintln,\
-    char : cprintln,\
-    char * : cpprintln,\
-    string : sprintln,\
-    string * : saprintln,\
-    default : cpprintln)(value)
 
 struct stack{int maxsize;int top;int*items;};struct stack*newStack(int capacity){struct stack*pt=(struct stack*)malloc(sizeof(struct stack));pt->maxsize=capacity;pt->top=-1;pt->items=(int*)malloc(sizeof(int)*capacity);return pt;}int size(struct stack*pt){return pt->top+1;}
 int isEmpty(struct stack*pt){return pt->top==-1;}

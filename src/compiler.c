@@ -84,20 +84,16 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
 
     for (int p = 0; p < len; p++)
     {
-        print("ITEM: ");
-        println(line[p]);
         if (startswith(line[p], "'") && endswith(line[p], "'"))
         {
             char * temp = (char *)malloc(strlen(line[p]));
+            strcpy(temp, "\"");
+            string sliced = stringslice(String(line[p]), 1, 1);
+            string escaped = stringreplace(sliced, String("\""), String("\\\""));
+            strcat(temp, escaped.value);
             strcat(temp, "\"");
-            strcat(temp, stringreplace(stringslice(String(line[p]), 1, 1), String("\""), String("\\\"")).value);
-            strcat(temp, "\"");
-            println("poop");
-            println(line[p]);
             strcpy(line[p], temp);
             free(temp);
-            println(temp);
-            println(line[p]);
         }
     }
 
@@ -299,9 +295,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             arrlstrip(line);
             arrlstrip(line);
             len -= 2;
-            println(line[0]);
             char * stringvalue = compileline(line, num, len, 1);
-            println(stringvalue);
             strcat(r, stringvalue);
             strcat(r, ";");
         }
