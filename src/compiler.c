@@ -561,6 +561,10 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         }
         scope++;
     }
+    else if (strcmp(line[0], "class") == 0)
+    {
+        if (len > 2) error("class action received too many arguments", num);
+    }
     else if (strcmp(line[0], "end") == 0)
     {
         if (isInline) error("end action must be at start of line", num);

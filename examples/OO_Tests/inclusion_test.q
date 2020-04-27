@@ -1,8 +1,6 @@
 // Demonstrates object instances
 include:
-    nonexistentheader.q
     potato.q
-    thing.q
 end
 
 main:
