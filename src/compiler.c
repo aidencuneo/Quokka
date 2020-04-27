@@ -19,6 +19,7 @@ char * quokka_compile(char * filename);
 
 // Bools
 int verbose = 0;
+int in_class_constructor = 0;
 
 // Ints
 int scope = 0;
@@ -161,6 +162,16 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
                 header_name = (char *)malloc(strlen(line[0]) + 3);
                 strcpy(header_name, line[0]);
                 strcat(header_name, ".q");
+            }
+            if (strcmp(current_file, header_name) == 0)
+            {
+                char * err = (char *)malloc(strlen(line[0]) + strlen(header_name) + 92); // 1 + 18 + 72 + 1 (\0 ending)
+                strcpy(err, "'");
+                strcat(err, line[0]);
+                strcat(err, "' (at local path '");
+                strcat(err, header_name);
+                strcat(err, "') is being imported from within itself, this should not happen");
+                error(err, num);
             }
             char * oldfile = current_file;
             current_file = header_name;
@@ -471,25 +482,6 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             strcat(r, ";\n");
         }
     }
-    else if (startswith(line[1], "(") && endswith(line[1], ")"))
-    {
-        if (len > 3) error("function call can not take arguments after itself", num);
-        char * tempstr[512];
-        tokenise(tempstr, stringslice(String(line[1]), 1, 1).value, ",");
-        if (verbose) println("START");
-        for (int p = 0; p < arrsize(tempstr); p++)
-        {
-            tempstr[p] = cpstrip(tempstr[p]);
-            if (verbose) println(tempstr[p]);
-        }
-        if (verbose) println("END");
-        strcat(r, line[0]);
-        strcat(r, "(");
-        strcat(r, compileline(tempstr, num, arrsize(tempstr), 1));
-        strcat(r, ")");
-        if (!isInline)
-            strcat(r, ";\n");
-    }
     else if (startswith(line[1], "[") && endswith(line[1], "]"))
     {
         if (len > 3) error("index can not take arguments", num);
@@ -573,10 +565,11 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         }
         scope++;
     }
-    else if (strcmp(line[0], "class") == 0)
+    else if (strcmp(line[0], "object") == 0)
     {
         char * name;
-        if (len > 2) error("class action received too many arguments", num);
+        if (isInline) error("object definition must be at start of line", num);
+        if (len > 2) error("object definition received too many arguments", num);
         if (len < 2)
         {
             int ext = strlen(strchr(current_file, '.'));
@@ -591,9 +584,9 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         // Define type
         strcat(r, "typedef struct __");
         strcat(r, name);
-        strcat(r, "_Struct__ __");
+        strcat(r, "_Struct__ ");
         strcat(r, name);
-        strcat(r, "_Type__;\n");
+        strcat(r, ";\n");
         // Define struct
         strcat(r, "struct __");
         strcat(r, name);
@@ -601,12 +594,118 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         free(name);
         scope++;
     }
+    else if (strcmp(line[0], "class") == 0)
+    {
+        char * name;
+        char * args = 0;
+        if (in_class_constructor) error("class constructor can not be within class constructor", num);
+        if (scope > 0) error("class constructor scope must not be higher than minimum scope", num);
+        if (isInline) error("class constructor definition must be at start of line", num);
+        if (len > 3) error("class constructor definition received too many arguments", num);
+        // if `class | classname | (int arg1, int arg2)`
+        if (len == 3)
+        {
+            name = (char *)malloc(strlen(line[1]));
+            strcpy(name, line[1]);
+
+            args = line[2];
+        }
+        else if (len == 2)
+        {
+            // if `class | (int arg1, int arg2)`
+            if (startswith(line[1], "(") && endswith(line[1], ")"))
+            {
+                int ext = strlen(strchr(current_file, '.'));
+                name = (char *)malloc(strlen(current_file) - ext);
+                strcpy(name, stringslice(String(current_file), 0, ext).value);
+
+                args = line[1];
+            }
+            // if `class | classname`
+            else
+            {
+                name = (char *)malloc(strlen(line[1]));
+                strcpy(name, line[1]);
+            }
+        }
+        else if (len == 1)
+        {
+            int ext = strlen(strchr(current_file, '.'));
+            name = (char *)malloc(strlen(current_file) - ext);
+            strcpy(name, stringslice(String(current_file), 0, ext).value);
+        }
+        strcat(r, "__");
+        strcat(r, name);
+        strcat(r, "_Constructor__ (");
+        if (args)
+        {
+            char * tempstr[512];
+            tokenise(tempstr, stringslice(String(args), 1, 1).value, ",");
+            for (int p = 0; p < arrsize(tempstr); p++)
+            {
+                tempstr[p] = cpstrip(tempstr[p]);
+                if (verbose) println(tempstr[p]);
+            }
+            strcat(r, compileline(tempstr, num, arrsize(tempstr), 1));
+        }
+        strcat(r, "){");
+        strcat(r, name);
+        strcat(r, " self;");
+        free(name);
+        scope++;
+        in_class_constructor = 1;
+    }
+    else if (strcmp(line[0], "new") == 0)
+    {
+        char * args = 0;
+        if (isInline) error("new object creation must be at start of line", num);
+        if (scope < 1) error("new object creation must not be at minimum scope", num);
+        if (len > 4) error("new object creation received too many arguments", num);
+        if (len < 2) error("new object creation missing object type", num);
+        if (len < 3) error("new object creation missing object name", num);
+        if (len == 4)
+            args = line[3];
+        if (!args)
+            args = "()";
+        if (!(startswith(args, "(") && endswith(args, ")")))
+            error("invalid constructor arguments in new object creation, arguments must have braces", num);
+        strcat(r, line[1]);
+        strcat(r, " ");
+        strcat(r, line[2]);
+        strcat(r, "=__");
+        strcat(r, line[1]);
+        strcat(r, "_Constructor__");
+        strcat(r, args);
+        strcat(r, ";\n");
+    }
+    else if (startswith(line[1], "(") && endswith(line[1], ")"))
+    {
+        if (len > 3) error("function call can not take arguments after itself", num);
+        char * tempstr[512];
+        tokenise(tempstr, stringslice(String(line[1]), 1, 1).value, ",");
+        if (verbose) println("START");
+        for (int p = 0; p < arrsize(tempstr); p++)
+        {
+            tempstr[p] = cpstrip(tempstr[p]);
+            if (verbose) println(tempstr[p]);
+        }
+        if (verbose) println("END");
+        strcat(r, line[0]);
+        strcat(r, "(");
+        strcat(r, compileline(tempstr, num, arrsize(tempstr), 1));
+        strcat(r, ")");
+        if (!isInline)
+            strcat(r, ";\n");
+    }
     else if (strcmp(line[0], "end") == 0)
     {
         if (isInline) error("end action must be at start of line", num);
         if (scope < 1) error("end action has nothing to end, program is already at minimum scope", num);
         if (len > 1) error("end action received too many arguments", num);
+        if (in_class_constructor)
+            strcat(r, "return self;\n");
         strcat(r, "}\n");
+        in_class_constructor = 0;
         scope--;
     }
     else if (strcmp(line[0], "continue") == 0)
@@ -841,7 +940,6 @@ int main(int argc, char ** argv)
     // Later I need to make sure the output file exists to
     // avoid a segmentation fault
     FILE * fp = fopen(outputpath, "w");
-    println(outputpath);
     fprintf(fp, "%s", C_HEADERS);
     fprintf(fp, "%s", C_FILE_START);
     fprintf(fp, "%s", compiled);
