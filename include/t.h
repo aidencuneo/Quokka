@@ -28,11 +28,15 @@ typedef struct
     void * value;
 } pointer;
 
-typedef struct
+typedef struct __string_Struct__ string;
+struct __string_Struct__
 {
     char * value;
     int length;
-} string;
+
+    string (*upper)(string self);
+    string (*lower)(string self);
+};
 
 
 // Function declarations
@@ -57,6 +61,19 @@ char cprint(char value);
 char * cpprint(char * value);
 string sprint(string value);
 string * saprint(string value[]);
+
+// string
+string __lstrip_string__(string st);
+string __upper_string__(string st);
+string __lower_string__(string st);
+string __rstrip_string__(string st);
+string __strip_string__(string st);
+string __add_string__(string arg1, ...);
+string __upper_string__(string st);
+string __lower_string__(string st);
+string __slice_string__(string st, int start, int stop);
+string __reorder_string__(string st, int step);
+string __replace_string__(string st, string strep, string repwith);
 
 
 // Definitions
@@ -109,10 +126,15 @@ string StringFromString(string value)
 
 string StringFromCharPointer(char * value)
 {
-    string out;
-    out.value = value;
-    out.length = strlen(value);
-    return out;
+    string self;
+
+    self.value = value;
+    self.length = strlen(value);
+
+    self.upper = __upper_string__;
+    self.lower = __lower_string__;
+
+    return self;
 }
 
 string StringFromCharArray(char value[])
@@ -148,14 +170,16 @@ string StringFromChar(char value)
 }
 
 #define String(value) _Generic((value),\
-    int : StringFromInt,\
-    long : StringFromLong,\
-    char : StringFromChar,\
-    char * : StringFromCharPointer,\
-    string : StringFromString,\
+    int     : StringFromInt,\
+    long    : StringFromLong,\
+    char    : StringFromChar,\
+    char *  : StringFromCharPointer,\
+    string  : StringFromString,\
     default : StringFromCharPointer)(value)
 
-string stringlstrip(string s)
+#define __string_Constructor__(value) String(value)
+
+string __lstrip_string__(string s)
 {
     if (!s.value)
         return s;
@@ -166,7 +190,7 @@ string stringlstrip(string s)
     return s;
 }
 
-string stringrstrip(string st)
+string __rstrip_string__(string st)
 {
     char * s = (char *)malloc(st.length + 1);
     strcpy(s, st.value);
@@ -190,7 +214,7 @@ string stringrstrip(string st)
     return String(s);
 }
 
-string stringstrip(string st)
+string __strip_string__(string st)
 {
     char * s = (char *)malloc(st.length + 1);
     strcpy(s, st.value);
@@ -211,10 +235,10 @@ string stringstrip(string st)
         end--;
     *(end + 1) = '\0';
 
-    return String(stringlstrip(String(s)));
+    return __lstrip_string__(String(s));
 }
 
-string stringcat(string arg1, ...)
+string __add_string__(string arg1, ...)
 {
     va_list ap;
 
@@ -239,7 +263,7 @@ string stringcat(string arg1, ...)
     return out;
 }
 
-string stringupper(string st)
+string __upper_string__(string st)
 {
     char * x = (char *)malloc(st.length * sizeof(char));
 
@@ -253,7 +277,7 @@ string stringupper(string st)
     return String(x);
 }
 
-string stringlower(string st)
+string __lower_string__(string st)
 {
     char * x = (char *)malloc(st.length * sizeof(char));
 
@@ -267,7 +291,7 @@ string stringlower(string st)
     return String(x);
 }
 
-string stringslice(string st, int start, int stop)
+string __slice_string__(string st, int start, int stop)
 {
     char * x = (char *)malloc(st.length + 1 * sizeof(char));
     strcpy(x, st.value);
@@ -286,7 +310,7 @@ string stringslice(string st, int start, int stop)
     return String(x);
 }
 
-string stringreorder(string st, int step)
+string __reorder_string__(string st, int step)
 {
     char * x = (char *)malloc(st.length * sizeof(char));
 
@@ -302,7 +326,7 @@ string stringreorder(string st, int step)
     return String(x);
 }
 
-string stringreplace(string st, string strep, string repwith) {
+string __replace_string__(string st, string strep, string repwith) {
     char * orig = st.value;
     char * rep = strep.value;
     char * with = repwith.value;
@@ -555,7 +579,7 @@ char * getrealpath(char * path)
 {
     char * rp = realpath(path, NULL);
     if (!rp) return NULL;
-    return stringreplace(String(rp), String('\\'), String('/')).value;
+    return __replace_string__(String(rp), String('\\'), String('/')).value;
 }
 
 #define ptrindex(value, index) _Generic((value, index), char ** : cptrindex, default : cptrindex)(value, index)
@@ -649,10 +673,3 @@ string * saprintln(string value[])
     printf("}\n");
     return value;
 }
-
-struct stack{int maxsize;int top;int*items;};struct stack*newStack(int capacity){struct stack*pt=(struct stack*)malloc(sizeof(struct stack));pt->maxsize=capacity;pt->top=-1;pt->items=(int*)malloc(sizeof(int)*capacity);return pt;}int size(struct stack*pt){return pt->top+1;}
-int isEmpty(struct stack*pt){return pt->top==-1;}
-int isFull(struct stack*pt){return pt->top==pt->maxsize-1;}
-void push(struct stack*pt,int x){if(isFull(pt))exit(EXIT_FAILURE);pt->items[++pt->top]=x;}
-int peek(struct stack*pt){if (!isEmpty(pt))return pt->items[pt->top];else return 0;}
-int pop(struct stack*pt){if(isEmpty(pt))return 0;return pt->items[pt->top--];}

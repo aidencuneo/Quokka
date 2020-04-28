@@ -138,8 +138,8 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         {
             char * temp = (char *)malloc(strlen(line[p]));
             strcpy(temp, "\"");
-            string sliced = stringslice(String(line[p]), 1, 1);
-            string escaped = stringreplace(sliced, String("\""), String("\\\""));
+            string sliced = __slice_string__(String(line[p]), 1, 1);
+            string escaped = __replace_string__(sliced, String("\""), String("\\\""));
             strcat(temp, escaped.value);
             strcat(temp, "\"");
             strcpy(line[p], temp);
@@ -387,7 +387,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             len -= 2;
             char * stringvalue = compileline(line, num, len, 1);
             if (endswith(stringvalue, ","))
-                strcpy(stringvalue, stringslice(String(stringvalue), 0, 1).value);
+                strcpy(stringvalue, __slice_string__(String(stringvalue), 0, 1).value);
             if (!startswith(stringvalue, "String("))
             {
                 char newstring[1024] = {0};
@@ -406,16 +406,18 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         else if (len < 3)
         {
             arrptrs[arrsize(arrptrs)] = line[1];
-            strcat(r, "string ");
+            strcat(r, "string*");
             strcat(r, line[1]);
-            strcat(r, "[1];\n");
+            strcat(r, ";\n");
         }
         else
         {
             arrptrs[arrsize(arrptrs)] = line[1];
-            strcat(r, "string ");
+            strcat(r, "string*");
             strcat(r, line[1]);
-            strcat(r, "[]=");
+            strcat(r, "=(string*)malloc(2*sizeof(string);");
+            strcat(r, line[1]);
+            strcat(r, "[0]=String(\"\\0\")");
             arrlstrip(line);
             arrlstrip(line);
             len -= 2;
@@ -513,7 +515,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         if (len > 3) error("index can not take arguments", num);
         strcat(r, line[0]);
         strcat(r, "[");
-        strcat(r, stringslice(String(line[1]), 1, 1).value);
+        strcat(r, __slice_string__(String(line[1]), 1, 1).value);
         strcat(r, "]");
         if (stringInList(arrptrs, line[0]))
         {
@@ -525,7 +527,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     }
     else if (endswith(line[0], ":"))
     {
-        char * name = stringslice(String(line[0]), 0, 1).value;
+        char * name = __slice_string__(String(line[0]), 0, 1).value;
         if (isInline) error("proc `:` action must be at start of line", num);
         else if (scope > 0 && !strlen(class_constructor)) error("proc `:` action can not be in a scope greater than 1", num);
         else if (len < 1) error("proc `:` action missing arguments", num);
@@ -575,7 +577,15 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             }
             else if (len == 4)
             {
-
+                strcat(r, line[1]);
+                strcat(r, " (*");
+                strcat(r, line[2]);
+                strcat(r, ")");
+                strcat(r, "(");
+                strcat(r, object_def);
+                strcat(r, " self,");
+                strcat(r, line[3]);
+                strcat(r, ");\n");
             }
             else if (len > 4) error("def action received too many arguments", num);
         }
@@ -587,7 +597,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             else if (len < 3) error("def action missing name", num);
             else if (len == 3)
             {
-                if (scope == 1 && strlen(class_constructor))
+                if (strlen(class_constructor))
                 {
                     class_declarations = (char *)realloc(class_declarations,
                         strlen(class_declarations) + strlen(line[1]) + 3 +
@@ -623,19 +633,35 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             // if (len == 4)
             else
             {
-                strcat(r, line[1]);
-                strcat(r, " ");
-                strcat(r, line[2]);
-                strcat(r, "(");
                 if (strlen(class_constructor))
                 {
-                    strcat(r, class_constructor);
-                    strcat(r, " self,");
+                    class_declarations = (char *)realloc(class_declarations,
+                        strlen(class_declarations) + strlen(line[1]) + 3 + strlen(line[2]) +
+                        1 + strlen(class_constructor) + 3 + strlen(class_constructor) + 6 +
+                        strlen(line[3]) + 3 + 1);
+                    strcat(class_declarations, line[1]);
+                    strcat(class_declarations, " __");
+                    strcat(class_declarations, line[2]);
+                    strcat(class_declarations, "_");
+                    strcat(class_declarations, class_constructor);
+                    strcat(class_declarations, "__(");
+                    strcat(class_declarations, class_constructor);
+                    strcat(class_declarations, " self,");
+                    strcat(class_declarations, line[3]);
+                    strcat(class_declarations, "){\n");
+
+                    cur_class_def = (char *)realloc(cur_class_def,
+                        strlen(cur_class_def) + strlen(line[2]) + 1);
+                    strcat(cur_class_def, line[2]);
                 }
-                strcat(r, line[3]);
-                strcat(r, "){\n");
-                if (!strlen(class_constructor))
+                else
                 {
+                    strcat(r, line[1]);
+                    strcat(r, " ");
+                    strcat(r, line[2]);
+                    strcat(r, "(");
+                    strcat(r, line[3]);
+                    strcat(r, "){\n");
                     file_declarations = (char *)realloc(
                         file_declarations, strlen(line[1]) + 1 + strlen(line[2]) + 1 + strlen(line[3]) + 4 + 1);
                     strcat(file_declarations, line[1]);
@@ -659,7 +685,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         {
             int ext = strlen(strchr(current_file, '.'));
             name = (char *)malloc(strlen(current_file) - ext);
-            strcpy(name, stringslice(String(current_file), 0, ext).value);
+            strcpy(name, __slice_string__(String(current_file), 0, ext).value);
         }
         else
         {
@@ -708,7 +734,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             {
                 int ext = strlen(strchr(current_file, '.'));
                 name = (char *)malloc(strlen(current_file) - ext);
-                strcpy(name, stringslice(String(current_file), 0, ext).value);
+                strcpy(name, __slice_string__(String(current_file), 0, ext).value);
 
                 args = line[1];
             }
@@ -723,7 +749,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         {
             int ext = strlen(strchr(current_file, '.'));
             name = (char *)malloc(strlen(current_file) - ext);
-            strcpy(name, stringslice(String(current_file), 0, ext).value);
+            strcpy(name, __slice_string__(String(current_file), 0, ext).value);
         }
         strcat(r, name);
         strcat(r, " __");
@@ -734,7 +760,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         if (args && strlen(args) > 2)
         {
             char * tempstr[512];
-            tokenise(tempstr, stringslice(String(args), 1, 1).value, ",");
+            tokenise(tempstr, __slice_string__(String(args), 1, 1).value, ",");
             for (int p = 0; p < arrsize(tempstr); p++)
             {
                 tempstr[p] = cpstrip(tempstr[p]);
@@ -772,7 +798,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         if (args && strlen(args) > 2)
         {
             char * tempstr[512];
-            tokenise(tempstr, stringslice(String(args), 1, 1).value, ",");
+            tokenise(tempstr, __slice_string__(String(args), 1, 1).value, ",");
             for (int p = 0; p < arrsize(tempstr); p++)
             {
                 tempstr[p] = cpstrip(tempstr[p]);
@@ -786,7 +812,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     {
         if (len > 3) error("function call can not take arguments after itself", num);
         char * tempstr[512];
-        tokenise(tempstr, stringslice(String(line[1]), 1, 1).value, ",");
+        tokenise(tempstr, __slice_string__(String(line[1]), 1, 1).value, ",");
         if (verbose) println("START");
         for (int p = 0; p < arrsize(tempstr); p++)
         {
@@ -802,6 +828,8 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             char ** temp = (char **)malloc(charCount(line[0], '.') + 1 * sizeof(char *));
             tokenise(temp, line[0], ".");
             strcat(r, cpstrip(temp[0]));
+            if (arrsize(tempstr))
+                strcat(r, ",");
         }
         if (tempsize)
             strcat(r, compileline(tempstr, num, tempsize, 1));
@@ -912,7 +940,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     else if (startswith(line[0], "{") && endswith(line[0], "}"))
     {
         char * tempstr[512];
-        tokenise(tempstr, stringslice(String(line[0]), 1, 1).value, ",");
+        tokenise(tempstr, __slice_string__(String(line[0]), 1, 1).value, ",");
         if (verbose) println("START");
         for (int p = 0; p < arrsize(tempstr); p++)
         {
@@ -965,11 +993,11 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
                     strcat(r, ",");
                 else strcat(r, ";\n");
                 while (endswith(r, ",,"))
-                    strcpy(r, stringslice(String(r), 0, 1).value);
+                    strcpy(r, __slice_string__(String(r), 0, 1).value);
             }
         }
         while (endswith(r, ","))
-            strcpy(r, stringslice(String(r), 0, 1).value);
+            strcpy(r, __slice_string__(String(r), 0, 1).value);
     }
 
     return r_ptr;
@@ -1109,10 +1137,6 @@ int main(int argc, char ** argv)
 
     if (!compiled)
         return 0;
-
-    println("--class declarations--");
-    println(compiled);
-    println("--class declarations--");
 
     FILE * fp = fopen(outputpath, "w");
     fprintf(fp, "%s", C_HEADERS);
