@@ -10,3 +10,8 @@ string word=__string_Constructor__(String("aiDEn"));
 println(word.upper(word));
 println(word.lower(word));
 }
+int main(int argc,char**argv){
+new string word ('aiDEn');
+println word.upper();
+println word.lower();
+}

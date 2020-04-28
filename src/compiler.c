@@ -17,6 +17,8 @@ char * compile_tokens(char ** tokens);
 char * compile_raw(char * rawtext, int maxtokensize);
 char * quokka_compile(char * filename);
 
+char ** quokka_line_tok(char * line);
+
 // Bools
 int verbose = 0;
 
@@ -1014,8 +1016,7 @@ char * compile_tokens(char ** tokens)
         if (tokens[i] == NULL)
             continue;
 
-        char * line[512];
-        tokenise(line, tokens[i], "|");
+        char ** line = quokka_line_tok(tokens[i]);
         for (int p = 0; line[p] != NULL; p++)
         {
             line[p] = cpstrip(line[p]);
@@ -1067,6 +1068,90 @@ char * quokka_compile(char * filename)
         return 0;
 
     return compile_raw(buffer, -1);
+}
+
+char ** quokka_line_tok(char * line)
+{
+    line = cpstrip(line);
+
+    char * tokenstr = (char *)malloc(1);
+    strcpy(tokenstr, "");
+
+    // Bools
+    int sq = 0; // Single-Quote = false
+    int dq = 0; // Double-Quote = false
+    int bt = 0; // Backtick = false
+
+    // Ints
+    int rb = 0; // Regular-bracket = 0
+    int sb = 0; // Square-bracket = 0
+    int cb = 0; // Curly-bracket = 0
+
+    // Chars
+    char q;
+    char p = '\0';
+    char t;
+
+    // Strings
+    char * separator = "\n";
+
+    // Set initial char type
+    if (isalpha(line[0]))
+        p = 'A';
+    else if (isdigit(line[0]))
+        p = 'D';
+    else if (ispunct(line[0]))
+        p = 'S';
+    else if (isspace(line[0]))
+        p = 'W';
+
+    int len = strlen(line);
+    for (int i = 0; i < len; i++)
+    {
+        q = p;
+        char c = line[i];
+        if (isalpha(c))
+            p = 'A'; // Alphabet
+        else if (isdigit(c))
+            p = 'D'; // Digit
+        else if (ispunct(c))
+            p = 'S'; // Symbol
+        else if (isspace(c))
+            p = 'W'; // Whitespace
+        if (((q != p && p != 'W') || p == 'S') && !(
+            sq || dq || bt || rb > 0 || sb > 0 || cb > 0
+        ))
+        {
+            tokenstr = (char *)realloc(tokenstr, strlen(tokenstr) + strlen(separator) + 1);
+            strncat(tokenstr, separator, strlen(separator));
+        }
+        if (c == '\'' && !(
+            dq || rb > 0 || sb > 0 || cb > 0))
+            sq = !sq;
+        else if (c == '"' && !(
+            sq || bt || rb > 0 || sb > 0 || cb > 0))
+            dq = !dq;
+        else if (c == '`' && !(
+            sq || dq || rb > 0 || sb > 0 || cb > 0))
+            bt = !bt;
+        else if (c == '(' && !(
+            sq || dq || bt || sb > 0 || cb > 0))
+            rb += 1;
+        else if (c == ')' && !(
+            sq || dq || bt || sb > 0 || cb > 0))
+            rb -= 1;
+        tokenstr = (char *)realloc(tokenstr, strlen(tokenstr) + 2);
+        strncat(tokenstr, &c, 1);
+        t = c;
+    }
+
+    char ** output = (char **)malloc(1024 * sizeof(char *));
+    output[0] = "\0";
+    tokenise(output, tokenstr, separator);
+    for (int p = 0; p < arrsize(output); p++)
+        output[p] = cpstrip(output[p]);
+
+    return output;
 }
 
 int main(int argc, char ** argv)
