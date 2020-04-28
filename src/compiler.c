@@ -8,7 +8,6 @@
 // Function declarations
 void error(char * text, int line);
 void arrlstrip(char * line[]);
-int stringIsInt(char * s);
 int stringHasChar(char * s, char c);
 int stringInList(char * arr[], char * key);
 
@@ -74,25 +73,7 @@ void arrlstrip(char * line[])
     n = arrsize(line);
     for (c = position - 1; c < n - 1; c++)
         line[c] = line[c + 1];
-}
-
-int stringIsInt(char * s)
-{
-    for (int i = 0; i < strlen(s); ++i)
-    {
-        if (s[i] != '0' &&
-            s[i] != '1' &&
-            s[i] != '2' &&
-            s[i] != '3' &&
-            s[i] != '4' &&
-            s[i] != '5' &&
-            s[i] != '6' &&
-            s[i] != '7' &&
-            s[i] != '8' &&
-            s[i] != '9')
-            return 0;
-    }
-    return 1;
+    line[n - 1] = "\0";
 }
 
 int stringHasChar(char * s, char c)
@@ -119,14 +100,11 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
 {
     // num is current line number
 
-    char r[512] = {0};
+    char r[512] = {0}; // Keep watch of this (512)
     char * r_ptr = r;
     int len;
     if (lineLen == -1) len = arrsize(line);
     else len = lineLen;
-
-    if (startswith(line[0], "//"))
-        return r_ptr;
 
     if (len < 1)
         return r_ptr;
@@ -204,25 +182,9 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         return r_ptr;
     }
 
-    // if (strcmp(line[0], "push") == 0)
-    // {
-    //     if (isInline) error("push action must be at start of line", num);
-    //     if (len < 2) error("push action missing argument", num);
-    //     arrlstrip(line);
-    //     len--;
-    //     strcat(r, "push(pt,");
-    //     strcat(r, compileline(line, num, len, 1));
-    //     strcat(r, ");\n");
-    // }
-    // else if (strcmp(line[0], "pop") == 0)
-    // {
-    //     if (!isInline) error("pop action must not be at start of line", num);
-    //     if (len > 1) error("pop action received too many arguments", num);
-    //     strcat(r, "pop(pt);\n");
-    // }
     if (strcmp(line[0], "print") == 0)
     {
-        if (len < 2) strcat(r, "print(pop(pt));\n");
+        if (len < 2) strcat(r, "print(\"\");\n");
         else
         {
             arrlstrip(line);
@@ -234,7 +196,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     }
     else if (strcmp(line[0], "println") == 0)
     {
-        if (len < 2) strcat(r, "println(pop(pt));\n");
+        if (len < 2) strcat(r, "println(\"\\n\");\n");
         else
         {
             arrlstrip(line);
@@ -247,10 +209,11 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     else if (strcmp(line[0], "if") == 0)
     {
         if (isInline) error("if statement must be at start of line", num);
-        if (len < 2) error("if statement missing condition", num);
-        else if (len > 2) error("if statement received too many conditions", num);
+        else if (len < 2) error("if statement missing condition", num);
+        arrlstrip(line);
+        len--;
         strcat(r, "if(");
-        strcat(r, line[1]);
+        strcat(r, compileline(line, num, len, 1));
         strcat(r, "){\n");
         scope++;
     }
@@ -258,9 +221,10 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     {
         if (isInline) error("elif statement must be at start of line", num);
         if (len < 2) error("elif statement missing condition", num);
-        else if (len > 2) error("elif statement received too many conditions", num);
+        arrlstrip(line);
+        len--;
         strcat(r, "else if(");
-        strcat(r, line[1]);
+        strcat(r, compileline(line, num, len, 1));
         strcat(r, "){\n");
         scope++;
     }
@@ -367,67 +331,67 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         values[arrsize(values)] = line[2];
         scope++;
     }
-    else if (strcmp(line[0], "string") == 0)
-    {
-        if (isInline) error("string declaration must be at start of line", num);
-        else if (len < 2) error("string declaration missing variable name", num);
-        else if (len < 3)
-        {
-            strcat(r, "string ");
-            strcat(r, line[1]);
-            strcat(r, ";\n");
-            //pointers[arrsize(pointers)] = line[1];
-        }
-        else
-        {
-            strcat(r, "string ");
-            strcat(r, line[1]);
-            strcat(r, "=");
-            //pointers[arrsize(pointers)] = line[1];
-            arrlstrip(line);
-            arrlstrip(line);
-            len -= 2;
-            char * stringvalue = compileline(line, num, len, 1);
-            if (endswith(stringvalue, ","))
-                strcpy(stringvalue, __slice_string__(String(stringvalue), 0, 1).value);
-            if (!startswith(stringvalue, "String("))
-            {
-                char newstring[1024] = {0};
-                strcpy(newstring, "String(");
-                strcat(newstring, stringvalue);
-                strcat(newstring, ")");
-                strcat(r, newstring);
-            } else strcat(r, stringvalue);
-            strcat(r, ";\n");
-        }
-    }
-    else if (strcmp(line[0], "string[]") == 0)
-    {
-        if (isInline) error("string[] declaration must be at start of line", num);
-        else if (len < 2) error("string[] declaration missing variable name", num);
-        else if (len < 3)
-        {
-            arrptrs[arrsize(arrptrs)] = line[1];
-            strcat(r, "string*");
-            strcat(r, line[1]);
-            strcat(r, ";\n");
-        }
-        else
-        {
-            arrptrs[arrsize(arrptrs)] = line[1];
-            strcat(r, "string*");
-            strcat(r, line[1]);
-            strcat(r, "=(string*)malloc(2*sizeof(string);");
-            strcat(r, line[1]);
-            strcat(r, "[0]=String(\"\\0\")");
-            arrlstrip(line);
-            arrlstrip(line);
-            len -= 2;
-            char * stringvalue = compileline(line, num, len, 1);
-            strcat(r, stringvalue);
-            strcat(r, ";\n");
-        }
-    }
+    // else if (strcmp(line[0], "string") == 0)
+    // {
+    //     if (isInline) error("string declaration must be at start of line", num);
+    //     else if (len < 2) error("string declaration missing variable name", num);
+    //     else if (len < 3)
+    //     {
+    //         strcat(r, "string ");
+    //         strcat(r, line[1]);
+    //         strcat(r, ";\n");
+    //         //pointers[arrsize(pointers)] = line[1];
+    //     }
+    //     else
+    //     {
+    //         strcat(r, "string ");
+    //         strcat(r, line[1]);
+    //         strcat(r, "=");
+    //         //pointers[arrsize(pointers)] = line[1];
+    //         arrlstrip(line);
+    //         arrlstrip(line);
+    //         len -= 2;
+    //         char * stringvalue = compileline(line, num, len, 1);
+    //         if (endswith(stringvalue, ","))
+    //             strcpy(stringvalue, __slice_string__(String(stringvalue), 0, 1).value);
+    //         if (!startswith(stringvalue, "String("))
+    //         {
+    //             char newstring[1024] = {0};
+    //             strcpy(newstring, "String(");
+    //             strcat(newstring, stringvalue);
+    //             strcat(newstring, ")");
+    //             strcat(r, newstring);
+    //         } else strcat(r, stringvalue);
+    //         strcat(r, ";\n");
+    //     }
+    // }
+    // else if (strcmp(line[0], "string[]") == 0)
+    // {
+    //     if (isInline) error("string[] declaration must be at start of line", num);
+    //     else if (len < 2) error("string[] declaration missing variable name", num);
+    //     else if (len < 3)
+    //     {
+    //         arrptrs[arrsize(arrptrs)] = line[1];
+    //         strcat(r, "string*");
+    //         strcat(r, line[1]);
+    //         strcat(r, ";\n");
+    //     }
+    //     else
+    //     {
+    //         arrptrs[arrsize(arrptrs)] = line[1];
+    //         strcat(r, "string*");
+    //         strcat(r, line[1]);
+    //         strcat(r, "=(string*)malloc(2*sizeof(string);");
+    //         strcat(r, line[1]);
+    //         strcat(r, "[0]=String(\"\\0\")");
+    //         arrlstrip(line);
+    //         arrlstrip(line);
+    //         len -= 2;
+    //         char * stringvalue = compileline(line, num, len, 1);
+    //         strcat(r, stringvalue);
+    //         strcat(r, ";\n");
+    //     }
+    // }
     else if (strcmp(line[0], "int") == 0)
     {
         if (isInline) error("int declaration must be at start of line", num);
@@ -782,19 +746,16 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     else if (strcmp(line[0], "new") == 0)
     {
         char * args = 0;
-        if (isInline) error("new object creation must be at start of line", num);
         if (scope < 1) error("new object creation must not be at minimum scope", num);
-        if (len > 4) error("new object creation received too many arguments", num);
-        if (len < 2) error("new object creation missing object type", num);
-        if (len < 3) error("new object creation missing object name", num);
-        if (len == 4)
-            args = line[3];
-        if (!(startswith(args, "(") && endswith(args, ")")) || !args)
+        else if (len < 2) error("new object creation missing object to instantiate", num);
+        else if (len < 3) error("new object creation missing constructor arguments", num);
+        else if (len > 3) error("new object creation received too many arguments", num);
+        // if (len == 3)
+        else
+            args = line[2];
+        if (!(startswith(args, "(") && endswith(args, ")")))
             error("invalid constructor arguments in new object creation, arguments must have braces", num);
-        strcat(r, line[1]);
-        strcat(r, " ");
-        strcat(r, line[2]);
-        strcat(r, "=__");
+        strcat(r, "__");
         strcat(r, line[1]);
         strcat(r, "_Constructor__(");
         if (args && strlen(args) > 2)
@@ -956,19 +917,49 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         if (!isInline)
             strcat(r, ";\n");
     }
-    else if (stringInList(pointers, line[0]))
+    else if (stringInList(line, "="))
     {
-        strcat(r, line[0]);
-        strcat(r, ".value");
-        if (!isInline)
+        if (isInline) error("variables can only be defined at the start of a line", num);
+        else if (len < 2) error("invalid syntax", num);
+        else if (len < 3) error("invalid syntax", num);
+        strcat(r, line[0]); // Type/Name
+        // If second line token is not an equals sign `string word =`
+        if (strcmp(line[1], "=") != 0)
+        {
+            strcat(r, " ");
+            strcat(r, line[1]); // Var name
+            strcat(r, "=");
+            len -= 3;
+            arrlstrip(line);
+            arrlstrip(line);
+            arrlstrip(line);
+            strcat(r, compileline(line, num, len, 1)); // Var value
             strcat(r, ";\n");
-    }
-    else if (stringInList(values, line[0]))
-    {
-        strcat(r, line[0]);
-        if (!isInline)
+        }
+        // If second line token is an equals sign `word =`
+        else
+        {
+            strcat(r, "=");
+            len -= 2;
+            arrlstrip(line);
+            arrlstrip(line);
+            strcat(r, compileline(line, num, len, 1)); // Var value
             strcat(r, ";\n");
+        }
     }
+    // else if (stringInList(pointers, line[0]))
+    // {
+    //     strcat(r, line[0]);
+    //     strcat(r, ".value");
+    //     if (!isInline)
+    //         strcat(r, ";\n");
+    // }
+    // else if (stringInList(values, line[0]))
+    // {
+    //     strcat(r, line[0]);
+    //     if (!isInline)
+    //         strcat(r, ";\n");
+    // }
     else
     {
         for (int p = 0; p < len; p++)
@@ -1087,6 +1078,9 @@ char ** quokka_line_tok(char * line)
     int sb = 0; // Square-bracket = 0
     int cb = 0; // Curly-bracket = 0
 
+    // Used to identify a `//` comment
+    int comment = 0; // 1 if `/` found, else 0    
+
     // Chars
     char q;
     char p = '\0';
@@ -1098,8 +1092,8 @@ char ** quokka_line_tok(char * line)
     // Set initial char type
     if (isalnum(line[0]))
         p = 'A';
-    // else if (isdigit(line[0]))
-    //     p = 'D';
+    else if (isdigit(line[0]))
+        p = 'D';
     else if (ispunct(line[0]))
         p = 'S';
     else if (isspace(line[0]))
@@ -1111,15 +1105,33 @@ char ** quokka_line_tok(char * line)
         q = p;
         char c = line[i];
         if (isalpha(c))
-            p = 'A'; // Alphanumerical
-        // else if (isdigit(c))
-        //     p = 'D'; // Digit
+            p = 'A'; // Alphabet
+        else if (isdigit(c))
+            p = 'D'; // Digit
         else if (ispunct(c))
             p = 'S'; // Symbol
         else if (isspace(c))
             p = 'W'; // Whitespace
         if (((q != p && p != 'W') || p == 'S') && !(
             sq || dq || bt || rb > 0 || sb > 0 || cb > 0
+        ) && !(
+            (t == '-' || t == '+') && p == 'D' // Join pluses/minuses with digits, -10, +5
+        ) && !(
+            t == '-' && c == '-' // Join minuses together --, ---, etc
+        ) && !(
+            t == '+' && c == '+' // Join pluses together ++, +++, etc
+        ) && !(
+            (t == '-' || t == '+' || t == '*' || t == '/') && c == '=' // Join together operators: -= += *= /=
+        ) && !(
+            q == 'A' && c == '.' // Join together names like `word.upper` (second part is below)
+        ) && !(
+            p == 'A' && t == '.' // Second part to the line above.
+        ) && !(
+            t == '_' && p == 'A' // Join together names like `string_one` (second part is below)
+        ) && !(
+            q == 'A' && c == '_' // Second part to the line above.
+        ) && !(
+            (q == 'A' || q == 'D' || t == '_') && c == ':' // Join together things like `main:` and `include:`
         ))
         {
             tokenstr = (char *)realloc(tokenstr, strlen(tokenstr) + strlen(separator) + 1);
@@ -1140,8 +1152,23 @@ char ** quokka_line_tok(char * line)
         else if (c == ')' && !(
             sq || dq || bt || sb > 0 || cb > 0))
             rb -= 1;
-        tokenstr = (char *)realloc(tokenstr, strlen(tokenstr) + 2);
-        strncat(tokenstr, &c, 1);
+        else if (c == '/' && !(
+            sq || dq || bt))
+        {
+            comment++;
+            if (comment >= 2)
+            {
+                tokenstr[strlen(tokenstr) - 2] = '\0';
+                break;
+            }
+        }
+        if (comment <= 1)
+        {
+            if (comment && c != '/')
+                comment = 0;
+            tokenstr = (char *)realloc(tokenstr, strlen(tokenstr) + 2);
+            strncat(tokenstr, &c, 1);
+        }
         t = c;
     }
 
@@ -1149,7 +1176,11 @@ char ** quokka_line_tok(char * line)
     output[0] = "\0";
     tokenise(output, tokenstr, separator);
     for (int p = 0; p < arrsize(output); p++)
+    {
         output[p] = cpstrip(output[p]);
+        print(">>>");
+        println(output[p]);
+    }
 
     return output;
 }
