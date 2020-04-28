@@ -1096,10 +1096,10 @@ char ** quokka_line_tok(char * line)
     char * separator = "\n";
 
     // Set initial char type
-    if (isalpha(line[0]))
+    if (isalnum(line[0]))
         p = 'A';
-    else if (isdigit(line[0]))
-        p = 'D';
+    // else if (isdigit(line[0]))
+    //     p = 'D';
     else if (ispunct(line[0]))
         p = 'S';
     else if (isspace(line[0]))
@@ -1111,9 +1111,9 @@ char ** quokka_line_tok(char * line)
         q = p;
         char c = line[i];
         if (isalpha(c))
-            p = 'A'; // Alphabet
-        else if (isdigit(c))
-            p = 'D'; // Digit
+            p = 'A'; // Alphanumerical
+        // else if (isdigit(c))
+        //     p = 'D'; // Digit
         else if (ispunct(c))
             p = 'S'; // Symbol
         else if (isspace(c))
