@@ -6,19 +6,29 @@
 
 int _FORVARNAME;
 struct stack*pt;
-typedef struct __potato_Struct__ potato;
-struct __potato_Struct__ {
+int nice1();
+int nice2(int num);
+typedef struct __Potato_Struct__ Potato;
+struct __Potato_Struct__ {
 int x;
 int y;
 }
-__potato_Constructor__ (int x,int y){potato self;self.x=x;
+__Potato_Constructor__ (int x,int y){
+Potato self;
+self.x=x;
 self.y=y;
 return self;
 }
+int nice1(){
+return 69;
+}
+int nice2(int num){
+return num + 69;
+}
 int main(int argc,char**argv){
 pt=newStack(4096);
-potato potato_1=__potato_Constructor__(0, 0);
-potato potato_2=__potato_Constructor__(0, 0);
+Potato potato_1=__Potato_Constructor__(0,0);
+Potato potato_2=__Potato_Constructor__(0,0);
 print(String("Potato 1: "));
 print(potato_1.x);
 print(String(","));

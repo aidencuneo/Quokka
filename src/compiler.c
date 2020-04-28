@@ -26,6 +26,7 @@ int scope = 0;
 
 // Strings
 char * current_file;
+char * file_declarations;
 
 // String arrays
 char * pointers[512];
@@ -122,7 +123,10 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     if (startswith(line[0], "//"))
         return r_ptr;
 
-    if (line[1] == NULL)
+    if (len < 1)
+        return r_ptr;
+
+    if (line[1] == NULL && len <= 1)
         line[1] = "";
 
     for (int p = 0; p < len; p++)
@@ -315,30 +319,30 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         values[arrsize(values)] = line[2];
         scope++;
     }
-    else if (strcmp(line[0], "char*[]") == 0)
-    {
-        if (isInline) error("char*[] declaration must be at start of line", num);
-        if (len < 2) error("char*[] declaration missing variable name", num);
-        if (len < 3) error("char*[] declaration missing variable size", num);
-        strcat(r, "char* ");
-        strcat(r, line[1]);
-        strcat(r, "[");
-        strcat(r, line[2]);
-        strcat(r, "];\n");
-        values[arrsize(values)] = line[1];
-    }
-    else if (strcmp(line[0], "char[]") == 0)
-    {
-        if (isInline) error("char[] declaration must be at start of line", num);
-        if (len < 2) error("char[] declaration missing variable name", num);
-        if (len < 3) error("char[] declaration missing variable size", num);
-        strcat(r, "char ");
-        strcat(r, line[1]);
-        strcat(r, "[");
-        strcat(r, line[2]);
-        strcat(r, "]={0};\n");
-        values[arrsize(values)] = line[1];
-    }
+    // else if (strcmp(line[0], "char*[]") == 0)
+    // {
+    //     if (isInline) error("char*[] declaration must be at start of line", num);
+    //     if (len < 2) error("char*[] declaration missing variable name", num);
+    //     if (len < 3) error("char*[] declaration missing variable size", num);
+    //     strcat(r, "char* ");
+    //     strcat(r, line[1]);
+    //     strcat(r, "[");
+    //     strcat(r, line[2]);
+    //     strcat(r, "];\n");
+    //     values[arrsize(values)] = line[1];
+    // }
+    // else if (strcmp(line[0], "char[]") == 0)
+    // {
+    //     if (isInline) error("char[] declaration must be at start of line", num);
+    //     if (len < 2) error("char[] declaration missing variable name", num);
+    //     if (len < 3) error("char[] declaration missing variable size", num);
+    //     strcat(r, "char ");
+    //     strcat(r, line[1]);
+    //     strcat(r, "[");
+    //     strcat(r, line[2]);
+    //     strcat(r, "]={0};\n");
+    //     values[arrsize(values)] = line[1];
+    // }
     else if (strcmp(line[0], "string") == 0)
     {
         if (isInline) error("string declaration must be at start of line", num);
@@ -348,14 +352,14 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             strcat(r, "string ");
             strcat(r, line[1]);
             strcat(r, ";\n");
-            pointers[arrsize(pointers)] = line[1];
+            //pointers[arrsize(pointers)] = line[1];
         }
         else
         {
             strcat(r, "string ");
             strcat(r, line[1]);
             strcat(r, "=");
-            pointers[arrsize(pointers)] = line[1];
+            //pointers[arrsize(pointers)] = line[1];
             arrlstrip(line);
             arrlstrip(line);
             len -= 2;
@@ -422,31 +426,31 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             strcat(r, ";\n");
         }
     }
-    else if (strcmp(line[0], "pointer") == 0)
-    {
-        if (isInline) error("pointer declaration must be at start of line", num);
-        if (len < 2) error("pointer declaration missing arguments", num);
-        if (len < 3)
-        {
-            strcat(r, "pointer ");
-            strcat(r, line[1]);
-            strcat(r, ";\n");
-        }
-        else
-        {
-            strcat(r, "pointer ");
-            strcat(r, line[1]);
-            strcat(r, ";\n");
-            strcat(r, line[1]);
-            strcat(r, ".value=");
-            pointers[arrsize(pointers)] = line[1];
-            arrlstrip(line);
-            arrlstrip(line);
-            len -= 2;
-            strcat(r, compileline(line, num, len, 1));
-            strcat(r, ";\n");
-        }
-    }
+    // else if (strcmp(line[0], "pointer") == 0)
+    // {
+    //     if (isInline) error("pointer declaration must be at start of line", num);
+    //     if (len < 2) error("pointer declaration missing arguments", num);
+    //     if (len < 3)
+    //     {
+    //         strcat(r, "pointer ");
+    //         strcat(r, line[1]);
+    //         strcat(r, ";\n");
+    //     }
+    //     else
+    //     {
+    //         strcat(r, "pointer ");
+    //         strcat(r, line[1]);
+    //         strcat(r, ";\n");
+    //         strcat(r, line[1]);
+    //         strcat(r, ".value=");
+    //         pointers[arrsize(pointers)] = line[1];
+    //         arrlstrip(line);
+    //         arrlstrip(line);
+    //         len -= 2;
+    //         strcat(r, compileline(line, num, len, 1));
+    //         strcat(r, ";\n");
+    //     }
+    // }
     else if (strcmp(line[0], "set") == 0)
     {
         if (isInline) error("set action must be at start of line", num);
@@ -460,28 +464,28 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         strcat(r, compileline(line, num, len, 1));
         strcat(r, ";\n");
     }
-    else if (strcmp(line[0], "var") == 0)
-    {
-        if (isInline) error("var declaration must be at start of line", num);
-        if (len < 2) error("var declaration missing variable type", num);
-        if (len < 3) error("var declaration missing variable name", num);
-        if (len < 4)
-        {
-            strcat(r, line[1]);
-            strcat(r, " ");
-            strcat(r, line[2]);
-            strcat(r, ";\n");
-        }
-        else
-        {
-            strcat(r, line[1]);
-            strcat(r, " ");
-            strcat(r, line[2]);
-            strcat(r, "=");
-            strcat(r, line[3]);
-            strcat(r, ";\n");
-        }
-    }
+    // else if (strcmp(line[0], "var") == 0)
+    // {
+    //     if (isInline) error("var declaration must be at start of line", num);
+    //     if (len < 2) error("var declaration missing variable type", num);
+    //     if (len < 3) error("var declaration missing variable name", num);
+    //     if (len < 4)
+    //     {
+    //         strcat(r, line[1]);
+    //         strcat(r, " ");
+    //         strcat(r, line[2]);
+    //         strcat(r, ";\n");
+    //     }
+    //     else
+    //     {
+    //         strcat(r, line[1]);
+    //         strcat(r, " ");
+    //         strcat(r, line[2]);
+    //         strcat(r, "=");
+    //         strcat(r, line[3]);
+    //         strcat(r, ";\n");
+    //     }
+    // }
     else if (startswith(line[1], "[") && endswith(line[1], "]"))
     {
         if (len > 3) error("index can not take arguments", num);
@@ -503,7 +507,8 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         if (isInline) error("proc `:` action must be at start of line", num);
         else if (scope > 0) error("proc `:` action can not be in a scope greater than 1", num);
         else if (len < 1) error("proc `:` action missing arguments", num);
-        else if (len < 2 && strcmp(name, "include") != 0)
+        else if (len > 1) error("proc `:` action received too many arguments", num);
+        else if (len == 1 && strcmp(name, "include") != 0)
         {
             strcat(r, "int ");
             strcat(r, name);
@@ -514,23 +519,13 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
                 values[arrsize(values)] = "argc";
                 pointers[arrsize(pointers)] = "argv";
             }
-            strcat(r, "){\n");
-        }
-        else if (len > 3) error("proc `:` action received too many arguments", num);
-        else if (strcmp(name, "include") != 0)
-        {
-            if (strcmp(name, "main") == 0 && len > 2)
-                error("main proc can not be given arguments as they are given by default", num);
-            strcat(r, "int ");
-            strcat(r, name);
-            strcat(r, "(");
-            if (strcmp(name, "main") == 0)
+            else
             {
-                strcat(r, "int argc,char**argv");
-                values[arrsize(values)] = "argc";
-                pointers[arrsize(pointers)] = "argv";
+                file_declarations = (char *)realloc(file_declarations, strlen(name) + 8);
+                strcat(file_declarations, "int ");
+                strcat(file_declarations, name);
+                strcat(file_declarations, "();\n");
             }
-            else strcat(r, line[2]);
             strcat(r, "){\n");
         }
         if (strcmp(name, "main") == 0)
@@ -546,14 +541,21 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         if (scope > 0) error("def action can not be in a scope greater than 1", num);
         if (len < 2) error("def action missing type", num);
         if (len < 3) error("def action missing name", num);
-        else if (len < 4)
+        else if (len == 3)
         {
             strcat(r, line[1]);
             strcat(r, " ");
             strcat(r, line[2]);
             strcat(r, "(){\n");
+            file_declarations = (char *)realloc(
+                file_declarations, strlen(line[1]) + 1 + strlen(line[2]) + 4);
+            strcat(file_declarations, line[1]);
+            strcat(file_declarations, " ");
+            strcat(file_declarations, line[2]);
+            strcat(file_declarations, "();\n");
         }
         else if (len > 4) error("def action received too many arguments", num);
+        // if (len == 4)
         else
         {
             strcat(r, line[1]);
@@ -562,6 +564,14 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             strcat(r, "(");
             strcat(r, line[3]);
             strcat(r, "){\n");
+            file_declarations = (char *)realloc(
+                file_declarations, strlen(line[1]) + 1 + strlen(line[2]) + 1 + strlen(line[3]) + 4);
+            strcat(file_declarations, line[1]);
+            strcat(file_declarations, " ");
+            strcat(file_declarations, line[2]);
+            strcat(file_declarations, "(");
+            strcat(file_declarations, line[3]);
+            strcat(file_declarations, ");\n");
         }
         scope++;
     }
@@ -648,9 +658,9 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             }
             strcat(r, compileline(tempstr, num, arrsize(tempstr), 1));
         }
-        strcat(r, "){");
+        strcat(r, "){\n");
         strcat(r, name);
-        strcat(r, " self;");
+        strcat(r, " self;\n");
         free(name);
         scope++;
         in_class_constructor = 1;
@@ -665,18 +675,26 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         if (len < 3) error("new object creation missing object name", num);
         if (len == 4)
             args = line[3];
-        if (!args)
-            args = "()";
-        if (!(startswith(args, "(") && endswith(args, ")")))
+        if (!(startswith(args, "(") && endswith(args, ")")) || !args)
             error("invalid constructor arguments in new object creation, arguments must have braces", num);
         strcat(r, line[1]);
         strcat(r, " ");
         strcat(r, line[2]);
         strcat(r, "=__");
         strcat(r, line[1]);
-        strcat(r, "_Constructor__");
-        strcat(r, args);
-        strcat(r, ";\n");
+        strcat(r, "_Constructor__(");
+        if (args)
+        {
+            char * tempstr[512];
+            tokenise(tempstr, stringslice(String(args), 1, 1).value, ",");
+            for (int p = 0; p < arrsize(tempstr); p++)
+            {
+                tempstr[p] = cpstrip(tempstr[p]);
+                if (verbose) println(tempstr[p]);
+            }
+            strcat(r, compileline(tempstr, num, arrsize(tempstr), 1));
+        }
+        strcat(r, ");\n");
     }
     else if (startswith(line[1], "(") && endswith(line[1], ")"))
     {
@@ -782,12 +800,6 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         strcat(r, "{");
         strcat(r, compileline(tempstr, num, arrsize(tempstr), 1));
         strcat(r, "}");
-        if (!isInline)
-            strcat(r, ";\n");
-    }
-    else if (stringIsInt(line[0]))
-    {
-        strcat(r, line[0]);
         if (!isInline)
             strcat(r, ";\n");
     }
@@ -915,6 +927,10 @@ int main(int argc, char ** argv)
         return 1;
     }
 
+    // Clear file_declarations
+    file_declarations = (char *)malloc(1);
+    strcpy(file_declarations, "");
+
     // Full path directing to first file to compile
     char * fullname = getrealpath(argv[1]);
 
@@ -942,6 +958,7 @@ int main(int argc, char ** argv)
     FILE * fp = fopen(outputpath, "w");
     fprintf(fp, "%s", C_HEADERS);
     fprintf(fp, "%s", C_FILE_START);
+    fprintf(fp, "%s", file_declarations);
     fprintf(fp, "%s", compiled);
     fclose(fp);
 
