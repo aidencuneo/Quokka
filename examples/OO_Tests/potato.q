@@ -1,22 +1,51 @@
 // Demonstrates an object.
 
-// Can also be `object | potato`
-// The second argument is optional, and defaults to
-// the name of this file, minus the extension.
+// This is the object for the Potato class.
+// Can also be `object | Potato`, but the
+// object name is optional, and defaults
+// to the current filename (minus `.q`).
 object
     int | x
     int | y
+
+    def | void | summary
 end
 
-// This is the constructor for the potato class
-// Can also be `class | potato | (int x, int y)`
-// Once again, the second argument is optional.
+// This is the constructor for the Potato class.
+// Can also be `class | Potato | (int x, int y)`
+// Once again, the name is optional.
 class | (int x, int y)
 
-    // Set potato's x value
     set | self.x | x
-
-    // Set potato's y value
     set | self.y | y
+
+    def | void  | summary
+        print   | self.x
+        print   | ','
+        println | self.y
+    end
+
+end
+
+// Just another ALMOST identical class to show
+// that Quokka can differentiate between multiple
+// classes with IDENTICAL values inside them.
+object | Point
+    int | x
+    int | y
+
+    def | void | summary
+end
+
+class | Point | (int x, int y)
+
+    set | self.x | x
+    set | self.y | y
+
+    def | void  | summary
+        print   | self.x
+        print   | ','
+        println | self.y
+    end
 
 end

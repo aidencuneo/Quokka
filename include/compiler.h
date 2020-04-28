@@ -6,6 +6,3 @@
 #include <ctype.h>\n\
 \n\
 int _FORVARNAME;\n"
-
-#define C_FILE_START "\
-struct stack*pt;\n"

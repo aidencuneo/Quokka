@@ -19,7 +19,6 @@ char * quokka_compile(char * filename);
 
 // Bools
 int verbose = 0;
-int in_class_constructor = 0;
 
 // Ints
 int scope = 0;
@@ -27,6 +26,10 @@ int scope = 0;
 // Strings
 char * current_file;
 char * file_declarations;
+char * object_def;
+char * class_constructor;
+char * class_declarations;
+char * cur_class_def;
 
 // String arrays
 char * pointers[512];
@@ -199,23 +202,23 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         return r_ptr;
     }
 
-    if (strcmp(line[0], "push") == 0)
-    {
-        if (isInline) error("push action must be at start of line", num);
-        if (len < 2) error("push action missing argument", num);
-        arrlstrip(line);
-        len--;
-        strcat(r, "push(pt,");
-        strcat(r, compileline(line, num, len, 1));
-        strcat(r, ");\n");
-    }
-    else if (strcmp(line[0], "pop") == 0)
-    {
-        if (!isInline) error("pop action must not be at start of line", num);
-        if (len > 1) error("pop action received too many arguments", num);
-        strcat(r, "pop(pt);\n");
-    }
-    else if (strcmp(line[0], "print") == 0)
+    // if (strcmp(line[0], "push") == 0)
+    // {
+    //     if (isInline) error("push action must be at start of line", num);
+    //     if (len < 2) error("push action missing argument", num);
+    //     arrlstrip(line);
+    //     len--;
+    //     strcat(r, "push(pt,");
+    //     strcat(r, compileline(line, num, len, 1));
+    //     strcat(r, ");\n");
+    // }
+    // else if (strcmp(line[0], "pop") == 0)
+    // {
+    //     if (!isInline) error("pop action must not be at start of line", num);
+    //     if (len > 1) error("pop action received too many arguments", num);
+    //     strcat(r, "pop(pt);\n");
+    // }
+    if (strcmp(line[0], "print") == 0)
     {
         if (len < 2) strcat(r, "print(pop(pt));\n");
         else
@@ -319,30 +322,49 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         values[arrsize(values)] = line[2];
         scope++;
     }
-    // else if (strcmp(line[0], "char*[]") == 0)
-    // {
-    //     if (isInline) error("char*[] declaration must be at start of line", num);
-    //     if (len < 2) error("char*[] declaration missing variable name", num);
-    //     if (len < 3) error("char*[] declaration missing variable size", num);
-    //     strcat(r, "char* ");
-    //     strcat(r, line[1]);
-    //     strcat(r, "[");
-    //     strcat(r, line[2]);
-    //     strcat(r, "];\n");
-    //     values[arrsize(values)] = line[1];
-    // }
-    // else if (strcmp(line[0], "char[]") == 0)
-    // {
-    //     if (isInline) error("char[] declaration must be at start of line", num);
-    //     if (len < 2) error("char[] declaration missing variable name", num);
-    //     if (len < 3) error("char[] declaration missing variable size", num);
-    //     strcat(r, "char ");
-    //     strcat(r, line[1]);
-    //     strcat(r, "[");
-    //     strcat(r, line[2]);
-    //     strcat(r, "]={0};\n");
-    //     values[arrsize(values)] = line[1];
-    // }
+    else if (strcmp(line[0], "rangefor") == 0)
+    {
+        char * start;
+        char * stop;
+        char * step;
+        if (isInline) error("rangefor loop must be at start of line", num);
+        else if (len < 2) error("rangefor loop missing variable name", num);
+        else if (len < 3) error("rangefor loop missing range stop number", num);
+        else if (len == 3)
+        {
+            start = "0";
+            stop = line[2];
+            step = "1";
+        }
+        else if (len == 4)
+        {
+            start = line[2];
+            stop = line[3];
+            step = "1";
+        }
+        else if (len == 5)
+        {
+            start = line[2];
+            stop = line[3];
+            step = line[4];
+        }
+        else if (len > 5) error("rangefor loop received too many arguments", num);
+        strcat(r, "for(int ");
+        strcat(r, line[1]);
+        strcat(r, "=");
+        strcat(r, start);
+        strcat(r, ";");
+        strcat(r, line[1]);
+        strcat(r, "<");
+        strcat(r, stop);
+        strcat(r, ";");
+        strcat(r, line[1]);
+        strcat(r, "+=");
+        strcat(r, step);
+        strcat(r, "){\n");
+        values[arrsize(values)] = line[2];
+        scope++;
+    }
     else if (strcmp(line[0], "string") == 0)
     {
         if (isInline) error("string declaration must be at start of line", num);
@@ -505,7 +527,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     {
         char * name = stringslice(String(line[0]), 0, 1).value;
         if (isInline) error("proc `:` action must be at start of line", num);
-        else if (scope > 0) error("proc `:` action can not be in a scope greater than 1", num);
+        else if (scope > 0 && !strlen(class_constructor)) error("proc `:` action can not be in a scope greater than 1", num);
         else if (len < 1) error("proc `:` action missing arguments", num);
         else if (len > 1) error("proc `:` action received too many arguments", num);
         else if (len == 1 && strcmp(name, "include") != 0)
@@ -521,15 +543,14 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             }
             else
             {
-                file_declarations = (char *)realloc(file_declarations, strlen(name) + 8);
+                file_declarations = (char *)realloc(file_declarations,
+                    strlen(file_declarations) + 4 + strlen(name) + 4 + 1);
                 strcat(file_declarations, "int ");
                 strcat(file_declarations, name);
                 strcat(file_declarations, "();\n");
             }
             strcat(r, "){\n");
         }
-        if (strcmp(name, "main") == 0)
-            strcat(r, "pt=newStack(4096);\n");
         if (strcmp(name, "include") == 0)
             scope = -1;
         else
@@ -538,46 +559,100 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     else if (strcmp(line[0], "def") == 0)
     {
         if (isInline) error("def action must be at start of line", num);
-        if (scope > 0) error("def action can not be in a scope greater than 1", num);
-        if (len < 2) error("def action missing type", num);
-        if (len < 3) error("def action missing name", num);
-        else if (len == 3)
+        if (scope == 1 && strlen(object_def))
         {
-            strcat(r, line[1]);
-            strcat(r, " ");
-            strcat(r, line[2]);
-            strcat(r, "(){\n");
-            file_declarations = (char *)realloc(
-                file_declarations, strlen(line[1]) + 1 + strlen(line[2]) + 4);
-            strcat(file_declarations, line[1]);
-            strcat(file_declarations, " ");
-            strcat(file_declarations, line[2]);
-            strcat(file_declarations, "();\n");
+            if (len < 2) error("def action missing type", num);
+            else if (len < 3) error("def action missing name", num);
+            else if (len == 3)
+            {
+                strcat(r, line[1]);
+                strcat(r, " (*");
+                strcat(r, line[2]);
+                strcat(r, ")");
+                strcat(r, "(");
+                strcat(r, object_def);
+                strcat(r, " self);\n");
+            }
+            else if (len == 4)
+            {
+
+            }
+            else if (len > 4) error("def action received too many arguments", num);
         }
-        else if (len > 4) error("def action received too many arguments", num);
-        // if (len == 4)
         else
         {
-            strcat(r, line[1]);
-            strcat(r, " ");
-            strcat(r, line[2]);
-            strcat(r, "(");
-            strcat(r, line[3]);
-            strcat(r, "){\n");
-            file_declarations = (char *)realloc(
-                file_declarations, strlen(line[1]) + 1 + strlen(line[2]) + 1 + strlen(line[3]) + 4);
-            strcat(file_declarations, line[1]);
-            strcat(file_declarations, " ");
-            strcat(file_declarations, line[2]);
-            strcat(file_declarations, "(");
-            strcat(file_declarations, line[3]);
-            strcat(file_declarations, ");\n");
+            if (scope > 0 && !strlen(class_constructor))
+                error("def action can not be in a scope greater than 1 (excluding class definitions)", num);
+            else if (len < 2) error("def action missing type", num);
+            else if (len < 3) error("def action missing name", num);
+            else if (len == 3)
+            {
+                if (scope == 1 && strlen(class_constructor))
+                {
+                    class_declarations = (char *)realloc(class_declarations,
+                        strlen(class_declarations) + strlen(line[1]) + 3 +
+                        strlen(line[2]) + 12 + strlen(class_constructor) + 8 + 1);
+                    strcat(class_declarations, line[1]);
+                    strcat(class_declarations, " __");
+                    strcat(class_declarations, line[2]);
+                    strcat(class_declarations, "_");
+                    strcat(class_declarations, class_constructor);
+                    strcat(class_declarations, "__(");
+                    strcat(class_declarations, class_constructor);
+                    strcat(class_declarations, " self){\n");
+
+                    cur_class_def = (char *)realloc(cur_class_def,
+                        strlen(cur_class_def) + strlen(line[2]) + 1);
+                    strcat(cur_class_def, line[2]);
+                }
+                else
+                {
+                    strcat(r, line[1]);
+                    strcat(r, " ");
+                    strcat(r, line[2]);
+                    strcat(r, "(){\n");
+                    file_declarations = (char *)realloc(file_declarations,
+                        strlen(file_declarations) + strlen(line[1]) + 1 + strlen(line[2]) + 4);
+                    strcat(file_declarations, line[1]);
+                    strcat(file_declarations, " ");
+                    strcat(file_declarations, line[2]);
+                    strcat(file_declarations, "();\n");
+                }
+            }
+            else if (len > 4) error("def action received too many arguments", num);
+            // if (len == 4)
+            else
+            {
+                strcat(r, line[1]);
+                strcat(r, " ");
+                strcat(r, line[2]);
+                strcat(r, "(");
+                if (strlen(class_constructor))
+                {
+                    strcat(r, class_constructor);
+                    strcat(r, " self,");
+                }
+                strcat(r, line[3]);
+                strcat(r, "){\n");
+                if (!strlen(class_constructor))
+                {
+                    file_declarations = (char *)realloc(
+                        file_declarations, strlen(line[1]) + 1 + strlen(line[2]) + 1 + strlen(line[3]) + 4);
+                    strcat(file_declarations, line[1]);
+                    strcat(file_declarations, " ");
+                    strcat(file_declarations, line[2]);
+                    strcat(file_declarations, "(");
+                    strcat(file_declarations, line[3]);
+                    strcat(file_declarations, ");\n");
+                }
+            }
+            scope++;
         }
-        scope++;
     }
     else if (strcmp(line[0], "object") == 0)
     {
         char * name;
+        if (strlen(class_constructor)) error("object definition must not be within class constructor", num);
         if (isInline) error("object definition must be at start of line", num);
         if (len > 2) error("object definition received too many arguments", num);
         if (len < 2)
@@ -592,15 +667,21 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             strcpy(name, line[1]);
         }
         // Define type
-        strcat(r, "typedef struct __");
-        strcat(r, name);
-        strcat(r, "_Struct__ ");
-        strcat(r, name);
-        strcat(r, ";\n");
+        file_declarations = (char *)realloc(
+            file_declarations, strlen(file_declarations) + 17 + strlen(name) + 10 + strlen(name) + 2);
+        strcat(file_declarations, "typedef struct __");
+        strcat(file_declarations, name);
+        strcat(file_declarations, "_Struct__ ");
+        strcat(file_declarations, name);
+        strcat(file_declarations, ";\n");
         // Define struct
-        strcat(r, "struct __");
-        strcat(r, name);
-        strcat(r, "_Struct__ {\n");
+        file_declarations = (char *)realloc(
+            file_declarations, strlen(file_declarations) + 9 + strlen(name) + 12);
+        strcat(file_declarations, "struct __");
+        strcat(file_declarations, name);
+        strcat(file_declarations, "_Struct__ {\n");
+        object_def = (char *)realloc(object_def, strlen(object_def) + strlen(name) + 1);
+        strcpy(object_def, name);
         free(name);
         scope++;
     }
@@ -608,7 +689,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     {
         char * name;
         char * args = 0;
-        if (in_class_constructor) error("class constructor can not be within class constructor", num);
+        if (strlen(class_constructor)) error("class constructor can not be within class constructor", num);
         if (scope > 0) error("class constructor scope must not be higher than minimum scope", num);
         if (isInline) error("class constructor definition must be at start of line", num);
         if (len > 3) error("class constructor definition received too many arguments", num);
@@ -644,7 +725,8 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             name = (char *)malloc(strlen(current_file) - ext);
             strcpy(name, stringslice(String(current_file), 0, ext).value);
         }
-        strcat(r, "__");
+        strcat(r, name);
+        strcat(r, " __");
         strcat(r, name);
         strcat(r, "_Constructor__ (");
         if (args)
@@ -661,9 +743,11 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         strcat(r, "){\n");
         strcat(r, name);
         strcat(r, " self;\n");
+        class_constructor = (char *)realloc(class_constructor,
+            strlen(class_constructor) + strlen(name));
+        strcpy(class_constructor, name);
         free(name);
         scope++;
-        in_class_constructor = 1;
     }
     else if (strcmp(line[0], "new") == 0)
     {
@@ -708,9 +792,17 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
             if (verbose) println(tempstr[p]);
         }
         if (verbose) println("END");
+        int tempsize = arrsize(tempstr);
         strcat(r, line[0]);
         strcat(r, "(");
-        strcat(r, compileline(tempstr, num, arrsize(tempstr), 1));
+        if (stringHasChar(line[0], '.'))
+        {
+            char ** temp = (char **)malloc(charCount(line[0], '.') + 1 * sizeof(char *));
+            tokenise(temp, line[0], ".");
+            strcat(r, cpstrip(temp[0]));
+        }
+        if (tempsize)
+            strcat(r, compileline(tempstr, num, tempsize, 1));
         strcat(r, ")");
         if (!isInline)
             strcat(r, ";\n");
@@ -718,12 +810,41 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
     else if (strcmp(line[0], "end") == 0)
     {
         if (isInline) error("end action must be at start of line", num);
-        if (scope < 1) error("end action has nothing to end, program is already at minimum scope", num);
-        if (len > 1) error("end action received too many arguments", num);
-        if (in_class_constructor)
-            strcat(r, "return self;\n");
-        strcat(r, "}\n");
-        in_class_constructor = 0;
+        else if (scope < 1) error("end action has nothing to end, program is already at minimum scope", num);
+        else if (len > 1) error("end action received too many arguments", num);
+        else if (strlen(class_constructor) && scope == 1)
+        {
+            strcat(r, "return self;}\n");
+            class_constructor = (char *)realloc(class_constructor, 1);
+            //strcpy(class_constructor, "");
+            class_constructor[0] = '\0';
+        }
+        else if (strlen(object_def) && scope == 1)
+        {
+            file_declarations = (char *)realloc(file_declarations,
+                strlen(file_declarations) + 3 + 1);
+            strcat(file_declarations, "};\n");
+            object_def = (char *)realloc(object_def, 1);
+            //strcpy(object_def, "");
+            object_def[0] = '\0';
+        }
+        else if (strlen(class_constructor) && strlen(cur_class_def))
+        {
+            class_declarations = (char *)realloc(class_declarations,
+                strlen(class_declarations) + 2 + 1);
+            strcat(class_declarations, "}\n");
+            strcat(r, "self.");
+            strcat(r, cur_class_def);
+            strcat(r, "=__");
+            strcat(r, cur_class_def);
+            strcat(r, "_");
+            strcat(r, class_constructor);
+            strcat(r, "__;\n");
+            cur_class_def = (char *)realloc(cur_class_def, 1);
+            //strcpy(cur_class_def, "");
+            cur_class_def[0] = '\0';
+        }
+        else strcat(r, "}\n");
         scope--;
     }
     else if (strcmp(line[0], "continue") == 0)
@@ -874,7 +995,19 @@ char * compile_tokens(char ** tokens)
         if (verbose) printf("SIZE %d\n", arrsize(line));
 
         char * result = compileline(line, i, -1, 0);
-        strcat(compiled, result);
+        if (strlen(object_def))
+        {
+            file_declarations = (char *)realloc(file_declarations,
+                strlen(file_declarations) + strlen(result) + 1);
+            strcat(file_declarations, result);
+        }
+        else if (strlen(class_constructor) && strlen(cur_class_def))
+        {
+            class_declarations = (char *)realloc(class_declarations,
+                strlen(class_declarations) + strlen(result) + 1);
+            strcat(class_declarations, result);
+        }
+        else strcat(compiled, result);
 
         if (verbose) printf("-%s-\n", tokens[i]);
         for (int p = 0; line[p] != NULL; p++)
@@ -901,7 +1034,7 @@ char * quokka_compile(char * filename)
     char * buffer = readfile(filename);
 
     if (!buffer)
-        return "";
+        return 0;
 
     return compile_raw(buffer, -1);
 }
@@ -916,6 +1049,7 @@ int main(int argc, char ** argv)
 
     if (verbose) println("--START--");
 
+    // Set up a line-by-line interpreter like the Python one possibly?
     if (argc < 2)
     {
         println("Input file path not given, no data to compile.");
@@ -931,8 +1065,29 @@ int main(int argc, char ** argv)
     file_declarations = (char *)malloc(1);
     strcpy(file_declarations, "");
 
+    // Clear object_def
+    object_def = (char *)malloc(1);
+    strcpy(object_def, "");
+
+    // Clear class_constructor
+    class_constructor = (char *)malloc(1);
+    strcpy(class_constructor, "");
+
+    // Clear class_declarations
+    class_declarations = (char *)malloc(1);
+    strcpy(class_declarations, "");
+
+    // Clear cur_class_def
+    cur_class_def = (char *)malloc(1);
+    strcpy(cur_class_def, "");
+
     // Full path directing to first file to compile
     char * fullname = getrealpath(argv[1]);
+    if (!fullname)
+    {
+        println("Input file path not found or not accessible.");
+        return 1;
+    }
 
     // Full path directing to output file
     char * outputpath = getrealpath(argv[2]);
@@ -953,12 +1108,14 @@ int main(int argc, char ** argv)
     if (!compiled)
         return 0;
 
-    // Later I need to make sure the output file exists to
-    // avoid a segmentation fault
+    println("--class declarations--");
+    println(compiled);
+    println("--class declarations--");
+
     FILE * fp = fopen(outputpath, "w");
     fprintf(fp, "%s", C_HEADERS);
-    fprintf(fp, "%s", C_FILE_START);
     fprintf(fp, "%s", file_declarations);
+    fprintf(fp, "%s", class_declarations);
     fprintf(fp, "%s", compiled);
     fclose(fp);
 

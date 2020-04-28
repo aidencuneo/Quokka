@@ -536,9 +536,26 @@ void ntokenise(char * arr[], char * buffer, char * tokAt)
     }
 }
 
+int charCount(char * chst, char ch)
+{
+    string st = String(chst);
+
+    int count = 0;
+
+    for (int i = 0; i < st.length; i++)
+    {
+        if (st.value[i] == ch)
+            count++;
+    }
+
+    return count;
+}
+
 char * getrealpath(char * path)
 {
-    return stringreplace(String(realpath(path, NULL)), String('\\'), String('/')).value;
+    char * rp = realpath(path, NULL);
+    if (!rp) return NULL;
+    return stringreplace(String(rp), String('\\'), String('/')).value;
 }
 
 #define ptrindex(value, index) _Generic((value, index), char ** : cptrindex, default : cptrindex)(value, index)

@@ -3,27 +3,29 @@ include:
     Potato
 end
 
-nice1:
-    ret | 69
+n:
 end
-
-def | int | nice2 | int num
-    ret | num + 69
+m:
+end
+o:
+end
+oo:
+end
+oooo:
 end
 
 main:
     // Instantiate two Potatoes, with their default position (x : 0, y : 0)
-    new | Potato | potato_1 | (0, 0)
-    new | Potato | potato_2 | (0, 0)
+    new | Potato | potato_1 | (950, 450)
+    new | Potato | potato_2 | (960, 450)
 
     // Print all values of the potatoes:
-    print   | 'Potato 1: '
-    print   | potato_1.x
-    print   | ','
-    println | potato_1.y
+    potato_1.summary | ()
+    potato_2.summary | ()
 
-    print   | 'Potato 2: '
-    print   | potato_2.x
-    print   | ','
-    println | potato_2.y
+    new | Point | point_1 | (53, 68)
+    new | Point | point_2 | (67, 43)
+
+    point_1.summary | ()
+    point_2.summary | ()
 end
