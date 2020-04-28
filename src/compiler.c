@@ -612,7 +612,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
                     strcat(r, line[2]);
                     strcat(r, "(){\n");
                     file_declarations = (char *)realloc(file_declarations,
-                        strlen(file_declarations) + strlen(line[1]) + 1 + strlen(line[2]) + 4);
+                        strlen(file_declarations) + strlen(line[1]) + 1 + strlen(line[2]) + 4 + 1);
                     strcat(file_declarations, line[1]);
                     strcat(file_declarations, " ");
                     strcat(file_declarations, line[2]);
@@ -637,7 +637,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
                 if (!strlen(class_constructor))
                 {
                     file_declarations = (char *)realloc(
-                        file_declarations, strlen(line[1]) + 1 + strlen(line[2]) + 1 + strlen(line[3]) + 4);
+                        file_declarations, strlen(line[1]) + 1 + strlen(line[2]) + 1 + strlen(line[3]) + 4 + 1);
                     strcat(file_declarations, line[1]);
                     strcat(file_declarations, " ");
                     strcat(file_declarations, line[2]);
@@ -668,7 +668,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         }
         // Define type
         file_declarations = (char *)realloc(
-            file_declarations, strlen(file_declarations) + 17 + strlen(name) + 10 + strlen(name) + 2);
+            file_declarations, strlen(file_declarations) + 17 + strlen(name) + 10 + strlen(name) + 2 + 1);
         strcat(file_declarations, "typedef struct __");
         strcat(file_declarations, name);
         strcat(file_declarations, "_Struct__ ");
@@ -676,7 +676,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         strcat(file_declarations, ";\n");
         // Define struct
         file_declarations = (char *)realloc(
-            file_declarations, strlen(file_declarations) + 9 + strlen(name) + 12);
+            file_declarations, strlen(file_declarations) + 9 + strlen(name) + 12 + 1);
         strcat(file_declarations, "struct __");
         strcat(file_declarations, name);
         strcat(file_declarations, "_Struct__ {\n");
@@ -728,8 +728,10 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         strcat(r, name);
         strcat(r, " __");
         strcat(r, name);
-        strcat(r, "_Constructor__ (");
-        if (args)
+        strcat(r, "_Constructor__(");
+        if (args) println("YUP");
+        else println("NUPE");
+        if (args && strlen(args) > 2)
         {
             char * tempstr[512];
             tokenise(tempstr, stringslice(String(args), 1, 1).value, ",");
@@ -744,7 +746,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         strcat(r, name);
         strcat(r, " self;\n");
         class_constructor = (char *)realloc(class_constructor,
-            strlen(class_constructor) + strlen(name));
+            strlen(class_constructor) + strlen(name) + 1);
         strcpy(class_constructor, name);
         free(name);
         scope++;
@@ -767,7 +769,7 @@ char * compileline(char * line[], int num, int lineLen, int isInline)
         strcat(r, "=__");
         strcat(r, line[1]);
         strcat(r, "_Constructor__(");
-        if (args)
+        if (args && strlen(args) > 2)
         {
             char * tempstr[512];
             tokenise(tempstr, stringslice(String(args), 1, 1).value, ",");
