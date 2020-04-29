@@ -161,6 +161,11 @@ integer IntegerFromInt(int value)
     return self;
 }
 
+integer IntegerFromInteger(integer value)
+{
+    return value;
+}
+
 integer IntegerFromLong(long value)
 {
     return IntegerFromInt((int)value);
@@ -175,6 +180,7 @@ integer IntegerFromChar(char value)
     int     : IntegerFromInt,\
     long    : IntegerFromLong,\
     char    : IntegerFromChar,\
+    integer : IntegerFromInteger,\
     default : IntegerFromInt)(value)
     // I need to fill this in with every single C datatype
 

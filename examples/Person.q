@@ -13,8 +13,7 @@ end
 class(string name)
 
     self.name   = name
-    integer num = name.length * 5 + 1
-    self.id     = new string(num)
+    self.id     = new string(name.length * 5)
 
     // Functions are included here as well (full functions)
     def void show

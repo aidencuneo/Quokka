@@ -128,10 +128,15 @@ int stringInList(char * arr[], char * key)
     return 0;
 }
 
-char * compile_raw_line(char * linestr, int num, int lineLen, int isInline)
+char * compile_raw_line(char * linestr, int num, int isInline)
 {
     char ** line = quokka_line_tok(linestr);
-    return compileline(line, num, lineLen, isInline);
+    if (verbose) println("--RAW LINE--");
+    if (verbose)
+        for (int p = 0; p < arrsize(line); p++)
+            println(line[p]);
+    if (verbose) println("--RAW LINE END--");
+    return compileline(line, num, -1, isInline);
 }
 
 char * compileline(char * origline[], int num, int lineLen, int isInline)
@@ -153,11 +158,34 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
 
     for (int p = 0; p < len1; p++)
     {
+        if (verbose) print(":: ");
+        if (verbose) println(origline[p]);
         if (p > 0 && startswith(origline[p], "."))
         {
             linestr1[strlen(linestr1) - 1] = '\0';
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(origline[p]) + 1);
             strncat(linestr1, origline[p], strlen(origline[p]));
+
+            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            strncat(linestr1, separator, strlen(separator));
+        }
+        else if (
+            (startswith(origline[p], "(") && endswith(origline[p], ")")) && ((!(
+                (charCount(origline[p], '(') + charCount(origline[p], ')')) > 2
+            ) && (isInline || stringInList(origline, "=")))))
+        {
+            if (verbose) println("!!BRACKETS");
+            if (verbose) println(origline[p]);
+            char * temp = __slice_string__(String(origline[p]), 1, 1).value;
+            if (verbose) println(temp);
+            char * tempcomp = compile_raw_line(temp, num, 1);
+            if (verbose) println(tempcomp);
+            if (verbose) println("??BRACKETS");
+
+            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 1 + strlen(tempcomp) + 1 + 1);
+            strncat(linestr1, "(", 2);
+            strncat(linestr1, tempcomp, strlen(tempcomp));
+            strncat(linestr1, ")", 2);
 
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
@@ -913,6 +941,11 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     }
     else if (strcmp(line[0], "new") == 0)
     {
+        if (verbose) println("--NEW START--");
+        if (verbose)
+            for (int p = 0; p < len; p++)
+                println(line[p]);
+        if (verbose) println("--!NEW END--");
         char * args = 0;
         if (scope < 1) error("new object creation must not be at minimum scope", num);
         else if (len < 2) error("new object creation missing object to instantiate", num);
@@ -933,8 +966,11 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             for (int p = 0; p < arrsize(tempstr); p++)
             {
                 tempstr[p] = cpstrip(tempstr[p]);
-                strcat(r, compile_raw_line(tempstr[p], num, arrsize(tempstr), 1));
+                strcat(r, compile_raw_line(tempstr[p], num, 1));
+                strcat(r, ",");
             }
+            while (endswith(r, ","))
+                strcpy(r, __slice_string__(String(r), 0, 1).value);
         }
         strcat(r, ");\n");
     }
@@ -1089,6 +1125,9 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             len -= 2;
             arrlstrip(line);
             arrlstrip(line);
+            if (verbose) print("HERE :::::: ");
+            if (verbose) println(line[2]);
+            if (verbose) println("-------------------");
             strcat(r, compileline(line, num, len, 1)); // Var value
             strcat(r, ";\n");
         }
@@ -1305,9 +1344,11 @@ char ** quokka_line_tok(char * line)
         ) && !(
             p == 'A' && t == '.' // Second part to the line above.
         ) && !(
-            t == '_' && p == 'A' // Join together names like `string_one` (second part is below)
+            t == '_' && (p == 'A' || c == '.') // Join together names like `string_one` (second part is below)
         ) && !(
-            q == 'A' && c == '_' // Second part to the line above.
+            (q == 'A' || t == '.') && c == '_' // Second part to the line above.
+        ) && !(
+            t == '_' && c == '_' // Join together double underscores `__`
         ) && !(
             (q == 'A' || q == 'D' || t == '_') && c == ':' // Join together things like `main:` and `include:`
         ))
