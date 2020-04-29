@@ -3,17 +3,6 @@ include:
     Potato
 end
 
-n:
-end
-m:
-end
-o:
-end
-oo:
-end
-oooo:
-end
-
 main:
     // Instantiate two Potatoes, with their default position (x : 0, y : 0)
     new | Potato | potato_1 | (950, 450)

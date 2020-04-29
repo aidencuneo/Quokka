@@ -28,14 +28,29 @@
 /// Structs
 //
 
+// integer
+typedef struct __integer_Struct__ integer;
+struct __integer_Struct__
+{
+    long value;
+
+    integer (*__add__)(integer self, integer other);
+    integer (*__sub__)(integer self, integer other);
+    integer (*__mul__)(integer self, integer other);
+    integer (*__div__)(integer self, integer other);
+};
+
 // string
 typedef struct __string_Struct__ string;
 struct __string_Struct__
 {
     char * value;
-    int length;
+    integer length;
 
     string (*__add__)(string self, string other);
+    string (*__sub__)(string self, string other);
+    string (*__mul__)(string self, string other);
+    string (*__div__)(string self, string other);
 
     string (*lstrip)(string self);
     string (*rstrip)(string self);
@@ -45,15 +60,6 @@ struct __string_Struct__
     string (*slice)(string self, int start, int stop);
     string (*reorder)(string self, int step);
     string (*replace)(string self, string strep, string repwith);
-};
-
-// integer
-typedef struct __integer_Struct__ integer;
-struct __integer_Struct__
-{
-    long value;
-
-    integer (*__add__)(integer self, integer other);
 };
 
 //
@@ -83,6 +89,17 @@ string sprint(string value);
 string * saprint(string value[]);
 integer intprint(integer value);
 
+// integer
+
+// Special functions `__funcname__`
+integer __add_integer__(integer self, integer other);
+integer __sub_integer__(integer self, integer other);
+integer __mul_integer__(integer self, integer other);
+integer __div_integer__(integer self, integer other);
+
+// Regular functions `funcname`
+// (None yet)
+
 // string
 
 // Special functions `__funcname__`
@@ -97,14 +114,6 @@ string __lower_string__(string st);
 string __slice_string__(string st, int start, int stop);
 string __reorder_string__(string st, int step);
 string __replace_string__(string st, string strep, string repwith);
-
-// integer
-
-// Special functions `__funcname__`
-integer __add_integer__(integer self, integer other);
-
-// Regular functions `funcname`
-// (None yet)
 
 
 // Definitions
@@ -135,6 +144,63 @@ integer __add_integer__(integer self, integer other);
     default  : cpprintln)(value)
 
 //
+/// integer
+//
+
+integer IntegerFromInt(int value)
+{
+    integer self;
+
+    self.value = value;
+
+    self.__add__ = __add_integer__;
+    self.__sub__ = __sub_integer__;
+    self.__mul__ = __mul_integer__;
+    self.__div__ = __div_integer__;
+
+    return self;
+}
+
+integer IntegerFromLong(long value)
+{
+    return IntegerFromInt((int)value);
+}
+
+integer IntegerFromChar(char value)
+{
+    return IntegerFromInt((int)value);
+}
+
+#define Integer(value) _Generic((value),\
+    int     : IntegerFromInt,\
+    long    : IntegerFromLong,\
+    char    : IntegerFromChar,\
+    default : IntegerFromInt)(value)
+    // I need to fill this in with every single C datatype
+
+#define __integer_Constructor__(value) Integer(value)
+
+integer __add_integer__(integer self, integer other)
+{
+    return Integer(self.value + other.value);
+}
+
+integer __sub_integer__(integer self, integer other)
+{
+    return Integer(self.value - other.value);
+}
+
+integer __mul_integer__(integer self, integer other)
+{
+    return Integer(self.value * other.value);
+}
+
+integer __div_integer__(integer self, integer other)
+{
+    return Integer(self.value / other.value);
+}
+
+//
 /// string
 //
 
@@ -148,7 +214,7 @@ string StringFromCharPointer(char * value)
     string self;
 
     self.value = value;
-    self.length = strlen(value);
+    self.length = Integer(strlen(value));
 
     self.__add__ = __add_string__;
 
@@ -183,19 +249,25 @@ string StringFromChar(char value)
     return StringFromCharPointer(&value);
 }
 
+string StringFromInteger(integer value)
+{
+    return StringFromLong(value.value);
+}
+
 #define String(value) _Generic((value),\
     int     : StringFromInt,\
     long    : StringFromLong,\
     char    : StringFromChar,\
     char *  : StringFromCharPointer,\
     string  : StringFromString,\
+    integer : StringFromInteger,\
     default : StringFromCharPointer)(value)
 
 #define __string_Constructor__(value) String(value)
 
 string __add_string__(string self, string other)
 {
-    char * x = (char *)malloc(self.length + other.length + 1);
+    char * x = (char *)malloc(self.length.value + other.length.value + 1);
     strcpy(x, self.value);
     strcat(x, other.value);
 
@@ -216,7 +288,7 @@ string __lstrip_string__(string s)
 
 string __rstrip_string__(string st)
 {
-    char * s = (char *)malloc(st.length + 1);
+    char * s = (char *)malloc(st.length.value + 1);
     strcpy(s, st.value);
 
     if (!s)
@@ -225,7 +297,7 @@ string __rstrip_string__(string st)
     size_t size;
     char * end;
 
-    size = st.length;
+    size = st.length.value;
 
     if (!size)
         return st;
@@ -240,7 +312,7 @@ string __rstrip_string__(string st)
 
 string __strip_string__(string st)
 {
-    char * s = (char *)malloc(st.length + 1);
+    char * s = (char *)malloc(st.length.value + 1);
     strcpy(s, st.value);
 
     if (!s)
@@ -249,7 +321,7 @@ string __strip_string__(string st)
     size_t size;
     char * end;
 
-    size = st.length;
+    size = st.length.value;
 
     if (!size)
         return st;
@@ -264,9 +336,9 @@ string __strip_string__(string st)
 
 string __upper_string__(string st)
 {
-    char * x = (char *)malloc(st.length * sizeof(char));
+    char * x = (char *)malloc(st.length.value * sizeof(char));
 
-    for (int i = 0; i < st.length; i++)
+    for (int i = 0; i < st.length.value; i++)
     {
         char letter[2] = {0};
         letter[0] = toupper(st.value[i]);
@@ -278,9 +350,9 @@ string __upper_string__(string st)
 
 string __lower_string__(string st)
 {
-    char * x = (char *)malloc(st.length * sizeof(char));
+    char * x = (char *)malloc(st.length.value * sizeof(char));
 
-    for (int i = 0; i < st.length; i++)
+    for (int i = 0; i < st.length.value; i++)
     {
         char letter[2] = {0};
         letter[0] = tolower(st.value[i]);
@@ -292,15 +364,15 @@ string __lower_string__(string st)
 
 string __slice_string__(string st, int start, int stop)
 {
-    char * x = (char *)malloc(st.length + 1 * sizeof(char));
+    char * x = (char *)malloc(st.length.value + 1 * sizeof(char));
     strcpy(x, st.value);
 
-    if (!st.value || !st.length)
+    if (!st.value || !st.length.value)
         return st;
 
     char * end;
 
-    end = x + st.length - 1;
+    end = x + st.length.value - 1;
     end -= stop;
     *(end + 1) = '\0';
 
@@ -311,11 +383,11 @@ string __slice_string__(string st, int start, int stop)
 
 string __reorder_string__(string st, int step)
 {
-    char * x = (char *)malloc(st.length * sizeof(char));
+    char * x = (char *)malloc(st.length.value * sizeof(char));
 
     if (step < 1) step = 1;
-    if (step > st.length) step = st.length;
-    for (int i = 0; i < st.length; i += step)
+    if (step > st.length.value) step = st.length.value;
+    for (int i = 0; i < st.length.value; i += step)
     {
         char * letter = malloc(2 * sizeof(char));
         letter[0] = st.value[i];
@@ -376,45 +448,6 @@ string __replace_string__(string st, string strep, string repwith) {
     string out;
     out = String(result);
     return out;
-}
-
-//
-/// integer
-//
-
-integer IntegerFromInt(int value)
-{
-    integer self;
-
-    self.value = value;
-
-    self.__add__ = __add_integer__;
-
-    return self;
-}
-
-integer IntegerFromLong(long value)
-{
-    return IntegerFromInt((int)value);
-}
-
-integer IntegerFromChar(char value)
-{
-    return IntegerFromInt((int)value);
-}
-
-#define Integer(value) _Generic((value),\
-    int     : IntegerFromInt,\
-    long    : IntegerFromLong,\
-    char    : IntegerFromChar,\
-    default : IntegerFromInt)(value)
-    // I need to fill this in with every single C datatype
-
-#define __integer_Constructor__(value) Integer(value)
-
-integer __add_integer__(integer self, integer other)
-{
-    return Integer(self.value + other.value);
 }
 
 //
@@ -482,10 +515,6 @@ string * sarradd(string * lst, string arg1, ...)
 
     return newlst;
 }
-
-//
-/// integer
-//
 
 char * cptrindex(char ** value, int index)
 {
@@ -629,7 +658,7 @@ int charCount(char * chst, char ch)
 
     int count = 0;
 
-    for (int i = 0; i < st.length; i++)
+    for (int i = 0; i < st.length.value; i++)
     {
         if (st.value[i] == ch)
             count++;

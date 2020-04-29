@@ -37,6 +37,7 @@ char * cur_class_def;
 char * pointers[512];
 char * values[512];
 char * arrptrs[512];
+char * types[512];
 
 void error(char * text, int line)
 {
@@ -127,6 +128,12 @@ int stringInList(char * arr[], char * key)
     return 0;
 }
 
+char * compile_raw_line(char * linestr, int num, int lineLen, int isInline)
+{
+    char ** line = quokka_line_tok(linestr);
+    return compileline(line, num, lineLen, isInline);
+}
+
 char * compileline(char * origline[], int num, int lineLen, int isInline)
 {
     // num is current line number
@@ -215,8 +222,8 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         }
         else if (strcmp(origline[p], "not") == 0)
         {
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 4);
-            strncat(linestr1, " ! ", 4);
+            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 3);
+            strncat(linestr1, " !", 3);
 
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
@@ -294,7 +301,58 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(line1[p + 1]) + 2 + 1);
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            strncat(linestr2, "(", 2);
+            strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
+            strncat(linestr2, ")", 2);
+
+            arrdel(line1, p + 1);
+            len2--;
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            strncat(linestr2, separator, strlen(separator));
+        }
+        else if (strcmp(line1[p], "*") == 0)
+        {
+            if (!(p > 0))
+                error("`*` operator missing first argument", num);
+            if (!(p < len2 - 1))
+                error("`*` operator missing second argument", num);
+            linestr2[strlen(linestr2) - 1] = '\0';
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 9);
+            strncat(linestr2, ".__mul__", 9);
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            strncat(linestr2, separator, strlen(separator));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            strncat(linestr2, "(", 2);
+            strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
+            strncat(linestr2, ")", 2);
+
+            arrdel(line1, p + 1);
+            len2--;
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            strncat(linestr2, separator, strlen(separator));
+        }
+        else if (strcmp(line1[p], "/") == 0)
+        {
+            if (!(p > 0))
+                error("`/` operator missing first argument", num);
+            if (!(p < len2 - 1))
+                error("`/` operator missing second argument", num);
+            linestr2[strlen(linestr2) - 1] = '\0';
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 9);
+            strncat(linestr2, ".__div__", 9);
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            strncat(linestr2, separator, strlen(separator));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            strncat(linestr2, "(", 2);
             strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
             strncat(linestr2, ")", 2);
 
@@ -797,7 +855,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         if (scope > 0) error("class constructor scope must not be higher than minimum scope", num);
         if (isInline) error("class constructor definition must be at start of line", num);
         if (len > 3) error("class constructor definition received too many arguments", num);
-        // if `class | classname | (int arg1, int arg2)`
+        // if `class classname(int arg1, int arg2)`
         if (len == 3)
         {
             name = (char *)malloc(strlen(line[1]));
@@ -807,7 +865,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         }
         else if (len == 2)
         {
-            // if `class | (int arg1, int arg2)`
+            // if `class(int arg1, int arg2)`
             if (startswith(line[1], "(") && endswith(line[1], ")"))
             {
                 int ext = strlen(strchr(current_file, '.'));
@@ -816,7 +874,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
 
                 args = line[1];
             }
-            // if `class | classname`
+            // if `class classname`
             else
             {
                 name = (char *)malloc(strlen(line[1]));
@@ -833,8 +891,6 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         strcat(r, " __");
         strcat(r, name);
         strcat(r, "_Constructor__(");
-        if (args) println("YUP");
-        else println("NUPE");
         if (args && strlen(args) > 2)
         {
             char * tempstr[512];
@@ -852,7 +908,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         class_constructor = (char *)realloc(class_constructor,
             strlen(class_constructor) + strlen(name) + 1);
         strcpy(class_constructor, name);
-        free(name);
+        types[arrsize(types)] = name;
         scope++;
     }
     else if (strcmp(line[0], "new") == 0)
@@ -877,9 +933,8 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             for (int p = 0; p < arrsize(tempstr); p++)
             {
                 tempstr[p] = cpstrip(tempstr[p]);
-                if (verbose) println(tempstr[p]);
+                strcat(r, compile_raw_line(tempstr[p], num, arrsize(tempstr), 1));
             }
-            strcat(r, compileline(tempstr, num, arrsize(tempstr), 1));
         }
         strcat(r, ");\n");
     }
@@ -1009,6 +1064,14 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         // If second line token is not an equals sign `string word =`, `int num =`
         if (strcmp(line[1], "=") != 0)
         {
+            if (!stringInList(types, line[0]))
+            {
+                char * err = (char *)malloc(14 + strlen(line[0]) + 1 + 1);
+                strcpy(err, "invalid type '");
+                strcat(err, line[0]);
+                strcat(err, "'");
+                error(err, num);
+            }
             strcat(r, " ");
             strcat(r, line[1]); // Var name
             strcat(r, "=");
@@ -1030,6 +1093,12 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             strcat(r, ";\n");
         }
     }
+    // else if (stringInList(types, line[0]))
+    // {
+    //     // Assign a type thingy here
+    //     // Basically `string word`
+    //     // So I can copy off of the else if above this if I need to
+    // }
     else if (startswith(line[len - 1], "(") && endswith(line[len - 1], ")"))
     {
         char * sg = (char *)malloc(1);
@@ -1039,8 +1108,6 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
 
         for (int p = 0; p < len; p++)
         {
-            print(":: ");
-            println(line[p]);
             if (stringHasChar(line[p], '.') && p < len - 1)
             {
                 int sblen = strlen(strrchr(line[p], '.'));
@@ -1080,6 +1147,8 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         }
 
         strcat(r, sg);
+        if (!isInline)
+            strcat(r, ";");
     }
     else
     {
@@ -1311,6 +1380,10 @@ int main(int argc, char ** argv)
         println("Output file path not given.");
         return 1;
     }
+
+    // Set built-in types
+    types[arrsize(types)] = "integer";
+    types[arrsize(types)] = "string";
 
     // Clear file_declarations
     file_declarations = (char *)malloc(1);

@@ -5,8 +5,22 @@
 #include <ctype.h>
 
 int _FORVARNAME;
-int main(int argc,char**argv){
-string name=String("John Smith").upper(String("John Smith"));
-string id=String(name.length).upper(name.length);
-println(name.__add__(name,(String(", ID: ")).__add__(String(", ID: "),id)));
+typedef struct __Person_Struct__ Person;
+struct __Person_Struct__ {
+string name ;string id ;void (*show)(Person self);
+};
+void __show_Person__(Person self){
+println(self.name.__add__(self.name,(String(", ID: ")).__add__(String(", ID: "),self.id)));
 }
+Person __Person_Constructor__(string name){
+Person self;
+self.name=name;
+integer num=name.length.__mul__(name.length,(Integer(5)).__add__(Integer(5),Integer(1)));
+self.id=__string_Constructor__(num);
+;
+self.show=__show_Person__;
+return self;}
+int main(int argc,char**argv){
+Person john=__Person_Constructor__(String("John Smith"));
+;
+john.show(john);}
