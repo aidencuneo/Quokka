@@ -4,7 +4,10 @@
 #include <string.h>
 #include <ctype.h>
 
-// OS-related definitions
+//
+/// OS-related definitions
+//
+
 #ifdef _WIN32
     #include <direct.h>
     #define chdir(value) _chdir(value)
@@ -21,25 +24,41 @@
     #include <unistd.h>
 #endif
 
+//
+/// Structs
+//
 
-// Structs
-typedef struct
-{
-    void * value;
-} pointer;
-
+// string
 typedef struct __string_Struct__ string;
 struct __string_Struct__
 {
     char * value;
     int length;
 
+    string (*__add__)(string self, string other);
+
+    string (*lstrip)(string self);
+    string (*rstrip)(string self);
+    string (*strip)(string self);
     string (*upper)(string self);
     string (*lower)(string self);
+    string (*slice)(string self, int start, int stop);
+    string (*reorder)(string self, int step);
+    string (*replace)(string self, string strep, string repwith);
 };
 
+// integer
+typedef struct __integer_Struct__ integer;
+struct __integer_Struct__
+{
+    long value;
 
-// Function declarations
+    integer (*__add__)(integer self, integer other);
+};
+
+//
+/// Function declarations
+//
 
 // arrsize
 int carrsize(char * arr[]);
@@ -53,6 +72,7 @@ char cprintln(char value);
 char * cpprintln(char * value);
 string sprintln(string value);
 string * saprintln(string value[]);
+integer intprintln(integer value);
 
 // print
 int iprint(int value);
@@ -61,19 +81,30 @@ char cprint(char value);
 char * cpprint(char * value);
 string sprint(string value);
 string * saprint(string value[]);
+integer intprint(integer value);
 
 // string
+
+// Special functions `__funcname__`
+string __add_string__(string self, string other);
+
+// Regular functions `funcname`
 string __lstrip_string__(string st);
-string __upper_string__(string st);
-string __lower_string__(string st);
 string __rstrip_string__(string st);
 string __strip_string__(string st);
-string __add_string__(string arg1, ...);
 string __upper_string__(string st);
 string __lower_string__(string st);
 string __slice_string__(string st, int start, int stop);
 string __reorder_string__(string st, int step);
 string __replace_string__(string st, string strep, string repwith);
+
+// integer
+
+// Special functions `__funcname__`
+integer __add_integer__(integer self, integer other);
+
+// Regular functions `funcname`
+// (None yet)
 
 
 // Definitions
@@ -90,6 +121,7 @@ string __replace_string__(string st, string strep, string repwith);
     char *   : cpprint,\
     string   : sprint,\
     string * : saprint,\
+    integer  : intprint,\
     default  : cpprint)(value)
 
 #define println(value) _Generic((value),\
@@ -99,25 +131,12 @@ string __replace_string__(string st, string strep, string repwith);
     char *   : cpprintln,\
     string   : sprintln,\
     string * : saprintln,\
+    integer  : intprintln,\
     default  : cpprintln)(value)
 
-
-int startswith(const char * a, const char * b)
-{
-    if (strncmp(a, b, strlen(b)) == 0) return 1;
-    return 0;
-}
-
-int endswith(const char * str, const char * suffix)
-{
-    if (!str || !suffix)
-        return 0;
-    size_t lenstr = strlen(str);
-    size_t lensuffix = strlen(suffix);
-    if (lensuffix >  lenstr)
-        return 0;
-    return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
-}
+//
+/// string
+//
 
 string StringFromString(string value)
 {
@@ -131,18 +150,18 @@ string StringFromCharPointer(char * value)
     self.value = value;
     self.length = strlen(value);
 
+    self.__add__ = __add_string__;
+
+    self.lstrip = __lstrip_string__;
+    self.rstrip = __rstrip_string__;
+    self.strip = __strip_string__;
     self.upper = __upper_string__;
     self.lower = __lower_string__;
+    self.slice = __slice_string__;
+    self.reorder = __reorder_string__;
+    self.replace = __replace_string__;
 
     return self;
-}
-
-string StringFromCharArray(char value[])
-{
-    string out;
-    out.value = value;
-    out.length = strlen(value);
-    return out;
 }
 
 string StringFromInt(int value)
@@ -161,12 +180,7 @@ string StringFromLong(long value)
 
 string StringFromChar(char value)
 {
-    string out;
-    char newval[2] = "\0";
-    newval[0] = value;
-    out.value = newval;
-    out.length = strlen(out.value);
-    return out;
+    return StringFromCharPointer(&value);
 }
 
 #define String(value) _Generic((value),\
@@ -178,6 +192,16 @@ string StringFromChar(char value)
     default : StringFromCharPointer)(value)
 
 #define __string_Constructor__(value) String(value)
+
+string __add_string__(string self, string other)
+{
+    char * x = (char *)malloc(self.length + other.length + 1);
+    strcpy(x, self.value);
+    strcat(x, other.value);
+
+    string out = String(x);
+    return out;
+}
 
 string __lstrip_string__(string s)
 {
@@ -236,31 +260,6 @@ string __strip_string__(string st)
     *(end + 1) = '\0';
 
     return __lstrip_string__(String(s));
-}
-
-string __add_string__(string arg1, ...)
-{
-    va_list ap;
-
-    char * x = (char *)malloc(2048 * sizeof(char));
-    strcpy(x, arg1.value);
-
-    char * y;
-
-    va_start(ap, arg1);
-
-    string last = va_arg(ap, string);
-
-    while (last.value != "\0")
-    {
-        strcat(x, last.value);
-        last = va_arg(ap, string);
-    }
-
-    va_end(ap);
-    string out = String(x);
-    free(x);
-    return out;
 }
 
 string __upper_string__(string st)
@@ -379,6 +378,49 @@ string __replace_string__(string st, string strep, string repwith) {
     return out;
 }
 
+//
+/// integer
+//
+
+integer IntegerFromInt(int value)
+{
+    integer self;
+
+    self.value = value;
+
+    self.__add__ = __add_integer__;
+
+    return self;
+}
+
+integer IntegerFromLong(long value)
+{
+    return IntegerFromInt((int)value);
+}
+
+integer IntegerFromChar(char value)
+{
+    return IntegerFromInt((int)value);
+}
+
+#define Integer(value) _Generic((value),\
+    int     : IntegerFromInt,\
+    long    : IntegerFromLong,\
+    char    : IntegerFromChar,\
+    default : IntegerFromInt)(value)
+    // I need to fill this in with every single C datatype
+
+#define __integer_Constructor__(value) Integer(value)
+
+integer __add_integer__(integer self, integer other)
+{
+    return Integer(self.value + other.value);
+}
+
+//
+/// All the rest
+//
+
 void sarrappend(string * lst, string arg1, ...)
 {
     printf("<%s>\n", lst[0].value);
@@ -441,6 +483,10 @@ string * sarradd(string * lst, string arg1, ...)
     return newlst;
 }
 
+//
+/// integer
+//
+
 char * cptrindex(char ** value, int index)
 {
     return value[index];
@@ -473,6 +519,23 @@ int sarrsize(string * arr)
         j = arr[i];
     }
     return i;
+}
+
+int startswith(const char * a, const char * b)
+{
+    if (strncmp(a, b, strlen(b)) == 0) return 1;
+    return 0;
+}
+
+int endswith(const char * str, const char * suffix)
+{
+    if (!str || !suffix)
+        return 0;
+    size_t lenstr = strlen(str);
+    size_t lensuffix = strlen(suffix);
+    if (lensuffix >  lenstr)
+        return 0;
+    return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 }
 
 char * readfile(char * fname)
@@ -631,6 +694,12 @@ string * saprint(string value[])
     return value;
 }
 
+integer intprint(integer value)
+{
+    printf("%ld", value.value);
+    return value;
+}
+
 int iprintln(int value)
 {
     printf("%d\n", value);
@@ -671,5 +740,11 @@ string * saprintln(string value[])
         printf("%s", value[i].value);
     }
     printf("}\n");
+    return value;
+}
+
+integer intprintln(integer value)
+{
+    printf("%ld\n", value.value);
     return value;
 }

@@ -1,21 +1,6 @@
 main:
-    string word = 'aiDEn'
-    println word.upper()
-    println word.lower()
+    string name = 'John Smith'.upper()
+    string id   = String(name.length).upper()
+
+    println name + ', ID: ' + id
 end
-
-// string word = new string('aiDEn')
-// println word.upper()
-// println(word.lower())
-
-// main:
-//     new | string | word  | ('aiDEn')
-//     println | word.upper | ()
-//     println | word.lower | ()
-// end
-
-// main:
-//     new string word ('aiDEn')
-//     println word.upper()
-//     println word.lower()
-// end

@@ -6,9 +6,7 @@
 
 int _FORVARNAME;
 int main(int argc,char**argv){
-if(10){
-string word=String("aiDEn");
-println(word.upper(word));
-println(word.lower(word));
-}
+string name=String("John Smith").upper(String("John Smith"));
+string id=String(name.length).upper(name.length);
+println(name.__add__(name,(String(", ID: ")).__add__(String(", ID: "),id)));
 }
