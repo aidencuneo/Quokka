@@ -41,29 +41,47 @@ char * types[512];
 
 void error(char * text, int line)
 {
-    int MAXLINE = 256;
+    int MAXLINE = 128;
 
     char * fullfile = readfile(current_file);
+
+    char * lineprevious = (char *)malloc(MAXLINE);
     char * linepreview = (char *)malloc(MAXLINE);
+    char * linenext = (char *)malloc(MAXLINE);
+
+    strcpy(lineprevious, "");
     strcpy(linepreview, "");
+    strcpy(linenext, "");
 
     int c = 0;
     for (int i = 0; i < strlen(fullfile) - 1; i++)
     {
         if (fullfile[i] == '\n')
             c++;
+        else if (c == line - 1 && strlen(lineprevious) < MAXLINE && fullfile[i] != 10 && fullfile[i] != 13)
+            strcat(lineprevious, String(fullfile[i]).value);
         else if (c == line && strlen(linepreview) < MAXLINE && fullfile[i] != 10 && fullfile[i] != 13)
             strcat(linepreview, String(fullfile[i]).value);
-        if (c > line)
+        else if (c == line + 1 && strlen(linenext) < MAXLINE && fullfile[i] != 10 && fullfile[i] != 13)
+            strcat(linenext, String(fullfile[i]).value);
+        if (c > line + 1)
             break;
     }
 
     line++;
 
     println("\nProgram compilation terminated:");
-    printf("At %s:%d\n", current_file, line);
-    printf("--> %s\n", text);
-    printf("  %d | %s\n\n", line, linepreview);
+    printf("At %s : Line %d\n\n", current_file, line);
+
+    if (strlen(lineprevious))
+        printf("  %d | %s\n", line - 1, lineprevious);
+    printf("> %d > %s\n", line, linepreview);
+    if (strlen(linenext))
+        printf("  %d | %s\n", line + 1, linenext);
+    print("\n");
+
+    printf("Error: %s\n\n", text);
+
     free(linepreview);
     exit(EXIT_FAILURE);
 }
@@ -139,18 +157,8 @@ char * compile_raw_line(char * linestr, int num, int isInline)
     return compileline(line, num, -1, isInline);
 }
 
-char * compileline(char * origline[], int num, int lineLen, int isInline)
+char * precompile_stage_1(char ** origline, char * separator, int num, int isInline)
 {
-    // num is current line number
-
-    char * separator = "\n";
-
-    //
-    /// PRECOMPILE STAGE 1
-    //
-
-    if (verbose) println("--PRECOMPILE STAGE 1--");
-
     char * linestr1 = (char *)malloc(1);
     strcpy(linestr1, "");
 
@@ -171,7 +179,10 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         }
         else if (
             (startswith(origline[p], "(") && endswith(origline[p], ")")) && ((!(
-                (charCount(origline[p], '(') + charCount(origline[p], ')')) > 2
+                p > 1 && strcmp(origline[p - 2], "new") == 0// strstr(origline[p], ".__add__(") != NULL ||
+                // strstr(origline[p], ".__sub__(") != NULL ||
+                // strstr(origline[p], ".__mul__(") != NULL ||
+                // strstr(origline[p], ".__div__(") != NULL
             ) && (isInline || stringInList(origline, "=")))))
         {
             if (verbose) println("!!BRACKETS");
@@ -232,6 +243,22 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
+        else if (strcmp(origline[p], "true") == 0)
+        {
+            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 7 + 1);
+            strncat(linestr1, "Bool(1)", 8);
+
+            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            strncat(linestr1, separator, strlen(separator));
+        }
+        else if (strcmp(origline[p], "false") == 0)
+        {
+            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 7 + 1);
+            strncat(linestr1, "Bool(0)", 8);
+
+            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            strncat(linestr1, separator, strlen(separator));
+        }
         else if (strcmp(origline[p], "and") == 0)
         {
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 5);
@@ -265,6 +292,23 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             strncat(linestr1, separator, strlen(separator));
         }
     }
+
+    return linestr1;
+}
+
+char * compileline(char * origline[], int num, int lineLen, int isInline)
+{
+    // num is current line number
+
+    char * separator = "\n";
+
+    //
+    /// PRECOMPILE STAGE 1
+    //
+
+    if (verbose) println("--PRECOMPILE STAGE 1--");
+
+    char * linestr1 = precompile_stage_1(origline, separator, num, isInline);
 
     char ** line1 = (char **)malloc(1024 * sizeof(char *)); // Keep watch of this (1024)
     line1[0] = "\0";
@@ -1425,6 +1469,7 @@ int main(int argc, char ** argv)
     // Set built-in types
     types[arrsize(types)] = "integer";
     types[arrsize(types)] = "string";
+    types[arrsize(types)] = "bool";
 
     // Clear file_declarations
     file_declarations = (char *)malloc(1);
