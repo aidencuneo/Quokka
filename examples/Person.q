@@ -24,11 +24,16 @@ end
 
 
 main:
-    bool boolean = false
-    println boolean
+    // print and println keywords may have brackets (it's optional)
+    print('Please enter a name: ')
 
-    string aiden = 'aiden'
-    Person john = new Person(readchar())
-    john.show()
-    println (john.name + " is this person's name") + 'dskjcndskjcsd'
+    // Initialise a Person object using input()
+    Person person = new Person(input())
+
+    // Call the Person object's show function
+    person.show()
+
+    // Print some test sentences
+    println (person.name + " is this person's name") + '.' // Just a test line
+    println 'Bunch of gibberish. ' + (person.name) + '.' // Also just a test line
 end

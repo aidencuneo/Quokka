@@ -179,11 +179,9 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
         }
         else if (
             (startswith(origline[p], "(") && endswith(origline[p], ")")) && ((!(
-                p > 1 && strcmp(origline[p - 2], "new") == 0// strstr(origline[p], ".__add__(") != NULL ||
-                // strstr(origline[p], ".__sub__(") != NULL ||
-                // strstr(origline[p], ".__mul__(") != NULL ||
-                // strstr(origline[p], ".__div__(") != NULL
-            ) && (isInline || stringInList(origline, "=")))))
+                (p > 1 && strcmp(origline[p - 2], "new") == 0)
+            )) )
+        )
         {
             if (verbose) println("!!BRACKETS");
             if (verbose) println(origline[p]);

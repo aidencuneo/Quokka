@@ -784,9 +784,42 @@ char * getrealpath(char * path)
 
 #define ptrindex(value, index) _Generic((value, index), char ** : cptrindex, default : cptrindex)(value, index)
 
-string readchar(){return String(getchar());}
-int readint(){int out;scanf("%d",&out);return out;}
-float readfloat(){float out;scanf("%f",&out);return out;}
+string readchar()
+{
+    return String(getchar());
+}
+
+string input()
+{
+    char * buffer = (char *)malloc(1);
+    strcpy(buffer, "");
+    char last = 0;
+
+    while (last != '\n' && last != '\r')
+    {
+        last = getchar();
+        buffer = (char *)realloc(buffer, strlen(buffer) + 1);
+        buffer[strlen(buffer)] = last;
+    }
+
+    buffer[strlen(buffer) - 1] = '\0';
+
+    return String(buffer);
+}
+
+int readint()
+{
+    int out;
+    scanf("%d", &out);
+    return out;
+}
+
+float readfloat()
+{
+    float out;
+    scanf("%f", &out);
+    return out;
+}
 
 // print
 

@@ -20,10 +20,9 @@ self.id=__string_Constructor__(name.length.__mul__(name.length,(Integer(5)).__ad
 self.show=__show_Person__;
 return self;}
 int main(int argc,char**argv){
-bool boolean=Bool(0);
-println(boolean);
-string aiden=String("aiden");
-Person john=__Person_Constructor__(readchar());
+print((String(String("Please enter a name: "))));
+Person person=__Person_Constructor__(input());
 ;
-john.show(john);println((john.name + " is this person's name").__add__(john.name + " is this person's name",String(String("dskjcndskjcsd"))));
+person.show(person);println((person.name.__add__(person.name,String(" is this person's name"))).__add__(person.name.__add__(person.name,String(" is this person's name")),String(String("."))));
+println(String("Bunch of gibberish. ").__add__(String("Bunch of gibberish. "),((person.name)).__add__(person.name,String(String(".")))));
 }
