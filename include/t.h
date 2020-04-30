@@ -100,6 +100,7 @@ char cprint(char value);
 char * cpprint(char * value);
 string sprint(string value);
 string * saprint(string value[]);
+integer intprint(integer value);
 bool bprint(bool value);
 
 // integer
@@ -738,28 +739,6 @@ char * cpstrip(char * s)
     return s;
 }
 
-void tokenise(char * arr[], char * buffer, char * tokAt)
-{
-    int i = 0;
-    arr[0] = strtok(buffer, tokAt);
-    while (arr[i] != NULL)
-    {
-        i++;
-        arr[i] = cpstrip(strtok(NULL, tokAt));
-    }
-}
-
-void ntokenise(char * arr[], char * buffer, char * tokAt)
-{
-    int i = 0;
-    arr[0] = nstrtok(buffer, tokAt);
-    while (arr[i] != NULL)
-    {
-        i++;
-        arr[i] = cpstrip(nstrtok(NULL, tokAt));
-    }
-}
-
 int charCount(char * chst, char ch)
 {
     string st = String(chst);
@@ -773,6 +752,28 @@ int charCount(char * chst, char ch)
     }
 
     return count;
+}
+
+void tokenise(char * arr[], char * buffer, char * tokAt)
+{
+    int i = 0;
+    arr[0] = cpstrip(strtok(buffer, tokAt));
+    while (arr[i] != NULL)
+    {
+        i++;
+        arr[i] = cpstrip(strtok(NULL, tokAt));
+    }
+}
+
+void ntokenise(char * arr[], char * buffer, char * tokAt)
+{
+    int i = 0;
+    arr[0] = cpstrip(nstrtok(buffer, tokAt));
+    while (arr[i] != NULL)
+    {
+        i++;
+        arr[i] = cpstrip(nstrtok(NULL, tokAt));
+    }
 }
 
 char * getrealpath(char * path)

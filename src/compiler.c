@@ -294,37 +294,8 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
     return linestr1;
 }
 
-char * compileline(char * origline[], int num, int lineLen, int isInline)
+char * precompile_stage_2(char ** line1, char * separator, int num, int isInline)
 {
-    // num is current line number
-
-    char * separator = "\n";
-
-    //
-    /// PRECOMPILE STAGE 1
-    //
-
-    if (verbose) println("--PRECOMPILE STAGE 1--");
-
-    char * linestr1 = precompile_stage_1(origline, separator, num, isInline);
-
-    char ** line1 = (char **)malloc(1024 * sizeof(char *)); // Keep watch of this (1024)
-    line1[0] = "\0";
-
-    tokenise(line1, linestr1, separator);
-    for (int p = 0; p < arrsize(line1); p++)
-        line1[p] = cpstrip(line1[p]);
-
-    if (verbose)
-        for (int p = 0; p < arrsize(line1); p++)
-            println(line1[p]);
-
-    //
-    /// PRECOMPILE STAGE 2
-    //
-
-    if (verbose) println("--PRECOMPILE STAGE 2--");
-
     char * linestr2 = (char *)malloc(1);
     strcpy(linestr2, "");
 
@@ -442,12 +413,55 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         }
     }
 
+    return linestr2;
+}
+
+char * compileline(char * origline[], int num, int lineLen, int isInline)
+{
+    // num is current line number
+
+    // MAKE QUOKKA FOLLOW BIDMAS
+    // Brackets - Done
+    // Indices  - Not done
+    // Divide   - Not done
+    // Multiply - Not done
+    // Add      - Not done
+    // Subtract - Not done
+
+    // D & M will group
+    // A & S will group
+
+    char * separator = "\n";
+
+    //
+    /// PRECOMPILE STAGE 1
+    //
+
+    if (verbose) println("--PRECOMPILE STAGE 1--");
+
+    char * linestr1 = precompile_stage_1(origline, separator, num, isInline);
+
+    char ** line1 = (char **)malloc(1024 * sizeof(char *)); // Keep watch of this (1024)
+    line1[0] = "";
+
+    tokenise(line1, linestr1, separator);
+
+    if (verbose)
+        for (int p = 0; p < arrsize(line1); p++)
+            println(line1[p]);
+
+    //
+    /// PRECOMPILE STAGE 2
+    //
+
+    if (verbose) println("--PRECOMPILE STAGE 2--");
+
+    char * linestr2 = precompile_stage_2(line1, separator, num, isInline);
+
     char ** line = (char **)malloc(1024 * sizeof(char *)); // Keep watch of this (1024)
-    line[0] = "\0";
+    line[0] = "";
 
     tokenise(line, linestr2, separator);
-    for (int p = 0; p < arrsize(line); p++)
-        line[p] = cpstrip(line[p]);
 
     if (verbose)
         for (int p = 0; p < arrsize(line); p++)
@@ -557,20 +571,20 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         else if (len < 2) error("if statement missing condition", num);
         arrlstrip(line);
         len--;
-        strcat(r, "if(");
+        strcat(r, "if(Bool(");
         strcat(r, compileline(line, num, len, 1));
-        strcat(r, "){\n");
+        strcat(r, ").value.value){\n");
         scope++;
     }
     else if (strcmp(line[0], "elif") == 0)
     {
         if (isInline) error("elif statement must be at start of line", num);
-        if (len < 2) error("elif statement missing condition", num);
+        else if (len < 2) error("elif statement missing condition", num);
         arrlstrip(line);
         len--;
-        strcat(r, "else if(");
+        strcat(r, "else if(Bool(");
         strcat(r, compileline(line, num, len, 1));
-        strcat(r, "){\n");
+        strcat(r, ").value.value){\n");
         scope++;
     }
     else if (strcmp(line[0], "else") == 0)
@@ -583,11 +597,12 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     else if (strcmp(line[0], "while") == 0)
     {
         if (isInline) error("while loop must be at start of line", num);
-        if (len < 2) error("while loop missing condition", num);
-        else if (len > 2) error("while loop received too many conditions", num);
-        strcat(r, "while(");
-        strcat(r, line[1]);
-        strcat(r, "){\n");
+        else if (len < 2) error("while loop missing condition", num);
+        arrlstrip(line);
+        len--;
+        strcat(r, "while(Bool(");
+        strcat(r, compileline(line, num, len, 1));
+        strcat(r, ").value.value){\n");
         scope++;
     }
     else if (strcmp(line[0], "for") == 0)
@@ -1059,7 +1074,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     else if (strcmp(line[0], "continue") == 0)
     {
         if (isInline) error("continue action must be at start of line", num);
-        if (scope < 1) error("continue action has nothing to end, program is already at minimum scope", num);
+        if (scope < 2) error("continue action has nothing to end, program is already at minimum scope", num);
         if (len > 1) error("continue action received too many arguments", num);
         strcat(r, "continue;\n");
     }
@@ -1136,6 +1151,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     else if (stringInList(line, "="))
     {
         if (isInline) error("variables can only be defined at the start of a line", num);
+        else if (scope < 1) error("variables can not be defined at minimum scope", num);
         else if (len < 2) error("invalid syntax", num);
         else if (len < 3) error("invalid syntax", num);
         strcat(r, line[0]); // Type/Name
