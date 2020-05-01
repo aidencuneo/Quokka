@@ -119,6 +119,7 @@ int stringIsInt(char * s)
 {
     if (!strlen(s))
         return 0;
+
     for (int i = 0; i < strlen(s); ++i)
     {
         if (s[i] != '0' &&
@@ -133,6 +134,21 @@ int stringIsInt(char * s)
             s[i] != '9')
             return 0;
     }
+
+    return 1;
+}
+
+int cpisidentifier(char * s)
+{
+    if (!strlen(s))
+        return 0;
+
+    for (int i = 0; i < strlen(s); ++i)
+    {
+        if (!isalnum(s[i]) && s[i] != '_')
+            return 0;
+    }
+
     return 1;
 }
 
@@ -168,6 +184,10 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
     {
         if (verbose) print(":: ");
         if (verbose) println(origline[p]);
+
+        if (!strlen(origline[p]))
+            break;
+
         if (p > 0 && startswith(origline[p], "."))
         {
             linestr1[strlen(linestr1) - 1] = '\0';
@@ -179,7 +199,10 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
         }
         else if (
             (startswith(origline[p], "(") && endswith(origline[p], ")")) && ((!(
-                (p > 1 && strcmp(origline[p - 2], "new") == 0)
+                (p > 0 && stringInList(types, origline[p - 1])) ||
+                (p > 1 && strcmp(origline[p - 2], "new") == 0) ||
+                (strcmp(origline[0], "def") == 0) ||
+                (p > 0 && cpisidentifier(origline[p - 1]))
             )) )
         )
         {
@@ -201,8 +224,8 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
         }
         else if (startswith(origline[p], "'") && endswith(origline[p], "'"))
         {
-            char * temp = (char *)malloc(strlen(origline[p]) + 7 + 1 + 1);
-            strcpy(temp, "String(\"");
+            char * temp = (char *)malloc(strlen(origline[p]) + 24 + 1 + 1);
+            strcpy(temp, "__string_Constructor__(\"");
             string sliced = __slice_string__(String(origline[p]), 1, 1);
             string escaped = __replace_string__(sliced, String("\""), String("\\\""));
             strcat(temp, escaped.value);
@@ -218,8 +241,8 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
         }
         else if (startswith(origline[p], "\"") && endswith(origline[p], "\""))
         {
-            char * temp = (char *)malloc(strlen(origline[p]) + 7 + 1 + 1);
-            strcpy(temp, "String(");
+            char * temp = (char *)malloc(strlen(origline[p]) + 23 + 1 + 1);
+            strcpy(temp, "__string_Constructor__(");
             strcat(temp, origline[p]);
             strcat(temp, ")");
 
@@ -233,8 +256,8 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
         }
         else if (stringIsInt(origline[p]))
         {
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 9 + strlen(origline[p]) + 2 + 1);
-            strncat(linestr1, "Integer(", 9);
+            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 24 + strlen(origline[p]) + 2 + 1);
+            strncat(linestr1, "__integer_Constructor__(", 25);
             strncat(linestr1, origline[p], strlen(origline[p]));
             strncat(linestr1, ")", 2);
 
@@ -243,16 +266,16 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
         }
         else if (strcmp(origline[p], "true") == 0)
         {
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 7 + 1);
-            strncat(linestr1, "Bool(1)", 8);
+            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 23 + 1);
+            strncat(linestr1, "__bool_Constructor__(1)", 24);
 
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
         else if (strcmp(origline[p], "false") == 0)
         {
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 7 + 1);
-            strncat(linestr1, "Bool(0)", 8);
+            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 23 + 1);
+            strncat(linestr1, "__bool_Constructor__(0)", 24);
 
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
@@ -399,6 +422,25 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
 
             arrdel(line1, p + 1);
             len2--;
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            strncat(linestr2, separator, strlen(separator));
+        }
+        else if (stringInList(types, line1[p]) && p + 1 < len2 && startswith(line1[p + 1], "(") && endswith(line1[p + 1], ")") && !(
+            p - 1 >= 0 && strcmp(line1[p - 1], "new") == 0
+        ))
+        {
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(line1[p + 1]) + 3 + strlen(line1[p]) + 2 + 1);
+            strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
+            strncat(linestr2, ".__", 4);
+            strncat(linestr2, line1[p], strlen(line1[p]));
+            strncat(linestr2, "__", 3);
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            strncat(linestr2, separator, strlen(separator));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 2 + 1);
+            strncat(linestr2, "()", 3);
 
             linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
@@ -567,47 +609,92 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     }
     else if (strcmp(line[0], "if") == 0)
     {
-        if (isInline) error("if statement must be at start of line", num);
+        if (isInline) error("if statement must be at the start of a line", num);
         else if (len < 2) error("if statement missing condition", num);
-        arrlstrip(line);
-        len--;
-        strcat(r, "if(Bool(");
-        strcat(r, compileline(line, num, len, 1));
+
+        char ** temp = malloc(3 * sizeof(char *));
+        temp[0] = malloc(4 + 1);
+        strcpy(temp[0], "bool");
+
+        temp[1] = malloc(2);
+        strcpy(temp[1], "(");
+
+        for (int p = 1; p < len; p++)
+        {
+            temp[1] = realloc(temp[1], strlen(temp[1]) + strlen(line[p]) + 1);
+            strcat(temp[1], line[p]);
+        }
+
+        temp[1] = realloc(temp[1], strlen(temp[1]) + 2);
+        strcat(temp[1], ")");
+
+        strcat(r, "if((");
+        strcat(r, compileline(temp, num, 2, 1));
         strcat(r, ").value.value){\n");
         scope++;
     }
     else if (strcmp(line[0], "elif") == 0)
     {
-        if (isInline) error("elif statement must be at start of line", num);
+        if (isInline) error("elif statement must be at the start of a line", num);
         else if (len < 2) error("elif statement missing condition", num);
-        arrlstrip(line);
-        len--;
-        strcat(r, "else if(Bool(");
-        strcat(r, compileline(line, num, len, 1));
+
+        char ** temp = malloc(3 * sizeof(char *));
+        temp[0] = malloc(4 + 1);
+        strcpy(temp[0], "bool");
+
+        temp[1] = malloc(2);
+        strcpy(temp[1], "(");
+
+        for (int p = 1; p < len; p++)
+        {
+            temp[1] = realloc(temp[1], strlen(temp[1]) + strlen(line[p]) + 1);
+            strcat(temp[1], line[p]);
+        }
+
+        temp[1] = realloc(temp[1], strlen(temp[1]) + 2);
+        strcat(temp[1], ")");
+
+        strcat(r, "else if((");
+        strcat(r, compileline(temp, num, 2, 1));
         strcat(r, ").value.value){\n");
         scope++;
     }
     else if (strcmp(line[0], "else") == 0)
     {
-        if (isInline) error("else statement must be at start of line", num);
+        if (isInline) error("else statement must be at the start of a line", num);
         else if (len > 1) error("else statement received too many conditions", num);
         strcat(r, "else{\n");
         scope++;
     }
     else if (strcmp(line[0], "while") == 0)
     {
-        if (isInline) error("while loop must be at start of line", num);
+        if (isInline) error("while loop must be at the start of a line", num);
         else if (len < 2) error("while loop missing condition", num);
-        arrlstrip(line);
-        len--;
-        strcat(r, "while(Bool(");
-        strcat(r, compileline(line, num, len, 1));
+        
+        char ** temp = malloc(3 * sizeof(char *));
+        temp[0] = malloc(4 + 1);
+        strcpy(temp[0], "bool");
+
+        temp[1] = malloc(2);
+        strcpy(temp[1], "(");
+
+        for (int p = 1; p < len; p++)
+        {
+            temp[1] = realloc(temp[1], strlen(temp[1]) + strlen(line[p]) + 1);
+            strcat(temp[1], line[p]);
+        }
+
+        temp[1] = realloc(temp[1], strlen(temp[1]) + 2);
+        strcat(temp[1], ")");
+
+        strcat(r, "while((");
+        strcat(r, compileline(temp, num, 2, 1));
         strcat(r, ").value.value){\n");
         scope++;
     }
     else if (strcmp(line[0], "for") == 0)
     {
-        if (isInline) error("for loop must be at start of line", num);
+        if (isInline) error("for loop must be at the start of a line", num);
         if (len < 2) error("for loop missing variable type", num);
         if (len < 3) error("for loop missing variable name", num);
         if (len < 4) error("for loop missing variable value", num);
@@ -630,7 +717,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     }
     else if (strcmp(line[0], "foreach") == 0)
     {
-        if (isInline) error("foreach loop must be at start of line", num);
+        if (isInline) error("foreach loop must be at the start of a line", num);
         if (len < 2) error("foreach loop missing variable type", num);
         if (len < 3) error("foreach loop missing variable name", num);
         if (len < 4) error("foreach loop missing iterable", num);
@@ -653,7 +740,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         char * start;
         char * stop;
         char * step;
-        if (isInline) error("rangefor loop must be at start of line", num);
+        if (isInline) error("rangefor loop must be at the start of a line", num);
         else if (len < 2) error("rangefor loop missing variable name", num);
         else if (len < 3) error("rangefor loop missing range stop number", num);
         else if (len == 3)
@@ -693,7 +780,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     }
     // else if (strcmp(line[0], "string[]") == 0)
     // {
-    //     if (isInline) error("string[] declaration must be at start of line", num);
+    //     if (isInline) error("string[] declaration must be at the start of a line", num);
     //     else if (len < 2) error("string[] declaration missing variable name", num);
     //     else if (len < 3)
     //     {
@@ -720,7 +807,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     // }
     else if (strcmp(line[0], "set") == 0)
     {
-        if (isInline) error("set action must be at start of line", num);
+        if (isInline) error("set action must be at the start of a line", num);
         if (len < 2) error("set action missing variable name", num);
         if (len < 3) error("set action missing new variable value", num);
         strcat(r, line[1]);
@@ -749,7 +836,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     else if (endswith(line[0], ":"))
     {
         char * name = __slice_string__(String(line[0]), 0, 1).value;
-        if (isInline) error("proc `:` action must be at start of line", num);
+        if (isInline) error("proc `:` action must be at the start of a line", num);
         else if (scope > 0 && !strlen(class_constructor)) error("proc `:` action can not be in a scope greater than 1", num);
         else if (len < 1) error("proc `:` action missing arguments", num);
         else if (len > 1) error("proc `:` action received too many arguments", num);
@@ -781,7 +868,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     }
     else if (strcmp(line[0], "def") == 0)
     {
-        if (isInline) error("def action must be at start of line", num);
+        if (isInline) error("def action must be at the start of a line", num);
         if (scope == 1 && strlen(object_def))
         {
             if (len < 2) error("def action missing type", num);
@@ -805,7 +892,10 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                 strcat(r, "(");
                 strcat(r, object_def);
                 strcat(r, " self,");
-                strcat(r, line[3]);
+                char * args = line[3];
+                if (startswith(args, "(") && endswith(args, ")"))
+                    args = __slice_string__(String(args), 1, 1).value;
+                strcat(r, args);
                 strcat(r, ");\n");
             }
             else if (len > 4) error("def action received too many arguments", num);
@@ -856,6 +946,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             {
                 if (strlen(class_constructor))
                 {
+                    println("HERE");
                     class_declarations = (char *)realloc(class_declarations,
                         strlen(class_declarations) + strlen(line[1]) + 3 + strlen(line[2]) +
                         1 + strlen(class_constructor) + 3 + strlen(class_constructor) + 6 +
@@ -868,12 +959,18 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                     strcat(class_declarations, "__(");
                     strcat(class_declarations, class_constructor);
                     strcat(class_declarations, " self,");
-                    strcat(class_declarations, line[3]);
+                    char * args = line[3];
+                    if (startswith(args, "(") && endswith(args, ")"))
+                        args = __slice_string__(String(args), 1, 1).value;
+                    strcat(class_declarations, args);
                     strcat(class_declarations, "){\n");
 
                     cur_class_def = (char *)realloc(cur_class_def,
-                        strlen(cur_class_def) + strlen(line[2]) + 1);
-                    strcat(cur_class_def, line[2]);
+                        strlen(line[2]) + 1);
+                    strcpy(cur_class_def, line[2]);
+
+                    println(cur_class_def);
+                    println("HERE");
                 }
                 else
                 {
@@ -883,13 +980,18 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                     strcat(r, "(");
                     strcat(r, line[3]);
                     strcat(r, "){\n");
+
+                    char * args = line[3];
+                    if (startswith(args, "(") && endswith(args, ")"))
+                        args = __slice_string__(String(args), 1, 1).value;
+
                     file_declarations = (char *)realloc(
-                        file_declarations, strlen(line[1]) + 1 + strlen(line[2]) + 1 + strlen(line[3]) + 4 + 1);
+                        file_declarations, strlen(line[1]) + 1 + strlen(line[2]) + 1 + strlen(args) + 4 + 1);
                     strcat(file_declarations, line[1]);
                     strcat(file_declarations, " ");
                     strcat(file_declarations, line[2]);
-                    strcat(file_declarations, "(");
-                    strcat(file_declarations, line[3]);
+                    strcat(file_declarations, "(");                    
+                    strcat(file_declarations, args);
                     strcat(file_declarations, ");\n");
                 }
             }
@@ -900,7 +1002,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     {
         char * name;
         if (strlen(class_constructor)) error("object definition must not be within class constructor", num);
-        if (isInline) error("object definition must be at start of line", num);
+        if (isInline) error("object definition must be at the start of a line", num);
         if (len > 2) error("object definition received too many arguments", num);
         if (len < 2)
         {
@@ -938,7 +1040,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         char * args = 0;
         if (strlen(class_constructor)) error("class constructor can not be within class constructor", num);
         if (scope > 0) error("class constructor scope must not be higher than minimum scope", num);
-        if (isInline) error("class constructor definition must be at start of line", num);
+        if (isInline) error("class constructor definition must be at the start of a line", num);
         if (len > 3) error("class constructor definition received too many arguments", num);
         // if `class classname(int arg1, int arg2)`
         if (len == 3)
@@ -972,10 +1074,13 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             name = (char *)malloc(strlen(current_file) - ext);
             strcpy(name, __slice_string__(String(current_file), 0, ext).value);
         }
-        strcat(r, name);
-        strcat(r, " __");
-        strcat(r, name);
-        strcat(r, "_Constructor__(");
+        char * sg;
+        sg = malloc(strlen(name) + 3 + strlen(name) + 15 + 1);
+        strcpy(sg, "");
+        strcat(sg, name);
+        strcat(sg, " __");
+        strcat(sg, name);
+        strcat(sg, "_Constructor__(");
         if (args && strlen(args) > 2)
         {
             char * tempstr[512];
@@ -985,14 +1090,27 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                 tempstr[p] = cpstrip(tempstr[p]);
                 if (verbose) println(tempstr[p]);
             }
-            strcat(r, compileline(tempstr, num, arrsize(tempstr), 1));
+            char * temp = compileline(tempstr, num, arrsize(tempstr), 1);
+            sg = realloc(sg, strlen(sg) + strlen(temp) + 1);
+            strcat(sg, temp);
         }
-        strcat(r, "){\n");
-        strcat(r, name);
-        strcat(r, " self;\n");
+        sg = realloc(sg, strlen(sg) + 2);
+        strcat(sg, ")");
+        file_declarations = (char *)realloc(file_declarations,
+            strlen(file_declarations) + strlen(sg) + 2 + 1);
+        strcat(file_declarations, sg);
+        strcat(file_declarations, ";\n");
+
+        sg = realloc(sg, strlen(sg) + 2 + strlen(name) + 7 + 1);
+        strcat(sg, "{\n");
+        strcat(sg, name);
+        strcat(sg, " self;\n");
+        strcpy(r, sg);
+
         class_constructor = (char *)realloc(class_constructor,
             strlen(class_constructor) + strlen(name) + 1);
         strcpy(class_constructor, name);
+
         types[arrsize(types)] = name;
         scope++;
     }
@@ -1031,9 +1149,16 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         }
         strcat(r, ");\n");
     }
+    else if (strcmp(line[0], "scope") == 0)
+    {
+        if (isInline) error("scope action must be at the start of a line", num);
+        else if (scope < 1) error("scope action has no effect at global scope", num);
+        strcat(r, "{\n");
+        scope++;
+    }
     else if (strcmp(line[0], "end") == 0)
     {
-        if (isInline) error("end action must be at start of line", num);
+        if (isInline) error("end action must be at the start of a line", num);
         else if (scope < 1) error("end action has nothing to end, program is already at minimum scope", num);
         else if (len > 1) error("end action received too many arguments", num);
         else if (strlen(class_constructor) && scope == 1)
@@ -1052,7 +1177,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             //strcpy(object_def, "");
             object_def[0] = '\0';
         }
-        else if (strlen(class_constructor) && strlen(cur_class_def))
+        else if (strlen(class_constructor) && strlen(cur_class_def) && scope == 2)
         {
             class_declarations = (char *)realloc(class_declarations,
                 strlen(class_declarations) + 2 + 1);
@@ -1073,17 +1198,16 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     }
     else if (strcmp(line[0], "continue") == 0)
     {
-        if (isInline) error("continue action must be at start of line", num);
+        if (isInline) error("continue action must be at the start of a line", num);
         if (scope < 2) error("continue action has nothing to end, program is already at minimum scope", num);
         if (len > 1) error("continue action received too many arguments", num);
         strcat(r, "continue;\n");
     }
     else if (strcmp(line[0], "ret") == 0)
     {
-        if (isInline) error("ret action must be at start of line", num);
-        if (scope < 1) error("ret action can not return a value at minimum scope", num);
-        if (len < 2) error("ret action missing argument", num);
-        else if (len > 2) error("ret action received too many arguments", num);
+        if (isInline) error("ret action must be at the start of a line", num);
+        else if (scope < 1) error("ret action can not return a value at minimum scope", num);
+        else if (len < 2) error("ret action missing argument", num);
         else
         {
             strcat(r, "return ");
@@ -1095,7 +1219,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     }
     else if (strcmp(line[1], "++") == 0)
     {
-        if (isInline) error("++ action must be at start of line, after variable name", num);
+        if (isInline) error("++ action must be at the start of a line, after variable name", num);
         if (scope < 1) error("++ action can not be at minimum scope", num);
         if (len > 3) error("++ action received too many arguments", num);
         else if (len > 2)
@@ -1114,7 +1238,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     }
     else if (strcmp(line[1], "--") == 0)
     {
-        if (isInline) error("-- action must be at start of line, after variable name", num);
+        if (isInline) error("-- action must be at the start of a line, after variable name", num);
         if (scope < 1) error("-- action can not be at minimum scope", num);
         if (len > 3) error("-- action received too many arguments", num);
         else if (len > 2)
@@ -1531,6 +1655,9 @@ int main(int argc, char ** argv)
 
     if (!compiled)
         return 0;
+
+    if (scope != 0)
+        error("EOF with scope remaining, did you forget to add 'end' somewhere?", charCount(readfile(fname), '\n'));
 
     FILE * fp = fopen(outputpath, "w");
     fprintf(fp, "%s", C_HEADERS);
