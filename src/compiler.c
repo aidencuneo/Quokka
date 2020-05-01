@@ -1,9 +1,15 @@
-#include "../include/t.h"
-#include "../include/compiler.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
+#include "../include/t.h"
+#include "../include/compiler.h"
+#include "../include/scopemanage.h"
+
+scopeManagement declared;
+scopeManagement defined;
+scopeManagement scpfuncs;
 
 // Function declarations
 void error(char * text, int line);
@@ -73,7 +79,7 @@ void error(char * text, int line)
     println("\nProgram compilation terminated:");
     printf("At %s : Line %d\n\n", current_file, line);
 
-    if (strlen(lineprevious))
+    if (line - 1 > 0)
         printf("  %d | %s\n", line - 1, lineprevious);
     printf("> %d > %s\n", line, linepreview);
     if (strlen(linenext))
@@ -778,61 +784,22 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         values[arrsize(values)] = line[2];
         scope++;
     }
-    // else if (strcmp(line[0], "string[]") == 0)
+    // else if (startswith(line[1], "[") && endswith(line[1], "]"))
     // {
-    //     if (isInline) error("string[] declaration must be at the start of a line", num);
-    //     else if (len < 2) error("string[] declaration missing variable name", num);
-    //     else if (len < 3)
+    //     // This must be remade to use OO indexing `__index__(0)` instead of plain indexing `[0]`
+    //     if (len > 3) error("index can not take arguments", num);
+    //     strcat(r, line[0]);
+    //     strcat(r, "[");
+    //     strcat(r, __slice_string__(String(line[1]), 1, 1).value);
+    //     strcat(r, "]");
+    //     if (stringInList(arrptrs, line[0]))
     //     {
-    //         arrptrs[arrsize(arrptrs)] = line[1];
-    //         strcat(r, "string*");
-    //         strcat(r, line[1]);
-    //         strcat(r, ";\n");
+    //         strcat(r, ".value");
     //     }
-    //     else
-    //     {
-    //         arrptrs[arrsize(arrptrs)] = line[1];
-    //         strcat(r, "string*");
-    //         strcat(r, line[1]);
-    //         strcat(r, "=(string*)malloc(2*sizeof(string);");
-    //         strcat(r, line[1]);
-    //         strcat(r, "[0]=String(\"\\0\")");
-    //         arrlstrip(line);
-    //         arrlstrip(line);
-    //         len -= 2;
-    //         char * stringvalue = compileline(line, num, len, 1);
-    //         strcat(r, stringvalue);
-    //         strcat(r, ";\n");
-    //     }
-    // }
-    else if (strcmp(line[0], "set") == 0)
-    {
-        if (isInline) error("set action must be at the start of a line", num);
-        if (len < 2) error("set action missing variable name", num);
-        if (len < 3) error("set action missing new variable value", num);
-        strcat(r, line[1]);
-        strcat(r, "=");
-        arrlstrip(line);
-        arrlstrip(line);
-        len -= 2;
-        strcat(r, compileline(line, num, len, 1));
-        strcat(r, ";\n");
-    }
-    else if (startswith(line[1], "[") && endswith(line[1], "]"))
-    {
-        if (len > 3) error("index can not take arguments", num);
-        strcat(r, line[0]);
-        strcat(r, "[");
-        strcat(r, __slice_string__(String(line[1]), 1, 1).value);
-        strcat(r, "]");
-        if (stringInList(arrptrs, line[0]))
-        {
-            strcat(r, ".value");
-        }
         
-        if (!isInline)
-            strcat(r, ";\n");
-    }
+    //     if (!isInline)
+    //         strcat(r, ";\n");
+    // }
     else if (endswith(line[0], ":"))
     {
         char * name = __slice_string__(String(line[0]), 0, 1).value;
@@ -1124,10 +1091,8 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         char * args = 0;
         if (scope < 1) error("new object creation must not be at minimum scope", num);
         else if (len < 2) error("new object creation missing object to instantiate", num);
-        else if (len < 3) error("new object creation missing constructor arguments", num);
         else if (len > 3) error("new object creation received too many arguments", num);
-        // if (len == 3)
-        else
+        else if (len == 3)
             args = line[2];
         if (!(startswith(args, "(") && endswith(args, ")")))
             error("invalid constructor arguments in new object creation, arguments must have braces", num);
@@ -1147,7 +1112,9 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             while (endswith(r, ","))
                 strcpy(r, __slice_string__(String(r), 0, 1).value);
         }
-        strcat(r, ");\n");
+        strcat(r, ")");
+        if (!isInline)
+            strcat(r, ";\n");
     }
     else if (strcmp(line[0], "scope") == 0)
     {
@@ -1163,7 +1130,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         else if (len > 1) error("end action received too many arguments", num);
         else if (strlen(class_constructor) && scope == 1)
         {
-            strcat(r, "return self;}\n");
+            strcat(r, "return self;\n}\n");
             class_constructor = (char *)realloc(class_constructor, 1);
             //strcpy(class_constructor, "");
             class_constructor[0] = '\0';
@@ -1194,15 +1161,24 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             cur_class_def[0] = '\0';
         }
         else strcat(r, "}\n");
+        declared = _sc_delscope(declared, scope);
+        defined = _sc_delscope(defined, scope);
         scope--;
     }
-    else if (strcmp(line[0], "continue") == 0)
-    {
-        if (isInline) error("continue action must be at the start of a line", num);
-        if (scope < 2) error("continue action has nothing to end, program is already at minimum scope", num);
-        if (len > 1) error("continue action received too many arguments", num);
-        strcat(r, "continue;\n");
-    }
+    // else if (strcmp(line[0], "continue") == 0)
+    // {
+    //     if (isInline) error("continue action must be at the start of a line", num);
+    //     if (scope < 2) error("continue action outside of loop", num);
+    //     if (len > 1) error("continue action received too many arguments", num);
+    //     strcat(r, "continue;\n");
+    // }
+    // else if (strcmp(line[0], "break") == 0)
+    // {
+    //     if (isInline) error("break action must be at the start of a line", num);
+    //     if (scope < 2) error("break action outside of loop", num);
+    //     if (len > 1) error("break action received too many arguments", num);
+    //     strcat(r, "break;\n");
+    // }
     else if (strcmp(line[0], "ret") == 0)
     {
         if (isInline) error("ret action must be at the start of a line", num);
@@ -1275,9 +1251,11 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     else if (stringInList(line, "="))
     {
         if (isInline) error("variables can only be defined at the start of a line", num);
-        else if (scope < 1) error("variables can not be defined at minimum scope", num);
-        else if (len < 2) error("invalid syntax", num);
-        else if (len < 3) error("invalid syntax", num);
+        else if (scope < 1)
+            error("variables can not be defined at minimum scope, did you mean to declare a global variable instead?",
+                num);
+        else if (len < 2) error("invalid syntax in variable definition", num);
+        else if (len < 3) error("invalid syntax in variable definition", num);
         strcat(r, line[0]); // Type/Name
         // If second line token is not an equals sign `string word =`, `int num =`
         if (strcmp(line[1], "=") != 0)
@@ -1290,8 +1268,18 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                 strcat(err, "'");
                 error(err, num);
             }
+            char * varname = line[1];
+            if (_sc_exists(declared, varname, scope))
+            {
+                char * err = malloc(12 + strlen(varname) + 82 + 1);
+                strcpy(err, "identifier '");
+                strcat(err, varname);
+                strcat(err,
+                    "' has already been declared, maybe you forget to remove this line's variable type?");
+                error(err, num);
+            }
             strcat(r, " ");
-            strcat(r, line[1]); // Var name
+            strcat(r, varname); // Var name
             strcat(r, "=");
             len -= 3;
             arrlstrip(line);
@@ -1299,10 +1287,13 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             arrlstrip(line);
             strcat(r, compileline(line, num, len, 1)); // Var value
             strcat(r, ";\n");
+            declared = _sc_add(declared, varname, scope);
+            defined = _sc_add(defined, varname, scope);
         }
-        // If second line token is an equals sign `word =`
+        // If second line token is an equals sign `word =`, `num =`
         else
         {
+            char * varname = line[0];
             strcat(r, "=");
             len -= 2;
             arrlstrip(line);
@@ -1312,14 +1303,21 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             if (verbose) println("-------------------");
             strcat(r, compileline(line, num, len, 1)); // Var value
             strcat(r, ";\n");
+            if (!_sc_exists(defined, varname, scope))
+                defined = _sc_add(defined, varname, scope);
         }
     }
-    // else if (stringInList(types, line[0]))
-    // {
-    //     // Assign a type thingy here
-    //     // Basically `string word`
-    //     // So I can copy off of the else if above this if I need to
-    // }
+    else if (stringInList(types, line[0]))
+    {
+        if (isInline) error("variables can only be declared at the start of a line", num);
+        else if (len < 2) error("variable declaration missing type", num);
+        else if (len > 2) error("invalid syntax in variable declaration (too many arguments)", num);
+        strcat(r, line[0]);
+        strcat(r, " ");
+        strcat(r, line[1]);
+        strcat(r, ";\n");
+        declared = _sc_add(declared, line[1], scope);
+    }
     else if (startswith(line[len - 1], "(") && endswith(line[len - 1], ")"))
     {
         char * sg = (char *)malloc(1);
@@ -1375,11 +1373,28 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     {
         for (int p = 0; p < len; p++)
         {
-            // else if (isdigit(line[p]))
-            // {
-            //     // Do this later
-            //     // Make an object called Integer
-            // }
+            if (cpisidentifier(line[p]) &&
+                _sc_exists(declared, line[p], scope) &&
+                !_sc_exists(defined, line[p], scope) &&
+                !_sc_exists(scpfuncs, line[p], scope))
+            {
+                char * err = malloc(22 + strlen(line[p]) + 36 + 1);
+                strcpy(err, "undefined identifier '");
+                strcat(err, line[p]);
+                strcat(err, "', did you forget to set it's value?");
+                error(err, num);
+            }
+            else if (cpisidentifier(line[p]) &&
+                !_sc_exists(declared, line[p], scope) &&
+                !_sc_exists(defined, line[p], scope) &&
+                !_sc_exists(scpfuncs, line[p], scope))
+            {
+                char * err = malloc(23 + strlen(line[p]) + 1 + 1);
+                strcpy(err, "undeclared identifier '");
+                strcat(err, line[p]);
+                strcat(err, "'");
+                error(err, num);
+            }
             strcat(r, line[p]);
             strcat(r, " ");
         }
@@ -1532,6 +1547,10 @@ char ** quokka_line_tok(char * line)
         ) && !(
             t == '_' && c == '_' // Join together double underscores `__`
         ) && !(
+            q == 'A' && p == 'D' // Join alphabetical and numerical characters.
+        ) && !(
+            p == 'A' && q == 'D' // Second part to the line above.
+        ) && !(
             (q == 'A' || q == 'D' || t == '_') && c == ':' // Join together things like `main:` and `include:`
         ))
         {
@@ -1604,6 +1623,14 @@ int main(int argc, char ** argv)
         return 1;
     }
 
+    // Construct scope managers
+    declared = _scopeManager();
+    defined = _scopeManager();
+    scpfuncs = _scopeManager();
+
+    scpfuncs = _sc_add(scpfuncs, "print", 0);
+    scpfuncs = _sc_add(scpfuncs, "println", 0);
+
     // Set built-in types
     types[arrsize(types)] = "integer";
     types[arrsize(types)] = "string";
@@ -1657,7 +1684,7 @@ int main(int argc, char ** argv)
         return 0;
 
     if (scope != 0)
-        error("EOF with scope remaining, did you forget to add 'end' somewhere?", charCount(readfile(fname), '\n'));
+        error("EOF inside a scope, did you forget to add 'end' somewhere?", charCount(readfile(fname), '\n'));
 
     FILE * fp = fopen(outputpath, "w");
     fprintf(fp, "%s", C_HEADERS);

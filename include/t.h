@@ -337,11 +337,11 @@ string input()
     return String(buffer);
 }
 
-int readint()
+integer readint()
 {
     int out;
     scanf("%d", &out);
-    return out;
+    return Integer(out);
 }
 
 float readfloat()
