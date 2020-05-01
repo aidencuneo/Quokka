@@ -141,7 +141,7 @@ string * sarradd(string * lst, string arg1, ...)
 
     string last = va_arg(ap, string);
 
-    while (last.value != "\0")
+    while (strncmp(last.value, "\0", 2) != 0)
     {
         newlst[len + 1] = String("\0");
         newlst[len] = last;
@@ -180,7 +180,7 @@ int sarrsize(string * arr)
 {
     int i = 0;
     string j = arr[0];
-    while (j.value != "\0")
+    while (strncmp(j.value, "\0", 2) != 0)
     {
         i++;
         j = arr[i];
@@ -407,6 +407,7 @@ bool bprint(bool value)
     if (value.value.value)
         printf("true");
     else printf("false");
+    return value;
 }
 
 // println
@@ -465,4 +466,5 @@ bool bprintln(bool value)
     if (value.value.value)
         printf("true\n");
     else printf("false\n");
+    return value;
 }
