@@ -27,6 +27,7 @@ struct __integer_Struct__
     integer (*__div__)(integer self, integer other);
 
     bool (*__bool__)(integer self);
+    string (*__type__)(integer self);
 };
 
 integer IntegerFromInt(int value);
@@ -59,6 +60,7 @@ struct __string_Struct__
     string (*__div__)(string self, string other);
 
     bool (*__bool__)(string self);
+    string (*__type__)(string self);
 
     string (*lstrip)(string self);
     string (*rstrip)(string self);
@@ -100,6 +102,9 @@ struct __bool_Struct__
     integer (*__sub__)(bool self, bool other);
     integer (*__mul__)(bool self, bool other);
     integer (*__div__)(bool self, bool other);
+
+    bool (*__bool__)(bool self);
+    string (*__type__)(bool self);
 };
 
 bool BoolFromInt(int value);

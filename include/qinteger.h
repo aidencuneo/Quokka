@@ -14,7 +14,8 @@ integer __mul_integer__(integer self, integer other);
 integer __div_integer__(integer self, integer other);
 
 // Type functions `__typename__`
-bool __bool_integer__(integer self);
+bool __bool__integer__(integer self);
+string __type__integer__(integer self);
 
 // Regular functions `funcname`
 // (None yet)
@@ -34,7 +35,8 @@ integer IntegerFromInt(int value)
     self.__mul__ = __mul_integer__;
     self.__div__ = __div_integer__;
 
-    self.__bool__ = __bool_integer__;
+    self.__bool__ = __bool__integer__;
+    self.__type__ = __type__integer__;
 
     return self;
 }
@@ -90,11 +92,16 @@ integer __div_integer__(integer self, integer other)
 }
 
 // Type functions `__typename__`
-bool __bool_integer__(integer self)
+bool __bool__integer__(integer self)
 {
     if (self.value)
         return Bool(1);
     return Bool(0);
+}
+
+string __type__integer__(integer self)
+{
+    return String("integer");
 }
 
 // Regular functions `funcname`

@@ -9,6 +9,10 @@
 #include "qstring.h"
 #include "qbool.h"
 
+// File stuff
+int most_recent_line;
+char * current_file;
+
 //
 /// OS-related definitions
 //
@@ -308,8 +312,17 @@ void ntokenise(char * arr[], char * buffer, char * tokAt)
 char * getrealpath(char * path)
 {
     char * rp = realpath(path, NULL);
-    if (!rp) return NULL;
-    return __replace_string__(String(rp), String('\\'), String('/')).value;
+
+    if (!rp)
+    {
+        free(rp);
+        return 0;
+    }
+
+    char * res = __replace_string__(String(rp), String('\\'), String('/')).value;
+    free(rp);
+
+    return res;
 }
 
 #define ptrindex(value, index) _Generic((value, index), char ** : cptrindex, default : cptrindex)(value, index)
@@ -467,4 +480,24 @@ bool bprintln(bool value)
         printf("true\n");
     else printf("false\n");
     return value;
+}
+
+//
+/// More stuff
+//
+
+void raise(string text, char * lineprevious, char * linepreview, char * linenext, char * filename, int line)
+{
+    printf("At %s : Line %d\n\n", filename, line);
+
+    if (line - 1 > 0)
+        printf("  %d | %s\n", line - 1, lineprevious);
+    printf("> %d > %s\n", line, linepreview);
+    if (strlen(linenext))
+        printf("  %d | %s\n", line + 1, linenext);
+    print("\n");
+
+    printf("Error: %s\n\n", text.value);
+
+    exit(EXIT_FAILURE);
 }

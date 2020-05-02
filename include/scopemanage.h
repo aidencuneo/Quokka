@@ -21,8 +21,8 @@ scopeManagement _sc_add(scopeManagement self, char * name, int value)
 {
     int size = getchsize(self.names);
 
-    self.names = realloc(self.names, size + 3 * sizeof(char *));
-    self.scopes = realloc(self.scopes, size + 3 * sizeof(int));
+    self.names = realloc(self.names, size + 3 * 3 * sizeof(char *));
+    self.scopes = realloc(self.scopes, size + 3 * 3 * sizeof(int));
 
     self.names[size] = malloc(strlen(name) + 1);
     strcpy(self.names[size], name);
@@ -40,6 +40,8 @@ scopeManagement _sc_delindex(scopeManagement self, int index)
 
     for (int c = index; c < size; c++)
     {
+        if (c == index)
+            free(self.names[c]);
         self.names[c] = self.names[c + 1];
         self.scopes[c] = self.scopes[c + 1];
     }
@@ -74,6 +76,16 @@ int _sc_exists(scopeManagement self, char * name, int value)
     }
 
     return 0;
+}
+
+void _sc_clear(scopeManagement self)
+{
+    for (int i = 0; self.names[i] != NULL; i++)
+    {
+        free(self.names[i]);
+    }
+    free(self.names);
+    free(self.scopes);
 }
 
 void _sc_report(scopeManagement self)

@@ -8,13 +8,14 @@
 //
 
 // Special functions `__funcname__`
-integer __add_bool__(bool self, bool other);
-integer __sub_bool__(bool self, bool other);
-integer __mul_bool__(bool self, bool other);
-integer __div_bool__(bool self, bool other);
+integer __add__bool__(bool self, bool other);
+integer __sub__bool__(bool self, bool other);
+integer __mul__bool__(bool self, bool other);
+integer __div__bool__(bool self, bool other);
 
 // Type functions `__typename__`
-// (None yet)
+bool __bool__bool__(bool self);
+string __type__bool__(bool self);
 
 // Regular functions `funcname`
 // (None yet)
@@ -31,10 +32,13 @@ bool BoolFromInt(int value)
         self.value = Integer(1);
     else self.value = Integer(0);
 
-    self.__add__ = __add_bool__;
-    self.__sub__ = __sub_bool__;
-    self.__mul__ = __mul_bool__;
-    self.__div__ = __div_bool__;
+    self.__add__ = __add__bool__;
+    self.__sub__ = __sub__bool__;
+    self.__mul__ = __mul__bool__;
+    self.__div__ = __div__bool__;
+
+    self.__bool__ = __bool__bool__;
+    self.__type__ = __type__bool__;
 
     return self;
 }
@@ -70,28 +74,28 @@ bool BoolFromInteger(integer value)
 //
 
 // Special functions `__funcname__`
-integer __add_bool__(bool self, bool other)
+integer __add__bool__(bool self, bool other)
 {
     if (self.value.value)
         return Integer(1 + other.value.value);
     return other.value;
 }
 
-integer __sub_bool__(bool self, bool other)
+integer __sub__bool__(bool self, bool other)
 {
     if (self.value.value)
         return Integer(1 - other.value.value);
     return Integer(-other.value.value);
 }
 
-integer __mul_bool__(bool self, bool other)
+integer __mul__bool__(bool self, bool other)
 {
     if (self.value.value)
         return other.value;
     return Integer(0);
 }
 
-integer __div_bool__(bool self, bool other)
+integer __div__bool__(bool self, bool other)
 {
     if (!other.value.value)
         return Integer(0);
@@ -99,7 +103,15 @@ integer __div_bool__(bool self, bool other)
 }
 
 // Type functions `__typename__`
-// (None yet)
+bool __bool__bool__(bool self)
+{
+    return self;
+}
+
+string __type__bool__(bool self)
+{
+    return String("bool");
+}
 
 // Regular functions `funcname`
 // (None yet)

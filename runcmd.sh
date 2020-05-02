@@ -1,6 +1,6 @@
 #!/bin/bash
 
-gcc src/compiler.c -o bin/tc
+gcc src/compiler.c -o bin/tc -ggdb3
 if [[ $? != 0 ]]; then exit; fi
 bin/tc $1 examples/_temp.c $2
 if [[ $? != 0 ]]; then exit; fi

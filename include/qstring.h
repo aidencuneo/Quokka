@@ -8,10 +8,11 @@
 //
 
 // Special functions `__funcname__`
-string __add_string__(string self, string other);
+string __add__string__(string self, string other);
 
 // Type functions `__typename__`
-bool __bool_string__(string self);
+bool __bool__string__(string self);
+string __type__string__(string self);
 
 // Regular functions `funcname`
 string __lstrip_string__(string st);
@@ -39,9 +40,10 @@ string StringFromCharPointer(char * value)
     self.value = value;
     self.length = Integer(strlen(value));
 
-    self.__add__ = __add_string__;
+    self.__add__ = __add__string__;
 
-    self.__bool__ = __bool_string__;
+    self.__bool__ = __bool__string__;
+    self.__type__ = __type__string__;
 
     self.lstrip = __lstrip_string__;
     self.rstrip = __rstrip_string__;
@@ -59,14 +61,22 @@ string StringFromInt(int value)
 {
     char * newval = malloc(11);
     sprintf(newval, "%d", value);
-    return StringFromCharPointer(newval);
+
+    string out = StringFromCharPointer(newval);
+    free(newval);
+
+    return out;
 }
 
 string StringFromLong(long value)
 {
     char * newval = malloc(21);
     sprintf(newval, "%ld", value);
-    return StringFromCharPointer(newval);
+
+    string out = StringFromCharPointer(newval);
+    free(newval);
+
+    return out;
 }
 
 string StringFromChar(char value)
@@ -95,22 +105,29 @@ string StringFromInteger(integer value)
 //
 
 // Special functions `__funcname__`
-string __add_string__(string self, string other)
+string __add__string__(string self, string other)
 {
-    char * x = (char *)malloc(self.length.value + other.length.value + 1);
+    char * x = malloc(self.length.value + other.length.value + 1);
     strcpy(x, self.value);
     strcat(x, other.value);
 
     string out = String(x);
+    free(x);
+
     return out;
 }
 
 // Type functions `__typename__`
-bool __bool_string__(string self)
+bool __bool__string__(string self)
 {
     if (strlen(self.value))
         return Bool(1);
     return Bool(0);
+}
+
+string __type__string__(string self)
+{
+    return String("string");
 }
 
 // Regular functions `funcname`
@@ -119,7 +136,7 @@ string __lstrip_string__(string s)
     if (!s.value)
         return s;
 
-    while (s.value[0] == ' ')
+    while (isspace(s.value[0]))
         s.value++;
 
     return s;
@@ -127,7 +144,7 @@ string __lstrip_string__(string s)
 
 string __rstrip_string__(string st)
 {
-    char * s = (char *)malloc(st.length.value + 1);
+    char * s = malloc(st.length.value + 1);
     strcpy(s, st.value);
 
     if (!s)
@@ -146,12 +163,17 @@ string __rstrip_string__(string st)
         end--;
     *(end + 1) = '\0';
 
-    return String(s);
+    string out = String(s);
+
+    free(s);
+    free(end);
+
+    return out;
 }
 
 string __strip_string__(string st)
 {
-    char * s = (char *)malloc(st.length.value + 1);
+    char * s = malloc(st.length.value + 1);
     strcpy(s, st.value);
 
     if (!s)
@@ -170,12 +192,16 @@ string __strip_string__(string st)
         end--;
     *(end + 1) = '\0';
 
-    return __lstrip_string__(String(s));
+    string out = __lstrip_string__(String(s));
+
+    free(s);
+
+    return out;
 }
 
 string __upper_string__(string st)
 {
-    char * x = (char *)malloc(st.length.value * sizeof(char));
+    char * x = malloc(st.length.value);
 
     for (int i = 0; i < st.length.value; i++)
     {
@@ -189,7 +215,7 @@ string __upper_string__(string st)
 
 string __lower_string__(string st)
 {
-    char * x = (char *)malloc(st.length.value * sizeof(char));
+    char * x = malloc(st.length.value);
 
     for (int i = 0; i < st.length.value; i++)
     {
@@ -203,11 +229,14 @@ string __lower_string__(string st)
 
 string __slice_string__(string st, int start, int stop)
 {
-    char * x = (char *)malloc(st.length.value + 1 * sizeof(char));
+    char * x = malloc(st.length.value + 1);
     strcpy(x, st.value);
 
     if (!st.value || !st.length.value)
+    {
+        free(x);
         return st;
+    }
 
     char * end;
 
@@ -215,25 +244,33 @@ string __slice_string__(string st, int start, int stop)
     end -= stop;
     *(end + 1) = '\0';
 
-    x += start;
+    string out = String(x);
+    out.value += start;
 
-    return String(x);
+    free(x);
+    free(end);
+
+    return out;
 }
 
 string __reorder_string__(string st, int step)
 {
-    char * x = (char *)malloc(st.length.value * sizeof(char));
+    char * x = malloc(st.length.value);
 
     if (step < 1) step = 1;
     if (step > st.length.value) step = st.length.value;
     for (int i = 0; i < st.length.value; i += step)
     {
-        char * letter = malloc(2 * sizeof(char));
+        char * letter = malloc(2);
         letter[0] = st.value[i];
         strcat(x, letter);
+        free(letter);
     }
 
-    return String(x);
+    string out = String(x);
+    free(x);
+
+    return out;
 }
 
 string __replace_string__(string st, string strep, string repwith) {
@@ -268,7 +305,11 @@ string __replace_string__(string st, string strep, string repwith) {
     tmp = result = malloc(strlen(orig) + (len_with - len_rep) * count + 1);
 
     if (!result)
+    {
+        free(result);
+        free(tmp);
         return String("");
+    }
 
     // first time through the loop, all the variable are set correctly
     // from here on,
@@ -284,8 +325,12 @@ string __replace_string__(string st, string strep, string repwith) {
     }
 
     strcpy(tmp, orig);
-    string out;
-    out = String(result);
+
+    string out = String(result);
+
+    free(result);
+    free(tmp);
+
     return out;
 }
 
