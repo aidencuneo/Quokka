@@ -306,7 +306,6 @@ string __replace_string__(string st, string strep, string repwith) {
 
     if (!result)
     {
-        free(result);
         free(tmp);
         return String("");
     }
@@ -327,9 +326,6 @@ string __replace_string__(string st, string strep, string repwith) {
     strcpy(tmp, orig);
 
     string out = String(result);
-
-    free(result);
-    free(tmp);
 
     return out;
 }

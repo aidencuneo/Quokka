@@ -319,7 +319,7 @@ char * getrealpath(char * path)
         return 0;
     }
 
-    char * res = __replace_string__(String(rp), String('\\'), String('/')).value;
+    char * res = __replace_string__(String(rp), String("\\"), String("/")).value;
     free(rp);
 
     return res;

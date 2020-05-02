@@ -188,7 +188,6 @@ char * compile_raw_line(char * linestr, int num, int isInline)
     char * temp = compileline(line, num, -1, isInline);
 
     free(line);
-    free(temp);
 
     return temp;
 }
@@ -1735,7 +1734,12 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         strcpy(r, cpstrip(r));
     }
 
+    println("STA");
+    println(r);
+    println("BETWEEN");
     free(line);
+    println(r);
+    println("ATS");
 
     return r;
 }
@@ -1754,6 +1758,7 @@ char * compile_tokens(char ** tokens, int isInline)
         char ** line = quokka_line_tok(tokens[i]);
         for (int p = 0; line[p] != NULL; p++)
         {
+            println(line[p]);
             line[p] = cpstrip(line[p]);
         }
 
@@ -1766,8 +1771,6 @@ char * compile_tokens(char ** tokens, int isInline)
         if (verbose) printf("\nSIZE %d\n", arrsize(line));
 
         char * result = compileline(line, i, -1, isInline);
-
-        free(line);
 
         if (strlen(object_def))
         {
@@ -1782,8 +1785,6 @@ char * compile_tokens(char ** tokens, int isInline)
             strcat(class_declarations, result);
         }
         else strcat(compiled, result);
-
-        free(result);
 
         if (verbose) printf("-%s-\n", tokens[i]);
         for (int p = 0; line[p] != NULL; p++)
@@ -1803,7 +1804,6 @@ char * compile_raw(char * rawtext, int maxtokensize, int isInline)
     ntokenise(tokens, rawtext, "\n");
 
     char * res = compile_tokens(tokens, isInline);
-    free(tokens);
 
     return res;
 }
@@ -1816,7 +1816,6 @@ char * quokka_compile(char * filename)
         return 0;
 
     char * res = compile_raw(buffer, -1, 0);
-    free(buffer);
 
     return res;
 }
@@ -1946,8 +1945,6 @@ char ** quokka_line_tok(char * line)
     for (int p = 0; p < arrsize(output); p++)
         output[p] = cpstrip(output[p]);
 
-    free(tokenstr);
-
     return output;
 }
 
@@ -2014,7 +2011,7 @@ int main(int argc, char ** argv)
 
     // Full path directing to first file to compile
     char * fullname = getrealpath(argv[1]);
-    if (!fullname)
+    if (!strlen(fullname))
     {
         println("Input file path not found or not accessible.");
         return 1;
@@ -2038,6 +2035,7 @@ int main(int argc, char ** argv)
 
     // Move CWD to dirname
     chdir(dirname);
+
 
     char * compiled = quokka_compile(fname);
 
