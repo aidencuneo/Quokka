@@ -11,7 +11,6 @@ def string fileread(string path)
 end
 
 main:
-    File textfile = new File('file.txt', 'r')
-    println textfile.read()
-    textfile.close()
+    string data = fileread('file.txt')
+    println data
 end

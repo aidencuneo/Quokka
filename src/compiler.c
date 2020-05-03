@@ -1008,8 +1008,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                 strcat(r, line[1]);
                 strcat(r, " (*");
                 strcat(r, line[2]);
-                strcat(r, ")");
-                strcat(r, "(");
+                strcat(r, ")(");
                 strcat(r, object_def);
                 strcat(r, " self);\n");
             }
@@ -1018,8 +1017,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                 strcat(r, line[1]);
                 strcat(r, " (*");
                 strcat(r, line[2]);
-                strcat(r, ")");
-                strcat(r, "(");
+                strcat(r, ")(");
                 strcat(r, object_def);
                 strcat(r, " self");
 
@@ -1096,12 +1094,15 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                     strcat(r, " ");
                     strcat(r, line[2]);
                     strcat(r, "(){\n");
+
                     file_declarations = (char *)realloc(file_declarations,
                         strlen(file_declarations) + strlen(line[1]) + 1 + strlen(line[2]) + 4 + 1);
                     strcat(file_declarations, line[1]);
                     strcat(file_declarations, " ");
                     strcat(file_declarations, line[2]);
                     strcat(file_declarations, "();\n");
+
+                    scpfuncs = _sc_add(scpfuncs, strndup(line[2], strlen(line[2])), scope);
                 }
             }
             else if (len > 4) error("def action received too many arguments", num);
@@ -1204,7 +1205,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
 
                     free(sg);
 
-                    scpfuncs = _sc_add(scpfuncs, line[1], scope);
+                    scpfuncs = _sc_add(scpfuncs, strndup(line[2], strlen(line[2])), scope);
                 }
             }
             scope++;

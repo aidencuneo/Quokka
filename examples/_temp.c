@@ -55,6 +55,6 @@ string data=fileobj.read(fileobj);
 fileobj.close(fileobj);return data;
 }
 int main(int argc,char**argv){
-File textfile=__File_Constructor__(__string_Constructor__("file.txt"),__string_Constructor__("r"));
-println(textfile.read(textfile));
-textfile.close(textfile);}
+string data=fileread(__string_Constructor__("file.txt"));
+println(data);
+}
