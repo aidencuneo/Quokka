@@ -244,11 +244,10 @@ string __slice_string__(string st, int start, int stop)
     end -= stop;
     *(end + 1) = '\0';
 
-    string out = String(x);
+    string out = String(strndup(x, strlen(x)));
     out.value += start;
 
     free(x);
-    free(end);
 
     return out;
 }

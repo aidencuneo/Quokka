@@ -573,9 +573,9 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     /// Cleanup
     //
 
-    free(linestr1);
-    free(line1);
-    free(linestr2);
+    //free(linestr1);
+    //free(line1);
+    //free(linestr2);
 
     //
     /// COMPILE STAGE
@@ -648,10 +648,9 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                 strcat(err, "') is an invalid header file, make sure the file exists and is not empty");
                 error(err, num);
             }
-            strcat(r, header_data);
+            strcat(r, strndup(header_data, strlen(header_data)));
 
             free(header_name);
-            free(header_data);
         }
 
         free(line);
@@ -963,6 +962,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     else if (endswith(line[0], ":"))
     {
         char * name = __slice_string__(String(line[0]), 0, 1).value;
+
         if (isInline) error("proc `:` action must be at the start of a line", num);
         else if (scope > 0 && !strlen(class_constructor)) error("proc `:` action can not be in a scope greater than 1", num);
         else if (len < 1) error("proc `:` action missing arguments", num);
@@ -990,6 +990,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             }
             strcat(r, "){\n");
         }
+
         if (strcmp(name, "include") == 0)
             scope = -1;
         else
@@ -1358,7 +1359,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             strlen(class_constructor) + strlen(name) + 1);
         strcpy(class_constructor, name);
 
-        types[arrsize(types)] = name;
+        types[arrsize(types)] = strndup(name, strlen(name));
 
         free(name);
 
@@ -1479,44 +1480,44 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             free(temp);
         }
     }
-    else if (strcmp(line[1], "++") == 0)
-    {
-        if (isInline) error("++ action must be at the start of a line, after variable name", num);
-        if (scope < 1) error("++ action can not be at minimum scope", num);
-        if (len > 3) error("++ action received too many arguments", num);
-        else if (len > 2)
-        {
-            strcat(r, line[0]);
-            strcat(r, "+=");
-            strcat(r, line[2]);
-            strcat(r, ";\n");
-        }
-        else
-        {
-            strcat(r, "++");
-            strcat(r, line[0]);
-            strcat(r, ";\n");
-        }
-    }
-    else if (strcmp(line[1], "--") == 0)
-    {
-        if (isInline) error("-- action must be at the start of a line, after variable name", num);
-        if (scope < 1) error("-- action can not be at minimum scope", num);
-        if (len > 3) error("-- action received too many arguments", num);
-        else if (len > 2)
-        {
-            strcat(r, line[0]);
-            strcat(r, "-=");
-            strcat(r, line[2]);
-            strcat(r, ";\n");
-        }
-        else
-        {
-            strcat(r, "--");
-            strcat(r, line[0]);
-            strcat(r, ";\n");
-        }
-    }
+    // else if (strcmp(line[1], "++") == 0)
+    // {
+    //     if (isInline) error("++ action must be at the start of a line, after variable name", num);
+    //     if (scope < 1) error("++ action can not be at minimum scope", num);
+    //     if (len > 3) error("++ action received too many arguments", num);
+    //     else if (len > 2)
+    //     {
+    //         strcat(r, line[0]);
+    //         strcat(r, "+=");
+    //         strcat(r, line[2]);
+    //         strcat(r, ";\n");
+    //     }
+    //     else
+    //     {
+    //         strcat(r, "++");
+    //         strcat(r, line[0]);
+    //         strcat(r, ";\n");
+    //     }
+    // }
+    // else if (strcmp(line[1], "--") == 0)
+    // {
+    //     if (isInline) error("-- action must be at the start of a line, after variable name", num);
+    //     if (scope < 1) error("-- action can not be at minimum scope", num);
+    //     if (len > 3) error("-- action received too many arguments", num);
+    //     else if (len > 2)
+    //     {
+    //         strcat(r, line[0]);
+    //         strcat(r, "-=");
+    //         strcat(r, line[2]);
+    //         strcat(r, ";\n");
+    //     }
+    //     else
+    //     {
+    //         strcat(r, "--");
+    //         strcat(r, line[0]);
+    //         strcat(r, ";\n");
+    //     }
+    // }
     else if (startswith(line[0], "{") && endswith(line[0], "}"))
     {
         char * tempstr[512];
@@ -1687,10 +1688,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         {
             if (startswith(line[p], "`") && endswith(line[p], "`"))
             {
-                char * temp = __slice_string__(String(line[p]), 1, 1).value;
-                strcat(r, temp);
-
-                free(temp);
+                strcat(r, __slice_string__(String(line[p]), 1, 1).value);
                 continue;
             }
 
@@ -1734,13 +1732,6 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         strcpy(r, cpstrip(r));
     }
 
-    println("STA");
-    println(r);
-    println("BETWEEN");
-    free(line);
-    println(r);
-    println("ATS");
-
     return r;
 }
 
@@ -1758,7 +1749,6 @@ char * compile_tokens(char ** tokens, int isInline)
         char ** line = quokka_line_tok(tokens[i]);
         for (int p = 0; line[p] != NULL; p++)
         {
-            println(line[p]);
             line[p] = cpstrip(line[p]);
         }
 
@@ -1792,6 +1782,8 @@ char * compile_tokens(char ** tokens, int isInline)
             if (verbose) printf("<%s>\n", line[p]);
         }
     }
+
+    free(tokens);
 
     return compiled;
 }
