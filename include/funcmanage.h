@@ -1,21 +1,14 @@
-typedef struct __scopeManagement_Struct__ scopeManagement;
+typedef struct __funcManagement_Struct__ funcManagement;
 
-int getchsize(char ** arr)
-{
-    int i;
-    for (i = 0; arr[i] && arr[i] != NULL && strlen(arr[i]); i++);
-    return i;
-}
+void _fm_report(funcManagement self);
 
-void _sc_report(scopeManagement self);
-
-struct __scopeManagement_Struct__
+struct __funcManagement_Struct__
 {
     char ** names;
     int * scopes;
 };
 
-scopeManagement _sc_add(scopeManagement self, char * name, int value)
+funcManagement _fm_add(funcManagement self, char * name, int value)
 {
     int size = getchsize(self.names);
 
@@ -32,38 +25,7 @@ scopeManagement _sc_add(scopeManagement self, char * name, int value)
     return self;
 }
 
-scopeManagement _sc_delindex(scopeManagement self, int index)
-{
-    int size = getchsize(self.names);
-
-    for (int c = index; c < size; c++)
-    {
-        if (c == index)
-            free(self.names[c]);
-        self.names[c] = self.names[c + 1];
-        self.scopes[c] = self.scopes[c + 1];
-    }
-
-    return self;
-}
-
-scopeManagement _sc_delscope(scopeManagement self, int value)
-{
-    int size = getchsize(self.names);
-
-    for (int i = 0; i < size; i++)
-    {
-        if (self.scopes[i] >= value)
-        {
-            _sc_delindex(self, i);
-            size--;
-        }
-    }
-
-    return self;
-}
-
-int _sc_exists(scopeManagement self, char * name, int value)
+int _fm_exists(funcManagement self, char * name, int value)
 {
     for (int i = 0; self.names[i] != NULL; i++)
     {
@@ -76,7 +38,7 @@ int _sc_exists(scopeManagement self, char * name, int value)
     return 0;
 }
 
-void _sc_clear(scopeManagement self)
+void _fm_clear(funcManagement self)
 {
     for (int i = 0; self.names[i] != NULL; i++)
     {
@@ -86,7 +48,7 @@ void _sc_clear(scopeManagement self)
     free(self.scopes);
 }
 
-void _sc_report(scopeManagement self)
+void _fm_report(funcManagement self)
 {
     int size = getchsize(self.names);
 
@@ -116,9 +78,9 @@ void _sc_report(scopeManagement self)
     free(ret);
 }
 
-scopeManagement _scopeManager()
+funcManagement _functionManager()
 {
-    scopeManagement self;
+    funcManagement self;
 
     self.names = malloc(2 * sizeof(char *));
     self.names[0] = NULL;

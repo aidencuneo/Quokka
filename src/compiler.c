@@ -5,6 +5,7 @@
 
 #include "../include/t.h"
 #include "../include/scopemanage.h"
+#include "../include/funcmanage.h" // Unfinished
 
 #define C_HEADERS "\
 #include \"../include/t.h\"\n\
@@ -46,6 +47,160 @@ char * cur_class_def;
 
 // String arrays
 char * types[512];
+char * c_builtins[] = {
+    /*
+        duplicates
+    */
+    "size_t",
+    "NULL",
+
+    /*
+        stdio.h
+    */
+    "FILE",
+    "fpos_t",
+    "_IOFBF",
+    "_IOLBF",
+    "_IONBF",
+    "BUFSIZ",
+    "EOF",
+    "FOPEN_MAX",
+    "FILENAME_MAX",
+    "L_tmpnam",
+    "SEEK_CUR",
+    "SEEK_END",
+    "SEEK_SET",
+    "TMP_MAX",
+    "stderr",
+    "stdin",
+    "stdout",
+
+    "fclose",
+    "clearerr",
+    "feof",
+    "ferror",
+    "fflush",
+    "fgetpos",
+    "fopen",
+    "fread",
+    "freopen",
+    "fseek",
+    "fsetpos",
+    "ftell",
+    "fwrite",
+    "remove",
+    "rename",
+    "rewind",
+    "setbuf",
+    "setvbuf",
+    "tmpfile",
+    "tmpnam",
+    "fprintf",
+    "printf",
+    "sprintf",
+    "vfprintf",
+    "vprintf",
+    "fscanf",
+    "scanf",
+    "sscanf",
+    "fgetc",
+    "fgets",
+    "fputc",
+    "fputs",
+    "getc",
+    "getchar",
+    "gets",
+    "putc",
+    "putchar",
+    "puts",
+    "ungetc",
+    "perror",
+
+    /*
+        stdlib.h
+    */
+    "wchar_t",
+    "div_t",
+    "ldiv_t",
+
+    "EXIT_FAILURE",
+    "EXIT_SUCCESS",
+    "RAND_MAX",
+    "MB_CUR_MAX",
+
+    "atof",
+    "atoi",
+    "atol",
+    "strtod",
+    "strtol",
+    "strtoul",
+    "calloc",
+    "free",
+    "malloc",
+    "realloc",
+    "abort",
+    "atexit",
+    "exit",
+    "getenv",
+    "system",
+    "bsearch",
+    "qsort",
+    "abs",
+    "div",
+    "labs",
+    "ldiv",
+    "rand",
+    "srand",
+    "mblen",
+    "mbstowcs",
+    "mbtowc",
+    "wcstombs",
+    "wctomb",
+
+    /*
+        string.h
+    */
+    "memchr",
+    "memcmp",
+    "memcpy",
+    "memmove",
+    "memset",
+    "strcat",
+    "strncat",
+    "strchr",
+    "strcmp",
+    "strncmp",
+    "strcoll",
+    "strcpy",
+    "strncpy",
+    "strcspn",
+    "strerror",
+    "strlen",
+    "strpbrk",
+    "strrchr",
+    "strspn",
+    "strstr",
+    "strtok",
+    "strxfrm",
+
+    /*
+        ctype.h
+    */
+    "isalnum",
+    "isalpha",
+    "iscntrl",
+    "isdigit",
+    "isgraph",
+    "islower",
+    "isprint",
+    "ispunct",
+    "isspace",
+    "isupper",
+    "isxdigit",
+
+    "tolower",
+    "toupper",
+};
 
 void error(char * text, int line)
 {
@@ -327,6 +482,15 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
         {
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 29);
             strncat(linestr1, " __integer_Constructor__(0) ", 29);
+
+            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            strncat(linestr1, separator, strlen(separator));
+        }
+        else if (stringInList(c_builtins, origline[p]))
+        {
+            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 1 + strlen(origline[p]) + 1);
+            strncat(linestr1, "_", 2);
+            strncat(linestr1, origline[p], strlen(origline[p]));
 
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
@@ -959,20 +1123,18 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     //     if (!isInline)
     //         strcat(r, ";\n");
     // }
-    else if (endswith(line[0], ":"))
+    else if (strcmp(line[len - 1], ":") == 0)
     {
-        char * name = __slice_string__(String(line[0]), 0, 1).value;
-
         if (isInline) error("proc `:` action must be at the start of a line", num);
         else if (scope > 0 && !strlen(class_constructor)) error("proc `:` action can not be in a scope greater than 1", num);
-        else if (len < 1) error("proc `:` action missing arguments", num);
-        else if (len > 1) error("proc `:` action received too many arguments", num);
-        else if (len == 1 && strcmp(name, "include") != 0)
+        else if (len < 2) error("proc `:` action missing arguments", num);
+        else if (len > 2) error("proc `:` action received too many arguments", num);
+        else if (len == 2 && strcmp(line[0], "include") != 0)
         {
             strcat(r, "int ");
-            strcat(r, name);
+            strcat(r, line[0]);
             strcat(r, "(");
-            if (strcmp(name, "main") == 0)
+            if (strcmp(line[0], "main") == 0)
             {
                 strcat(r, "int argc,char**argv");
                 declared = _sc_add(declared, "argc", scope);
@@ -983,18 +1145,21 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             else
             {
                 file_declarations = (char *)realloc(file_declarations,
-                    strlen(file_declarations) + 4 + strlen(name) + 4 + 1);
+                    strlen(file_declarations) + 4 + strlen(line[0]) + 4 + 1);
                 strcat(file_declarations, "int ");
-                strcat(file_declarations, name);
+                strcat(file_declarations, line[0]);
                 strcat(file_declarations, "();\n");
             }
             strcat(r, "){\n");
         }
 
-        if (strcmp(name, "include") == 0)
+        if (strcmp(line[0], "include") == 0)
             scope = -1;
         else
+        {
+            scpfuncs = _sc_add(scpfuncs, strndup(line[0], strlen(line[0])), 0);
             scope++;
+        }
     }
     else if (strcmp(line[0], "def") == 0)
     {
@@ -1890,8 +2055,6 @@ char ** quokka_line_tok(char * line)
             p == 'A' && q == 'D' // Second part to the line above.
         ) && !(
             t == '.' && c == '.' // Join together all `.` tokens.
-        ) && !(
-            (q == 'A' || q == 'D' || t == '_') && c == ':' // Join together things like `main:` and `include:`
         ))
         {
             tokenstr = (char *)realloc(tokenstr, strlen(tokenstr) + strlen(separator) + 1);
@@ -2029,7 +2192,6 @@ int main(int argc, char ** argv)
     // Move CWD to dirname
     chdir(dirname);
 
-
     char * compiled = quokka_compile(fname);
 
     if (compilation_error)
@@ -2079,3 +2241,19 @@ int main(int argc, char ** argv)
 
     return 0;
 }
+
+/* TODO */
+
+/*
+
+1.  When a C function name is entered which should not be included in Quokka,
+    automatically prefix it with an underscore if it's found ANYWHERE in code.
+
+2.  Finish funcmanage.h to keep a record of every function that exists in a
+    current Quokka execution session, and keep a record of how many arguments
+    each function can or can't take.
+    Eventually, improve this to include optional arguments, where any arguments
+    that aren't given values through a function call are automatically given
+    a null value ( most likely Integer(0) ).
+
+*/
