@@ -49,6 +49,18 @@ char * cur_class_def;
 char * types[512];
 char * c_builtins[] = {
     /*
+        types
+    */
+    "int",
+    "char",
+    "double",
+    "float",
+    "short",
+    "long",
+    "signed",
+    "unsigned",
+
+    /*
         duplicates
     */
     "size_t",
@@ -486,10 +498,17 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
-        else if (stringInList(c_builtins, origline[p]))
+        else if (startswith(origline[p], "_q_") || stringInList(c_builtins, origline[p]))
         {
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 1 + strlen(origline[p]) + 1);
-            strncat(linestr1, "_", 2);
+            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 3 + strlen(origline[p]) + 1);
+
+            if (startswith(origline[p], "_q_"))
+                strncat(linestr1, "_Q_", 4);
+            else if (startswith(origline[p], "_q_") && !startswith(origline[p], "_q__Q_"))
+                strncat(linestr1, "_q_", 4);
+            else
+                strncat(linestr1, "_Q_", 4);
+
             strncat(linestr1, origline[p], strlen(origline[p]));
 
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
@@ -1097,7 +1116,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         strcat(r, line[1]);
         strcat(r, "<");
         strcat(r, stop);
-        strcat(r, ";");
+        strcat(r, ".value;");
         strcat(r, line[1]);
         strcat(r, "+=");
         strcat(r, step);
@@ -1640,50 +1659,12 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             arrlstrip(line);
             len--;
             char * temp = compileline(line, num, len, 1);
-            strcat(r, temp);
+            strcat(r, strndup(temp, strlen(temp)));
             strcat(r, ";\n");
 
             free(temp);
         }
     }
-    // else if (strcmp(line[1], "++") == 0)
-    // {
-    //     if (isInline) error("++ action must be at the start of a line, after variable name", num);
-    //     if (scope < 1) error("++ action can not be at minimum scope", num);
-    //     if (len > 3) error("++ action received too many arguments", num);
-    //     else if (len > 2)
-    //     {
-    //         strcat(r, line[0]);
-    //         strcat(r, "+=");
-    //         strcat(r, line[2]);
-    //         strcat(r, ";\n");
-    //     }
-    //     else
-    //     {
-    //         strcat(r, "++");
-    //         strcat(r, line[0]);
-    //         strcat(r, ";\n");
-    //     }
-    // }
-    // else if (strcmp(line[1], "--") == 0)
-    // {
-    //     if (isInline) error("-- action must be at the start of a line, after variable name", num);
-    //     if (scope < 1) error("-- action can not be at minimum scope", num);
-    //     if (len > 3) error("-- action received too many arguments", num);
-    //     else if (len > 2)
-    //     {
-    //         strcat(r, line[0]);
-    //         strcat(r, "-=");
-    //         strcat(r, line[2]);
-    //         strcat(r, ";\n");
-    //     }
-    //     else
-    //     {
-    //         strcat(r, "--");
-    //         strcat(r, line[0]);
-    //         strcat(r, ";\n");
-    //     }
-    // }
     else if (startswith(line[0], "{") && endswith(line[0], "}"))
     {
         char * tempstr[512];
@@ -1724,8 +1705,8 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             char * varname = line[1];
             if (_sc_exists(declared, varname, scope))
             {
-                char * err = malloc(12 + strlen(varname) + 82 + 1);
-                strcpy(err, "identifier '");
+                char * err = malloc(20 + strlen(varname) + 82 + 1);
+                strcpy(err, "variable with name '");
                 strcat(err, varname);
                 strcat(err,
                     "' has already been declared, maybe you forget to remove this line's variable type?");
@@ -1752,6 +1733,17 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         else
         {
             char * varname = line[0];
+
+            if (!_sc_exists(declared, varname, scope))
+            {
+                char * err = malloc(20 + strlen(varname) + 66 + 1);
+                strcpy(err, "variable with name '");
+                strcat(err, varname);
+                strcat(err,
+                    "' has not been declared, did you forget this line's variable type?");
+                error(err, num);
+            }
+
             strcat(r, "=");
             len -= 2;
             arrlstrip(line);
@@ -1762,7 +1754,11 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
 
             strcat(r, ";\n");
             if (!_sc_exists(defined, varname, scope))
-                defined = _sc_add(defined, varname, scope);
+            {
+                // Get the scope of this variable's declaration
+                int declaredscope = _sc_getscope(declared, varname);
+                defined = _sc_add(defined, strndup(varname, strlen(varname)), declaredscope);
+            }
 
             free(temp);
         }
@@ -1786,9 +1782,12 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             (startswith(line[0], "__") && endswith(line[0], "__"))
         ))
         {
-            char * err = malloc(20 + strlen(line[0]) + 1 + 1);
+            char * funcname = line[0];
+            if (startswith(funcname, "_q_") || startswith(funcname, "_Q_"))
+                funcname += 3;
+            char * err = malloc(20 + strlen(funcname) + 1 + 1);
             strcpy(err, "undefined function '");
-            strcat(err, line[0]);
+            strcat(err, funcname);
             strcat(err, "'");
             error(err, num);
         }
@@ -1864,9 +1863,12 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                 !_sc_exists(scpfuncs, line[p], scope) &&
                 !_sc_exists(scpcnstrct, line[p], scope))
             {
-                char * err = malloc(22 + strlen(line[p]) + 36 + 1);
+                char * ident = line[p];
+                if (startswith(ident, "_q_") || startswith(ident, "_Q_"))
+                    ident += 3;
+                char * err = malloc(22 + strlen(ident) + 36 + 1);
                 strcpy(err, "undefined identifier '");
-                strcat(err, line[p]);
+                strcat(err, ident);
                 strcat(err, "', did you forget to set it's value?");
                 error(err, num);
             }
@@ -1876,9 +1878,12 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                 !_sc_exists(scpfuncs, line[p], scope) &&
                 !_sc_exists(scpcnstrct, line[p], scope))
             {
-                char * err = malloc(23 + strlen(line[p]) + 1 + 1);
+                char * ident = line[p];
+                if (startswith(ident, "_q_") || startswith(ident, "_Q_"))
+                    ident += 3;
+                char * err = malloc(23 + strlen(ident) + 1 + 1);
                 strcpy(err, "undeclared identifier '");
-                strcat(err, line[p]);
+                strcat(err, ident);
                 strcat(err, "'");
                 error(err, num);
             }
@@ -2246,14 +2251,21 @@ int main(int argc, char ** argv)
 
 /*
 
-1.  When a C function name is entered which should not be included in Quokka,
-    automatically prefix it with an underscore if it's found ANYWHERE in code.
+1.  Add +=, -=, *=, and /= operators.
 
-2.  Finish funcmanage.h to keep a record of every function that exists in a
+2.  Store variable types within scopeManagers. That way statements can decide
+    beforehand whether or not they will immediately fail. It'll help a little
+    to reduce the amount of errors that have to get sent to GCC before you get
+    told about them, and hopefully increase the amount that Quokka can handle.
+
+3.  Add definitions from t.h into the c_builtins list.
+    Obviously don't chuck in definitions that are going to be used in Quokka.
+
+4.  Finish funcmanage.h to keep a record of every function that exists in a
     current Quokka execution session, and keep a record of how many arguments
     each function can or can't take.
-    Eventually, improve this to include optional arguments, where any arguments
-    that aren't given values through a function call are automatically given
-    a null value ( most likely Integer(0) ).
+    Eventually, improve this to include optional arguments, where any
+    arguments that aren't given values through a function call are
+    automatically given a null value ( most likely Integer(0) ).
 
 */

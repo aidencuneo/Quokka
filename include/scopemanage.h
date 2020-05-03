@@ -63,6 +63,17 @@ scopeManagement _sc_delscope(scopeManagement self, int value)
     return self;
 }
 
+int _sc_getscope(scopeManagement self, char * name)
+{
+    int size = getchsize(self.names);
+
+    for (int i = 0; i < size; i++)
+    {
+        if (strcmp(self.names[i], name) == 0)
+            return self.scopes[i];
+    }
+}
+
 int _sc_exists(scopeManagement self, char * name, int value)
 {
     for (int i = 0; self.names[i] != NULL; i++)

@@ -1,7 +1,11 @@
-def string isspace
-    ret 'this is what the isspace function returns'
+def string strcat(string word, integer count)
+    string out
+    rangefor _ count
+        out = out + word
+    end
+    ret out
 end
 
 main:
-    println isspace()
+    println strcat('aiden', 3)
 end

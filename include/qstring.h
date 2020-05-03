@@ -111,7 +111,7 @@ string __add__string__(string self, string other)
     strcpy(x, self.value);
     strcat(x, other.value);
 
-    string out = String(x);
+    string out = String(strndup(x, strlen(x)));
     free(x);
 
     return out;
