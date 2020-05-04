@@ -5,7 +5,6 @@
 #include <ctype.h>
 
 #include "qdef.h"
-#include "qobject.h"
 #include "qinteger.h"
 #include "qstring.h"
 #include "qbool.h"
@@ -44,13 +43,23 @@ int sarrsize(string * arr);
 
 // println
 int iprintln(int value);
+long lprintln(long value);
+char cprintln(char value);
 char * cpprintln(char * value);
-object oprintln(object value);
+string sprintln(string value);
+string * saprintln(string value[]);
+integer intprintln(integer value);
+bool bprintln(bool value);
 
 // print
 int iprint(int value);
+long lprint(long value);
+char cprint(char value);
 char * cpprint(char * value);
-object oprint(object value);
+string sprint(string value);
+string * saprint(string value[]);
+integer intprint(integer value);
+bool bprint(bool value);
 
 
 // Definitions
@@ -62,15 +71,23 @@ object oprint(object value);
 
 #define print(value) _Generic((value),\
     int      : iprint,\
+    long     : lprint,\
+    char     : cprint,\
     char *   : cpprint,\
-    object   : oprint,\
+    string   : sprint,\
+    integer  : intprint,\
+    bool     : bprint,\
     default  : cpprint)(value)
 
 #define println(value) _Generic((value),\
     int      : iprintln,\
+    long     : lprintln,\
+    char     : cprintln,\
     char *   : cpprintln,\
-    object   : oprintln,\
-    default  : oprintln)(value)
+    string   : sprintln,\
+    integer  : intprintln,\
+    bool     : bprintln,\
+    default  : cpprintln)(value)
 
 //
 /// All the rest
@@ -98,18 +115,6 @@ int carrsize(char * arr[])
 int iarrsize(int * arr)
 {
     return sizeof(arr) / sizeof(int);
-}
-
-int sarrsize(string * arr)
-{
-    int i = 0;
-    string j = arr[0];
-    while (strncmp(j.value, "\0", 2) != 0)
-    {
-        i++;
-        j = arr[i];
-    }
-    return i;
 }
 
 int startswith(const char * a, const char * b)
@@ -194,11 +199,11 @@ char * cpstrip(char * s)
 
 int charCount(char * chst, char ch)
 {
-    string st = * ((string *)String(chst).obj);
+    string st = String(chst);
 
     int count = 0;
 
-    for (int i = 0; i < st.length; i++)
+    for (int i = 0; i < st.length.value; i++)
     {
         if (st.value[i] == ch)
             count++;
@@ -239,7 +244,7 @@ char * getrealpath(char * path)
         return 0;
     }
 
-    char * res = ((string *)__replace_string__(String(rp), String("\\"), String("/")).obj)->value;
+    char * res = __replace_string__(String(rp), String("\\"), String("/")).value;
     free(rp);
 
     return res;
@@ -247,12 +252,12 @@ char * getrealpath(char * path)
 
 #define ptrindex(value, index) _Generic((value, index), char ** : cptrindex, default : cptrindex)(value, index)
 
-object readchar()
+string readchar()
 {
     return String(getchar());
 }
 
-object input()
+string input()
 {
     char * buffer = (char *)malloc(1);
     strcpy(buffer, "");
@@ -270,7 +275,7 @@ object input()
     return String(buffer);
 }
 
-object readint()
+integer readint()
 {
     int out;
     scanf("%d", &out);
@@ -292,24 +297,41 @@ int iprint(int value)
     return value;
 }
 
+long lprint(long value)
+{
+    printf("%ld", value);
+    return value;
+}
+
+char cprint(char value)
+{
+    printf("%c", value);
+    return value;
+}
+
 char * cpprint(char * value)
 {
     printf("%s", value);
     return value;
 }
 
-object oprint(object value)
+string sprint(string value)
 {
-    if (!strcmp(value.name, "integer"))
-        printf("%ld", ((integer *)value.obj)->value);
-    else if (!strcmp(value.name, "string"))
-        printf("%s", ((string *)value.obj)->value);
-    else if (!strcmp(value.name, "bool"))
-    {
-        if (((bool *)value.obj)->value)
-            printf("true");
-        else printf("false");
-    }
+    printf("%s", value.value);
+    return value;
+}
+
+integer intprint(integer value)
+{
+    printf("%ld", value.value);
+    return value;
+}
+
+bool bprint(bool value)
+{
+    if (value.value.value)
+        printf("true");
+    else printf("false");
     return value;
 }
 
@@ -321,24 +343,41 @@ int iprintln(int value)
     return value;
 }
 
+long lprintln(long value)
+{
+    printf("%ld\n", value);
+    return value;
+}
+
+char cprintln(char value)
+{
+    printf("%c\n", value);
+    return value;
+}
+
 char * cpprintln(char * value)
 {
     printf("%s\n", value);
     return value;
 }
 
-object oprintln(object value)
+string sprintln(string value)
 {
-    if (!strcmp(value.name, "integer"))
-        printf("%ld\n", ((integer *)value.obj)->value);
-    else if (!strcmp(value.name, "string"))
-        printf("%s\n", ((string *)value.obj)->value);
-    else if (!strcmp(value.name, "bool"))
-    {
-        if (((bool *)value.obj)->value)
-            printf("true\n");
-        else printf("false\n");
-    }
+    printf("%s\n", value.value);
+    return value;
+}
+
+integer intprintln(integer value)
+{
+    printf("%ld\n", value.value);
+    return value;
+}
+
+bool bprintln(bool value)
+{
+    if (value.value.value)
+        printf("true");
+    else printf("false");
     return value;
 }
 

@@ -17,8 +17,6 @@ scopeManagement defined;
 scopeManagement scpfuncs;
 scopeManagement scpcnstrct;
 
-object * object_store;
-
 // Function declarations
 void error(char * text, int line);
 void arrlstrip(char * line[]);
