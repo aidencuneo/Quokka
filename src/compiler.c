@@ -3,12 +3,12 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "../include/t.h"
+#include "../include/q.h"
 #include "../include/scopemanage.h"
 #include "../include/funcmanage.h" // Unfinished
 
 #define C_HEADERS "\
-#include \"../include/t.h\"\n\
+#include \"../include/q.h\"\n\
 \n\
 int _FORVARNAME;\n"
 
@@ -17,12 +17,15 @@ scopeManagement defined;
 scopeManagement scpfuncs;
 scopeManagement scpcnstrct;
 
+object * object_store;
+
 // Function declarations
 void error(char * text, int line);
 void arrlstrip(char * line[]);
 int stringHasChar(char * s, char c);
 int stringIsInt(char * s);
 int stringInList(char * arr[], char * key);
+int lastIndexOf(char * st, char ch);
 
 char * compileline(char * line[], int num, int lineLen, int isInline);
 char * compile_tokens(char ** tokens, int isInline);
@@ -212,6 +215,11 @@ char * c_builtins[] = {
 
     "tolower",
     "toupper",
+
+    /*
+        q.h
+    */
+
 };
 
 void error(char * text, int line)
@@ -343,6 +351,14 @@ int stringInList(char * arr[], char * key)
     return 0;
 }
 
+int lastIndexOf(char * st, char ch)
+{
+    for (int i = strlen(st); i; i--)
+        if (st[i] == ch)
+            return i;
+    return -1;
+}
+
 char * compile_raw_line(char * linestr, int num, int isInline)
 {
     char ** line = quokka_line_tok(linestr);
@@ -357,6 +373,50 @@ char * compile_raw_line(char * linestr, int num, int isInline)
     free(line);
 
     return temp;
+}
+
+char ** rearrange_expressions(char ** line)
+{
+    char * linestr = malloc(1);
+    strcpy(linestr, "");
+
+    int len = arrsize(line);
+
+    for (int p = 0; p < len; p++)
+    {
+        if (p > 0 && p < len - 1 && (!strcmp(line[p], "*") || !strcmp(line[p], "/")))
+        {
+            linestr[strlen(linestr) - strlen(line[p - 1]) - 1] = '\0';
+
+            linestr = realloc(linestr, strlen(linestr) +
+                1 + strlen(line[p - 1]) + 1 + strlen(line[p]) + 1 + strlen(line[p + 1]) + 1 + 1);
+            strncat(linestr, "(", 2);
+            strncat(linestr, strndup(line[p - 1], strlen(line[p - 1])), strlen(line[p - 1]));
+            strncat(linestr, " ", 2);
+            strncat(linestr, strndup(line[p], strlen(line[p])), strlen(line[p]));
+            strncat(linestr, " ", 2);
+            strncat(linestr, strndup(line[p + 1], strlen(line[p + 1])), strlen(line[p + 1]));
+            strncat(linestr, ")", 2);
+
+            arrdel(line, p + 1);
+            len--;
+
+            linestr = realloc(linestr, strlen(linestr) + 1 + 1);
+            strncat(linestr, "\n", 2);
+        }
+        else
+        {
+            linestr = realloc(linestr, strlen(linestr) + strlen(line[p]) + 1 + 1);
+            strncat(linestr, strndup(line[p], strlen(line[p])), strlen(line[p]));
+            strncat(linestr, "\n", 2);
+        }
+    }
+
+    char ** output = malloc(1024);
+    tokenise(output, strndup(linestr, strlen(linestr)), "\n");
+    free(linestr);
+
+    return line;
 }
 
 char * precompile_stage_1(char ** origline, char * separator, int num, int isInline)
@@ -378,7 +438,7 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
         {
             linestr1[strlen(linestr1) - 1] = '\0';
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(origline[p]) + 1);
-            strncat(linestr1, origline[p], strlen(origline[p]));
+            strncat(linestr1, strdup(origline[p]), strlen(origline[p]));
 
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
@@ -444,7 +504,7 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
         {
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 24 + strlen(origline[p]) + 2 + 1);
             strncat(linestr1, "__integer_Constructor__(", 25);
-            strncat(linestr1, origline[p], strlen(origline[p]));
+            strncat(linestr1, strdup(origline[p]), strlen(origline[p]));
             strncat(linestr1, ")", 2);
 
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
@@ -509,7 +569,7 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
             else
                 strncat(linestr1, "_Q_", 4);
 
-            strncat(linestr1, origline[p], strlen(origline[p]));
+            strncat(linestr1, strdup(origline[p]), strlen(origline[p]));
 
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
@@ -517,7 +577,7 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
         else
         {
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(origline[p]) + 1);
-            strncat(linestr1, origline[p], strlen(origline[p]));
+            strncat(linestr1, strdup(origline[p]), strlen(origline[p]));
 
             linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
@@ -642,6 +702,170 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
             linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
         }
+        else if (strcmp(line1[p], "+=") == 0)
+        {
+            if (!(p > 0))
+                error("`+=` operator missing first argument", num);
+            if (!(p < len2 - 1))
+                error("`+=` operator missing second argument", num);
+
+            linestr2[strlen(linestr2) - 1] = '\0';
+            int lastsep = lastIndexOf(linestr2, *separator);
+            if (lastsep == -1)
+                lastsep = 0;
+
+            char * varname = linestr2;
+            varname += lastsep;
+            varname = strndup(varname, strlen(varname));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            strncat(linestr2, separator, strlen(separator));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1 + 1);
+            strncat(linestr2, "=", 2);
+            strncat(linestr2, separator, strlen(separator));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(varname) + 1);
+            strncat(linestr2, varname, strlen(varname));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 8 + 1);
+            strncat(linestr2, ".__add__", 9);
+            strncat(linestr2, separator, strlen(separator));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            strncat(linestr2, "(", 2);
+            strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
+            strncat(linestr2, ")", 2);
+
+            arrdel(line1, p + 1);
+            len2--;
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            strncat(linestr2, separator, strlen(separator));
+        }
+        else if (strcmp(line1[p], "-=") == 0)
+        {
+            if (!(p > 0))
+                error("`-=` operator missing first argument", num);
+            if (!(p < len2 - 1))
+                error("`-=` operator missing second argument", num);
+
+            linestr2[strlen(linestr2) - 1] = '\0';
+            int lastsep = lastIndexOf(linestr2, *separator);
+            if (lastsep == -1)
+                lastsep = 0;
+
+            char * varname = linestr2;
+            varname += lastsep;
+            varname = strndup(varname, strlen(varname));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            strncat(linestr2, separator, strlen(separator));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1 + 1);
+            strncat(linestr2, "=", 2);
+            strncat(linestr2, separator, strlen(separator));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(varname) + 1);
+            strncat(linestr2, varname, strlen(varname));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 8 + 1);
+            strncat(linestr2, ".__sub__", 9);
+            strncat(linestr2, separator, strlen(separator));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            strncat(linestr2, "(", 2);
+            strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
+            strncat(linestr2, ")", 2);
+
+            arrdel(line1, p + 1);
+            len2--;
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            strncat(linestr2, separator, strlen(separator));
+        }
+        else if (strcmp(line1[p], "*=") == 0)
+        {
+            if (!(p > 0))
+                error("`*=` operator missing first argument", num);
+            if (!(p < len2 - 1))
+                error("`*=` operator missing second argument", num);
+
+            linestr2[strlen(linestr2) - 1] = '\0';
+            int lastsep = lastIndexOf(linestr2, *separator);
+            if (lastsep == -1)
+                lastsep = 0;
+
+            char * varname = linestr2;
+            varname += lastsep;
+            varname = strndup(varname, strlen(varname));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            strncat(linestr2, separator, strlen(separator));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1 + 1);
+            strncat(linestr2, "=", 2);
+            strncat(linestr2, separator, strlen(separator));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(varname) + 1);
+            strncat(linestr2, varname, strlen(varname));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 8 + 1);
+            strncat(linestr2, ".__mul__", 9);
+            strncat(linestr2, separator, strlen(separator));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            strncat(linestr2, "(", 2);
+            strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
+            strncat(linestr2, ")", 2);
+
+            arrdel(line1, p + 1);
+            len2--;
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            strncat(linestr2, separator, strlen(separator));
+        }
+        else if (strcmp(line1[p], "/") == 0)
+        {
+            if (!(p > 0))
+                error("`/=` operator missing first argument", num);
+            if (!(p < len2 - 1))
+                error("`/=` operator missing second argument", num);
+
+            linestr2[strlen(linestr2) - 1] = '\0';
+            int lastsep = lastIndexOf(linestr2, *separator);
+            if (lastsep == -1)
+                lastsep = 0;
+
+            char * varname = linestr2;
+            varname += lastsep;
+            varname = strndup(varname, strlen(varname));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            strncat(linestr2, separator, strlen(separator));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1 + 1);
+            strncat(linestr2, "=", 2);
+            strncat(linestr2, separator, strlen(separator));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(varname) + 1);
+            strncat(linestr2, varname, strlen(varname));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 8 + 1);
+            strncat(linestr2, ".__div__", 9);
+            strncat(linestr2, separator, strlen(separator));
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            strncat(linestr2, "(", 2);
+            strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
+            strncat(linestr2, ")", 2);
+
+            arrdel(line1, p + 1);
+            len2--;
+
+            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            strncat(linestr2, separator, strlen(separator));
+        }
         else if (strcmp(line1[p], "==") == 0)
         {
             if (!(p > 0))
@@ -703,20 +927,24 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
 {
     // num is current line number
 
-    most_recent_line = num;
+    char * separator = "\n";
 
     // MAKE QUOKKA FOLLOW BIDMAS
     // Brackets - Done
     // Indices  - Not done, will probably leave until last
-    // Divide   - Not done
-    // Multiply - Not done
-    // Add      - Not done
-    // Subtract - Not done
+    // Divide   - Done
+    // Multiply - Done
+    // Add      - Kinda done
+    // Subtract - Kinda done
 
-    // D & M will group
+    // D & M will group - Done
     // A & S will group
 
-    char * separator = "\n";
+    char ** arrangedline;
+    if (!isInline)
+        arrangedline = origline;
+    else
+        arrangedline = rearrange_expressions(origline);
 
     //
     /// PRECOMPILE STAGE 1
@@ -724,7 +952,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
 
     if (verbose) println("--PRECOMPILE STAGE 1--");
 
-    char * linestr1 = precompile_stage_1(origline, separator, num, isInline);
+    char * linestr1 = precompile_stage_1(arrangedline, separator, num, isInline);
 
     char ** line1 = (char **)malloc(1024 * sizeof(char *)); // Keep watch of this (1024)
     line1[0] = "";
@@ -1773,6 +2001,23 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         strcat(r, line[0]);
         strcat(r, " ");
         strcat(r, line[1]);
+
+        if (!strncmp(line[0], "integer", 7))
+        {
+            strcat(r, "=__integer_Constructor__(0)");
+            defined = _sc_add(defined, line[1], scope);
+        }
+        else if (!strncmp(line[0], "string", 6))
+        {
+            strcat(r, "=__string_Constructor__(\"\")");
+            defined = _sc_add(defined, line[1], scope);
+        }
+        else if (!strncmp(line[0], "bool", 4))
+        {
+            strcat(r, "=__bool_Constructor__(0)");
+            defined = _sc_add(defined, line[1], scope);
+        }
+
         strcat(r, ";\n");
         declared = _sc_add(declared, line[1], scope);
     }
@@ -2172,7 +2417,7 @@ int main(int argc, char ** argv)
 
     // Full path directing to first file to compile
     char * fullname = getrealpath(argv[1]);
-    if (!strlen(fullname))
+    if (fullname == 0)
     {
         println("Input file path not found or not accessible.");
         return 1;
@@ -2251,17 +2496,15 @@ int main(int argc, char ** argv)
 
 /*
 
-1.  Add +=, -=, *=, and /= operators.
-
-2.  Store variable types within scopeManagers. That way statements can decide
+1.  Store variable types within scopeManagers. That way statements can decide
     beforehand whether or not they will immediately fail. It'll help a little
     to reduce the amount of errors that have to get sent to GCC before you get
     told about them, and hopefully increase the amount that Quokka can handle.
 
-3.  Add definitions from t.h into the c_builtins list.
+2.  Add definitions from q.h into the c_builtins list.
     Obviously don't chuck in definitions that are going to be used in Quokka.
 
-4.  Finish funcmanage.h to keep a record of every function that exists in a
+3.  Finish funcmanage.h to keep a record of every function that exists in a
     current Quokka execution session, and keep a record of how many arguments
     each function can or can't take.
     Eventually, improve this to include optional arguments, where any
