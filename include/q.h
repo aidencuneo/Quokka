@@ -3,6 +3,9 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "qdef.h"
 #include "qinteger.h"

@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "../include/q.h"
 #include "../include/scopemanage.h"
@@ -24,6 +27,7 @@ int stringHasChar(char * s, char c);
 int stringIsInt(char * s);
 int stringInList(char * arr[], char * key);
 int lastIndexOf(char * st, char ch);
+char * cpjoin(char ** line);
 
 char * compileline(char * line[], int num, int lineLen, int isInline);
 char * compile_tokens(char ** tokens, int isInline);
@@ -40,10 +44,11 @@ int compilation_error = 0;
 int scope = 0;
 
 // Strings
+char * type_declarations;
 char * file_declarations;
+char * class_declarations;
 char * object_def;
 char * class_constructor;
-char * class_declarations;
 char * cur_class_def;
 
 // String arrays
@@ -226,9 +231,9 @@ void error(char * text, int line)
 
     char * fullfile = readfile(current_file);
 
-    char * lineprevious = (char *)malloc(MAXLINE);
-    char * linepreview = (char *)malloc(MAXLINE);
-    char * linenext = (char *)malloc(MAXLINE);
+    char * lineprevious = malloc(MAXLINE);
+    char * linepreview = malloc(MAXLINE);
+    char * linenext = malloc(MAXLINE);
 
     strcpy(lineprevious, "");
     strcpy(linepreview, "");
@@ -259,7 +264,7 @@ void error(char * text, int line)
     if (line - 1 > 0)
         printf("  %d | %s\n", line - 1, lineprevious);
     printf("> %d > %s\n", line, linepreview);
-    if (strlen(linenext))
+    if (line + 1 < charCount(fullfile, '\n'))
         printf("  %d | %s\n", line + 1, linenext);
     print("\n");
 
@@ -357,6 +362,22 @@ int lastIndexOf(char * st, char ch)
     return -1;
 }
 
+char * cpjoin(char ** line)
+{
+    char * out = malloc(2);
+    strcpy(out, "");
+
+    int len = arrsize(line);
+
+    for (int i = 0; i < len; i++)
+    {
+        out = realloc(out, strlen(out) + strlen(line[i]) + 1);
+        strcat(out, line[i]);
+    }
+
+    return out;
+}
+
 char * compile_raw_line(char * linestr, int num, int isInline)
 {
     char ** line = quokka_line_tok(linestr);
@@ -410,7 +431,7 @@ char ** rearrange_expressions(char ** line)
         }
     }
 
-    char ** output = malloc(1024);
+    char ** output = malloc(2048);
     tokenise(output, strndup(linestr, strlen(linestr)), "\n");
     free(linestr);
 
@@ -419,7 +440,7 @@ char ** rearrange_expressions(char ** line)
 
 char * precompile_stage_1(char ** origline, char * separator, int num, int isInline)
 {
-    char * linestr1 = (char *)malloc(1);
+    char * linestr1 = malloc(1);
     strcpy(linestr1, "");
 
     int len1 = arrsize(origline);
@@ -435,10 +456,10 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
         if (p > 0 && startswith(origline[p], "."))
         {
             linestr1[strlen(linestr1) - 1] = '\0';
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(origline[p]) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(origline[p]) + 1);
             strncat(linestr1, strdup(origline[p]), strlen(origline[p]));
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
         else if (
@@ -452,113 +473,113 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
         {
             if (verbose) println("!!BRACKETS");
             if (verbose) println(origline[p]);
-            char * temp = __slice_string__(String(origline[p]), 1, 1).value;
+            char * temp = __slice_string__(String(origline[p]), Integer(1), Integer(1)).value;
             if (verbose) println(temp);
             char * tempcomp = compile_raw_line(temp, num, 1);
             if (verbose) println(tempcomp);
             if (verbose) println("??BRACKETS");
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 1 + strlen(tempcomp) + 1 + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + 1 + strlen(tempcomp) + 1 + 1);
             strncat(linestr1, "(", 2);
             strncat(linestr1, tempcomp, strlen(tempcomp));
             strncat(linestr1, ")", 2);
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
         else if (startswith(origline[p], "'") && endswith(origline[p], "'"))
         {
-            char * temp = (char *)malloc(strlen(origline[p]) + 24 + 1 + 1);
+            char * temp = malloc(strlen(origline[p]) + 24 + 1 + 1);
             strcpy(temp, "__string_Constructor__(\"");
-            string sliced = __slice_string__(String(origline[p]), 1, 1);
+            string sliced = __slice_string__(String(origline[p]), Integer(1), Integer(1));
             string escaped = __replace_string__(sliced, String("\""), String("\\\""));
             strcat(temp, escaped.value);
             strcat(temp, "\")");
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(temp) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(temp) + 1);
             strncat(linestr1, temp, strlen(temp));
 
             free(temp);
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
         else if (startswith(origline[p], "\"") && endswith(origline[p], "\""))
         {
-            char * temp = (char *)malloc(strlen(origline[p]) + 23 + 1 + 1);
+            char * temp = malloc(strlen(origline[p]) + 23 + 1 + 1);
             strcpy(temp, "__string_Constructor__(");
             strcat(temp, origline[p]);
             strcat(temp, ")");
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(temp) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(temp) + 1);
             strncat(linestr1, temp, strlen(temp));
 
             free(temp);
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
         else if (stringIsInt(origline[p]))
         {
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 24 + strlen(origline[p]) + 2 + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + 24 + strlen(origline[p]) + 2 + 1);
             strncat(linestr1, "__integer_Constructor__(", 25);
             strncat(linestr1, strdup(origline[p]), strlen(origline[p]));
             strncat(linestr1, ")", 2);
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
         else if (strcmp(origline[p], "true") == 0)
         {
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 23 + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + 23 + 1);
             strncat(linestr1, "__bool_Constructor__(1)", 24);
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
         else if (strcmp(origline[p], "false") == 0)
         {
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 23 + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + 23 + 1);
             strncat(linestr1, "__bool_Constructor__(0)", 24);
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
         else if (strcmp(origline[p], "and") == 0)
         {
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 5);
+            linestr1 = realloc(linestr1, strlen(linestr1) + 5);
             strncat(linestr1, " && ", 5);
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
         else if (strcmp(origline[p], "or") == 0)
         {
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 5);
+            linestr1 = realloc(linestr1, strlen(linestr1) + 5);
             strncat(linestr1, " || ", 5);
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
         else if (strcmp(origline[p], "not") == 0)
         {
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 3);
+            linestr1 = realloc(linestr1, strlen(linestr1) + 3);
             strncat(linestr1, " !", 3);
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
         else if (strcmp(origline[p], "...") == 0)
         {
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 29);
+            linestr1 = realloc(linestr1, strlen(linestr1) + 29);
             strncat(linestr1, " __integer_Constructor__(0) ", 29);
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
         else if (startswith(origline[p], "_q_") || stringInList(c_builtins, origline[p]))
         {
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + 3 + strlen(origline[p]) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + 3 + strlen(origline[p]) + 1);
 
             if (startswith(origline[p], "_q_"))
                 strncat(linestr1, "_Q_", 4);
@@ -569,15 +590,15 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
 
             strncat(linestr1, strdup(origline[p]), strlen(origline[p]));
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
         else
         {
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(origline[p]) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(origline[p]) + 1);
             strncat(linestr1, strdup(origline[p]), strlen(origline[p]));
 
-            linestr1 = (char *)realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
+            linestr1 = realloc(linestr1, strlen(linestr1) + strlen(separator) + 1);
             strncat(linestr1, separator, strlen(separator));
         }
     }
@@ -587,7 +608,7 @@ char * precompile_stage_1(char ** origline, char * separator, int num, int isInl
 
 char * precompile_stage_2(char ** line1, char * separator, int num, int isInline)
 {
-    char * linestr2 = (char *)malloc(1);
+    char * linestr2 = malloc(1);
     strcpy(linestr2, "");
 
     int len2 = arrsize(line1);
@@ -608,13 +629,13 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
                 error("`+` operator missing second argument", num);
             linestr2[strlen(linestr2) - 1] = '\0';
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 9);
+            linestr2 = realloc(linestr2, strlen(linestr2) + 9);
             strncat(linestr2, ".__add__", 9);
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
             strncat(linestr2, "(", 2);
             strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
             strncat(linestr2, ")", 2);
@@ -622,7 +643,7 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
             arrdel(line1, p + 1);
             len2--;
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
         }
         else if (strcmp(line1[p], "-") == 0)
@@ -633,13 +654,13 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
                 error("`-` operator missing second argument", num);
             linestr2[strlen(linestr2) - 1] = '\0';
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 9);
+            linestr2 = realloc(linestr2, strlen(linestr2) + 9);
             strncat(linestr2, ".__sub__", 9);
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
             strncat(linestr2, "(", 2);
             strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
             strncat(linestr2, ")", 2);
@@ -647,7 +668,7 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
             arrdel(line1, p + 1);
             len2--;
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
         }
         else if (strcmp(line1[p], "*") == 0)
@@ -658,13 +679,13 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
                 error("`*` operator missing second argument", num);
             linestr2[strlen(linestr2) - 1] = '\0';
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 9);
+            linestr2 = realloc(linestr2, strlen(linestr2) + 9);
             strncat(linestr2, ".__mul__", 9);
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
             strncat(linestr2, "(", 2);
             strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
             strncat(linestr2, ")", 2);
@@ -672,7 +693,7 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
             arrdel(line1, p + 1);
             len2--;
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
         }
         else if (strcmp(line1[p], "/") == 0)
@@ -683,13 +704,13 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
                 error("`/` operator missing second argument", num);
             linestr2[strlen(linestr2) - 1] = '\0';
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 9);
+            linestr2 = realloc(linestr2, strlen(linestr2) + 9);
             strncat(linestr2, ".__div__", 9);
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
             strncat(linestr2, "(", 2);
             strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
             strncat(linestr2, ")", 2);
@@ -697,7 +718,7 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
             arrdel(line1, p + 1);
             len2--;
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
         }
         else if (strcmp(line1[p], "+=") == 0)
@@ -716,21 +737,21 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
             varname += lastsep;
             varname = strndup(varname, strlen(varname));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1 + 1);
             strncat(linestr2, "=", 2);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(varname) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(varname) + 1);
             strncat(linestr2, varname, strlen(varname));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 8 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 8 + 1);
             strncat(linestr2, ".__add__", 9);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
             strncat(linestr2, "(", 2);
             strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
             strncat(linestr2, ")", 2);
@@ -738,7 +759,7 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
             arrdel(line1, p + 1);
             len2--;
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
         }
         else if (strcmp(line1[p], "-=") == 0)
@@ -757,21 +778,21 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
             varname += lastsep;
             varname = strndup(varname, strlen(varname));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1 + 1);
             strncat(linestr2, "=", 2);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(varname) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(varname) + 1);
             strncat(linestr2, varname, strlen(varname));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 8 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 8 + 1);
             strncat(linestr2, ".__sub__", 9);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
             strncat(linestr2, "(", 2);
             strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
             strncat(linestr2, ")", 2);
@@ -779,7 +800,7 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
             arrdel(line1, p + 1);
             len2--;
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
         }
         else if (strcmp(line1[p], "*=") == 0)
@@ -798,21 +819,21 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
             varname += lastsep;
             varname = strndup(varname, strlen(varname));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1 + 1);
             strncat(linestr2, "=", 2);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(varname) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(varname) + 1);
             strncat(linestr2, varname, strlen(varname));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 8 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 8 + 1);
             strncat(linestr2, ".__mul__", 9);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
             strncat(linestr2, "(", 2);
             strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
             strncat(linestr2, ")", 2);
@@ -820,7 +841,7 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
             arrdel(line1, p + 1);
             len2--;
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
         }
         else if (strcmp(line1[p], "/") == 0)
@@ -839,21 +860,21 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
             varname += lastsep;
             varname = strndup(varname, strlen(varname));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1 + 1);
             strncat(linestr2, "=", 2);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(varname) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(varname) + 1);
             strncat(linestr2, varname, strlen(varname));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 8 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 8 + 1);
             strncat(linestr2, ".__div__", 9);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
             strncat(linestr2, "(", 2);
             strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
             strncat(linestr2, ")", 2);
@@ -861,7 +882,7 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
             arrdel(line1, p + 1);
             len2--;
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
         }
         else if (strcmp(line1[p], "==") == 0)
@@ -872,13 +893,13 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
                 error("`==` equality operator missing second argument", num);
             linestr2[strlen(linestr2) - 1] = '\0';
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 9);
+            linestr2 = realloc(linestr2, strlen(linestr2) + 9);
             strncat(linestr2, ".__eq__", 9);
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + 1 + strlen(line1[p + 1]) + 2 + 1);
             strncat(linestr2, "(", 2);
             strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
             strncat(linestr2, ")", 2);
@@ -886,34 +907,32 @@ char * precompile_stage_2(char ** line1, char * separator, int num, int isInline
             arrdel(line1, p + 1);
             len2--;
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
         }
         else if (stringInList(types, line1[p]) && p + 1 < len2 && startswith(line1[p + 1], "(") && endswith(line1[p + 1], ")") && !(
             p - 1 >= 0 && strcmp(line1[p - 1], "new") == 0
         ))
         {
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(line1[p + 1]) + 3 + strlen(line1[p]) + 2 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(line1[p + 1]) + 3 + strlen(line1[p]) + 2 + 1);
             strncat(linestr2, line1[p + 1], strlen(line1[p + 1]));
             strncat(linestr2, ".__", 4);
             strncat(linestr2, line1[p], strlen(line1[p]));
             strncat(linestr2, "__", 3);
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + 2 + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + 2 + 1);
             strncat(linestr2, "()", 3);
 
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
         }
         else
         {
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(line1[p]) + 1);
+            linestr2 = realloc(linestr2, strlen(linestr2) + strlen(line1[p]) + strlen(separator) + 1);
             strncat(linestr2, line1[p], strlen(line1[p]));
-
-            linestr2 = (char *)realloc(linestr2, strlen(linestr2) + strlen(separator) + 1);
             strncat(linestr2, separator, strlen(separator));
         }
     }
@@ -957,10 +976,6 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
 
     tokenise(line1, linestr1, separator);
 
-    if (verbose)
-        for (int p = 0; p < arrsize(line1); p++)
-            println(line1[p]);
-
     //
     /// PRECOMPILE STAGE 2
     //
@@ -973,10 +988,6 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     line[0] = "";
 
     tokenise(line, linestr2, separator);
-
-    if (verbose)
-        for (int p = 0; p < arrsize(line); p++)
-            println(line[p]);
 
     //
     /// Cleanup
@@ -1008,64 +1019,6 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     if (line[1] == NULL && len <= 1)
         line[1] = "";
 
-    if (scope == -1)
-    {
-        if (strcmp(line[0], "end") == 0)
-        {
-            if (len > 1) error("end action received too many arguments", num);
-            scope++;
-        }
-        else if (len > 1)
-            error("invalid syntax, headers must be included on separate lines", num);
-        else
-        {
-            char * header_name;
-            if (stringHasChar(line[0], '.'))
-            {
-                header_name = (char *)malloc(strlen(line[0]) + 1);
-                strcpy(header_name, line[0]);
-            }
-            else
-            {
-                header_name = (char *)malloc(strlen(line[0]) + 3);
-                strcpy(header_name, line[0]);
-                strcat(header_name, ".q");
-            }
-            if (strcmp(current_file, header_name) == 0)
-            {
-                char * err = (char *)malloc(strlen(line[0]) + strlen(header_name) + 92); // 1 + 18 + 72 + 1 (\0 ending)
-                strcpy(err, "'");
-                strcat(err, line[0]);
-                strcat(err, "' (at local path '");
-                strcat(err, header_name);
-                strcat(err, "') is being imported from within itself, this should not happen");
-                error(err, num);
-            }
-            char * oldfile = current_file;
-            current_file = header_name;
-            scope = 0;
-            char * header_data = quokka_compile(header_name);
-            current_file = oldfile;
-            scope = -1;
-            if (strlen(header_data) <= 0)
-            {
-                char * err = (char *)malloc(strlen(line[0]) + strlen(header_name) + 92); // 1 + 18 + 72 + 1 (\0 ending)
-                strcpy(err, "'");
-                strcat(err, line[0]);
-                strcat(err, "' (at local path '");
-                strcat(err, header_name);
-                strcat(err, "') is an invalid header file, make sure the file exists and is not empty");
-                error(err, num);
-            }
-            strcat(r, strndup(header_data, strlen(header_data)));
-
-            free(header_name);
-        }
-
-        free(line);
-        return r;
-    }
-
     if (strcmp(line[0], "raise") == 0)
     {
         if (len < 2) error("raise action missing arguments", num);
@@ -1082,9 +1035,9 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
 
             char * fullfile = readfile(current_file);
 
-            char * lineprevious = (char *)malloc(MAXLINE);
-            char * linepreview = (char *)malloc(MAXLINE);
-            char * linenext = (char *)malloc(MAXLINE);
+            char * lineprevious = malloc(MAXLINE);
+            char * linepreview = malloc(MAXLINE);
+            char * linenext = malloc(MAXLINE);
 
             strcpy(lineprevious, "");
             strcpy(linepreview, "");
@@ -1351,6 +1304,85 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         scope++;
         declared = _sc_add(declared, line[2], scope);
         defined = _sc_add(defined, line[2], scope);
+
+        declared = _sc_add(declared, line[1], scope);
+        defined = _sc_add(defined, line[1], scope);
+    }
+    else if (strcmp(line[0], "import") == 0)
+    {
+        if (isInline) error("import must be at the start of a line", num);
+        else if (scope > 0 && !strlen(class_constructor)) error("import must be at minimum scope", num);
+        else if (len < 2) error("import missing arguments", num);
+        else if (len > 2) error("import received too many arguments", num);
+
+        char * prename = line[1];
+        if (!(startswith(prename, "__string_Constructor__(\"") && endswith(prename, "\")")))
+        {
+            error("file path to import should be a string", num);
+
+            free(line);
+            return r;
+        }
+
+        prename = __slice_string__(String(prename), Integer(24), Integer(2)).value;
+
+        char * header_name;
+
+        if (stringHasChar(prename, '.'))
+        {
+            header_name = malloc(strlen(prename) + 1);
+            strcpy(header_name, prename);
+        }
+        else
+        {
+            header_name = malloc(strlen(prename) + 3);
+            strcpy(header_name, prename);
+            strcat(header_name, ".q");
+        }
+
+        if (strcmp(current_file, header_name) == 0)
+        {
+            char * err = malloc(strlen(prename) + strlen(header_name) + 92); // 1 + 18 + 72 + 1 (\0 ending)
+            strcpy(err, "'");
+            strcat(err, prename);
+            strcat(err, "' (at local path '");
+            strcat(err, header_name);
+            strcat(err, "') is being imported from within itself, this should not happen");
+            error(err, num);
+        }
+
+        if (getrealpath(header_name) == 0)
+        {
+            char * err = malloc(strlen(prename) + strlen(header_name) + 92); // 1 + 18 + 72 + 1 (\0 ending)
+            strcpy(err, "'");
+            strcat(err, prename);
+            strcat(err, "' (at local path '");
+            strcat(err, header_name);
+            strcat(err, "') is an invalid header file, make sure the file exists and is not empty");
+            error(err, num);
+        }
+
+        char * oldfile = current_file;
+        current_file = getrealpath(header_name);
+        scope = 0;
+        char * header_data = quokka_compile(header_name);
+        current_file = oldfile;
+
+        if (!strlen(header_data))
+        {
+            char * err = malloc(strlen(prename) + strlen(header_name) + 92); // 1 + 18 + 72 + 1 (\0 ending)
+            strcpy(err, "'");
+            strcat(err, prename);
+            strcat(err, "' (at local path '");
+            strcat(err, header_name);
+            strcat(err, "') is an invalid header file, make sure the file exists and is not empty");
+            error(err, num);
+        }
+
+        r = realloc(r, strlen(r) + strlen(header_data) + 1);
+        strcat(r, strndup(header_data, strlen(header_data)));
+
+        free(header_name);
     }
     // else if (startswith(line[1], "[") && endswith(line[1], "]"))
     // {
@@ -1374,7 +1406,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         else if (scope > 0 && !strlen(class_constructor)) error("proc `:` action can not be in a scope greater than 1", num);
         else if (len < 2) error("proc `:` action missing arguments", num);
         else if (len > 2) error("proc `:` action received too many arguments", num);
-        else if (len == 2 && strcmp(line[0], "include") != 0)
+        else if (len == 2)
         {
             strcat(r, "int ");
             strcat(r, line[0]);
@@ -1389,7 +1421,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             }
             else
             {
-                file_declarations = (char *)realloc(file_declarations,
+                file_declarations = realloc(file_declarations,
                     strlen(file_declarations) + 4 + strlen(line[0]) + 4 + 1);
                 strcat(file_declarations, "int ");
                 strcat(file_declarations, line[0]);
@@ -1398,21 +1430,16 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             strcat(r, "){\n");
         }
 
-        if (strcmp(line[0], "include") == 0)
-            scope = -1;
-        else
-        {
-            scpfuncs = _sc_add(scpfuncs, strndup(line[0], strlen(line[0])), 0);
-            scope++;
-        }
+        scpfuncs = _sc_add(scpfuncs, strndup(line[0], strlen(line[0])), 0);
+        scope++;
     }
     else if (strcmp(line[0], "def") == 0)
     {
-        if (isInline) error("def action must be at the start of a line", num);
+        if (isInline) error("function definition must be at the start of a line", num);
         if (scope == 1 && strlen(object_def))
         {
-            if (len < 2) error("def action missing type", num);
-            else if (len < 3) error("def action missing name", num);
+            if (len < 2) error("function definition missing return type", num);
+            else if (len < 3) error("function definition missing name", num);
             else if (len == 3)
             {
                 strcat(r, line[1]);
@@ -1433,7 +1460,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
 
                 char * args = line[3];
                 if (startswith(args, "(") && endswith(args, ")"))
-                    args = __slice_string__(String(args), 1, 1).value;
+                    args = __slice_string__(String(args), Integer(1), Integer(1)).value;
 
                 char ** argslist = malloc(charCount(args, ',') + 1 * sizeof(char *));
                 tokenise(argslist, args, ",");
@@ -1449,7 +1476,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                         error("invalid syntax in function argument declaration", num);
                     if (!stringInList(types, varsg[0]))
                     {
-                        char * err = (char *)malloc(14 + strlen(varsg[0]) + 1 + 1);
+                        char * err = malloc(14 + strlen(varsg[0]) + 1 + 1);
                         strcpy(err, "invalid type '");
                         strcat(err, varsg[0]);
                         strcat(err, "'");
@@ -1469,20 +1496,29 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
 
                 strcat(r, ");\n");
             }
-            else if (len > 4) error("def action received too many arguments", num);
+            else if (len > 4) error("function definition received too many arguments", num);
         }
         else
         {
             if (scope > 0 && !strlen(class_constructor))
-                error("def action can not be in a scope greater than 1 (excluding class definitions)",
+                error("function definition can not be in a scope greater than 1 (excluding class definitions)",
                     num);
-            else if (len < 2) error("def action missing type", num);
-            else if (len < 3) error("def action missing name", num);
+            else if (len < 2) error("function definition missing return type", num);
+            else if (len < 3) error("function definition missing name", num);
             else if (len == 3)
             {
                 if (strlen(class_constructor))
                 {
-                    class_declarations = (char *)realloc(class_declarations,
+                    type_declarations = realloc(type_declarations,
+                        strlen(type_declarations) + strlen(line[1]) + 3 + strlen(line[2]) + 2 + strlen(class_constructor) + 8 + 1);
+                    strcat(type_declarations, line[1]);
+                    strcat(type_declarations, " (*");
+                    strcat(type_declarations, line[2]);
+                    strcat(type_declarations, ")(");
+                    strcat(type_declarations, class_constructor);
+                    strcat(type_declarations, " self);\n");
+
+                    class_declarations = realloc(class_declarations,
                         strlen(class_declarations) + strlen(line[1]) + 3 +
                         strlen(line[2]) + 12 + strlen(class_constructor) + 8 + 1);
                     strcat(class_declarations, line[1]);
@@ -1494,7 +1530,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                     strcat(class_declarations, class_constructor);
                     strcat(class_declarations, " self){\n");
 
-                    cur_class_def = (char *)realloc(cur_class_def,
+                    cur_class_def = realloc(cur_class_def,
                         strlen(cur_class_def) + strlen(line[2]) + 1);
                     strcat(cur_class_def, line[2]);
                 }
@@ -1505,7 +1541,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                     strcat(r, line[2]);
                     strcat(r, "(){\n");
 
-                    file_declarations = (char *)realloc(file_declarations,
+                    file_declarations = realloc(file_declarations,
                         strlen(file_declarations) + strlen(line[1]) + 1 + strlen(line[2]) + 4 + 1);
                     strcat(file_declarations, line[1]);
                     strcat(file_declarations, " ");
@@ -1515,16 +1551,23 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                     scpfuncs = _sc_add(scpfuncs, strndup(line[2], strlen(line[2])), scope);
                 }
             }
-            else if (len > 4) error("def action received too many arguments", num);
-            // if (len == 4)
-            else
+            else if (len > 4) error("function definition received too many arguments", num);
+            else // if (len == 4)
             {
                 if (strlen(class_constructor))
                 {
-                    class_declarations = (char *)realloc(class_declarations,
+                    type_declarations = realloc(type_declarations,
+                        strlen(type_declarations) + strlen(line[1]) + 3 + strlen(line[2]) + 2 + strlen(class_constructor) + 5 + 1);
+                    strcat(type_declarations, line[1]);
+                    strcat(type_declarations, " (*");
+                    strcat(type_declarations, line[2]);
+                    strcat(type_declarations, ")(");
+                    strcat(type_declarations, class_constructor);
+                    strcat(type_declarations, " self");
+
+                    class_declarations = realloc(class_declarations,
                         strlen(class_declarations) + strlen(line[1]) + 3 + strlen(line[2]) +
-                        1 + strlen(class_constructor) + 3 + strlen(class_constructor) + 6 +
-                        strlen(line[3]) + 3 + 1);
+                        1 + strlen(class_constructor) + 3 + strlen(class_constructor) + 5 + 1);
                     strcat(class_declarations, line[1]);
                     strcat(class_declarations, " __");
                     strcat(class_declarations, line[2]);
@@ -1533,28 +1576,6 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                     strcat(class_declarations, "__(");
                     strcat(class_declarations, class_constructor);
                     strcat(class_declarations, " self");
-                    char * args = line[3];
-                    if (startswith(args, "(") && endswith(args, ")"))
-                        args = __slice_string__(String(args), 1, 1).value;
-                    if (strlen(args))
-                    {
-                        strcat(class_declarations, ",");
-                        strcat(class_declarations, args);
-                    }
-                    strcat(class_declarations, "){\n");
-
-                    cur_class_def = (char *)realloc(cur_class_def,
-                        strlen(line[2]) + 1);
-                    strcpy(cur_class_def, line[2]);
-                }
-                else
-                {
-                    char * sg;
-                    sg = malloc(strlen(line[1]) + 1 + strlen(line[2]) + 1 + 1);
-                    strcpy(sg, line[1]);
-                    strcat(sg, " ");
-                    strcat(sg, line[2]);
-                    strcat(sg, "(");
 
                     char * args = line[3];
                     if (!(startswith(args, "(") && endswith(args, ")")))
@@ -1562,7 +1583,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
 
                     if (strlen(args) > 2)
                     {
-                        args = __slice_string__(String(args), 1, 1).value;
+                        args = __slice_string__(String(args), Integer(1), Integer(1)).value;
 
                         char ** argslist = malloc(charCount(args, ',') + 1 * sizeof(char *));
                         tokenise(argslist, args, ",");
@@ -1579,7 +1600,76 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                                 error("invalid syntax in function argument declaration", num);
                             if (!stringInList(types, varsg[0]))
                             {
-                                char * err = (char *)malloc(14 + strlen(varsg[0]) + 1 + 1);
+                                char * err = malloc(14 + strlen(varsg[0]) + 1 + 1);
+                                strcpy(err, "invalid type '");
+                                strcat(err, varsg[0]);
+                                strcat(err, "'");
+                                error(err, num);
+                            }
+
+                            declared = _sc_add(declared, varsg[1], scope + 1);
+                            defined = _sc_add(defined, varsg[1], scope + 1);
+
+                            type_declarations = realloc(type_declarations,
+                                strlen(type_declarations) + strlen(argslist[p]) + 1 + 1);
+                            strcat(type_declarations, ",");
+                            strcat(type_declarations, argslist[p]);
+
+                            class_declarations = realloc(class_declarations,
+                                strlen(class_declarations) + strlen(argslist[p]) + 1 + 1);
+                            strcat(class_declarations, ",");
+                            strcat(class_declarations, argslist[p]);
+
+                            free(varsg);
+                        }
+
+                        free(argslist);
+                    }
+
+                    type_declarations = realloc(type_declarations,
+                        strlen(type_declarations) + 3 + 1);
+                    strcat(type_declarations, ");\n");
+
+                    class_declarations = realloc(class_declarations,
+                        strlen(class_declarations) + 3 + 1);
+                    strcat(class_declarations, "){\n");
+
+                    cur_class_def = realloc(cur_class_def,
+                        strlen(line[2]) + 1);
+                    strcpy(cur_class_def, line[2]);
+                }
+                else
+                {
+                    char * sg = malloc(strlen(line[1]) + 1 + strlen(line[2]) + 1 + 1);
+                    strcpy(sg, line[1]);
+                    strcat(sg, " ");
+                    strcat(sg, line[2]);
+                    strcat(sg, "(");
+
+                    char * args = line[3];
+                    if (!(startswith(args, "(") && endswith(args, ")")))
+                        error("invalid syntax in function argument declaration", num);
+
+                    if (strlen(args) > 2)
+                    {
+                        args = __slice_string__(String(args), Integer(1), Integer(1)).value;
+
+                        char ** argslist = malloc(charCount(args, ',') + 1 * sizeof(char *));
+                        tokenise(argslist, args, ",");
+                        int size = arrsize(argslist);
+
+                        for (int p = 0; p < size; p++)
+                        {
+                            char ** varsg = quokka_line_tok(argslist[p]);
+                            int vsize = arrsize(varsg);
+
+                            if (vsize == 0)
+                                break;
+                            if (vsize != 2)
+                                error("invalid syntax in function argument declaration", num);
+                            if (!stringInList(types, varsg[0]))
+                            {
+                                char * err = malloc(14 + strlen(varsg[0]) + 1 + 1);
                                 strcpy(err, "invalid type '");
                                 strcat(err, varsg[0]);
                                 strcat(err, "'");
@@ -1597,14 +1687,14 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                         }
 
                         while (endswith(sg, ","))
-                            strcpy(sg, __slice_string__(String(sg), 0, 1).value);
+                            strcpy(sg, __slice_string__(String(sg), Integer(0), Integer(1)).value);
 
                         free(argslist);
                     }
 
                     sg = realloc(sg, strlen(sg) + 2);
                     strcat(sg, ")");
-                    file_declarations = (char *)realloc(file_declarations,
+                    file_declarations = realloc(file_declarations,
                         strlen(file_declarations) + strlen(sg) + 2 + 1);
                     strcat(file_declarations, sg);
                     strcat(file_declarations, ";\n");
@@ -1630,16 +1720,16 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         if (len < 2)
         {
             int ext = strlen(strchr(current_file, '.'));
-            name = (char *)malloc(strlen(current_file) - ext + 1);
-            strcpy(name, __slice_string__(String(current_file), 0, ext).value);
+            name = malloc(strlen(current_file) - ext + 1);
+            strcpy(name, __slice_string__(String(current_file), Integer(0), Integer(ext)).value);
         }
         else
         {
-            name = (char *)malloc(strlen(line[1]));
+            name = malloc(strlen(line[1]));
             strcpy(name, line[1]);
         }
         // Define type
-        file_declarations = (char *)realloc(
+        file_declarations = realloc(
             file_declarations, strlen(file_declarations) + 17 + strlen(name) + 10 + strlen(name) + 2 + 1);
         strcat(file_declarations, "typedef struct __");
         strcat(file_declarations, name);
@@ -1647,12 +1737,12 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         strcat(file_declarations, name);
         strcat(file_declarations, ";\n");
         // Define struct
-        file_declarations = (char *)realloc(
+        file_declarations = realloc(
             file_declarations, strlen(file_declarations) + 9 + strlen(name) + 12 + 1);
         strcat(file_declarations, "struct __");
         strcat(file_declarations, name);
         strcat(file_declarations, "_Struct__ {\n");
-        object_def = (char *)realloc(object_def, strlen(object_def) + strlen(name) + 1);
+        object_def = realloc(object_def, strlen(object_def) + strlen(name) + 1);
         strcpy(object_def, name);
         types[arrsize(types)] = name;
         scope++;
@@ -1670,7 +1760,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         // if `class classname(int arg1, int arg2)`
         if (len == 3)
         {
-            name = (char *)malloc(strlen(line[1]));
+            name = malloc(strlen(line[1]));
             strcpy(name, line[1]);
 
             args = line[2];
@@ -1683,25 +1773,42 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             if (startswith(line[1], "(") && endswith(line[1], ")"))
             {
                 int ext = strlen(strchr(current_file, '.'));
-                name = (char *)malloc(strlen(current_file) - ext);
-                strcpy(name, __slice_string__(String(current_file), 0, ext).value);
+                name = malloc(strlen(current_file) - ext);
+                strcpy(name, __slice_string__(String(current_file), Integer(0), Integer(ext)).value);
 
                 args = line[1];
             }
             // if `class classname`
             else
             {
-                name = (char *)malloc(strlen(line[1]));
+                name = malloc(strlen(line[1]));
                 strcpy(name, line[1]);
             }
         }
         else if (len == 1)
         {
             int ext = strlen(strchr(current_file, '.'));
-            name = (char *)malloc(strlen(current_file) - ext);
-            strcpy(name, __slice_string__(String(current_file), 0, ext).value);
+            name = malloc(strlen(current_file) - ext);
+            strcpy(name, __slice_string__(String(current_file), Integer(0), Integer(ext)).value);
         }
 
+        // Define type
+        type_declarations = realloc(
+            type_declarations, strlen(type_declarations) + 17 + strlen(name) + 10 + strlen(name) + 2 + 1);
+        strcat(type_declarations, "typedef struct __");
+        strcat(type_declarations, name);
+        strcat(type_declarations, "_Struct__ ");
+        strcat(type_declarations, name);
+        strcat(type_declarations, ";\n");
+
+        // Define struct
+        type_declarations = realloc(
+            type_declarations, strlen(type_declarations) + 9 + strlen(name) + 12 + 1);
+        strcat(type_declarations, "struct __");
+        strcat(type_declarations, name);
+        strcat(type_declarations, "_Struct__ {\n");
+
+        // Define class constructor
         char * sg;
         sg = malloc(strlen(name) + 3 + strlen(name) + 15 + 1);
         strcpy(sg, name);
@@ -1711,7 +1818,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
 
         if (strlen(args) > 2)
         {
-            args = __slice_string__(String(args), 1, 1).value;
+            args = __slice_string__(String(args), Integer(1), Integer(1)).value;
 
             char ** argslist = malloc(charCount(args, ',') + 1 * sizeof(char *));
             tokenise(argslist, args, ",");
@@ -1728,7 +1835,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                     error("invalid syntax in class constructor's argument declaration", num);
                 if (!stringInList(types, varsg[0]))
                 {
-                    char * err = (char *)malloc(14 + strlen(varsg[0]) + 1 + 1);
+                    char * err = malloc(14 + strlen(varsg[0]) + 1 + 1);
                     strcpy(err, "invalid type '");
                     strcat(err, varsg[0]);
                     strcat(err, "'");
@@ -1746,14 +1853,14 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             }
 
             while (endswith(sg, ","))
-                strcpy(sg, __slice_string__(String(sg), 0, 1).value);
+                strcpy(sg, __slice_string__(String(sg), Integer(0), Integer(1)).value);
 
             free(argslist);
         }
 
         sg = realloc(sg, strlen(sg) + 2);
         strcat(sg, ")");
-        file_declarations = (char *)realloc(file_declarations,
+        file_declarations = realloc(file_declarations,
             strlen(file_declarations) + strlen(sg) + 2 + 1);
         strcat(file_declarations, sg);
         strcat(file_declarations, ";\n");
@@ -1766,7 +1873,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
 
         free(sg);
 
-        class_constructor = (char *)realloc(class_constructor,
+        class_constructor = realloc(class_constructor,
             strlen(class_constructor) + strlen(name) + 1);
         strcpy(class_constructor, name);
 
@@ -1797,7 +1904,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         if (args && strlen(args) > 2)
         {
             char * tempstr[512];
-            tokenise(tempstr, __slice_string__(String(args), 1, 1).value, ",");
+            tokenise(tempstr, __slice_string__(String(args), Integer(1), Integer(1)).value, ",");
             for (int p = 0; p < arrsize(tempstr); p++)
             {
                 tempstr[p] = cpstrip(tempstr[p]);
@@ -1805,7 +1912,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                 strcat(r, ",");
             }
             while (endswith(r, ","))
-                strcpy(r, __slice_string__(String(r), 0, 1).value);
+                strcpy(r, __slice_string__(String(r), Integer(0), Integer(1)).value);
         }
         strcat(r, ")");
         if (!isInline)
@@ -1825,23 +1932,27 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         else if (len > 1) error("end action received too many arguments", num);
         else if (strlen(class_constructor) && scope == 1)
         {
+            type_declarations = realloc(type_declarations,
+                strlen(type_declarations) + 3 + 1);
+            strcat(type_declarations, "};\n");
+
             strcat(r, "return self;\n}\n");
-            class_constructor = (char *)realloc(class_constructor, 1);
+            class_constructor = realloc(class_constructor, 1);
             //strcpy(class_constructor, "");
             class_constructor[0] = '\0';
         }
         else if (strlen(object_def) && scope == 1)
         {
-            file_declarations = (char *)realloc(file_declarations,
+            file_declarations = realloc(file_declarations,
                 strlen(file_declarations) + 3 + 1);
             strcat(file_declarations, "};\n");
-            object_def = (char *)realloc(object_def, 1);
+            object_def = realloc(object_def, 1);
             //strcpy(object_def, "");
             object_def[0] = '\0';
         }
         else if (strlen(class_constructor) && strlen(cur_class_def) && scope == 2)
         {
-            class_declarations = (char *)realloc(class_declarations,
+            class_declarations = realloc(class_declarations,
                 strlen(class_declarations) + 2 + 1);
             strcat(class_declarations, "}\n");
             strcat(r, "self.");
@@ -1851,7 +1962,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             strcat(r, "_");
             strcat(r, class_constructor);
             strcat(r, "__;\n");
-            cur_class_def = (char *)realloc(cur_class_def, 1);
+            cur_class_def = realloc(cur_class_def, 1);
             //strcpy(cur_class_def, "");
             cur_class_def[0] = '\0';
         }
@@ -1894,7 +2005,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
     else if (startswith(line[0], "{") && endswith(line[0], "}"))
     {
         char * tempstr[512];
-        tokenise(tempstr, __slice_string__(String(line[0]), 1, 1).value, ",");
+        tokenise(tempstr, __slice_string__(String(line[0]), Integer(1), Integer(1)).value, ",");
         if (verbose) println("START");
         for (int p = 0; p < arrsize(tempstr); p++)
         {
@@ -1916,29 +2027,46 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                 num);
         else if (len < 2) error("invalid syntax in variable definition", num);
         else if (len < 3) error("invalid syntax in variable definition", num);
-        strcat(r, line[0]); // Type/Name
         // If second line token is not an equals sign `string word =`, `int num =`
         if (strcmp(line[1], "=") != 0)
         {
+            // Check if type is valid
             if (!stringInList(types, line[0]))
             {
-                char * err = (char *)malloc(14 + strlen(line[0]) + 1 + 1);
+                char * err = malloc(14 + strlen(line[0]) + 1 + 1);
                 strcpy(err, "invalid type '");
                 strcat(err, line[0]);
                 strcat(err, "'");
                 error(err, num);
             }
+
+            if (strlen(class_constructor) && startswith(line[1], "self."))
+            {
+                type_declarations = realloc(
+                    type_declarations, strlen(type_declarations) + strlen(line[0]) + 1 + (strlen(line[1]) - 5) + 2 + 1);
+                strcat(type_declarations, line[0]);
+                strcat(type_declarations, " ");
+                strcat(type_declarations, __slice_string__(String(line[1]), Integer(5), Integer(0)).value);
+                strcat(type_declarations, ";\n");
+            }
+            else
+            {
+                strcat(r, line[0]); // Type/Name
+                strcat(r, " ");
+            }
+
             char * varname = line[1];
+
             if (_sc_exists(declared, varname, scope))
             {
                 char * err = malloc(20 + strlen(varname) + 82 + 1);
                 strcpy(err, "variable with name '");
                 strcat(err, varname);
                 strcat(err,
-                    "' has already been declared, maybe you forget to remove this line's variable type?");
+                    "' has already been declared, did you forget to remove this line's variable type?");
                 error(err, num);
             }
-            strcat(r, " ");
+
             strcat(r, varname); // Var name
             strcat(r, "=");
             len -= 3;
@@ -1958,6 +2086,8 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         // If second line token is an equals sign `word =`, `num =`
         else
         {
+            strcat(r, line[0]); // Type/Name
+
             char * varname = line[0];
 
             if (!_sc_exists(declared, varname, scope))
@@ -2035,7 +2165,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             error(err, num);
         }
 
-        char * sg = (char *)malloc(1);
+        char * sg = malloc(1);
         strcpy(sg, "");
 
         char * last;
@@ -2045,10 +2175,10 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
             if (stringHasChar(line[p], '.') && p < len - 1)
             {
                 int sblen = strlen(strrchr(line[p], '.'));
-                char * name = __slice_string__(String(line[p]), 0, sblen).value;
+                char * name = __slice_string__(String(line[p]), Integer(0), Integer(sblen)).value;
 
                 while (startswith(name, "(") && endswith(name, ")"))
-                    strcpy(name, __slice_string__(String(name), 1, 1).value);
+                    strcpy(name, __slice_string__(String(name), Integer(1), Integer(1)).value);
 
                 sg = realloc(sg, strlen(sg) + strlen(line[p]) + 1 + strlen(name) + 1 + 1);
 
@@ -2065,7 +2195,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
                     args = compile_raw_line(args, num, 1);
 
                 if (startswith(args, "(") && endswith(args, ")") && endswith(sg, ","))
-                    strcpy(args, __slice_string__(String(args), 1, 1).value);
+                    strcpy(args, __slice_string__(String(args), Integer(1), Integer(1)).value);
 
                 sg = realloc(sg, strlen(sg) + strlen(args) + 1);
                 strcat(sg, args);
@@ -2073,7 +2203,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         }
 
         while (endswith(sg, ","))
-            strcpy(sg, __slice_string__(String(sg), 0, 1).value);
+            strcpy(sg, __slice_string__(String(sg), Integer(0), Integer(1)).value);
 
         int lbc = charCount(sg, '(');
         int rbc = charCount(sg, ')');
@@ -2096,7 +2226,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         {
             if (startswith(line[p], "`") && endswith(line[p], "`"))
             {
-                strcat(r, __slice_string__(String(line[p]), 1, 1).value);
+                strcat(r, __slice_string__(String(line[p]), Integer(1), Integer(1)).value);
                 continue;
             }
 
@@ -2136,7 +2266,7 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         }
 
         while (endswith(r, ","))
-            strcpy(r, __slice_string__(String(r), 0, 1).value);
+            strcpy(r, __slice_string__(String(r), Integer(0), Integer(1)).value);
 
         if (!isInline)
         {
@@ -2151,8 +2281,8 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
 
 char * compile_tokens(char ** tokens, int isInline)
 {
-    // Keep watch of this in case the files start to get bigger than 6000 characters
-    char * compiled = (char *)malloc(6000);
+    // Keep watch of this in case the files start to get bigger than 8192 characters
+    char * compiled = malloc(8192);
     strcpy(compiled, "");
 
     for (int i = 0; i < arrsize(tokens); i++)
@@ -2178,13 +2308,13 @@ char * compile_tokens(char ** tokens, int isInline)
 
         if (strlen(object_def))
         {
-            file_declarations = (char *)realloc(file_declarations,
+            file_declarations = realloc(file_declarations,
                 strlen(file_declarations) + strlen(result) + 1);
             strcat(file_declarations, result);
         }
         else if (strlen(class_constructor) && strlen(cur_class_def))
         {
-            class_declarations = (char *)realloc(class_declarations,
+            class_declarations = realloc(class_declarations,
                 strlen(class_declarations) + strlen(result) + 1);
             strcat(class_declarations, result);
         }
@@ -2221,7 +2351,18 @@ char * quokka_compile(char * filename)
     if (!buffer)
         return 0;
 
+    char olddir[260];
+    getcwd(olddir, sizeof(olddir));
+
+    if (stringHasChar(filename, '/'))
+    {
+        char * dirname = strndup(filename, strlen(filename) - strlen(strrchr(filename, '/')));
+        chdir(dirname);
+    }
+
     char * res = compile_raw(buffer, -1, 0);
+
+    chdir(olddir);
 
     return res;
 }
@@ -2230,7 +2371,7 @@ char ** quokka_line_tok(char * line)
 {
     line = cpstrip(line);
 
-    char * tokenstr = (char *)malloc(1);
+    char * tokenstr = malloc(1);
     strcpy(tokenstr, "");
 
     // Bools
@@ -2305,7 +2446,7 @@ char ** quokka_line_tok(char * line)
             t == '.' && c == '.' // Join together all `.` tokens.
         ))
         {
-            tokenstr = (char *)realloc(tokenstr, strlen(tokenstr) + strlen(separator) + 1);
+            tokenstr = realloc(tokenstr, strlen(tokenstr) + strlen(separator) + 1);
             strncat(tokenstr, separator, strlen(separator));
         }
         if (c == '\'' && !(
@@ -2337,7 +2478,7 @@ char ** quokka_line_tok(char * line)
         {
             if (comment && c != '/')
                 comment = 0;
-            tokenstr = (char *)realloc(tokenstr, strlen(tokenstr) + 2);
+            tokenstr = realloc(tokenstr, strlen(tokenstr) + 2);
             strncat(tokenstr, &c, 1);
         }
         t = c;
@@ -2393,24 +2534,28 @@ int main(int argc, char ** argv)
     types[arrsize(types)] = "string";
     types[arrsize(types)] = "bool";
 
+    // Initialise type_declarations
+    type_declarations = malloc(1);
+    strcpy(type_declarations, "");
+
     // Initialise file_declarations
-    file_declarations = (char *)malloc(1);
+    file_declarations = malloc(1);
     strcpy(file_declarations, "");
 
+    // Initialise class_declarations
+    class_declarations = malloc(1);
+    strcpy(class_declarations, "");
+
     // Initialise object_def
-    object_def = (char *)malloc(1);
+    object_def = malloc(1);
     strcpy(object_def, "");
 
     // Initialise class_constructor
-    class_constructor = (char *)malloc(1);
+    class_constructor = malloc(1);
     strcpy(class_constructor, "");
 
-    // Initialise class_declarations
-    class_declarations = (char *)malloc(1);
-    strcpy(class_declarations, "");
-
     // Initialise cur_class_def
-    cur_class_def = (char *)malloc(1);
+    cur_class_def = malloc(1);
     strcpy(cur_class_def, "");
 
     // Full path directing to first file to compile
@@ -2442,52 +2587,55 @@ int main(int argc, char ** argv)
 
     char * compiled = quokka_compile(fname);
 
-    if (compilation_error)
+    if (!compilation_error)
     {
-        println("Compilation failed.\n");
-        return 1;
-    }
 
-    if (verbose) println("--COMPILED--");
+        if (verbose) println("--COMPILED--");
 
-    if (scope != 0)
-        error("EOF inside a scope, did you forget to add 'end' somewhere?", charCount(readfile(fname), '\n'));
+        if (scope != 0)
+            error("EOF inside a scope, did you forget to add 'end' somewhere?", charCount(readfile(fname), '\n'));
 
-    FILE * fp = fopen(outputpath, "w");
-    fprintf(fp, "%s", C_HEADERS);
+        FILE * fp = fopen(outputpath, "w");
+        fprintf(fp, "%s", C_HEADERS);
 
-    if (!strlen(compiled))
-    {
-        fprintf(fp, "%s", "int main(){}\n");
+        if (!strlen(compiled))
+        {
+            fprintf(fp, "%s", "int main(){}\n");
+            fclose(fp);
+            return 0;
+        }
+
+        fprintf(fp, "%s", type_declarations);
+        fprintf(fp, "%s", file_declarations);
+        fprintf(fp, "%s", class_declarations);
+        fprintf(fp, "%s", compiled);
         fclose(fp);
+
+        // Free extra data
+        free(outputpath);
+        free(dirname);
+
+        free(file_declarations);
+        free(object_def);
+        free(class_constructor);
+        free(class_declarations);
+        free(cur_class_def);
+        free(compiled);
+
+        // Free scope managers
+        _sc_clear(declared);
+        _sc_clear(defined);
+        _sc_clear(scpfuncs);
+        _sc_clear(scpcnstrct);
+
+        if (verbose) println("--END--");
+
         return 0;
+
     }
 
-    fprintf(fp, "%s", file_declarations);
-    fprintf(fp, "%s", class_declarations);
-    fprintf(fp, "%s", compiled);
-    fclose(fp);
-
-    // Free extra data
-    free(outputpath);
-    free(dirname);
-
-    free(file_declarations);
-    free(object_def);
-    free(class_constructor);
-    free(class_declarations);
-    free(cur_class_def);
-    free(compiled);
-
-    // Free scope managers
-    _sc_clear(declared);
-    _sc_clear(defined);
-    _sc_clear(scpfuncs);
-    _sc_clear(scpcnstrct);
-
-    if (verbose) println("--END--");
-
-    return 0;
+    println("Compilation failed.\n");
+    return 1;
 }
 
 /* TODO */
