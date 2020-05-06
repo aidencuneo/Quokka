@@ -1,5 +1,3 @@
-#include "../include/q.h"
-
 // Definitions:
 #define SEPARATOR " | "
 #define INSTRUCTION_END "\n"

@@ -1,16 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <ctype.h>
-#include <time.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
 #include "qdef.h"
-#include "qinteger.h"
 #include "qstring.h"
-#include "qbool.h"
 
 // File stuff
 char * current_file;
@@ -51,8 +40,6 @@ char cprintln(char value);
 char * cpprintln(char * value);
 string sprintln(string value);
 string * saprintln(string value[]);
-integer intprintln(integer value);
-bool bprintln(bool value);
 
 // print
 int iprint(int value);
@@ -61,9 +48,6 @@ char cprint(char value);
 char * cpprint(char * value);
 string sprint(string value);
 string * saprint(string value[]);
-integer intprint(integer value);
-bool bprint(bool value);
-
 
 // Definitions
 #define arrsize(value) _Generic((value),\
@@ -77,8 +61,6 @@ bool bprint(bool value);
     char     : cprint,\
     char *   : cpprint,\
     string   : sprint,\
-    integer  : intprint,\
-    bool     : bprint,\
     default  : cpprint)(value)
 
 #define println(value) _Generic((value),\
@@ -87,18 +69,11 @@ bool bprint(bool value);
     char     : cprintln,\
     char *   : cpprintln,\
     string   : sprintln,\
-    integer  : intprintln,\
-    bool     : bprintln,\
     default  : cpprintln)(value)
 
 //
 /// All the rest
 //
-
-char * cptrindex(char ** value, int index)
-{
-    return value[index];
-}
 
 int carrsize(char * arr[])
 {
@@ -115,6 +90,22 @@ int carrsize(char * arr[])
 int iarrsize(int * arr)
 {
     return sizeof(arr) / sizeof(int);
+}
+
+char * getrealpath(char * path)
+{
+    char * rp = realpath(path, NULL);
+
+    if (!rp)
+    {
+        free(rp);
+        return 0;
+    }
+
+    char * res = __replace_string__(String(rp), String("\\"), String("/")).value;
+    free(rp);
+
+    return res;
 }
 
 int startswith(const char * a, const char * b)
@@ -203,7 +194,7 @@ int charCount(char * chst, char ch)
 
     int count = 0;
 
-    for (int i = 0; i < st.length.value; i++)
+    for (int i = 0; i < st.length; i++)
     {
         if (st.value[i] == ch)
             count++;
@@ -232,61 +223,6 @@ void ntokenise(char * arr[], char * buffer, char * tokAt)
         i++;
         arr[i] = cpstrip(nstrtok(NULL, tokAt));
     }
-}
-
-char * getrealpath(char * path)
-{
-    char * rp = realpath(path, NULL);
-
-    if (!rp)
-    {
-        free(rp);
-        return 0;
-    }
-
-    char * res = __replace_string__(String(rp), String("\\"), String("/")).value;
-    free(rp);
-
-    return res;
-}
-
-#define ptrindex(value, index) _Generic((value, index), char ** : cptrindex, default : cptrindex)(value, index)
-
-string readchar()
-{
-    return String(getchar());
-}
-
-string input()
-{
-    char * buffer = (char *)malloc(1);
-    strcpy(buffer, "");
-    char last = 0;
-
-    while (last != '\n' && last != '\r')
-    {
-        last = getchar();
-        buffer = (char *)realloc(buffer, strlen(buffer) + 1);
-        buffer[strlen(buffer)] = last;
-    }
-
-    buffer[strlen(buffer) - 1] = '\0';
-
-    return String(buffer);
-}
-
-integer readint()
-{
-    int out;
-    scanf("%d", &out);
-    return Integer(out);
-}
-
-float readfloat()
-{
-    float out;
-    scanf("%f", &out);
-    return out;
 }
 
 // print
@@ -321,20 +257,6 @@ string sprint(string value)
     return value;
 }
 
-integer intprint(integer value)
-{
-    printf("%ld", value.value);
-    return value;
-}
-
-bool bprint(bool value)
-{
-    if (value.value.value)
-        printf("true");
-    else printf("false");
-    return value;
-}
-
 // println
 
 int iprintln(int value)
@@ -365,38 +287,4 @@ string sprintln(string value)
 {
     printf("%s\n", value.value);
     return value;
-}
-
-integer intprintln(integer value)
-{
-    printf("%ld\n", value.value);
-    return value;
-}
-
-bool bprintln(bool value)
-{
-    if (value.value.value)
-        printf("true");
-    else printf("false");
-    return value;
-}
-
-//
-/// More stuff
-//
-
-void raise(string text, char * lineprevious, char * linepreview, char * linenext, char * filename, int line)
-{
-    printf("At %s : Line %d\n\n", filename, line);
-
-    if (line - 1 > 0)
-        printf("  %d | %s\n", line - 1, lineprevious);
-    printf("> %d > %s\n", line, linepreview);
-    if (strlen(linenext))
-        printf("  %d | %s\n", line + 1, linenext);
-    print("\n");
-
-    printf("Error: %s\n\n", text.value);
-
-    exit(EXIT_FAILURE);
 }

@@ -3,7 +3,9 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "../include/quokka.h"
 #include "../include/compile.h"
+#include "../include/interpret.h"
 
 int main(int argc, char ** argv)
 {
@@ -47,6 +49,11 @@ int main(int argc, char ** argv)
 
     if (verbose) println("\n--BYTECODE--\n");
     println(bytecode);
+
+    interp_init();
+    char * output = quokka_interpret(bytecode);
+    if (verbose) println("\n--OUTPUT--");
+    println(output);
 
     if (verbose) println("--SUCCESS--");
 

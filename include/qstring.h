@@ -11,7 +11,6 @@
 string __add__string__(string self, string other);
 
 // Type functions `__typename__`
-bool __bool__string__(string self);
 string __type__string__(string self);
 
 // Regular functions `funcname`
@@ -38,11 +37,10 @@ string StringFromCharPointer(char * value)
     string self;
 
     self.value = value;
-    self.length = Integer(strlen(value));
+    self.length = strlen(value);
 
     self.__add__ = __add__string__;
 
-    self.__bool__ = __bool__string__;
     self.__type__ = __type__string__;
 
     self.lstrip = __lstrip_string__;
@@ -84,18 +82,12 @@ string StringFromChar(char value)
     return StringFromCharPointer(&value);
 }
 
-string StringFromInteger(integer value)
-{
-    return StringFromLong(value.value);
-}
-
 #define String(value) _Generic((value),\
     int     : StringFromInt,\
     long    : StringFromLong,\
     char    : StringFromChar,\
     char *  : StringFromCharPointer,\
     string  : StringFromString,\
-    integer : StringFromInteger,\
     default : StringFromCharPointer)(value)
 
 #define __string_Constructor__(value) String(value)
@@ -107,7 +99,7 @@ string StringFromInteger(integer value)
 // Special functions `__funcname__`
 string __add__string__(string self, string other)
 {
-    char * x = malloc(self.length.value + other.length.value + 1);
+    char * x = malloc(self.length + other.length + 1);
     strcpy(x, self.value);
     strcat(x, other.value);
 
@@ -115,14 +107,6 @@ string __add__string__(string self, string other)
     free(x);
 
     return out;
-}
-
-// Type functions `__typename__`
-bool __bool__string__(string self)
-{
-    if (strlen(self.value))
-        return Bool(1);
-    return Bool(0);
 }
 
 string __type__string__(string self)
@@ -144,7 +128,7 @@ string __lstrip_string__(string s)
 
 string __rstrip_string__(string st)
 {
-    char * s = malloc(st.length.value + 1);
+    char * s = malloc(st.length + 1);
     strcpy(s, st.value);
 
     if (!s)
@@ -153,7 +137,7 @@ string __rstrip_string__(string st)
     size_t size;
     char * end;
 
-    size = st.length.value;
+    size = st.length;
 
     if (!size)
         return st;
@@ -173,7 +157,7 @@ string __rstrip_string__(string st)
 
 string __strip_string__(string st)
 {
-    char * s = malloc(st.length.value + 1);
+    char * s = malloc(st.length + 1);
     strcpy(s, st.value);
 
     if (!s)
@@ -182,7 +166,7 @@ string __strip_string__(string st)
     size_t size;
     char * end;
 
-    size = st.length.value;
+    size = st.length;
 
     if (!size)
         return st;
@@ -201,9 +185,9 @@ string __strip_string__(string st)
 
 string __upper_string__(string st)
 {
-    char * x = malloc(st.length.value);
+    char * x = malloc(st.length);
 
-    for (int i = 0; i < st.length.value; i++)
+    for (int i = 0; i < st.length; i++)
     {
         char letter[2] = {0};
         letter[0] = toupper(st.value[i]);
@@ -215,9 +199,9 @@ string __upper_string__(string st)
 
 string __lower_string__(string st)
 {
-    char * x = malloc(st.length.value);
+    char * x = malloc(st.length);
 
-    for (int i = 0; i < st.length.value; i++)
+    for (int i = 0; i < st.length; i++)
     {
         char letter[2] = {0};
         letter[0] = tolower(st.value[i]);
@@ -229,10 +213,10 @@ string __lower_string__(string st)
 
 string __slice_string__(string st, int start, int stop)
 {
-    char * x = malloc(st.length.value + 1);
+    char * x = malloc(st.length + 1);
     strcpy(x, st.value);
 
-    if (!st.value || !st.length.value)
+    if (!st.value || !st.length)
     {
         free(x);
         return st;
@@ -240,7 +224,7 @@ string __slice_string__(string st, int start, int stop)
 
     char * end;
 
-    end = x + st.length.value - 1;
+    end = x + st.length - 1;
     end -= stop;
     *(end + 1) = '\0';
 
@@ -254,11 +238,11 @@ string __slice_string__(string st, int start, int stop)
 
 string __reorder_string__(string st, int step)
 {
-    char * x = malloc(st.length.value);
+    char * x = malloc(st.length);
 
     if (step < 1) step = 1;
-    if (step > st.length.value) step = st.length.value;
-    for (int i = 0; i < st.length.value; i += step)
+    if (step > st.length) step = st.length;
+    for (int i = 0; i < st.length; i += step)
     {
         char * letter = malloc(2);
         letter[0] = st.value[i];
