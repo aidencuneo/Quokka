@@ -3,8 +3,11 @@
 #include <string.h>
 #include <ctype.h>
 
+int line_num;
+
 #include "../include/quokka.h"
 #include "../include/compile.h"
+#include "../include/functions.h"
 #include "../include/interpret.h"
 
 int main(int argc, char ** argv)
@@ -39,7 +42,6 @@ int main(int argc, char ** argv)
 
     current_file = fname;
 
-    // Move CWD to dirname
     chdir(dirname);
 
     char * bytecode = quokka_compile_fname(fname);
@@ -48,12 +50,13 @@ int main(int argc, char ** argv)
         return 1;
 
     if (verbose) println("\n--BYTECODE--\n");
-    println(bytecode);
+    if (verbose) println(bytecode);
 
+    if (verbose) println("\n--OUTPUT--");
     interp_init();
     char * output = quokka_interpret(bytecode);
-    if (verbose) println("\n--OUTPUT--");
-    println(output);
+    if (strlen(output))
+        println(output);
 
     if (verbose) println("--SUCCESS--");
 

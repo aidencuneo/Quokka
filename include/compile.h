@@ -1,5 +1,5 @@
 // Definitions:
-#define SEPARATOR " | "
+#define SEPARATOR " "
 #define INSTRUCTION_END "\n"
 
 // Bools:
@@ -53,7 +53,7 @@ void error(char * text, int line)
     line++;
 
     if (!compilation_error)
-        println("\nProgram compilation terminated:\n");
+        println("\nProgram execution terminated:\n");
 
     printf("At %s : Line %d\n\n", current_file, line);
 
@@ -146,13 +146,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     if (len < 2)
         line[1] = "";
 
-    println("PPP");
-    for (int p = 0; p < len; p++)
-    {
-        print(":P: ");
-        println(line[p]);
-    }
-
     if (isidentifier(line[0]) && startswith(line[1], "(") && endswith(line[1], ")"))
     {
         if (len > 2)
@@ -190,7 +183,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         len -= 2;
         char * temp = quokka_compile_line_tokens(line, -1, len, 1);
 
-        println(temp);
         strcat(bytecode, strndup(temp, strlen(temp)));
 
         free(temp);
@@ -200,13 +192,19 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcat(bytecode, varname);
         strcat(bytecode, INSTRUCTION_END);
     }
+    else if (isinteger(line[0]) && len == 1)
+    {
+        strcat(bytecode, "LOAD_INT");
+        strcat(bytecode, SEPARATOR);
+        strcat(bytecode, line[0]);
+        strcat(bytecode, INSTRUCTION_END);
+    }
     else if ((
-        (isinteger(line[0])) ||
         (startswith(line[0], "'") && endswith(line[0], "'")) ||
         (startswith(line[0], "\"") && endswith(line[0], "\""))
     ) && len == 1)
     {
-        strcat(bytecode, "LOAD_CONST");
+        strcat(bytecode, "LOAD_STRING");
         strcat(bytecode, SEPARATOR);
         strcat(bytecode, line[0]);
         strcat(bytecode, INSTRUCTION_END);
@@ -265,8 +263,6 @@ char * quokka_compile_tokens(char ** tokens, int isInline)
         if (tokens[i] == NULL)
             continue;
 
-        strcat(compiled, "LINE");
-        strcat(compiled, SEPARATOR);
         strcat(compiled, String(i + 1).value);
         strcat(compiled, INSTRUCTION_END);
 
@@ -284,8 +280,6 @@ char * quokka_compile_raw(char * rawtext, int maxtokensize, int isInline)
         maxtokensize = 2048;
     char ** tokens = malloc(maxtokensize + 1);
     ntokenise(tokens, rawtext, "\n");
-
-    //for (int p = 0; p < arrsize(tokens); p++) println(tokens[p]);
 
     char * res = quokka_compile_tokens(tokens, isInline);
 

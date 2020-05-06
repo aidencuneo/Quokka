@@ -4,6 +4,10 @@
 #ifndef _qdef
 #define _qdef
 
+//
+/// string
+//
+
 typedef struct __string_Struct__ string;
 struct __string_Struct__
 {
@@ -42,5 +46,39 @@ string StringFromChar(char value);
     default : StringFromCharPointer)(value)
 
 #define __string_Constructor__(value) String(value)
+
+//
+/// Object & Varlist
+//
+
+typedef struct __Object_Struct__ Object;
+struct __Object_Struct__
+{
+    char * name;
+    int value_count;
+
+    char ** names;
+    void ** values;
+};
+
+typedef struct __Varlist_Struct__ Varlist;
+struct __Varlist_Struct__
+{
+    int count;
+
+    char ** names;
+    Object * values;
+};
+
+// Function declarations
+Object emptyObject(char * name);
+Object makeObject(char * name, void * value);
+Object addObjectValue(Object obj, char * name, void * value);
+int objectHasAttr(Object obj, char * name);
+void * objectGetAttr(Object obj, char * name);
+void pushTop(Object obj);
+Object popTop();
+void addVar(char * name, Object obj);
+Object getVar(char * name);
 
 #endif
