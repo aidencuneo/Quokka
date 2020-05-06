@@ -66,7 +66,7 @@ struct __string_Struct__
     string (*strip)(string self);
     string (*upper)(string self);
     string (*lower)(string self);
-    string (*slice)(string st, integer start, integer stop);
+    string (*slice)(string st, int start, int stop);
     string (*reorder)(string self, int step);
     string (*replace)(string self, string strep, string repwith);
 };

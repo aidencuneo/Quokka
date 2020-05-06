@@ -20,7 +20,7 @@ string __rstrip_string__(string st);
 string __strip_string__(string st);
 string __upper_string__(string st);
 string __lower_string__(string st);
-string __slice_string__(string st, integer start, integer stop);
+string __slice_string__(string st, int start, int stop);
 string __reorder_string__(string st, int step);
 string __replace_string__(string st, string strep, string repwith);
 
@@ -62,7 +62,7 @@ string StringFromInt(int value)
     char * newval = malloc(11);
     sprintf(newval, "%d", value);
 
-    string out = StringFromCharPointer(newval);
+    string out = StringFromCharPointer(strndup(newval, strlen(newval)));
     free(newval);
 
     return out;
@@ -73,7 +73,7 @@ string StringFromLong(long value)
     char * newval = malloc(21);
     sprintf(newval, "%ld", value);
 
-    string out = StringFromCharPointer(newval);
+    string out = StringFromCharPointer(strndup(newval, strlen(newval)));
     free(newval);
 
     return out;
@@ -227,7 +227,7 @@ string __lower_string__(string st)
     return String(x);
 }
 
-string __slice_string__(string st, integer start, integer stop)
+string __slice_string__(string st, int start, int stop)
 {
     char * x = malloc(st.length.value + 1);
     strcpy(x, st.value);
@@ -241,11 +241,11 @@ string __slice_string__(string st, integer start, integer stop)
     char * end;
 
     end = x + st.length.value - 1;
-    end -= stop.value;
+    end -= stop;
     *(end + 1) = '\0';
 
     string out = String(strndup(x, strlen(x)));
-    out.value += start.value;
+    out.value += start;
 
     free(x);
 
