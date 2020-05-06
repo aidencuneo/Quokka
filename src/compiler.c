@@ -2130,17 +2130,17 @@ char * compileline(char * origline[], int num, int lineLen, int isInline)
         strcat(r, " ");
         strcat(r, line[1]);
 
-        if (!strncmp(line[0], "integer", 7))
+        if (!strcmp(line[0], "integer"))
         {
             strcat(r, "=__integer_Constructor__(0)");
             defined = _sc_add(defined, line[1], scope);
         }
-        else if (!strncmp(line[0], "string", 6))
+        else if (!strcmp(line[0], "string"))
         {
             strcat(r, "=__string_Constructor__(\"\")");
             defined = _sc_add(defined, line[1], scope);
         }
-        else if (!strncmp(line[0], "bool", 4))
+        else if (!strcmp(line[0], "bool"))
         {
             strcat(r, "=__bool_Constructor__(0)");
             defined = _sc_add(defined, line[1], scope);
@@ -2533,6 +2533,10 @@ int main(int argc, char ** argv)
     types[arrsize(types)] = "integer";
     types[arrsize(types)] = "string";
     types[arrsize(types)] = "bool";
+
+    types[arrsize(types)] = "integerArr";
+    types[arrsize(types)] = "stringArr";
+    types[arrsize(types)] = "boolArr";
 
     // Initialise type_declarations
     type_declarations = malloc(1);

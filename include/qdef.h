@@ -12,7 +12,6 @@ typedef struct __integer_Struct__ integer;
 typedef struct __string_Struct__ string;
 typedef struct __bool_Struct__ bool;
 
-
 //
 /// integer
 //
@@ -120,5 +119,15 @@ bool BoolFromInteger(integer value);
     default : BoolFromInt)(value)
 
 #define __bool_Constructor__(value) Bool(value)
+
+//
+/// array
+//
+
+#define __Array_Struct__(DATATYPE) struct { DATATYPE * data; size_t size; }
+
+typedef __Array_Struct__(integer) integerArr;
+typedef __Array_Struct__(string) stringArr;
+typedef __Array_Struct__(bool) boolArr;
 
 #endif

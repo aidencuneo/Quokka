@@ -1,32 +1,15 @@
 #include "../include/q.h"
 
-object func(object var)
-{
-    if (!strcmp(var.name, "string"))
-        return String("S");
-    else if (!strcmp(var.name, "integer"))
-        return String("I");
-    else if (!strcmp(var.name, "bool"))
-        return String("B");
-    else
-        return String("?");
-}
-
 int main()
 {
-    object num = Integer(92130828);
-    object str = String("This is a string, but also an object.");
-    object boo = Bool(0);
+    stringArr mylist;
 
-    print(num.name);
-    print(" : ");
-    println(num);
+    mylist.data[0] = String("aidennnn");
+    mylist.data[1] = String("tariyaaa");
+    mylist.size = 2;
 
-    print(str.name);
-    print("  : ");
-    println(str);
+    for (int i = 0; i < mylist.size; i++)
+        println(mylist.data[i]);
 
-    print(boo.name);
-    print("    : ");
-    println(boo);
+    return 0;
 }

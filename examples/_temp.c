@@ -4,7 +4,7 @@ int _FORVARNAME;
 string strgetch(string s,integer i);
 integer file_last_modified(string path);
 string strexp(string st,integer exp);
-string construct_func(string name,string args);
+string construct(string name,string args);
 string strgetch(string s,integer i){
 return String(s.value[i.value]);
 }
@@ -18,11 +18,10 @@ out=out.__add__(out,st);
 }
 return out;
 }
-string construct_func(string name,string args){
+string construct(string name,string args){
 args=args.slice(args,__integer_Constructor__(1),__integer_Constructor__(__integer_Constructor__(__integer_Constructor__(1))));
-println(name);
-println(args);
+println(name.__add__(name,(__string_Constructor__(", ")).__add__(__string_Constructor__(", "),args)));
 }
 int main(int argc,char**argv){
-string function=construct_func(__string_Constructor__("bob") , __string_Constructor__("(50, 60, 70)"));
+string function=construct(__string_Constructor__("bob") , __string_Constructor__("(50, 60, 70)"));
 }

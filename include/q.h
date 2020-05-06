@@ -69,7 +69,6 @@ bool bprint(bool value);
 #define arrsize(value) _Generic((value),\
     char **  : carrsize,\
     int *    : iarrsize,\
-    string * : sarrsize,\
     default  : carrsize)(value)
 
 #define print(value) _Generic((value),\
@@ -95,8 +94,6 @@ bool bprint(bool value);
 //
 /// All the rest
 //
-
-
 
 char * cptrindex(char ** value, int index)
 {
