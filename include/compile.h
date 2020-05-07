@@ -198,7 +198,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcat(bytecode, varname);
         strcat(bytecode, INSTRUCTION_END);
     }
-    else if (stringInList(line, "+") || stringInList(line, "-"))
+    else if (stringInList(line, "+") || stringInList(line, "-") || stringInList(line, "*") || stringInList(line, "/"))
     {
         char * operslist = malloc(1);
         strcpy(operslist, "");
@@ -265,6 +265,58 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
                 lastwasop = 1;
             }
+            else if (!strcmp(line[i], "*"))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+                strcat(valuelist, strdup(temp));
+                free(temp);
+
+                if (lastwasop)
+                {
+                    error("invalid syntax at '*'", num);
+                    exit(1);
+                }
+
+                operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
+
+                char * tmp = strdup(operslist);
+
+                memset(operslist, 0, strlen(operslist));
+                strcpy(operslist, "BINARY_MUL");
+                strcat(operslist, INSTRUCTION_END);
+                strcat(operslist, tmp);
+
+                free(tmp);
+
+                lastwasop = 1;
+            }
+            else if (!strcmp(line[i], "/"))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+                strcat(valuelist, strdup(temp));
+                free(temp);
+
+                if (lastwasop)
+                {
+                    error("invalid syntax at '/'", num);
+                    exit(1);
+                }
+
+                operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
+
+                char * tmp = strdup(operslist);
+
+                memset(operslist, 0, strlen(operslist));
+                strcpy(operslist, "BINARY_DIV");
+                strcat(operslist, INSTRUCTION_END);
+                strcat(operslist, tmp);
+
+                free(tmp);
+
+                lastwasop = 1;
+            }
             else
             {
                 if (lastwasop)
@@ -300,11 +352,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         if (len > 2)
         {
-            for (int p = 0; p < len; p++)
-            {
-                print(":::>");
-                println(line[p]);
-            }
             error("invalid syntax", num);
             exit(1);
         }
@@ -328,7 +375,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (isinteger(line[0]) && len == 1)
     {
         // Clear leading 0's on integers
-        while (startswith(line[0], "0") && strlen(line[0]) > 0)
+        while (startswith(line[0], "0") && strlen(line[0]) > 1)
             line[0]++;
 
         strcat(bytecode, "LOAD_INT");

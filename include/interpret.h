@@ -152,10 +152,10 @@ Object __add___integer(Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
-        char * err = malloc(54 + strlen(argv[1].name) + 1 + 1);
-        strcpy(err, "only 'int' and 'int' can not be added, not 'int' and '");
+        char * err = malloc(17 + strlen(argv[1].name) + 27 + 1);
+        strcpy(err, "types 'int' and '");
         strcat(err, argv[1].name);
-        strcpy(err, "'");
+        strcat(err, "' can not be added with '+'");
         error(err, line_num);
         exit(1);
     }
@@ -169,10 +169,10 @@ Object __sub___integer(Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
-        char * err = malloc(59 + strlen(argv[1].name) + 1 + 1);
-        strcpy(err, "only 'int' and 'int' can not be subtracted, not 'int' and '");
+        char * err = malloc(17 + strlen(argv[1].name) + 32 + 1);
+        strcpy(err, "types 'int' and '");
         strcat(err, argv[1].name);
-        strcpy(err, "'");
+        strcat(err, "' can not be subtracted with '-'");
         error(err, line_num);
         exit(1);
     }
@@ -180,6 +180,44 @@ Object __sub___integer(Object * argv)
     int * first = (int *)objectGetAttr(argv[0], "value");
     int * secnd = (int *)objectGetAttr(argv[1], "value");
     return makeInteger(makeIntPtr(first[0] - secnd[0]));
+}
+
+Object __mul___integer(Object * argv)
+{
+    if (strcmp(argv[1].name, "int"))
+    {
+        char * err = malloc(17 + strlen(argv[1].name) + 32 + 1);
+        strcpy(err, "types 'int' and '");
+        strcat(err, argv[1].name);
+        strcat(err, "' can not be multiplied with '*'");
+        error(err, line_num);
+        exit(1);
+    }
+
+    int * first = (int *)objectGetAttr(argv[0], "value");
+    int * secnd = (int *)objectGetAttr(argv[1], "value");
+    return makeInteger(makeIntPtr(first[0] * secnd[0]));
+}
+
+Object __div___integer(Object * argv)
+{
+    if (strcmp(argv[1].name, "int"))
+    {
+        char * err = malloc(17 + strlen(argv[1].name) + 29 + 1);
+        strcpy(err, "types 'int' and '");
+        strcat(err, argv[1].name);
+        strcat(err, "' can not be divided with '/'");
+        error(err, line_num);
+        exit(1);
+    }
+
+    int * first = (int *)objectGetAttr(argv[0], "value");
+    int * secnd = (int *)objectGetAttr(argv[1], "value");
+
+    if (!secnd[0])
+        return makeInteger(makeIntPtr(0));
+
+    return makeInteger(makeIntPtr(first[0] / secnd[0]));
 }
 
 Object __str___integer(Object * argv)
@@ -201,6 +239,14 @@ Object makeInteger(int * value)
     // __sub__
     self = addObjectValue(self, "__sub__argc", &twoArgc);
     self = addObjectValue(self, "__sub__", &__sub___integer);
+
+    // __mul__
+    self = addObjectValue(self, "__mul__argc", &twoArgc);
+    self = addObjectValue(self, "__mul__", &__mul___integer);
+
+    // __div__
+    self = addObjectValue(self, "__div__argc", &twoArgc);
+    self = addObjectValue(self, "__div__", &__div___integer);
 
     // __str__
     self = addObjectValue(self, "__str__argc", &oneArgc);
@@ -310,12 +356,9 @@ char * quokka_interpret_line_tokens(char ** line)
             exit(1);
         }
 
-        int addargc = ((int *)objectGetAttr(first, "__add__argc"))[0];
-
-        if (2 > addargc)
-            error("function received too many arguments", line_num);
-        if (2 < addargc)
-            error("function requires 1 more argument", line_num);
+        int funcargc = ((int *)objectGetAttr(first, "__add__argc"))[0];
+        if (funcargc != 2)
+            error("__add__ function requires an invalid amount of arguments, should be 2", line_num);
 
         Object arglist[2];
         arglist[0] = first;
@@ -348,18 +391,85 @@ char * quokka_interpret_line_tokens(char ** line)
             exit(1);
         }
 
-        int addargc = ((int *)objectGetAttr(first, "__sub__argc"))[0];
-
-        if (2 > addargc)
-            error("function received too many arguments", line_num);
-        if (2 < addargc)
-            error("function requires 1 more argument", line_num);
+        int funcargc = ((int *)objectGetAttr(first, "__sub__argc"))[0];
+        if (funcargc != 2)
+            error("__sub__ function requires an invalid amount of arguments, should be 2", line_num);
 
         Object arglist[2];
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__sub__"))(arglist));
+    }
+    else if (!strcmp(line[0], "BINARY_MUL"))
+    {
+        Object secnd = popTop();
+        Object first = popTop();
+
+        if (!objectHasAttr(first, "__mul__"))
+        {
+            char * err = malloc(6 + strlen(first.name) + 43 + 1);
+            strcpy(err, "type '");
+            strcat(err, first.name);
+            strcat(err, "' does not have a method for multiplication");
+            error(err, line_num);
+            exit(1);
+        }
+
+        if (!objectHasAttr(first, "__mul__argc"))
+        {
+            char * err = malloc(28 + strlen(first.name) + 56 + 1);
+            strcpy(err, "the __mul__ method of type '");
+            strcat(err, first.name);
+            strcat(err, "' is missing an argument limit, this should never happen");
+            error(err, line_num);
+            exit(1);
+        }
+
+        int funcargc = ((int *)objectGetAttr(first, "__mul__argc"))[0];
+        if (funcargc != 2)
+            error("__mul__ function requires an invalid amount of arguments, should be 2", line_num);
+
+        Object arglist[2];
+        arglist[0] = first;
+        arglist[1] = secnd;
+
+        pushTop(((standard_func_def)objectGetAttr(first, "__mul__"))(arglist));
+    }
+    else if (!strcmp(line[0], "BINARY_DIV"))
+    {
+        Object secnd = popTop();
+        Object first = popTop();
+
+        if (!objectHasAttr(first, "__div__"))
+        {
+            char * err = malloc(6 + strlen(first.name) + 37 + 1);
+            strcpy(err, "type '");
+            strcat(err, first.name);
+            strcat(err, "' does not have a method for division");
+            error(err, line_num);
+            exit(1);
+        }
+
+        if (!objectHasAttr(first, "__div__argc"))
+        {
+            char * err = malloc(28 + strlen(first.name) + 56 + 1);
+            strcpy(err, "the __div__ method of type '");
+            strcat(err, first.name);
+            strcat(err, "' is missing an argument limit, this should never happen");
+            error(err, line_num);
+            exit(1);
+        }
+
+        int funcargc = ((int *)objectGetAttr(first, "__div__argc"))[0];
+        if (funcargc != 2)
+            error("__div__ function requires an invalid amount of arguments, should be 2", line_num);
+
+        Object arglist[2];
+        arglist[0] = first;
+        arglist[1] = secnd;
+
+        pushTop(((standard_func_def)objectGetAttr(first, "__div__"))(arglist));
     }
     else if (!strcmp(line[0], "STORE_NAME"))
     {
