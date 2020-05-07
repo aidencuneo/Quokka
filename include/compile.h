@@ -3,7 +3,6 @@
 #define INSTRUCTION_END "\n"
 
 // Bools:
-int verbose = 0;
 int compilation_error = 0;
 
 // Function declarations
