@@ -1,4 +1,4 @@
-// Speedtest results between Quokka and Python
+// Speedtest results between Quokka (the Compiler) and Python
 
 // -- TEST 1 --
 
@@ -34,5 +34,5 @@
 // 3.55 times faster than Python
 
 // -- FINAL RESULT --
-// On average, Quokka is 3.96 times faster than Python,
+// On average, Quokka (the Compiler) is 3.96 times faster than Python,
 // which can be rounded easily to 4.
