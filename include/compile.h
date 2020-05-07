@@ -166,7 +166,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else len = lineLen;
 
     if (!len)
-        return 0;
+        return "";
 
     if (len < 2)
         line[1] = "";
@@ -219,23 +219,70 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcat(bytecode, varname);
         strcat(bytecode, INSTRUCTION_END);
     }
-    else if (stringInList(line, "+"))
+    else if (stringInList(line, "+") || stringInList(line, "-"))
     {
-        if (strcmp(line[1], "+"))
-            error("plus sign operator is in the wrong position for binary addition", num);
-        if (len < 3) error("plus sign operator missing an argument", num);
+        char * operslist = malloc(1);
+        strcpy(operslist, "");
 
-        char * first = quokka_compile_line(line[0], num, 1, 1);
-        char * second = quokka_compile_line(line[2], num, 1, 1);
+        char * valuelist = malloc(1);
+        strcpy(valuelist, "");
 
-        strcat(bytecode, strndup(first, strlen(first)));
-        strcat(bytecode, strndup(second, strlen(second)));
+        int lastwasop = 1;
 
-        free(first);
-        free(second);
+        for (int i = 0; i < len; i++)
+        {
+            if (!strcmp(line[i], "+"))
+            {
+                if (lastwasop)
+                {
+                    error("invalid syntax at '+'", num);
+                    exit(1);
+                }
 
-        strcat(bytecode, "BINARY_ADD");
-        strcat(bytecode, INSTRUCTION_END);
+                operslist = realloc(operslist, strlen(operslist) + 1 + 1 + 1);
+                strcat(operslist, "BINARY_ADD");
+                strcat(operslist, INSTRUCTION_END);
+
+                lastwasop = 1;
+            }
+            else if (!strcmp(line[i], "-"))
+            {
+                if (lastwasop)
+                {
+                    error("invalid syntax at '-'", num);
+                    exit(1);
+                }
+
+                operslist = realloc(operslist, strlen(operslist) + 1 + 1 + 1);
+                strcat(operslist, "BINARY_SUB");
+                strcat(operslist, INSTRUCTION_END);
+
+                lastwasop = 1;
+            }
+            else
+            {
+                if (!lastwasop)
+                {
+                    error("invalid syntax, expression is missing commas for value separation", num);
+                    exit(1);
+                }
+
+                char * temp = quokka_compile_line(line[i], num, -1, 1);
+
+                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+                strcat(valuelist, strdup(temp));
+
+                free(temp);
+
+                lastwasop = 0;
+            }
+        }
+
+        strcat(bytecode, strdup(valuelist));
+        strcat(bytecode, strdup(operslist));
+
+        free(valuelist);
+        free(operslist);
     }
     else if (isinteger(line[0]) && len == 1)
     {

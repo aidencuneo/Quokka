@@ -1,5 +1,9 @@
-a = 10
-b = 20
-println(a)
-println(00000000000000000930)
-println('') // Quokka source code currently MUST end in a newline after the final line of code
+a = 16
+b = 128
+
+println('Hello' + ', W' + 'orld' + '!')
+print(a)
+print(' + ')
+print(b)
+print(' = ')
+println(a + b)

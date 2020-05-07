@@ -16,6 +16,7 @@ int stack_size;
 // Function stuff
 typedef Object (*standard_func_def)(Object * argv);
 int oneArgc;
+int twoArgc;
 
 void interp_init()
 {
@@ -23,15 +24,16 @@ void interp_init()
     stack_size = 0;
 
     oneArgc = 1;
+    twoArgc = 2;
 
     Object printObj = makeObject("function", &oneArgc);
     printObj = addObjectValue(printObj, "__call__", &qprint);
-    printObj = addObjectValue(printObj, "value", &oneArgc);
+    printObj = addObjectValue(printObj, "__call__argc", &oneArgc);
     addVar("print", printObj);
 
     Object printlnObj = makeObject("function", &oneArgc);
     printlnObj = addObjectValue(printlnObj, "__call__", &qprintln);
-    printlnObj = addObjectValue(printlnObj, "value", &oneArgc);
+    printlnObj = addObjectValue(printlnObj, "__call__argc", &oneArgc);
     addVar("println", printlnObj);
 }
 
@@ -160,9 +162,33 @@ Object makeInteger(int * value)
     Object self;
 
     self = makeObject("int", value);
+
+    self = addObjectValue(self, "__add__argc", &twoArgc);
     self = addObjectValue(self, "__add__", &__add___integer);
 
     return self;
+}
+
+Object __add___string(Object * argv)
+{
+    if (strcmp(argv[1].name, "string"))
+    {
+        char * err = malloc(70 + strlen(argv[1].name) + 1 + 1);
+        strcpy(err, "only 'string' and 'string' can not be concatenated, not 'string' and '");
+        strcat(err, argv[1].name);
+        strcpy(err, "'");
+        error(err, line_num);
+        exit(1);
+    }
+
+    char * first = (char *)objectGetAttr(argv[0], "value");
+    char * secnd = (char *)objectGetAttr(argv[1], "value");
+
+    char * third = malloc(strlen(first) + strlen(secnd) + 1);
+    strcpy(third, first);
+    strcat(third, secnd);
+
+    return makeString(third);
 }
 
 Object makeString(char * value)
@@ -170,6 +196,9 @@ Object makeString(char * value)
     Object self;
 
     self = makeObject("string", value);
+
+    self = addObjectValue(self, "__add__argc", &twoArgc);
+    self = addObjectValue(self, "__add__", &__add___string);
 
     return self;
 }
@@ -233,8 +262,8 @@ char * quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "BINARY_ADD"))
     {
-        Object first = popTop();
         Object secnd = popTop();
+        Object first = popTop();
 
         if (!objectHasAttr(first, "__add__"))
         {
@@ -246,30 +275,28 @@ char * quokka_interpret_line_tokens(char ** line)
             exit(1);
         }
 
-        if ((((Function *)objectGetAttr(first, "__add__"))->is_function)[0] != 1)
+        if (!objectHasAttr(first, "__add__argc"))
         {
-            char * err = malloc(6 + strlen(first.name) + 37 + 1);
-            strcpy(err, "type '");
+            char * err = malloc(28 + strlen(first.name) + 56 + 1);
+            strcpy(err, "the __add__ method of type '");
             strcat(err, first.name);
-            strcat(err, "' does not have a method for addition");
+            strcat(err, "' is missing an argument limit, this should never happen");
             error(err, line_num);
             exit(1);
         }
 
-        Function * addfunc = (Function *)objectGetAttr(first, "__add__");
+        int addargc = ((int *)objectGetAttr(first, "__add__argc"))[0];
 
-        if (2 > addfunc->argc[0])
+        if (2 > addargc)
             error("function received too many arguments", line_num);
-        if (2 < addfunc->argc[0])
+        if (2 < addargc)
             error("function requires 1 more argument", line_num);
-
-        println(addfunc->argc[0]);
 
         Object arglist[2];
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTop(addfunc->func(arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__add__"))(arglist));
     }
     else if (!strcmp(line[0], "STORE_NAME"))
     {
@@ -294,7 +321,7 @@ char * quokka_interpret_line_tokens(char ** line)
         }
 
         int funcargs = 0;
-        funcargs = ((int *)objectGetAttr(func, "value"))[0];
+        funcargs = ((int *)objectGetAttr(func, "__call__argc"))[0];
 
         if (argcount > funcargs)
             error("function received too many arguments", line_num);
@@ -319,7 +346,7 @@ char * quokka_interpret_line_tokens(char ** line)
             error(err, line_num);
         }
 
-        ((standard_func_def)objectGetAttr(func, "__call__"))(arglist);
+        pushTop(((standard_func_def)objectGetAttr(func, "__call__"))(arglist));
     }
 
     return output;
