@@ -225,6 +225,48 @@ void ntokenise(char * arr[], char * buffer, char * tokAt)
     }
 }
 
+char * makeLiteralString(char * str)
+{
+    if ((startswith(str, "'") && endswith(str, "'")) ||
+        (startswith(str, "\"") && endswith(str, "\"")))
+        str = __slice_string__(String(str), 1, 1).value;
+
+    char * newstr = malloc(strlen(str) + 1);
+    strcpy(newstr, "");
+
+    int len = strlen(str);
+    int escaped = 0;
+
+    for (int i = 0; i < len; i++)
+    {
+        if (str[i] == '\\')
+            escaped = 1;
+        else if (escaped)
+        {
+            if      (str[i] == 'a')  strcat(newstr, "\a");
+            else if (str[i] == 'b')  strcat(newstr, "\b");
+            else if (str[i] == 'e')  strcat(newstr, "\e");
+            else if (str[i] == 'f')  strcat(newstr, "\f");
+            else if (str[i] == 'n')  strcat(newstr, "\n");
+            else if (str[i] == 'r')  strcat(newstr, "\r");
+            else if (str[i] == 't')  strcat(newstr, "\t");
+            else if (str[i] == 'v')  strcat(newstr, "\v");
+            else if (str[i] == '\\') strcat(newstr, "\\");
+            else if (str[i] == '\'') strcat(newstr, "'");
+            else if (str[i] == '"')  strcat(newstr, "\"");
+            else if (str[i] == '?')  strcat(newstr, "?");
+            escaped = 0;
+        }
+        else
+        {
+            newstr[strlen(newstr)] = str[i];
+            escaped = 0;
+        }
+    }
+
+    return newstr;
+}
+
 // print
 
 int iprint(int value)

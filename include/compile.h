@@ -12,6 +12,7 @@ int isidentifier(char * word);
 int isinteger(char * word);
 int stringInList(char * arr[], char * key);
 void arrlstrip(char * line[]);
+int stringHasChar(char * s, char c);
 
 char * quokka_compile_line(char * linetext, int num, int lineLen, int isInline);
 char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInline);
@@ -125,6 +126,30 @@ void arrlstrip(char * line[])
     line[n - 1] = "\0";
 }
 
+int stringHasChar(char * s, char c)
+{
+    for (int i = 0; i < strlen(s); ++i)
+    {
+        if (s[i] == c)
+            return 1;
+    }
+    return 0;
+}
+
+int stringCount(char ** lst, char * st)
+{
+    int len = arrsize(lst);
+    int count = 0;
+
+    for (int i = 0; i < len; i++)
+    {
+        if (!strcmp(lst[i], st))
+            count++;
+    }
+
+    return count;
+}
+
 char * quokka_compile_line(char * linetext, int num, int lineLen, int isInline)
 {
     char ** line = quokka_line_tok(linetext);
@@ -146,6 +171,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     if (len < 2)
         line[1] = "";
 
+    if (verbose) println(line[0]);
+
     if (isidentifier(line[0]) && startswith(line[1], "(") && endswith(line[1], ")"))
     {
         if (len > 2)
@@ -156,13 +183,13 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcat(bytecode, line[0]);
         strcat(bytecode, INSTRUCTION_END);
 
-        char * temp = quokka_compile_line(__slice_string__(String(line[1]), 1, 1).value, -1, -1, 1);
+        char * temp = quokka_compile_line(__slice_string__(String(line[1]), 1, 1).value, num, -1, 1);
 
         strcat(bytecode, strndup(temp, strlen(temp)));
 
         strcat(bytecode, "CALL_FUNCTION");
         strcat(bytecode, SEPARATOR);
-        strcat(bytecode, String(charCount(temp, '\n')).value);
+        strcat(bytecode, String(stringCount(line, ",") + 1).value);
         strcat(bytecode, INSTRUCTION_END);
 
         free(temp);
@@ -181,7 +208,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         arrlstrip(line);
         arrlstrip(line);
         len -= 2;
-        char * temp = quokka_compile_line_tokens(line, -1, len, 1);
+        char * temp = quokka_compile_line_tokens(line, num, len, 1);
 
         strcat(bytecode, strndup(temp, strlen(temp)));
 
@@ -192,8 +219,30 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcat(bytecode, varname);
         strcat(bytecode, INSTRUCTION_END);
     }
+    else if (stringInList(line, "+"))
+    {
+        if (strcmp(line[1], "+"))
+            error("plus sign operator is in the wrong position for binary addition", num);
+        if (len < 3) error("plus sign operator missing an argument", num);
+
+        char * first = quokka_compile_line(line[0], num, 1, 1);
+        char * second = quokka_compile_line(line[2], num, 1, 1);
+
+        strcat(bytecode, strndup(first, strlen(first)));
+        strcat(bytecode, strndup(second, strlen(second)));
+
+        free(first);
+        free(second);
+
+        strcat(bytecode, "BINARY_ADD");
+        strcat(bytecode, INSTRUCTION_END);
+    }
     else if (isinteger(line[0]) && len == 1)
     {
+        // Clear leading 0's on integers
+        while (startswith(line[0], "0") && strlen(line[0]) > 0)
+            line[0]++;
+
         strcat(bytecode, "LOAD_INT");
         strcat(bytecode, SEPARATOR);
         strcat(bytecode, line[0]);
@@ -218,6 +267,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else
     {
+        if (isInline)
+            error("invalid syntax", num);
+
         int lastwascomma = 0;
 
         for (int p = 0; p < len; p++)

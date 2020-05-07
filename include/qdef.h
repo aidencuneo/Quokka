@@ -4,6 +4,20 @@
 #ifndef _qdef
 #define _qdef
 
+int * makeIntPtrFromStr(char * st)
+{
+    int * n = malloc(sizeof(int));
+    n[0] = strtol(st, (char **)NULL, 10);
+    return n;
+}
+
+int * makeIntPtr(int i)
+{
+    int * n = malloc(sizeof(int));
+    n[0] = i;
+    return n;
+}
+
 //
 /// string
 //
@@ -55,10 +69,10 @@ typedef struct __Object_Struct__ Object;
 struct __Object_Struct__
 {
     char * name;
-    int value_count;
 
     char ** names;
     void ** values;
+    int value_count;
 };
 
 typedef struct __Varlist_Struct__ Varlist;
@@ -80,5 +94,35 @@ void pushTop(Object obj);
 Object popTop();
 void addVar(char * name, Object obj);
 Object getVar(char * name);
+
+//
+/// Function
+//
+
+typedef struct __Function_Struct__ Function;
+struct __Function_Struct__
+{
+    Object (*func)(Object * argv);
+    int * is_function;
+    int * argc;
+};
+
+// Function declarations
+void addFunction(Function funcobj);
+
+//
+/// Quokka datatypes
+//
+
+// int
+Object __add___int(Object * argv);
+Object makeInteger(int * value);
+
+// string
+Object makeString(char * value);
+
+// function
+Object makeFunction(Object (*func)(Object * argv), int argc);
+Object makeMethod(Object (*func)(Object * argv), int * argc);
 
 #endif
