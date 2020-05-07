@@ -235,6 +235,7 @@ char * makeLiteralString(char * str)
         str = __slice_string__(String(str), 1, 1).value;
 
     char * newstr = malloc(strlen(str) + 1);
+    memset(newstr, 0, strlen(str) + 1);
     strcpy(newstr, "");
 
     int len = strlen(str);

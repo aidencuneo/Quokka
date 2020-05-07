@@ -5,8 +5,7 @@
 
 // CLI options (bools):
 int verbose = 0;
-int export_neat_bytecode = 0;
-int export_compact_bytecode = 0;
+int export_bytecode = 0;
 
 int line_num;
 
@@ -14,7 +13,6 @@ int line_num;
 #include "../include/compile.h"
 #include "../include/functions.h"
 #include "../include/interpret.h"
-#include "../include/bytecode.h"
 
 int main(int argc, char ** argv)
 {
@@ -25,10 +23,8 @@ int main(int argc, char ** argv)
     {
         if (!strcmp(argv[i], "-V") || !strcmp(argv[i], "--verbose"))
             verbose = 1;
-        else if (!strcmp(argv[i], "-C") || !strcmp(argv[i], "--compile-neat"))
-            export_neat_bytecode = 1;
-        else if (!strcmp(argv[i], "-c") || !strcmp(argv[i], "--compile-raw"))
-            export_compact_bytecode = 1;
+        else if (!strcmp(argv[i], "-c") || !strcmp(argv[i], "--compile"))
+            export_bytecode = 1;
         else
         {
             args[newargc] = argv[i];
@@ -65,15 +61,23 @@ int main(int argc, char ** argv)
 
     chdir(dirname);
 
-    char * bytecode = quokka_compile_fname(fname);
+    char * bytecode;
 
-    if (compilation_error)
-        return 1;
+    // If an already compiled .qc file is entered as the first argument,
+    // then just retrieve the bytecode and interpret it
+    if (endswith(fname, ".qc"))
+        bytecode = readfile(fname);
+    else
+    {
+        bytecode = quokka_compile_fname(fname);
+        if (compilation_error)
+            return 1;
+    }
 
     if (verbose) println("\n--BYTECODE--\n");
     if (verbose) println(bytecode);
 
-    if (export_neat_bytecode || export_compact_bytecode)
+    if (export_bytecode)
     {
         char * barefile = strndup(fullname, strlen(fullname) - strlen(strrchr(fullname, '.')));
         char * outputfile = malloc(strlen(barefile) + 3 + 1);
@@ -82,18 +86,16 @@ int main(int argc, char ** argv)
         strcat(outputfile, ".qc");
 
         FILE * fp = fopen(outputfile, "wb");
-        if (export_compact_bytecode)
-            fprintf(fp, "%s", compactBytecode(bytecode));
-        else if (export_neat_bytecode)
+        if (export_bytecode)
             fprintf(fp, "%s", bytecode);
         fclose(fp);
+
+        return 0;
     }
 
     if (verbose) println("\n--OUTPUT--");
     interp_init();
-    char * output = quokka_interpret(bytecode);
-    if (strlen(output))
-        println(output);
+    quokka_interpret(bytecode);
 
     if (verbose) println("--SUCCESS--");
 

@@ -1,8 +1,8 @@
 void interp_init();
-char * quokka_interpret_line(char * linetext);
-char * quokka_interpret_line_tokens(char ** line);
-char * quokka_interpret_tokens(char ** tokens);
-char * quokka_interpret(char * bytecode);
+void quokka_interpret_line(char * linetext);
+void quokka_interpret_line_tokens(char ** line);
+void quokka_interpret_tokens(char ** tokens);
+void quokka_interpret(char * bytecode);
 
 // Important stuff
 Varlist vars;
@@ -13,17 +13,28 @@ int method_count;
 Object * stack;
 int stack_size;
 
-// Function stuff
+// Multi-use pointers
 int oneArgc;
 int twoArgc;
 
-void interp_init()
+int truePtr;
+int falsePtr;
+
+void resetStack()
 {
     stack = malloc(sizeof(Object));
     stack_size = 0;
+}
+
+void interp_init()
+{
+    resetStack();
 
     oneArgc = 1;
     twoArgc = 2;
+
+    truePtr = 1;
+    falsePtr = 0;
 
     Object printFunction = makeObject("function", &oneArgc);
     printFunction = addObjectValue(printFunction, "__call__", &q_function_print);
@@ -39,6 +50,11 @@ void interp_init()
     stringFunction = addObjectValue(stringFunction, "__call__", &q_function_string);
     stringFunction = addObjectValue(stringFunction, "__call__argc", &oneArgc);
     addVar("string", stringFunction);
+
+    Object intFunction = makeObject("function", &oneArgc);
+    intFunction = addObjectValue(intFunction, "__call__", &q_function_int);
+    intFunction = addObjectValue(intFunction, "__call__argc", &oneArgc);
+    addVar("int", intFunction);
 }
 
 Object emptyObject(char * name)
@@ -107,7 +123,7 @@ void pushTop(Object obj)
 
 Object popTop()
 {
-    stack = realloc(stack, stack_size * sizeof(Object));
+    stack = realloc(stack, (stack_size + 1) * sizeof(Object));
     stack_size--;
 
     return stack[stack_size];
@@ -115,6 +131,13 @@ Object popTop()
 
 void addVar(char * name, Object obj)
 {
+    int check = getVarIndex(name);
+    if (check != -1)
+    {
+        vars.values[check] = obj;
+        return;
+    }
+
     vars.names = realloc(vars.names, (vars.count + 1) * sizeof(char *));
     vars.values = realloc(vars.values, (vars.count + 1) * sizeof(Object));
 
@@ -137,181 +160,49 @@ Object getVar(char * name)
     error(err, line_num);
 }
 
-void addMethod(Object method)
+int getVarIndex(char * name)
 {
-    methods = realloc(methods, (method_count + 1) * sizeof(Object));
-    methods[method_count] = method;
-    method_count++;
+    for (int i = 0; i < vars.count; i++)
+        if (!strcmp(vars.names[i], name))
+            return i;
+
+    return -1;
 }
+
+// void addMethod(Object method)
+// {
+//     methods = realloc(methods, (method_count + 1) * sizeof(Object));
+//     methods[method_count] = method;
+//     method_count++;
+// }
 
 //
 /// datatypes
 //
 
-Object __add___integer(Object * argv)
-{
-    if (strcmp(argv[1].name, "int"))
-    {
-        char * err = malloc(17 + strlen(argv[1].name) + 27 + 1);
-        strcpy(err, "types 'int' and '");
-        strcat(err, argv[1].name);
-        strcat(err, "' can not be added with '+'");
-        error(err, line_num);
-        exit(1);
-    }
+#include "datatypes/int.h"
+#include "datatypes/string.h"
 
-    int * first = (int *)objectGetAttr(argv[0], "value");
-    int * secnd = (int *)objectGetAttr(argv[1], "value");
-    return makeInteger(makeIntPtr(first[0] + secnd[0]));
-}
+// Object makeMethod(Object (*func)(Object * argv), int * argc)
+// {
+//     Object self;
 
-Object __sub___integer(Object * argv)
-{
-    if (strcmp(argv[1].name, "int"))
-    {
-        char * err = malloc(17 + strlen(argv[1].name) + 32 + 1);
-        strcpy(err, "types 'int' and '");
-        strcat(err, argv[1].name);
-        strcat(err, "' can not be subtracted with '-'");
-        error(err, line_num);
-        exit(1);
-    }
+//     self = makeObject("method", argc);
+//     self = addObjectValue(self, "__call__", &func);
 
-    int * first = (int *)objectGetAttr(argv[0], "value");
-    int * secnd = (int *)objectGetAttr(argv[1], "value");
-    return makeInteger(makeIntPtr(first[0] - secnd[0]));
-}
+//     return self;
+// }
 
-Object __mul___integer(Object * argv)
-{
-    if (strcmp(argv[1].name, "int"))
-    {
-        char * err = malloc(17 + strlen(argv[1].name) + 32 + 1);
-        strcpy(err, "types 'int' and '");
-        strcat(err, argv[1].name);
-        strcat(err, "' can not be multiplied with '*'");
-        error(err, line_num);
-        exit(1);
-    }
-
-    int * first = (int *)objectGetAttr(argv[0], "value");
-    int * secnd = (int *)objectGetAttr(argv[1], "value");
-    return makeInteger(makeIntPtr(first[0] * secnd[0]));
-}
-
-Object __div___integer(Object * argv)
-{
-    if (strcmp(argv[1].name, "int"))
-    {
-        char * err = malloc(17 + strlen(argv[1].name) + 29 + 1);
-        strcpy(err, "types 'int' and '");
-        strcat(err, argv[1].name);
-        strcat(err, "' can not be divided with '/'");
-        error(err, line_num);
-        exit(1);
-    }
-
-    int * first = (int *)objectGetAttr(argv[0], "value");
-    int * secnd = (int *)objectGetAttr(argv[1], "value");
-
-    if (!secnd[0])
-        return makeInteger(makeIntPtr(0));
-
-    return makeInteger(makeIntPtr(first[0] / secnd[0]));
-}
-
-Object __str___integer(Object * argv)
-{
-    int * thisvalue = ((int *)objectGetAttr(argv[0], "value"));
-    return makeString(String(thisvalue[0]).value);
-}
-
-Object makeInteger(int * value)
-{
-    Object self;
-
-    self = makeObject("int", value);
-
-    // __add__
-    self = addObjectValue(self, "__add__argc", &twoArgc);
-    self = addObjectValue(self, "__add__", &__add___integer);
-
-    // __sub__
-    self = addObjectValue(self, "__sub__argc", &twoArgc);
-    self = addObjectValue(self, "__sub__", &__sub___integer);
-
-    // __mul__
-    self = addObjectValue(self, "__mul__argc", &twoArgc);
-    self = addObjectValue(self, "__mul__", &__mul___integer);
-
-    // __div__
-    self = addObjectValue(self, "__div__argc", &twoArgc);
-    self = addObjectValue(self, "__div__", &__div___integer);
-
-    // __str__
-    self = addObjectValue(self, "__str__argc", &oneArgc);
-    self = addObjectValue(self, "__str__", &__str___integer);
-
-    return self;
-}
-
-Object __add___string(Object * argv)
-{
-    if (strcmp(argv[1].name, "string"))
-    {
-        char * err = malloc(66 + strlen(argv[1].name) + 1 + 1);
-        strcpy(err, "only 'string' and 'string' can be concatenated, not 'string' and '");
-        strcat(err, argv[1].name);
-        strcat(err, "'");
-        error(err, line_num);
-        exit(1);
-    }
-
-    char * first = (char *)objectGetAttr(argv[0], "value");
-    char * secnd = (char *)objectGetAttr(argv[1], "value");
-
-    char * third = malloc(strlen(first) + strlen(secnd) + 1);
-    strcpy(third, first);
-    strcat(third, secnd);
-
-    return makeString(third);
-}
-
-Object makeString(char * value)
-{
-    Object self;
-
-    self = makeObject("string", value);
-
-    self = addObjectValue(self, "__add__argc", &twoArgc);
-    self = addObjectValue(self, "__add__", &__add___string);
-
-    return self;
-}
-
-Object makeMethod(Object (*func)(Object * argv), int * argc)
-{
-    Object self;
-
-    self = makeObject("method", argc);
-    self = addObjectValue(self, "__call__", &func);
-
-    return self;
-}
-
-char * quokka_interpret_line(char * linetext)
+void quokka_interpret_line(char * linetext)
 {
     char ** line = quokka_line_tok(linetext);
-    return quokka_interpret_line_tokens(line);
+    quokka_interpret_line_tokens(line);
 }
 
-char * quokka_interpret_line_tokens(char ** line)
+void quokka_interpret_line_tokens(char ** line)
 {
     if (!strlen(line[0]))
-        return 0;
-
-    char * output = malloc(1);
-    strcpy(output, "");
+        return;
 
     if (verbose) println(line[0]);
 
@@ -471,6 +362,181 @@ char * quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(first, "__div__"))(arglist));
     }
+    else if (!strcmp(line[0], "CMP_EQ"))
+    {
+        Object secnd = popTop();
+        Object first = popTop();
+
+        if (!objectHasAttr(first, "__eq__"))
+        {
+            char * err = malloc(6 + strlen(first.name) + 53 + 1);
+            strcpy(err, "type '");
+            strcat(err, first.name);
+            strcat(err, "' does not have a method for equality (==) comparison");
+            error(err, line_num);
+            exit(1);
+        }
+
+        if (!objectHasAttr(first, "__eq__argc"))
+        {
+            char * err = malloc(27 + strlen(first.name) + 56 + 1);
+            strcpy(err, "the __eq__ method of type '");
+            strcat(err, first.name);
+            strcat(err, "' is missing an argument limit, this should never happen");
+            error(err, line_num);
+            exit(1);
+        }
+
+        int funcargc = ((int *)objectGetAttr(first, "__eq__argc"))[0];
+        if (funcargc != 2)
+            error("__eq__ function requires an invalid amount of arguments, should be 2", line_num);
+
+        Object arglist[2];
+        arglist[0] = first;
+        arglist[1] = secnd;
+
+        pushTop(((standard_func_def)objectGetAttr(first, "__eq__"))(arglist));
+    }
+    else if (!strcmp(line[0], "CMP_LT"))
+    {
+        Object secnd = popTop();
+        Object first = popTop();
+
+        if (!objectHasAttr(first, "__lt__"))
+        {
+            char * err = malloc(6 + strlen(first.name) + 53 + 1);
+            strcpy(err, "type '");
+            strcat(err, first.name);
+            strcat(err, "' does not have a method for less than (<) comparison");
+            error(err, line_num);
+            exit(1);
+        }
+
+        if (!objectHasAttr(first, "__lt__argc"))
+        {
+            char * err = malloc(27 + strlen(first.name) + 56 + 1);
+            strcpy(err, "the __lt__ method of type '");
+            strcat(err, first.name);
+            strcat(err, "' is missing an argument limit, this should never happen");
+            error(err, line_num);
+            exit(1);
+        }
+
+        int funcargc = ((int *)objectGetAttr(first, "__lt__argc"))[0];
+        if (funcargc != 2)
+            error("__lt__ function requires an invalid amount of arguments, should be 2", line_num);
+
+        Object arglist[2];
+        arglist[0] = first;
+        arglist[1] = secnd;
+
+        pushTop(((standard_func_def)objectGetAttr(first, "__lt__"))(arglist));
+    }
+    else if (!strcmp(line[0], "CMP_GT"))
+    {
+        Object secnd = popTop();
+        Object first = popTop();
+
+        if (!objectHasAttr(first, "__gt__"))
+        {
+            char * err = malloc(6 + strlen(first.name) + 56 + 1);
+            strcpy(err, "type '");
+            strcat(err, first.name);
+            strcat(err, "' does not have a method for greater than (>) comparison");
+            error(err, line_num);
+            exit(1);
+        }
+
+        if (!objectHasAttr(first, "__gt__argc"))
+        {
+            char * err = malloc(27 + strlen(first.name) + 56 + 1);
+            strcpy(err, "the __gt__ method of type '");
+            strcat(err, first.name);
+            strcat(err, "' is missing an argument limit, this should never happen");
+            error(err, line_num);
+            exit(1);
+        }
+
+        int funcargc = ((int *)objectGetAttr(first, "__gt__argc"))[0];
+        if (funcargc != 2)
+            error("__gt__ function requires an invalid amount of arguments, should be 2", line_num);
+
+        Object arglist[2];
+        arglist[0] = first;
+        arglist[1] = secnd;
+
+        pushTop(((standard_func_def)objectGetAttr(first, "__gt__"))(arglist));
+    }
+    else if (!strcmp(line[0], "CMP_LE"))
+    {
+        Object secnd = popTop();
+        Object first = popTop();
+
+        if (!objectHasAttr(first, "__le__"))
+        {
+            char * err = malloc(6 + strlen(first.name) + 66 + 1);
+            strcpy(err, "type '");
+            strcat(err, first.name);
+            strcat(err, "' does not have a method for less than or equal to (<=) comparison");
+            error(err, line_num);
+            exit(1);
+        }
+
+        if (!objectHasAttr(first, "__le__argc"))
+        {
+            char * err = malloc(27 + strlen(first.name) + 56 + 1);
+            strcpy(err, "the __le__ method of type '");
+            strcat(err, first.name);
+            strcat(err, "' is missing an argument limit, this should never happen");
+            error(err, line_num);
+            exit(1);
+        }
+
+        int funcargc = ((int *)objectGetAttr(first, "__le__argc"))[0];
+        if (funcargc != 2)
+            error("__le__ function requires an invalid amount of arguments, should be 2", line_num);
+
+        Object arglist[2];
+        arglist[0] = first;
+        arglist[1] = secnd;
+
+        pushTop(((standard_func_def)objectGetAttr(first, "__le__"))(arglist));
+    }
+    else if (!strcmp(line[0], "CMP_GE"))
+    {
+        Object secnd = popTop();
+        Object first = popTop();
+
+        if (!objectHasAttr(first, "__ge__"))
+        {
+            char * err = malloc(6 + strlen(first.name) + 69 + 1);
+            strcpy(err, "type '");
+            strcat(err, first.name);
+            strcat(err, "' does not have a method for greater than or equal to (>=) comparison");
+            error(err, line_num);
+            exit(1);
+        }
+
+        if (!objectHasAttr(first, "__ge__argc"))
+        {
+            char * err = malloc(27 + strlen(first.name) + 56 + 1);
+            strcpy(err, "the __ge__ method of type '");
+            strcat(err, first.name);
+            strcat(err, "' is missing an argument limit, this should never happen");
+            error(err, line_num);
+            exit(1);
+        }
+
+        int funcargc = ((int *)objectGetAttr(first, "__ge__argc"))[0];
+        if (funcargc != 2)
+            error("__ge__ function requires an invalid amount of arguments, should be 2", line_num);
+
+        Object arglist[2];
+        arglist[0] = first;
+        arglist[1] = secnd;
+
+        pushTop(((standard_func_def)objectGetAttr(first, "__ge__"))(arglist));
+    }
     else if (!strcmp(line[0], "STORE_NAME"))
     {
         addVar(line[1], popTop());
@@ -521,16 +587,12 @@ char * quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(func, "__call__"))(arglist));
     }
-
-    return output;
 }
 
-char * quokka_interpret_tokens(char ** tokens)
+void quokka_interpret_tokens(char ** tokens)
 {
-    char * output = malloc(1);
-    strcpy(output, "");
-
     int size = arrsize(tokens);
+
     for (int i = 0; i < size; i++)
     {
         if (tokens[i] == NULL)
@@ -539,23 +601,21 @@ char * quokka_interpret_tokens(char ** tokens)
         if (isinteger(tokens[i]))
         {
             line_num = strtol(tokens[i], (char **)NULL, 10) - 1;
+            resetStack();
             continue;
         }
 
-        strcat(output, quokka_interpret_line(tokens[i]));
+        quokka_interpret_line(tokens[i]);
     }
 
     free(tokens);
-
-    return output;
 }
 
-char * quokka_interpret(char * bytecode)
+void quokka_interpret(char * bytecode)
 {
-    char ** tokens = malloc(2048 * sizeof(char *));
+    // 8192 is the line limit for a bytecode file
+    char ** tokens = malloc(8192 * sizeof(char *));
     ntokenise(tokens, bytecode, "\n");
 
-    char * res = quokka_interpret_tokens(tokens);
-
-    return res;
+    quokka_interpret_tokens(tokens);
 }

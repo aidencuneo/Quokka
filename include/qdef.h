@@ -94,6 +94,7 @@ void pushTop(Object obj);
 Object popTop();
 void addVar(char * name, Object obj);
 Object getVar(char * name);
+int getVarIndex(char * name);
 
 //
 /// Function
@@ -114,8 +115,10 @@ void addFunction(Function funcobj);
 /// Quokka datatypes
 //
 
+// bool
+Object makeBool(short * value);
+
 // int
-Object __add___int(Object * argv);
 Object makeInteger(int * value);
 
 // string

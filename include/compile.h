@@ -197,6 +197,182 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcat(bytecode, varname);
         strcat(bytecode, INSTRUCTION_END);
     }
+    else if (stringInList(line, "<") || stringInList(line, ">") || stringInList(line, "<=") || stringInList(line, ">=") || stringInList(line, "=="))
+    {
+        char * operslist = malloc(1);
+        strcpy(operslist, "");
+
+        char * valuelist = malloc(1);
+        strcpy(valuelist, "");
+
+        char * latestvalue = malloc(1);
+        strcpy(latestvalue, "");
+
+        int lastwasop = 1;
+
+        for (int i = 0; i < len; i++)
+        {
+            if (!strcmp(line[i], "<"))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+                strcat(valuelist, strdup(temp));
+                free(temp);
+
+                if (lastwasop)
+                {
+                    error("invalid syntax at '<'", num);
+                    exit(1);
+                }
+
+                operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
+
+                char * tmp = strdup(operslist);
+
+                memset(operslist, 0, strlen(operslist));
+                strcpy(operslist, "CMP_LT");
+                strcat(operslist, INSTRUCTION_END);
+                strcat(operslist, tmp);
+
+                free(tmp);
+
+                lastwasop = 1;
+            }
+            else if (!strcmp(line[i], ">"))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+                strcat(valuelist, strdup(temp));
+                free(temp);
+
+                if (lastwasop)
+                {
+                    error("invalid syntax at '>'", num);
+                    exit(1);
+                }
+
+                operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
+
+                char * tmp = strdup(operslist);
+
+                memset(operslist, 0, strlen(operslist));
+                strcpy(operslist, "CMP_GT");
+                strcat(operslist, INSTRUCTION_END);
+                strcat(operslist, tmp);
+
+                free(tmp);
+
+                lastwasop = 1;
+            }
+            else if (!strcmp(line[i], "<="))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+                strcat(valuelist, strdup(temp));
+                free(temp);
+
+                if (lastwasop)
+                {
+                    error("invalid syntax at '<='", num);
+                    exit(1);
+                }
+
+                operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
+
+                char * tmp = strdup(operslist);
+
+                memset(operslist, 0, strlen(operslist));
+                strcpy(operslist, "CMP_LE");
+                strcat(operslist, INSTRUCTION_END);
+                strcat(operslist, tmp);
+
+                free(tmp);
+
+                lastwasop = 1;
+            }
+            else if (!strcmp(line[i], ">="))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+                strcat(valuelist, strdup(temp));
+                free(temp);
+
+                if (lastwasop)
+                {
+                    error("invalid syntax at '>='", num);
+                    exit(1);
+                }
+
+                operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
+
+                char * tmp = strdup(operslist);
+
+                memset(operslist, 0, strlen(operslist));
+                strcpy(operslist, "CMP_GE");
+                strcat(operslist, INSTRUCTION_END);
+                strcat(operslist, tmp);
+
+                free(tmp);
+
+                lastwasop = 1;
+            }
+            else if (!strcmp(line[i], "=="))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+                strcat(valuelist, strdup(temp));
+                free(temp);
+
+                if (lastwasop)
+                {
+                    error("invalid syntax at '=='", num);
+                    exit(1);
+                }
+
+                operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
+
+                char * tmp = strdup(operslist);
+
+                memset(operslist, 0, strlen(operslist));
+                strcpy(operslist, "CMP_EQ");
+                strcat(operslist, INSTRUCTION_END);
+                strcat(operslist, tmp);
+
+                free(tmp);
+
+                lastwasop = 1;
+            }
+            else
+            {
+                if (lastwasop)
+                {
+                    latestvalue = realloc(latestvalue, strlen(line[i]) + 1 + 1);
+                    memset(latestvalue, 0, strlen(latestvalue) + 1);
+                    strcpy(latestvalue, line[i]);
+                    strcat(latestvalue, " ");
+                }
+                else
+                {
+                    latestvalue = realloc(latestvalue, strlen(line[i]) + 1 + 1);
+                    strcat(latestvalue, line[i]);
+                    strcat(latestvalue, " ");
+                }
+
+                lastwasop = 0;
+            }
+        }
+
+        char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+        valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+        strcat(valuelist, strndup(temp, strlen(temp)));
+        free(temp);
+
+        strcat(bytecode, strdup(valuelist));
+        strcat(bytecode, strdup(operslist));
+
+        free(valuelist);
+        free(operslist);
+    }
     else if (stringInList(line, "+") || stringInList(line, "-") || stringInList(line, "*") || stringInList(line, "/"))
     {
         char * operslist = malloc(1);
@@ -552,7 +728,7 @@ char ** quokka_line_tok(char * line)
         ) && !(
             t == '+' && c == '+' // Join pluses together ++, +++, etc
         ) && !(
-            (t == '-' || t == '+' || t == '*' || t == '/') && c == '=' // Join together operators: -= += *= /=
+            (t == '-' || t == '+' || t == '*' || t == '/' || t == '=') && c == '=' // Join together operators: -= += *= /= ==
         ) && !(
             q == 'A' && c == '.' // Join together names like `word.upper` (second part is below)
         ) && !(
@@ -609,8 +785,8 @@ char ** quokka_line_tok(char * line)
         t = c;
     }
 
-    char ** output = (char **)malloc(1024 * sizeof(char *));
-    output[0] = "\0";
+    char ** output = malloc(512 * sizeof(char *));
+
     tokenise(output, tokenstr, separator);
     for (int p = 0; p < arrsize(output); p++)
         output[p] = cpstrip(output[p]);
