@@ -71,6 +71,9 @@ string * saprint(string value[]);
     string   : sprintln,\
     default  : cpprintln)(value)
 
+// Used to typecast Object pointers into Quokka functions
+typedef Object (*standard_func_def)(Object * argv);
+
 //
 /// All the rest
 //

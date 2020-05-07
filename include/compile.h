@@ -173,28 +173,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
     if (verbose) println(line[0]);
 
-    if (isidentifier(line[0]) && startswith(line[1], "(") && endswith(line[1], ")"))
-    {
-        if (len > 2)
-            error("invalid syntax", num);
-
-        strcat(bytecode, "LOAD_NAME");
-        strcat(bytecode, SEPARATOR);
-        strcat(bytecode, line[0]);
-        strcat(bytecode, INSTRUCTION_END);
-
-        char * temp = quokka_compile_line(__slice_string__(String(line[1]), 1, 1).value, num, -1, 1);
-
-        strcat(bytecode, strndup(temp, strlen(temp)));
-
-        strcat(bytecode, "CALL_FUNCTION");
-        strcat(bytecode, SEPARATOR);
-        strcat(bytecode, String(stringCount(line, ",") + 1).value);
-        strcat(bytecode, INSTRUCTION_END);
-
-        free(temp);
-    }
-    else if (stringInList(line, "="))
+    if (stringInList(line, "="))
     {
         if (isInline) error("variables must be defined at the start of a line", num);
         if (!isidentifier(line[0]))
@@ -227,62 +206,124 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         char * valuelist = malloc(1);
         strcpy(valuelist, "");
 
+        char * latestvalue = malloc(1);
+        strcpy(latestvalue, "");
+
         int lastwasop = 1;
 
         for (int i = 0; i < len; i++)
         {
             if (!strcmp(line[i], "+"))
             {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+                strcat(valuelist, strdup(temp));
+                free(temp);
+
                 if (lastwasop)
                 {
                     error("invalid syntax at '+'", num);
                     exit(1);
                 }
 
-                operslist = realloc(operslist, strlen(operslist) + 1 + 1 + 1);
-                strcat(operslist, "BINARY_ADD");
+                operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
+
+                char * tmp = strdup(operslist);
+
+                memset(operslist, 0, strlen(operslist));
+                strcpy(operslist, "BINARY_ADD");
                 strcat(operslist, INSTRUCTION_END);
+                strcat(operslist, tmp);
+
+                free(tmp);
 
                 lastwasop = 1;
             }
             else if (!strcmp(line[i], "-"))
             {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+                strcat(valuelist, strdup(temp));
+                free(temp);
+
                 if (lastwasop)
                 {
                     error("invalid syntax at '-'", num);
                     exit(1);
                 }
 
-                operslist = realloc(operslist, strlen(operslist) + 1 + 1 + 1);
-                strcat(operslist, "BINARY_SUB");
+                operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
+
+                char * tmp = strdup(operslist);
+
+                memset(operslist, 0, strlen(operslist));
+                strcpy(operslist, "BINARY_SUB");
                 strcat(operslist, INSTRUCTION_END);
+                strcat(operslist, tmp);
+
+                free(tmp);
 
                 lastwasop = 1;
             }
             else
             {
-                if (!lastwasop)
+                if (lastwasop)
                 {
-                    error("invalid syntax, expression is missing commas for value separation", num);
-                    exit(1);
+                    latestvalue = realloc(latestvalue, strlen(line[i]) + 1 + 1);
+                    memset(latestvalue, 0, strlen(latestvalue) + 1);
+                    strcpy(latestvalue, line[i]);
+                    strcat(latestvalue, " ");
                 }
-
-                char * temp = quokka_compile_line(line[i], num, -1, 1);
-
-                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, strdup(temp));
-
-                free(temp);
+                else
+                {
+                    latestvalue = realloc(latestvalue, strlen(line[i]) + 1 + 1);
+                    strcat(latestvalue, line[i]);
+                    strcat(latestvalue, " ");
+                }
 
                 lastwasop = 0;
             }
         }
+
+        char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+        valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+        strcat(valuelist, strndup(temp, strlen(temp)));
+        free(temp);
 
         strcat(bytecode, strdup(valuelist));
         strcat(bytecode, strdup(operslist));
 
         free(valuelist);
         free(operslist);
+    }
+    else if (isidentifier(line[0]) && startswith(line[1], "(") && endswith(line[1], ")"))
+    {
+        if (len > 2)
+        {
+            for (int p = 0; p < len; p++)
+            {
+                print(":::>");
+                println(line[p]);
+            }
+            error("invalid syntax", num);
+            exit(1);
+        }
+
+        strcat(bytecode, "LOAD_NAME");
+        strcat(bytecode, SEPARATOR);
+        strcat(bytecode, line[0]);
+        strcat(bytecode, INSTRUCTION_END);
+
+        char * temp = quokka_compile_line(__slice_string__(String(line[1]), 1, 1).value, num, -1, 1);
+
+        strcat(bytecode, strndup(temp, strlen(temp)));
+
+        strcat(bytecode, "CALL_FUNCTION");
+        strcat(bytecode, SEPARATOR);
+        strcat(bytecode, String(stringCount(line, ",") + 1).value);
+        strcat(bytecode, INSTRUCTION_END);
+
+        free(temp);
     }
     else if (isinteger(line[0]) && len == 1)
     {
@@ -315,7 +356,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else
     {
         if (isInline)
+        {
             error("invalid syntax", num);
+            exit(1);
+        }
 
         int lastwascomma = 0;
 
@@ -352,7 +396,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
 char * quokka_compile_tokens(char ** tokens, int isInline)
 {
-    // Keep watch of this in case the files start to get bigger than 8192 characters
+    // This will eventually need to be fixed and made dynamic
     char * compiled = malloc(8192);
     strcpy(compiled, "");
 
@@ -362,10 +406,15 @@ char * quokka_compile_tokens(char ** tokens, int isInline)
         if (tokens[i] == NULL)
             continue;
 
-        strcat(compiled, String(i + 1).value);
-        strcat(compiled, INSTRUCTION_END);
+        char * ins = quokka_compile_line(tokens[i], i, -1, isInline);
 
-        strcat(compiled, quokka_compile_line(tokens[i], i, -1, isInline));
+        if (strlen(ins))
+        {
+            strcat(compiled, String(i + 1).value);
+            strcat(compiled, INSTRUCTION_END);
+
+            strcat(compiled, ins);
+        }
     }
 
     free(tokens);
@@ -490,10 +539,10 @@ char ** quokka_line_tok(char * line)
             bt = !bt;
         else if (c == '(' && !(
             sq || dq || bt || sb > 0 || cb > 0))
-            rb += 1;
+            rb++;
         else if (c == ')' && !(
             sq || dq || bt || sb > 0 || cb > 0))
-            rb -= 1;
+            rb--;
         else if (c == '/' && !(
             sq || dq || bt))
         {

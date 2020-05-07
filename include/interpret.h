@@ -14,27 +14,31 @@ Object * stack;
 int stack_size;
 
 // Function stuff
-typedef Object (*standard_func_def)(Object * argv);
 int oneArgc;
 int twoArgc;
 
 void interp_init()
 {
-    stack = malloc(sizeof(char *));
+    stack = malloc(sizeof(Object));
     stack_size = 0;
 
     oneArgc = 1;
     twoArgc = 2;
 
-    Object printObj = makeObject("function", &oneArgc);
-    printObj = addObjectValue(printObj, "__call__", &qprint);
-    printObj = addObjectValue(printObj, "__call__argc", &oneArgc);
-    addVar("print", printObj);
+    Object printFunction = makeObject("function", &oneArgc);
+    printFunction = addObjectValue(printFunction, "__call__", &q_function_print);
+    printFunction = addObjectValue(printFunction, "__call__argc", &oneArgc);
+    addVar("print", printFunction);
 
-    Object printlnObj = makeObject("function", &oneArgc);
-    printlnObj = addObjectValue(printlnObj, "__call__", &qprintln);
-    printlnObj = addObjectValue(printlnObj, "__call__argc", &oneArgc);
-    addVar("println", printlnObj);
+    Object printlnFunction = makeObject("function", &oneArgc);
+    printlnFunction = addObjectValue(printlnFunction, "__call__", &q_function_println);
+    printlnFunction = addObjectValue(printlnFunction, "__call__argc", &oneArgc);
+    addVar("println", printlnFunction);
+
+    Object stringFunction = makeObject("function", &oneArgc);
+    stringFunction = addObjectValue(stringFunction, "__call__", &q_function_string);
+    stringFunction = addObjectValue(stringFunction, "__call__argc", &oneArgc);
+    addVar("string", stringFunction);
 }
 
 Object emptyObject(char * name)
@@ -140,6 +144,10 @@ void addMethod(Object method)
     method_count++;
 }
 
+//
+/// datatypes
+//
+
 Object __add___integer(Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
@@ -157,14 +165,46 @@ Object __add___integer(Object * argv)
     return makeInteger(makeIntPtr(first[0] + secnd[0]));
 }
 
+Object __sub___integer(Object * argv)
+{
+    if (strcmp(argv[1].name, "int"))
+    {
+        char * err = malloc(59 + strlen(argv[1].name) + 1 + 1);
+        strcpy(err, "only 'int' and 'int' can not be subtracted, not 'int' and '");
+        strcat(err, argv[1].name);
+        strcpy(err, "'");
+        error(err, line_num);
+        exit(1);
+    }
+
+    int * first = (int *)objectGetAttr(argv[0], "value");
+    int * secnd = (int *)objectGetAttr(argv[1], "value");
+    return makeInteger(makeIntPtr(first[0] - secnd[0]));
+}
+
+Object __str___integer(Object * argv)
+{
+    int * thisvalue = ((int *)objectGetAttr(argv[0], "value"));
+    return makeString(String(thisvalue[0]).value);
+}
+
 Object makeInteger(int * value)
 {
     Object self;
 
     self = makeObject("int", value);
 
+    // __add__
     self = addObjectValue(self, "__add__argc", &twoArgc);
     self = addObjectValue(self, "__add__", &__add___integer);
+
+    // __sub__
+    self = addObjectValue(self, "__sub__argc", &twoArgc);
+    self = addObjectValue(self, "__sub__", &__sub___integer);
+
+    // __str__
+    self = addObjectValue(self, "__str__argc", &oneArgc);
+    self = addObjectValue(self, "__str__", &__str___integer);
 
     return self;
 }
@@ -173,10 +213,10 @@ Object __add___string(Object * argv)
 {
     if (strcmp(argv[1].name, "string"))
     {
-        char * err = malloc(70 + strlen(argv[1].name) + 1 + 1);
-        strcpy(err, "only 'string' and 'string' can not be concatenated, not 'string' and '");
+        char * err = malloc(66 + strlen(argv[1].name) + 1 + 1);
+        strcpy(err, "only 'string' and 'string' can be concatenated, not 'string' and '");
         strcat(err, argv[1].name);
-        strcpy(err, "'");
+        strcat(err, "'");
         error(err, line_num);
         exit(1);
     }
@@ -202,21 +242,6 @@ Object makeString(char * value)
 
     return self;
 }
-
-// Object makeFunction(Object (*func)(Object * argv), int argc)
-// {
-//     Object self;
-
-//     self = makeObject("function", 0);
-
-//     int * argcptr = malloc(sizeof(int));
-//     argcptr[0] = argc;
-
-//     addMethod(makeMethod(func, argcptr));
-//     self = addObjectValue(self, "__call__", &methods[method_count - 1]);
-
-//     return self;
-// }
 
 Object makeMethod(Object (*func)(Object * argv), int * argc)
 {
@@ -297,6 +322,44 @@ char * quokka_interpret_line_tokens(char ** line)
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__add__"))(arglist));
+    }
+    else if (!strcmp(line[0], "BINARY_SUB"))
+    {
+        Object secnd = popTop();
+        Object first = popTop();
+
+        if (!objectHasAttr(first, "__sub__"))
+        {
+            char * err = malloc(6 + strlen(first.name) + 37 + 1);
+            strcpy(err, "type '");
+            strcat(err, first.name);
+            strcat(err, "' does not have a method for subtraction");
+            error(err, line_num);
+            exit(1);
+        }
+
+        if (!objectHasAttr(first, "__sub__argc"))
+        {
+            char * err = malloc(28 + strlen(first.name) + 56 + 1);
+            strcpy(err, "the __sub__ method of type '");
+            strcat(err, first.name);
+            strcat(err, "' is missing an argument limit, this should never happen");
+            error(err, line_num);
+            exit(1);
+        }
+
+        int addargc = ((int *)objectGetAttr(first, "__sub__argc"))[0];
+
+        if (2 > addargc)
+            error("function received too many arguments", line_num);
+        if (2 < addargc)
+            error("function requires 1 more argument", line_num);
+
+        Object arglist[2];
+        arglist[0] = first;
+        arglist[1] = secnd;
+
+        pushTop(((standard_func_def)objectGetAttr(first, "__sub__"))(arglist));
     }
     else if (!strcmp(line[0], "STORE_NAME"))
     {
