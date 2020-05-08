@@ -244,7 +244,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' does not have a method for addition");
             error(err, line_num);
-            exit(1);
         }
 
         if (!objectHasAttr(first, "__add__argc"))
@@ -254,7 +253,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' is missing an argument limit, this should never happen");
             error(err, line_num);
-            exit(1);
         }
 
         int funcargc = ((int *)objectGetAttr(first, "__add__argc"))[0];
@@ -279,7 +277,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' does not have a method for subtraction");
             error(err, line_num);
-            exit(1);
         }
 
         if (!objectHasAttr(first, "__sub__argc"))
@@ -289,7 +286,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' is missing an argument limit, this should never happen");
             error(err, line_num);
-            exit(1);
         }
 
         int funcargc = ((int *)objectGetAttr(first, "__sub__argc"))[0];
@@ -314,7 +310,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' does not have a method for multiplication");
             error(err, line_num);
-            exit(1);
         }
 
         if (!objectHasAttr(first, "__mul__argc"))
@@ -349,7 +344,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' does not have a method for division");
             error(err, line_num);
-            exit(1);
         }
 
         if (!objectHasAttr(first, "__div__argc"))
@@ -359,7 +353,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' is missing an argument limit, this should never happen");
             error(err, line_num);
-            exit(1);
         }
 
         int funcargc = ((int *)objectGetAttr(first, "__div__argc"))[0];
@@ -384,7 +377,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' does not have a method for equality (==) comparison");
             error(err, line_num);
-            exit(1);
         }
 
         if (!objectHasAttr(first, "__eq__argc"))
@@ -394,7 +386,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' is missing an argument limit, this should never happen");
             error(err, line_num);
-            exit(1);
         }
 
         int funcargc = ((int *)objectGetAttr(first, "__eq__argc"))[0];
@@ -419,7 +410,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' does not have a method for less than (<) comparison");
             error(err, line_num);
-            exit(1);
         }
 
         if (!objectHasAttr(first, "__lt__argc"))
@@ -429,7 +419,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' is missing an argument limit, this should never happen");
             error(err, line_num);
-            exit(1);
         }
 
         int funcargc = ((int *)objectGetAttr(first, "__lt__argc"))[0];
@@ -454,7 +443,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' does not have a method for greater than (>) comparison");
             error(err, line_num);
-            exit(1);
         }
 
         if (!objectHasAttr(first, "__gt__argc"))
@@ -464,7 +452,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' is missing an argument limit, this should never happen");
             error(err, line_num);
-            exit(1);
         }
 
         int funcargc = ((int *)objectGetAttr(first, "__gt__argc"))[0];
@@ -489,7 +476,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' does not have a method for less than or equal to (<=) comparison");
             error(err, line_num);
-            exit(1);
         }
 
         if (!objectHasAttr(first, "__le__argc"))
@@ -499,7 +485,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' is missing an argument limit, this should never happen");
             error(err, line_num);
-            exit(1);
         }
 
         int funcargc = ((int *)objectGetAttr(first, "__le__argc"))[0];
@@ -524,7 +509,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' does not have a method for greater than or equal to (>=) comparison");
             error(err, line_num);
-            exit(1);
         }
 
         if (!objectHasAttr(first, "__ge__argc"))
@@ -534,7 +518,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' is missing an argument limit, this should never happen");
             error(err, line_num);
-            exit(1);
         }
 
         int funcargc = ((int *)objectGetAttr(first, "__ge__argc"))[0];
@@ -546,6 +529,17 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__ge__"))(arglist));
+    }
+    else if (!strcmp(line[0], "JUMP_TO"))
+    {
+        for (int i = bc_line; i < bc_line_count; i++)
+        {
+            if (!strcmp(bc_tokens[i], line[1]))
+            {
+                bc_line = i;
+                break;
+            }
+        }
     }
     else if (!strcmp(line[0], "JUMP_IF_FALSE"))
     {
@@ -561,7 +555,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, obj.name);
             strcat(err, "' can not be converted into a bool");
             error(err, line_num);
-            exit(1);
         }
 
         Object conditionobj = ((standard_func_def)objectGetAttr(obj, "__bool__"))(arglist);
@@ -598,10 +591,7 @@ void quokka_interpret_line_tokens(char ** line)
         Object func = popTop();
 
         if (!objectHasAttr(func, "__call__"))
-        {
             error("not callable", line_num);
-            exit(1);
-        }
 
         int funcargs = 0;
         funcargs = ((int *)objectGetAttr(func, "__call__argc"))[0];
@@ -610,7 +600,7 @@ void quokka_interpret_line_tokens(char ** line)
             error("function received too many arguments", line_num);
         if (argcount < funcargs)
         {
-            int diff = argcount - funcargs;
+            int diff = funcargs - argcount;
             char * diffstr = malloc(11);
             sprintf(diffstr, "%d", diff);
 

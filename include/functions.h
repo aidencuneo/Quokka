@@ -83,16 +83,21 @@ Object q_function_input(Object * argv)
 {
     char * buffer = malloc(1);
     strcpy(buffer, "");
+    int buflen = 0;
+
     char last = 0;
 
     while (last != '\n' && last != '\r')
     {
         last = getchar();
+
         buffer = realloc(buffer, strlen(buffer) + 1);
-        buffer[strlen(buffer)] = last;
+        buffer[buflen] = last;
+
+        buflen++;
     }
 
-    buffer[strlen(buffer) - 1] = '\0';
+    buffer[buflen - 1] = '\0';
 
     return makeString(buffer);
 }

@@ -2,10 +2,8 @@
 #define SEPARATOR " "
 #define INSTRUCTION_END "\n"
 
-// Bools:
-int compilation_error = 0;
-
 // Ints:
+int current_line;
 int scpstk_size;
 int scope;
 int file_line_count;
@@ -60,8 +58,7 @@ void error(char * text, int line)
 
     line++;
 
-    if (!compilation_error)
-        println("\nProgram execution terminated:\n");
+    println("\nProgram execution terminated:\n");
 
     printf("At %s : Line %d\n\n", current_file, line);
 
@@ -79,7 +76,8 @@ void error(char * text, int line)
     free(linepreview);
     free(linenext);
 
-    compilation_error = 1;
+    // Exit
+    exit(1);
 }
 
 int isidentifier(char * word)
@@ -157,7 +155,87 @@ int stringCount(char ** lst, char * st)
     return count;
 }
 
-int findNextEnd(int cur_line, int scp)
+int findNextIfChain(char * kwtype, int cur_line, int scp)
+{
+    // This will become -1 if 'end' is not found
+    int ind = -2;
+    int tempscope = scp;
+
+    // 0 = 'if'
+    // 1 = 'elif'
+    // 2 = 'else'
+    int kw;
+
+    if (!strcmp(kwtype, "if"))
+        kw = 0;
+    else if (!strcmp(kwtype, "elif"))
+        kw = 1;
+    else if (!strcmp(kwtype, "else"))
+        kw = 2;
+
+    for (int i = cur_line + 1; i < file_line_count; i++)
+    {
+        char ** templine = quokka_line_tok(file_tokens[i]);
+
+        if (!arrsize(templine))
+        {
+            i++;
+            continue;
+        }
+
+        // Error checking
+        if (tempscope == scp)
+        {
+            if (kw == 1 && !strcmp(templine[0], "if"))
+            {
+                error("if statement after elif statement in the same if chain",
+                    current_line);
+            }
+            else if (kw == 2 && !strcmp(templine[0], "if"))
+            {
+                error("if statement after else statement in the same if chain",
+                    current_line);
+            }
+            else if (kw == 2 && !strcmp(templine[0], "elif"))
+            {
+                error("elif statement after else statement in the same if chain",
+                    current_line);
+            }
+            else if (kw == 2 && !strcmp(templine[0], "else"))
+            {
+                error("else statement on the end of another else statement",
+                    current_line);
+            }
+        }
+
+        // Regular scope checking and all the rest
+        if (!strcmp(templine[0], "if") ||
+            !strcmp(templine[0], "while") ||
+            !strcmp(templine[0], "for"))
+        {
+            tempscope++;
+        }
+        else
+        {
+            if (!strcmp(templine[0], "end") ||
+               (!strcmp(templine[0], "elif") && (kw == 0 || kw == 1)) ||
+               (!strcmp(templine[0], "else") && (kw == 0 || kw == 1)))
+            {
+                if (tempscope == scp)
+                {
+                    ind = i;
+                    break;
+                }
+            }
+            if (!strcmp(templine[0], "end"))
+                tempscope--;
+        }
+    }
+
+    return ind + 1;
+}
+
+int findNextEnd(char * kwtype, int cur_line, int scp)
 {
     // This will become -1 if 'end' is not found
     int ind = -2;
@@ -170,9 +248,9 @@ int findNextEnd(int cur_line, int scp)
         if (!arrsize(templine))
             continue;
 
-        if ((!strcmp(templine[0], "if")) ||
-            (!strcmp(templine[0], "while")) ||
-            (!strcmp(templine[0], "for")))
+        if (!strcmp(templine[0], "if") ||
+            !strcmp(templine[0], "while") ||
+            !strcmp(templine[0], "for"))
         {
             tempscope++;
         }
@@ -221,12 +299,21 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
     if (stringInList(line, "="))
     {
-        if (isInline) error("variables must be defined at the start of a line", num);
+        // Set new line
+        strcat(bytecode, String(current_line + 1).value);
+        strcat(bytecode, INSTRUCTION_END);
+
+        if (isInline)
+            error("variables must be defined at the start of a line", num);
+
         if (!isidentifier(line[0]))
             error("variable name to assign must be a valid identifier", num);
+
         if (strcmp(line[1], "="))
             error("equals sign operator is in the wrong position for variable definition", num);
-        if (len < 3) error("variable declaration missing variable value", num);
+
+        if (len < 3)
+            error("variable declaration missing variable value", num);
 
         char * varname = line[0];
 
@@ -246,6 +333,15 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else if (!strcmp(line[0], "if"))
     {
+        if (isInline)
+            error("if statement can only be at the start of a line", num);
+        if (len <= 1)
+            error("if statement requires a condition", num);
+
+        // Set new line
+        strcat(bytecode, String(current_line + 1).value);
+        strcat(bytecode, INSTRUCTION_END);
+
         arrlstrip(line);
         len--;
 
@@ -255,7 +351,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         free(temp);
 
-        int next = findNextEnd(num, scope);
+        int next = findNextIfChain("if", num, scope);
         if (next == -1)
             error("if statement missing 'end' keyword", num);
 
@@ -266,13 +362,91 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         scope++;
     }
+    else if (!strcmp(line[0], "elif"))
+    {
+        if (isInline)
+            error("elif statement can only be at the start of a line", num);
+        if (len <= 1)
+            error("elif statement requires a condition", num);
+
+        int nextend = findNextEnd("elif", num, scope);
+        if (nextend == -1)
+            error("elif statement missing 'end' keyword", num);
+
+        strcat(bytecode, "JUMP_TO");
+        strcat(bytecode, SEPARATOR);
+        strcat(bytecode, String(nextend).value);
+        strcat(bytecode, INSTRUCTION_END);
+
+        // Set new line
+        strcat(bytecode, String(current_line + 1).value);
+        strcat(bytecode, INSTRUCTION_END);
+
+        arrlstrip(line);
+        len--;
+
+        char * temp = quokka_compile_line_tokens(line, num, len, 1);
+
+        strcat(bytecode, strndup(temp, strlen(temp)));
+
+        free(temp);
+
+        int next = findNextIfChain("elif", num, scope);
+        if (next == -1)
+            error("elif statement missing 'end' keyword", num);
+
+        strcat(bytecode, "JUMP_IF_FALSE");
+        strcat(bytecode, SEPARATOR);
+        strcat(bytecode, String(next).value);
+        strcat(bytecode, INSTRUCTION_END);
+
+        scope++;
+    }
+    else if (!strcmp(line[0], "else"))
+    {
+        if (isInline)
+            error("else statement can only be at the start of a line", num);
+        if (len > 1)
+            error("else statement does not take arguments", num);
+
+        int nextend = findNextEnd("else", num, scope);
+        if (nextend == -1)
+            error("else statement missing 'end' keyword", num);
+
+        strcat(bytecode, "JUMP_TO");
+        strcat(bytecode, SEPARATOR);
+        strcat(bytecode, String(nextend).value);
+        strcat(bytecode, INSTRUCTION_END);
+
+        // Set new line
+        strcat(bytecode, String(current_line + 1).value);
+        strcat(bytecode, INSTRUCTION_END);
+
+        scope++;
+    }
     else if (!strcmp(line[0], "end"))
     {
+        if (isInline)
+            error("'end' can only be at the start of a line", num);
+
         if (len > 1)
             error("'end' does not take arguments", num);
+
+        // Set new line
+        strcat(bytecode, String(current_line + 1).value);
+        strcat(bytecode, INSTRUCTION_END);
+
+        scope--;
     }
     else if (stringInList(line, "<") || stringInList(line, ">") || stringInList(line, "<=") || stringInList(line, ">=") || stringInList(line, "=="))
     {
+        // Set new line
+        if (!isInline)
+        {
+            strcat(bytecode, String(current_line + 1).value);
+            strcat(bytecode, INSTRUCTION_END);
+        }
+
         char * operslist = malloc(1);
         strcpy(operslist, "");
 
@@ -294,10 +468,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                {
                     error("invalid syntax at '<'", num);
-                    exit(1);
-                }
 
                 operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
 
@@ -320,10 +491,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                {
                     error("invalid syntax at '>'", num);
-                    exit(1);
-                }
 
                 operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
 
@@ -346,10 +514,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                {
                     error("invalid syntax at '<='", num);
-                    exit(1);
-                }
 
                 operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
 
@@ -372,10 +537,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                {
                     error("invalid syntax at '>='", num);
-                    exit(1);
-                }
 
                 operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
 
@@ -398,10 +560,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                {
                     error("invalid syntax at '=='", num);
-                    exit(1);
-                }
 
                 operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
 
@@ -449,6 +608,13 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else if (stringInList(line, "+") || stringInList(line, "-") || stringInList(line, "*") || stringInList(line, "/"))
     {
+        // Set new line
+        if (!isInline)
+        {
+            strcat(bytecode, String(current_line + 1).value);
+            strcat(bytecode, INSTRUCTION_END);
+        }
+
         char * operslist = malloc(1);
         strcpy(operslist, "");
 
@@ -470,10 +636,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                {
                     error("invalid syntax at '+'", num);
-                    exit(1);
-                }
 
                 operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
 
@@ -496,10 +659,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                {
                     error("invalid syntax at '-'", num);
-                    exit(1);
-                }
 
                 operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
 
@@ -522,10 +682,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                {
                     error("invalid syntax at '*'", num);
-                    exit(1);
-                }
 
                 operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
 
@@ -548,10 +705,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                {
                     error("invalid syntax at '/'", num);
-                    exit(1);
-                }
 
                 operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
 
@@ -599,11 +753,15 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else if (isidentifier(line[0]) && startswith(line[1], "(") && endswith(line[1], ")"))
     {
-        if (len > 2)
+        // Set new line
+        if (!isInline)
         {
-            error("invalid syntax", num);
-            exit(1);
+            strcat(bytecode, String(current_line + 1).value);
+            strcat(bytecode, INSTRUCTION_END);
         }
+
+        if (len > 2)
+            error("invalid syntax", num);
 
         strcat(bytecode, "LOAD_NAME");
         strcat(bytecode, SEPARATOR);
@@ -635,6 +793,13 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else if (isinteger(line[0]) && len == 1)
     {
+        // Set new line
+        if (!isInline)
+        {
+            strcat(bytecode, String(current_line + 1).value);
+            strcat(bytecode, INSTRUCTION_END);
+        }
+
         // Clear leading 0's on integers
         while (startswith(line[0], "0") && strlen(line[0]) > 1)
             line[0]++;
@@ -649,6 +814,13 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         (startswith(line[0], "\"") && endswith(line[0], "\""))
     ) && len == 1)
     {
+        // Set new line
+        if (!isInline)
+        {
+            strcat(bytecode, String(current_line + 1).value);
+            strcat(bytecode, INSTRUCTION_END);
+        }
+
         strcat(bytecode, "LOAD_STRING");
         strcat(bytecode, SEPARATOR);
         strcat(bytecode, line[0]);
@@ -656,6 +828,13 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else if (isidentifier(line[0]) && len == 1)
     {
+        // Set new line
+        if (!isInline)
+        {
+            strcat(bytecode, String(current_line + 1).value);
+            strcat(bytecode, INSTRUCTION_END);
+        }
+
         strcat(bytecode, "LOAD_NAME");
         strcat(bytecode, SEPARATOR);
         strcat(bytecode, line[0]);
@@ -664,10 +843,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else
     {
         if (isInline)
-        {
             error("invalid syntax", num);
-            exit(1);
-        }
+
+        // Set new line
+        strcat(bytecode, String(current_line + 1).value);
+        strcat(bytecode, INSTRUCTION_END);
 
         int lastwascomma = 0;
 
@@ -709,18 +889,20 @@ char * quokka_compile_tokens(char ** tokens, int isInline)
     strcpy(compiled, "");
 
     file_line_count = arrsize(tokens);
-    for (int i = 0; i < file_line_count; i++)
+    current_line = 0;
+
+    while (current_line < file_line_count)
     {
-        if (tokens[i] == NULL)
+        char * t = tokens[current_line];
+
+        if (t == NULL)
             continue;
 
-        char * ins = quokka_compile_line(tokens[i], i, -1, isInline);
+        char * ins = quokka_compile_line(t, current_line, -1, isInline);
 
-        strcat(compiled, String(i + 1).value);
-        strcat(compiled, INSTRUCTION_END);
+        strcat(compiled, ins);
 
-        if (strlen(ins))
-            strcat(compiled, ins);
+        current_line++;
     }
 
     free(tokens);

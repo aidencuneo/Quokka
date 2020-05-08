@@ -71,8 +71,6 @@ int main(int argc, char ** argv)
     {
         compile_init();
         bytecode = quokka_compile_fname(fname);
-        if (compilation_error)
-            return 1;
     }
 
     if (verbose) println("\n--BYTECODE--\n");
