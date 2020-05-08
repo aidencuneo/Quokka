@@ -69,6 +69,7 @@ int main(int argc, char ** argv)
         bytecode = readfile(fname);
     else
     {
+        compile_init();
         bytecode = quokka_compile_fname(fname);
         if (compilation_error)
             return 1;

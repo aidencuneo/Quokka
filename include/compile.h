@@ -5,6 +5,14 @@
 // Bools:
 int compilation_error = 0;
 
+// Ints:
+int scpstk_size;
+int scope;
+int file_line_count;
+
+// String arrays:
+char ** file_tokens;
+
 // Function declarations
 void error(char * text, int line);
 int isidentifier(char * word);
@@ -149,6 +157,44 @@ int stringCount(char ** lst, char * st)
     return count;
 }
 
+int findNextEnd(int cur_line, int scp)
+{
+    // This will become -1 if 'end' is not found
+    int ind = -2;
+    int tempscope = scp;
+
+    for (int i = cur_line + 1; i < file_line_count; i++)
+    {
+        char ** templine = quokka_line_tok(file_tokens[i]);
+
+        if (!arrsize(templine))
+            continue;
+
+        if ((!strcmp(templine[0], "if")) ||
+            (!strcmp(templine[0], "while")) ||
+            (!strcmp(templine[0], "for")))
+        {
+            tempscope++;
+        }
+        else if (!strcmp(templine[0], "end"))
+        {
+            if (tempscope == scp)
+            {
+                ind = i;
+                break;
+            }
+            else tempscope--;
+        }
+    }
+
+    return ind + 1;
+}
+
+void compile_init()
+{
+    scope = 0;
+}
+
 char * quokka_compile_line(char * linetext, int num, int lineLen, int isInline)
 {
     char ** line = quokka_line_tok(linetext);
@@ -196,6 +242,33 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcat(bytecode, SEPARATOR);
         strcat(bytecode, varname);
         strcat(bytecode, INSTRUCTION_END);
+    }
+    else if (!strcmp(line[0], "if"))
+    {
+        arrlstrip(line);
+        len--;
+
+        char * temp = quokka_compile_line_tokens(line, num, len, 1);
+
+        strcat(bytecode, strndup(temp, strlen(temp)));
+
+        free(temp);
+
+        int next = findNextEnd(num, scope);
+        if (next == -1)
+            error("if statement missing 'end' keyword", num);
+
+        strcat(bytecode, "JUMP_IF_FALSE");
+        strcat(bytecode, SEPARATOR);
+        strcat(bytecode, String(next).value);
+        strcat(bytecode, INSTRUCTION_END);
+
+        scope++;
+    }
+    else if (!strcmp(line[0], "end"))
+    {
+        if (len > 1)
+            error("'end' does not take arguments", num);
     }
     else if (stringInList(line, "<") || stringInList(line, ">") || stringInList(line, "<=") || stringInList(line, ">=") || stringInList(line, "=="))
     {
@@ -622,21 +695,19 @@ char * quokka_compile_tokens(char ** tokens, int isInline)
     char * compiled = malloc(8192);
     strcpy(compiled, "");
 
-    int size = arrsize(tokens);
-    for (int i = 0; i < size; i++)
+    file_line_count = arrsize(tokens);
+    for (int i = 0; i < file_line_count; i++)
     {
         if (tokens[i] == NULL)
             continue;
 
         char * ins = quokka_compile_line(tokens[i], i, -1, isInline);
 
-        if (strlen(ins))
-        {
-            strcat(compiled, String(i + 1).value);
-            strcat(compiled, INSTRUCTION_END);
+        strcat(compiled, String(i + 1).value);
+        strcat(compiled, INSTRUCTION_END);
 
+        if (strlen(ins))
             strcat(compiled, ins);
-        }
     }
 
     free(tokens);
@@ -648,10 +719,10 @@ char * quokka_compile_raw(char * rawtext, int maxtokensize, int isInline)
 {
     if (maxtokensize == -1)
         maxtokensize = 2048;
-    char ** tokens = malloc(maxtokensize + 1);
-    ntokenise(tokens, rawtext, "\n");
+    file_tokens = malloc(maxtokensize + 1);
+    ntokenise(file_tokens, rawtext, "\n");
 
-    char * res = quokka_compile_tokens(tokens, isInline);
+    char * res = quokka_compile_tokens(file_tokens, isInline);
 
     return res;
 }

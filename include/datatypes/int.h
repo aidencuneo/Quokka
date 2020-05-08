@@ -139,6 +139,15 @@ Object __gt___integer(Object * argv)
     return makeInteger(&falsePtr);
 }
 
+Object __bool___integer(Object * argv)
+{
+    int * thisvalue = ((int *)objectGetAttr(argv[0], "value"));
+
+    if (thisvalue[0])
+        return makeInteger(&truePtr);
+    return makeInteger(&falsePtr);
+}
+
 Object __str___integer(Object * argv)
 {
     int * thisvalue = ((int *)objectGetAttr(argv[0], "value"));
@@ -178,6 +187,10 @@ Object makeInteger(int * value)
     // __gt__
     self = addObjectValue(self, "__gt__argc", &twoArgc);
     self = addObjectValue(self, "__gt__", &__gt___integer);
+
+    // __bool__
+    self = addObjectValue(self, "__bool__argc", &oneArgc);
+    self = addObjectValue(self, "__bool__", &__bool___integer);
 
     // __str__
     self = addObjectValue(self, "__str__argc", &oneArgc);

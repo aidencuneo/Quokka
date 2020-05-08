@@ -13,6 +13,11 @@ int method_count;
 Object * stack;
 int stack_size;
 
+// Bytecode file stuff
+char ** bc_tokens;
+int bc_line;
+int bc_line_count;
+
 // Multi-use pointers
 int oneArgc;
 int twoArgc;
@@ -537,6 +542,40 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(first, "__ge__"))(arglist));
     }
+    else if (!strcmp(line[0], "JUMP_IF_FALSE"))
+    {
+        Object obj = popTop();
+
+        Object * arglist = malloc(sizeof(Object));
+        arglist[0] = obj;
+
+        if (!objectHasAttr(obj, "__bool__"))
+        {
+            char * err = malloc(6 + strlen(obj.name) + 34 + 1);
+            strcpy(err, "type '");
+            strcat(err, obj.name);
+            strcat(err, "' can not be converted into a bool");
+            error(err, line_num);
+            exit(1);
+        }
+
+        Object conditionobj = ((standard_func_def)objectGetAttr(obj, "__bool__"))(arglist);
+        int condition = ((int *)objectGetAttr(conditionobj, "value"))[0];
+
+        if (condition)
+            return;
+
+        // If false, skip the if statement
+
+        for (int i = bc_line; i < bc_line_count; i++)
+        {
+            if (!strcmp(bc_tokens[i], line[1]))
+            {
+                bc_line = i;
+                break;
+            }
+        }
+    }
     else if (!strcmp(line[0], "STORE_NAME"))
     {
         addVar(line[1], popTop());
@@ -591,21 +630,28 @@ void quokka_interpret_line_tokens(char ** line)
 
 void quokka_interpret_tokens(char ** tokens)
 {
-    int size = arrsize(tokens);
+    bc_line_count = arrsize(tokens);
 
-    for (int i = 0; i < size; i++)
+    bc_line = 0;
+    while (bc_line < bc_line_count)
     {
-        if (tokens[i] == NULL)
+        char * t = tokens[bc_line];
+
+        if (t == NULL)
             continue;
 
-        if (isinteger(tokens[i]))
+        if (isinteger(t))
         {
-            line_num = strtol(tokens[i], (char **)NULL, 10) - 1;
+            line_num = strtol(t, (char **)NULL, 10) - 1;
             resetStack();
+
+            bc_line++;
             continue;
         }
 
-        quokka_interpret_line(tokens[i]);
+        quokka_interpret_line(t);
+
+        bc_line++;
     }
 
     free(tokens);
@@ -614,8 +660,8 @@ void quokka_interpret_tokens(char ** tokens)
 void quokka_interpret(char * bytecode)
 {
     // 8192 is the line limit for a bytecode file
-    char ** tokens = malloc(8192 * sizeof(char *));
-    ntokenise(tokens, bytecode, "\n");
+    bc_tokens = malloc(8192 * sizeof(char *));
+    ntokenise(bc_tokens, bytecode, "\n");
 
-    quokka_interpret_tokens(tokens);
+    quokka_interpret_tokens(bc_tokens);
 }
