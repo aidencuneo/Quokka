@@ -1,3 +1,10 @@
+i = 0
+while i < 10
+    println(i)
+    i = i + 1
+end
+
+
 // Operators:
 // +------------------------+
 // | +  | -  | *  | /  | =  |
@@ -12,12 +19,12 @@
 // string
 // int (not complete)
 
-i = input()
+// i = input()
 
-if i == 'hello'
-    println('Hi.')
-elif i == 'hi'
-    println('Hello.')
-else
-    println('Oh.')
-end
+// if i == 'hello'
+//     println('Hi.')
+// elif i == 'hi'
+//     println('Hello.')
+// else
+//     println('Oh.')
+// end

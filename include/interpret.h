@@ -207,6 +207,8 @@ void quokka_interpret_line(char * linetext)
 {
     char ** line = quokka_line_tok(linetext);
     quokka_interpret_line_tokens(line);
+
+    free(line);
 }
 
 void quokka_interpret_line_tokens(char ** line)
@@ -533,6 +535,17 @@ void quokka_interpret_line_tokens(char ** line)
     else if (!strcmp(line[0], "JUMP_TO"))
     {
         for (int i = bc_line; i < bc_line_count; i++)
+        {
+            if (!strcmp(bc_tokens[i], line[1]))
+            {
+                bc_line = i;
+                break;
+            }
+        }
+    }
+    else if (!strcmp(line[0], "JUMP_BACK"))
+    {
+        for (int i = bc_line; i >= 0; i--)
         {
             if (!strcmp(bc_tokens[i], line[1]))
             {

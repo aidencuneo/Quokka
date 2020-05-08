@@ -4,19 +4,24 @@
 
 // Ints:
 int current_line;
-int scpstk_size;
 int scope;
 int file_line_count;
 
 // String arrays:
 char ** file_tokens;
 
+// Scope stack stuff
+char ** scpstk;
+int * scps;
+int * scplines;
+int scpstk_size;
+
 // Function declarations
 void error(char * text, int line);
 int isidentifier(char * word);
 int isinteger(char * word);
 int stringInList(char * arr[], char * key);
-void arrlstrip(char * line[]);
+void arrlstrip(char ** line);
 int stringHasChar(char * s, char c);
 
 char * quokka_compile_line(char * linetext, int num, int lineLen, int isInline);
@@ -121,14 +126,14 @@ int stringInList(char * arr[], char * key)
     return 0;
 }
 
-void arrlstrip(char * line[])
+void arrlstrip(char ** line)
 {
     int position, c, n;
     position = 0;
     n = arrsize(line);
     for (c = position - 1; c < n - 1; c++)
         line[c] = line[c + 1];
-    line[n - 1] = "\0";
+    line[n - 1] = "";
 }
 
 int stringHasChar(char * s, char c)
@@ -153,6 +158,29 @@ int stringCount(char ** lst, char * st)
     }
 
     return count;
+}
+
+void scpstkPush(char * kw, int scp, int linenum)
+{
+    scpstk = realloc(scpstk, (scpstk_size + 1) * sizeof(char *));
+    scpstk[scpstk_size] = kw;
+
+    scps = realloc(scps, (scpstk_size + 1) * sizeof(int));
+    scps[scpstk_size] = scp;
+
+    scplines = realloc(scplines, (scpstk_size + 1) * sizeof(int));
+    scplines[scpstk_size] = linenum;
+
+    scpstk_size++;
+}
+
+void scpstkPop()
+{
+    scpstk = realloc(scpstk, (scpstk_size + 1) * sizeof(char *));
+    scps = realloc(scps, (scpstk_size + 1) * sizeof(int));
+    scplines = realloc(scplines, (scpstk_size + 1) * sizeof(int));
+
+    scpstk_size--;
 }
 
 int findNextIfChain(char * kwtype, int cur_line, int scp)
@@ -230,6 +258,8 @@ int findNextIfChain(char * kwtype, int cur_line, int scp)
             if (!strcmp(templine[0], "end"))
                 tempscope--;
         }
+
+        free(templine);
     }
 
     return ind + 1;
@@ -263,6 +293,8 @@ int findNextEnd(char * kwtype, int cur_line, int scp)
             }
             else tempscope--;
         }
+
+        free(templine);
     }
 
     return ind + 1;
@@ -276,12 +308,15 @@ void compile_init()
 char * quokka_compile_line(char * linetext, int num, int lineLen, int isInline)
 {
     char ** line = quokka_line_tok(linetext);
+
     return quokka_compile_line_tokens(line, num, lineLen, isInline);
 }
 
 char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInline)
 {
-    char * bytecode = malloc(2048);
+    println("YO");
+    char * bytecode = malloc(1024);
+    println("YOu");
     strcpy(bytecode, "");
 
     int len;
@@ -315,7 +350,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (len < 3)
             error("variable declaration missing variable value", num);
 
-        char * varname = line[0];
+        char * varname = strndup(line[0], strlen(line[0]));
 
         arrlstrip(line);
         arrlstrip(line);
@@ -330,6 +365,52 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcat(bytecode, SEPARATOR);
         strcat(bytecode, varname);
         strcat(bytecode, INSTRUCTION_END);
+    }
+    else if (!strcmp(line[0], "while"))
+    {
+        println(1);
+
+        if (isInline)
+            error("while loop can only be at the start of a line", num);
+        if (len <= 1)
+            error("while loop requires a condition", num);
+
+        println(3);
+
+        // Set new line
+        char * numstr = malloc(11);
+        println(6);
+        strcpy(numstr, "");
+        snprintf(numstr, 11, "%d", current_line + 1);
+
+        println(6);
+        strcat(bytecode, numstr);
+        println(5);
+        strcat(bytecode, INSTRUCTION_END);
+
+        println(2);
+
+        arrlstrip(line);
+        len--;
+
+        char * temp = quokka_compile_line_tokens(line, num, len, 1);
+
+        strcat(bytecode, strndup(temp, strlen(temp)));
+
+        free(temp);
+
+        int next = findNextEnd("while", num, scope);
+        if (next == -1)
+            error("if statement missing 'end' keyword", num);
+
+        strcat(bytecode, "JUMP_IF_FALSE");
+        strcat(bytecode, SEPARATOR);
+        strcat(bytecode, String(next).value);
+        strcat(bytecode, INSTRUCTION_END);
+
+        scpstkPush("while", scope, current_line + 1);
+
+        scope++;
     }
     else if (!strcmp(line[0], "if"))
     {
@@ -431,6 +512,26 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         if (len > 1)
             error("'end' does not take arguments", num);
+
+        if (scpstk_size)
+        {
+            char * kw = scpstk[scpstk_size - 1];
+            int scp = scps[scpstk_size - 1];
+            int scpline = scplines[scpstk_size - 1];
+
+            if (scope - 1 == scp)
+            {
+                if (!strcmp(kw, "while"))
+                {
+                    strcat(bytecode, "JUMP_BACK");
+                    strcat(bytecode, SEPARATOR);
+                    strcat(bytecode, String(scpline).value);
+                    strcat(bytecode, INSTRUCTION_END);
+
+                    scpstkPop();
+                }
+            }
+        }
 
         // Set new line
         strcat(bytecode, String(current_line + 1).value);
@@ -765,7 +866,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         strcat(bytecode, "LOAD_NAME");
         strcat(bytecode, SEPARATOR);
-        strcat(bytecode, line[0]);
+        strcat(bytecode, strndup(line[0], strlen(line[0])));
         strcat(bytecode, INSTRUCTION_END);
 
         // If arguments were given to the function
@@ -878,7 +979,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         }
     }
 
-    bytecode = realloc(bytecode, strlen(bytecode) + 1);
     return bytecode;
 }
 
@@ -900,7 +1000,8 @@ char * quokka_compile_tokens(char ** tokens, int isInline)
 
         char * ins = quokka_compile_line(t, current_line, -1, isInline);
 
-        strcat(compiled, ins);
+        strcat(compiled, strndup(ins, strlen(ins)));
+        free(ins);
 
         current_line++;
     }
@@ -1051,11 +1152,20 @@ char ** quokka_line_tok(char * line)
         t = c;
     }
 
-    char ** output = malloc(512 * sizeof(char *));
+    char ** output = malloc(sizeof(char *));
+    output[0] = "";
 
-    tokenise(output, tokenstr, separator);
-    for (int p = 0; p < arrsize(output); p++)
-        output[p] = cpstrip(output[p]);
+    int i = 0;
+    output[0] = cpstrip(strtok(tokenstr, separator));
+
+    while (output[i] != NULL)
+    {
+        i++;
+        output = realloc(output, (i + 1) * sizeof(char *));
+        output[i] = cpstrip(strtok(NULL, separator));
+    }
+
+    output[i + 1] = "";
 
     return output;
 }
