@@ -60,6 +60,11 @@ void interp_init()
     intFunction = addObjectValue(intFunction, "__call__", &q_function_int);
     intFunction = addObjectValue(intFunction, "__call__argc", &oneArgc);
     addVar("int", intFunction);
+
+    Object inputFunction = makeObject("function", &oneArgc);
+    inputFunction = addObjectValue(inputFunction, "__call__", &q_function_input);
+    inputFunction = addObjectValue(inputFunction, "__call__argc", &falsePtr);
+    addVar("input", inputFunction);
 }
 
 Object emptyObject(char * name)

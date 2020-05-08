@@ -204,6 +204,7 @@ char * quokka_compile_line(char * linetext, int num, int lineLen, int isInline)
 char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInline)
 {
     char * bytecode = malloc(2048);
+    strcpy(bytecode, "");
 
     int len;
     if (lineLen == -1)
@@ -211,7 +212,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else len = lineLen;
 
     if (!len)
-        return "";
+        return bytecode;
 
     if (len < 2)
         line[1] = "";
@@ -609,16 +610,28 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcat(bytecode, line[0]);
         strcat(bytecode, INSTRUCTION_END);
 
-        char * temp = quokka_compile_line(__slice_string__(String(line[1]), 1, 1).value, num, -1, 1);
+        // If arguments were given to the function
+        if (strlen(line[1]) > 2)
+        {
+            char * temp = quokka_compile_line(__slice_string__(String(line[1]), 1, 1).value, num, -1, 1);
 
-        strcat(bytecode, strndup(temp, strlen(temp)));
+            strcat(bytecode, strndup(temp, strlen(temp)));
 
-        strcat(bytecode, "CALL_FUNCTION");
-        strcat(bytecode, SEPARATOR);
-        strcat(bytecode, String(stringCount(line, ",") + 1).value);
-        strcat(bytecode, INSTRUCTION_END);
+            free(temp);
 
-        free(temp);
+            strcat(bytecode, "CALL_FUNCTION");
+            strcat(bytecode, SEPARATOR);
+            strcat(bytecode, String(stringCount(line, ",") + 1).value);
+            strcat(bytecode, INSTRUCTION_END);
+        }
+        // If no arguments were given
+        else
+        {
+            strcat(bytecode, "CALL_FUNCTION");
+            strcat(bytecode, SEPARATOR);
+            strcat(bytecode, "0");
+            strcat(bytecode, INSTRUCTION_END);
+        }
     }
     else if (isinteger(line[0]) && len == 1)
     {

@@ -78,3 +78,21 @@ Object q_function_int(Object * argv)
     }
     return ((standard_func_def)objectGetAttr(argv[0], "__int__"))(argv);
 }
+
+Object q_function_input(Object * argv)
+{
+    char * buffer = malloc(1);
+    strcpy(buffer, "");
+    char last = 0;
+
+    while (last != '\n' && last != '\r')
+    {
+        last = getchar();
+        buffer = realloc(buffer, strlen(buffer) + 1);
+        buffer[strlen(buffer)] = last;
+    }
+
+    buffer[strlen(buffer) - 1] = '\0';
+
+    return makeString(buffer);
+}
