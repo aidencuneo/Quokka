@@ -634,6 +634,55 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(func, "__call__"))(arglist));
     }
+    else if (!strcmp(line[0], "GET_INDEX"))
+    {
+        // If 'GET_INDEX *' then use __copy__
+
+        if (!strcmp(line[1], "*"))
+        {
+            Object obj = popTop();
+
+            if (!objectHasAttr(obj, "__copy__"))
+            {
+                char * err = malloc(6 + strlen(obj.name) + 36 + 1);
+                strcpy(err, "type '");
+                strcat(err, obj.name);
+                strcat(err, "' does not have a method for copying");
+                error(err, line_num);
+            }
+
+            Object * arglist = malloc(sizeof(Object));
+            arglist[0] = obj;
+
+            pushTop(((standard_func_def)objectGetAttr(obj, "__copy__"))(arglist));
+
+            return;
+        }
+
+        // If 'GET_INDEX 1' then get index like normal
+
+        Object ind = popTop();
+        Object obj = popTop();
+
+        Object * arglist = malloc(2 * sizeof(Object));
+        arglist[0] = obj;
+        arglist[1] = ind;
+
+        if (!objectHasAttr(obj, "__index__"))
+        {
+            char * err = malloc(6 + strlen(obj.name) + 45 + 1);
+            strcpy(err, "type '");
+            strcat(err, obj.name);
+            strcat(err, "' does not have a method for index retrieving");
+            error(err, line_num);
+        }
+
+        int funcargc = ((int *)objectGetAttr(obj, "__index__argc"))[0];
+        if (funcargc != 2)
+            error("__index__ function requires an invalid amount of arguments, should be 2", line_num);
+
+        pushTop(((standard_func_def)objectGetAttr(obj, "__index__"))(arglist));
+    }
 }
 
 void quokka_interpret_tokens(char ** tokens)

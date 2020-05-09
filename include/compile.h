@@ -887,6 +887,46 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             strcat(bytecode, INSTRUCTION_END);
         }
     }
+    else if (isidentifier(line[0]) && startswith(line[1], "[") && endswith(line[1], "]"))
+    {
+        // Set new line
+        if (!isInline)
+        {
+            strcat(bytecode, String(current_line + 1).value);
+            strcat(bytecode, INSTRUCTION_END);
+        }
+
+        if (len > 2)
+            error("invalid syntax", num);
+
+        strcat(bytecode, "LOAD_NAME");
+        strcat(bytecode, SEPARATOR);
+        strcat(bytecode, strndup(line[0], strlen(line[0])));
+        strcat(bytecode, INSTRUCTION_END);
+
+        // If arguments were given to the function
+        if (strlen(line[1]) > 2)
+        {
+            char * temp = quokka_compile_line(__slice_string__(String(line[1]), 1, 1).value, num, -1, 1);
+
+            strcat(bytecode, strndup(temp, strlen(temp)));
+
+            free(temp);
+
+            strcat(bytecode, "GET_INDEX");
+            strcat(bytecode, SEPARATOR);
+            strcat(bytecode, "1");
+            strcat(bytecode, INSTRUCTION_END);
+        }
+        // If no arguments were given
+        else
+        {
+            strcat(bytecode, "GET_INDEX");
+            strcat(bytecode, SEPARATOR);
+            strcat(bytecode, "*");
+            strcat(bytecode, INSTRUCTION_END);
+        }
+    }
     else if (isinteger(line[0]) && len == 1)
     {
         // Set new line
@@ -1128,6 +1168,12 @@ char ** quokka_line_tok(char * line)
         else if (c == ')' && !(
             sq || dq || bt || sb > 0 || cb > 0))
             rb--;
+        else if (c == '[' && !(
+            sq || dq || bt || rb > 0 || cb > 0))
+            sb++;
+        else if (c == ']' && !(
+            sq || dq || bt || rb > 0 || cb > 0))
+            sb--;
         else if (c == '/' && !(
             sq || dq || bt))
         {

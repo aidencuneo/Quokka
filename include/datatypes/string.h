@@ -40,6 +40,40 @@ Object __eq___string(Object * argv)
     return makeInteger(&falsePtr);
 }
 
+Object __index___string(Object * argv)
+{
+    if (strcmp(argv[1].name, "int"))
+    {
+        char * err = malloc(42 + strlen(argv[1].name) + 1 + 1);
+        strcpy(err, "string index argument must be 'int', not '");
+        strcat(err, argv[1].name);
+        strcat(err, "'");
+        error(err, line_num);
+        exit(1);
+    }
+
+    int ind = ((int *)objectGetAttr(argv[1], "value"))[0];
+    int len = strlen((char *)objectGetAttr(argv[0], "value"));
+
+    if (ind >= len)
+        return makeString("");
+    else if (ind < 0)
+        return makeString("");
+
+    char ch = ((char *)objectGetAttr(argv[0], "value"))[ind];
+
+    char * chst = malloc(2);
+    chst[0] = ch;
+    chst[1] = '\0';
+
+    return makeString(chst);
+}
+
+Object __copy___string(Object * argv)
+{
+    return makeString((char *)objectGetAttr(argv[0], "value"));
+}
+
 Object makeString(char * value)
 {
     Object self;
@@ -53,6 +87,14 @@ Object makeString(char * value)
     // __eq__
     self = addObjectValue(self, "__eq__argc", &twoArgc);
     self = addObjectValue(self, "__eq__", &__eq___string);
+
+    // __index__
+    self = addObjectValue(self, "__index__argc", &twoArgc);
+    self = addObjectValue(self, "__index__", &__index___string);
+
+    // __copy__
+    self = addObjectValue(self, "__copy__argc", &twoArgc);
+    self = addObjectValue(self, "__copy__", &__copy___string);
 
     return self;
 }
