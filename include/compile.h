@@ -353,10 +353,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             error("variable name to assign must be a valid identifier", num);
 
         if (strcmp(line[1], "="))
-            error("equals sign operator is in the wrong position for variable definition", num);
+            error("invalid syntax", num);
 
         if (len < 3)
-            error("variable declaration missing variable value", num);
+            error("variable definition missing variable value", num);
 
         char * varname = strndup(line[0], strlen(line[0]));
 
@@ -373,6 +373,182 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcat(bytecode, SEPARATOR);
         strcat(bytecode, varname);
         strcat(bytecode, INSTRUCTION_END);
+    }
+    else if (stringInList(line, "+="))
+    {
+        // Set new line
+        strcat(bytecode, String(current_line + 1).value);
+        strcat(bytecode, INSTRUCTION_END);
+
+        if (isInline)
+            error("variables must be defined at the start of a line", num);
+
+        if (!isidentifier(line[0]))
+            error("variable name to assign must be a valid identifier", num);
+
+        if (strcmp(line[1], "+="))
+            error("invalid syntax", num);
+
+        if (len < 3)
+            error("variable definition missing variable value", num);
+
+        char * varname = strndup(line[0], strlen(line[0]));
+
+        char ** templine = malloc(5 * sizeof(char *));
+        int size = 4;
+
+        templine[0] = varname;
+        templine[1] = "=";
+        templine[2] = varname;
+        templine[3] = "+";
+
+        for (int i = 2; i < len; i++)
+        {
+            templine = realloc(templine, (size + 1) * sizeof(char *));
+            templine[size] = line[i];
+            size++;
+        }
+
+        templine = realloc(templine, (size + 1) * sizeof(char *));
+        templine[size] = NULL;
+
+        char * temp = quokka_compile_line_tokens(templine, num, size, 0);
+
+        strcat(bytecode, strndup(temp, strlen(temp)));
+
+        free(temp);
+    }
+    else if (stringInList(line, "-="))
+    {
+        // Set new line
+        strcat(bytecode, String(current_line + 1).value);
+        strcat(bytecode, INSTRUCTION_END);
+
+        if (isInline)
+            error("variables must be defined at the start of a line", num);
+
+        if (!isidentifier(line[0]))
+            error("variable name to assign must be a valid identifier", num);
+
+        if (strcmp(line[1], "-="))
+            error("invalid syntax", num);
+
+        if (len < 3)
+            error("variable definition missing variable value", num);
+
+        char * varname = strndup(line[0], strlen(line[0]));
+
+        char ** templine = malloc(5 * sizeof(char *));
+        int size = 4;
+
+        templine[0] = varname;
+        templine[1] = "=";
+        templine[2] = varname;
+        templine[3] = "-";
+
+        for (int i = 2; i < len; i++)
+        {
+            templine = realloc(templine, (size + 1) * sizeof(char *));
+            templine[size] = line[i];
+            size++;
+        }
+
+        templine = realloc(templine, (size + 1) * sizeof(char *));
+        templine[size] = NULL;
+
+        char * temp = quokka_compile_line_tokens(templine, num, size, 0);
+
+        strcat(bytecode, strndup(temp, strlen(temp)));
+
+        free(temp);
+    }
+    else if (stringInList(line, "*="))
+    {
+        // Set new line
+        strcat(bytecode, String(current_line + 1).value);
+        strcat(bytecode, INSTRUCTION_END);
+
+        if (isInline)
+            error("variables must be defined at the start of a line", num);
+
+        if (!isidentifier(line[0]))
+            error("variable name to assign must be a valid identifier", num);
+
+        if (strcmp(line[1], "*="))
+            error("invalid syntax", num);
+
+        if (len < 3)
+            error("variable definition missing variable value", num);
+
+        char * varname = strndup(line[0], strlen(line[0]));
+
+        char ** templine = malloc(5 * sizeof(char *));
+        int size = 4;
+
+        templine[0] = varname;
+        templine[1] = "=";
+        templine[2] = varname;
+        templine[3] = "*";
+
+        for (int i = 2; i < len; i++)
+        {
+            templine = realloc(templine, (size + 1) * sizeof(char *));
+            templine[size] = line[i];
+            size++;
+        }
+
+        templine = realloc(templine, (size + 1) * sizeof(char *));
+        templine[size] = NULL;
+
+        char * temp = quokka_compile_line_tokens(templine, num, size, 0);
+
+        strcat(bytecode, strndup(temp, strlen(temp)));
+
+        free(temp);
+    }
+    else if (stringInList(line, "/="))
+    {
+        // Set new line
+        strcat(bytecode, String(current_line + 1).value);
+        strcat(bytecode, INSTRUCTION_END);
+
+        if (isInline)
+            error("variables must be defined at the start of a line", num);
+
+        if (!isidentifier(line[0]))
+            error("variable name to assign must be a valid identifier", num);
+
+        if (strcmp(line[1], "/="))
+            error("invalid syntax", num);
+
+        if (len < 3)
+            error("variable definition missing variable value", num);
+
+        char * varname = strndup(line[0], strlen(line[0]));
+
+        char ** templine = malloc(5 * sizeof(char *));
+        int size = 4;
+
+        templine[0] = varname;
+        templine[1] = "=";
+        templine[2] = varname;
+        templine[3] = "/";
+
+        for (int i = 2; i < len; i++)
+        {
+            templine = realloc(templine, (size + 1) * sizeof(char *));
+            templine[size] = line[i];
+            size++;
+        }
+
+        templine = realloc(templine, (size + 1) * sizeof(char *));
+        templine[size] = NULL;
+
+        char * temp = quokka_compile_line_tokens(templine, num, size, 0);
+
+        strcat(bytecode, strndup(temp, strlen(temp)));
+
+        free(temp);
     }
     else if (!strcmp(line[0], "while"))
     {

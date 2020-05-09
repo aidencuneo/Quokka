@@ -17,7 +17,7 @@ i = input()
 a = 0
 while a < 50
     print(i[a])
-    a = a + 2
+    a += 2
 end
 
 print('\n')
