@@ -32,14 +32,13 @@ int main(int argc, char ** argv)
         }
     }
 
-    for (int i = 0; i < newargc; i++)
-        println(args[i]);
-
     if (verbose) println("--START--\n");
 
     if (argc < 2)
     {
         println("Input file path not given, no data to compile.");
+
+        free(args);
         return 1;
     }
 
@@ -48,6 +47,8 @@ int main(int argc, char ** argv)
     if (fullname == 0)
     {
         println("Input file path not found or not accessible.");
+
+        free(args);
         return 1;
     }
 
@@ -88,6 +89,8 @@ int main(int argc, char ** argv)
         if (export_bytecode)
             fprintf(fp, "%s", bytecode);
         fclose(fp);
+
+        free(outputfile);
 
         return 0;
     }

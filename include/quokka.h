@@ -78,15 +78,11 @@ typedef Object (*standard_func_def)(Object * argv);
 /// All the rest
 //
 
-int carrsize(char * arr[])
+int carrsize(char ** arr)
 {
-    int i = 0;
-    long j = (long) arr[0];
-    while (j != '\0')
-    {
-        i++;
-        j = (long) arr[i];
-    }
+    int i;
+    for (i = 0; arr[i] != NULL; i++);
+
     return i;
 }
 
@@ -130,21 +126,27 @@ int endswith(const char * str, const char * suffix)
 
 char * readfile(char * fname)
 {
-    char * buffer = 0;
+    char * buffer;
     long length;
 
     FILE * f = fopen(fname, "rb");
 
-    if (f)
-    {
-        fseek(f, 0, SEEK_END);
-        length = ftell(f);
-        fseek(f, 0, SEEK_SET);
-        buffer = malloc(length);
-        if (buffer)
-            fread(buffer, 1, length, f);
-        fclose(f);
-    }
+    if (!f) return 0;
+
+    fseek(f, 0, SEEK_END);
+    length = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    buffer = malloc(length);
+    strcpy(buffer, "");
+
+    if (buffer)
+        fread(buffer, 1, length, f);
+
+    fclose(f);
+
+    buffer = realloc(buffer, length + 1);
+    buffer[length] = '\0';
 
     return buffer;
 }

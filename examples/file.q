@@ -1,10 +1,3 @@
-i = 0
-while i < 10
-    println(i)
-    i = i + 1
-end
-
-
 // Operators:
 // +------------------------+
 // | +  | -  | *  | /  | =  |
@@ -28,3 +21,9 @@ end
 // else
 //     println('Oh.')
 // end
+
+i = 100
+while i
+    print(i)
+    i = i - 1
+end

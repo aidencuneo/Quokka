@@ -20,7 +20,7 @@ int scpstk_size;
 void error(char * text, int line);
 int isidentifier(char * word);
 int isinteger(char * word);
-int stringInList(char * arr[], char * key);
+int stringInList(char ** arr, char * key);
 void arrlstrip(char ** line);
 int stringHasChar(char * s, char c);
 
@@ -116,23 +116,26 @@ int isinteger(char * word)
     return 1;
 }
 
-int stringInList(char * arr[], char * key)
+int stringInList(char ** arr, char * key)
 {
-    for (int n = 0; n < arrsize(arr); ++n)
+    int len = arrsize(arr);
+
+    for (int n = 0; arr[n] != NULL; ++n)
     {
         if (strcmp(arr[n], key) == 0)
             return 1;
     }
+
     return 0;
 }
 
 void arrlstrip(char ** line)
 {
-    int position, c, n;
-    position = 0;
-    n = arrsize(line);
-    for (c = position - 1; c < n - 1; c++)
+    int n = arrsize(line);
+
+    for (int c = 0; c < n - 1; c++)
         line[c] = line[c + 1];
+
     line[n - 1] = "";
 }
 
@@ -207,6 +210,8 @@ int findNextIfChain(char * kwtype, int cur_line, int scp)
 
         if (!arrsize(templine))
         {
+            free(templine);
+
             i++;
             continue;
         }
@@ -276,7 +281,10 @@ int findNextEnd(char * kwtype, int cur_line, int scp)
         char ** templine = quokka_line_tok(file_tokens[i]);
 
         if (!arrsize(templine))
+        {
+            free(templine);
             continue;
+        }
 
         if (!strcmp(templine[0], "if") ||
             !strcmp(templine[0], "while") ||
@@ -314,9 +322,7 @@ char * quokka_compile_line(char * linetext, int num, int lineLen, int isInline)
 
 char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInline)
 {
-    println("YO");
     char * bytecode = malloc(1024);
-    println("YOu");
     strcpy(bytecode, "");
 
     int len;
@@ -325,7 +331,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else len = lineLen;
 
     if (!len)
+    {
         return bytecode;
+    }
 
     if (len < 2)
         line[1] = "";
@@ -368,27 +376,18 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else if (!strcmp(line[0], "while"))
     {
-        println(1);
-
         if (isInline)
             error("while loop can only be at the start of a line", num);
         if (len <= 1)
             error("while loop requires a condition", num);
 
-        println(3);
-
         // Set new line
         char * numstr = malloc(11);
-        println(6);
         strcpy(numstr, "");
-        snprintf(numstr, 11, "%d", current_line + 1);
+        snprintf(numstr, 10, "%d", current_line + 1);
 
-        println(6);
         strcat(bytecode, numstr);
-        println(5);
         strcat(bytecode, INSTRUCTION_END);
-
-        println(2);
 
         arrlstrip(line);
         len--;
@@ -985,7 +984,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 char * quokka_compile_tokens(char ** tokens, int isInline)
 {
     // This will eventually need to be fixed and made dynamic
-    char * compiled = malloc(8192);
+    char * compiled = malloc(4096);
     strcpy(compiled, "");
 
     file_line_count = arrsize(tokens);
@@ -1165,7 +1164,8 @@ char ** quokka_line_tok(char * line)
         output[i] = cpstrip(strtok(NULL, separator));
     }
 
-    output[i + 1] = "";
+    output = realloc(output, (i + 2) * sizeof(char *));
+    output[i + 1] = NULL;
 
     return output;
 }
