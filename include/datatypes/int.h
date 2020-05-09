@@ -7,7 +7,6 @@ Object __add___integer(Object * argv)
         strcat(err, argv[1].name);
         strcat(err, "' can not be added with '+'");
         error(err, line_num);
-        exit(1);
     }
 
     int * first = (int *)objectGetAttr(argv[0], "value");
@@ -24,7 +23,6 @@ Object __sub___integer(Object * argv)
         strcat(err, argv[1].name);
         strcat(err, "' can not be subtracted with '-'");
         error(err, line_num);
-        exit(1);
     }
 
     int * first = (int *)objectGetAttr(argv[0], "value");
@@ -41,7 +39,6 @@ Object __mul___integer(Object * argv)
         strcat(err, argv[1].name);
         strcat(err, "' can not be multiplied with '*'");
         error(err, line_num);
-        exit(1);
     }
 
     int * first = (int *)objectGetAttr(argv[0], "value");
@@ -58,7 +55,6 @@ Object __div___integer(Object * argv)
         strcat(err, argv[1].name);
         strcat(err, "' can not be divided with '/'");
         error(err, line_num);
-        exit(1);
     }
 
     int * first = (int *)objectGetAttr(argv[0], "value");
@@ -79,7 +75,6 @@ Object __eq___integer(Object * argv)
         strcat(err, argv[1].name);
         strcat(err, "' can not be compared with '=='");
         error(err, line_num);
-        exit(1);
     }
 
     int * first = (int *)objectGetAttr(argv[0], "value");
@@ -102,7 +97,6 @@ Object __lt___integer(Object * argv)
         strcat(err, argv[1].name);
         strcat(err, "' can not be compared with '<'");
         error(err, line_num);
-        exit(1);
     }
 
     int * first = (int *)objectGetAttr(argv[0], "value");
@@ -116,6 +110,28 @@ Object __lt___integer(Object * argv)
     return makeInteger(&falsePtr);
 }
 
+Object __le___integer(Object * argv)
+{
+    if (strcmp(argv[1].name, "int"))
+    {
+        char * err = malloc(17 + strlen(argv[1].name) + 31 + 1);
+        strcpy(err, "types 'int' and '");
+        strcat(err, argv[1].name);
+        strcat(err, "' can not be compared with '<='");
+        error(err, line_num);
+    }
+
+    int * first = (int *)objectGetAttr(argv[0], "value");
+    int * secnd = (int *)objectGetAttr(argv[1], "value");
+
+    if (!secnd[0])
+        return makeInteger(makeIntPtr(0));
+
+    if (first[0] <= secnd[0])
+        return makeInteger(&truePtr);
+    return makeInteger(&falsePtr);
+}
+
 Object __gt___integer(Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
@@ -125,7 +141,6 @@ Object __gt___integer(Object * argv)
         strcat(err, argv[1].name);
         strcat(err, "' can not be compared with '>'");
         error(err, line_num);
-        exit(1);
     }
 
     int * first = (int *)objectGetAttr(argv[0], "value");
@@ -135,6 +150,28 @@ Object __gt___integer(Object * argv)
         return makeInteger(makeIntPtr(0));
 
     if (first[0] > secnd[0])
+        return makeInteger(&truePtr);
+    return makeInteger(&falsePtr);
+}
+
+Object __ge___integer(Object * argv)
+{
+    if (strcmp(argv[1].name, "int"))
+    {
+        char * err = malloc(17 + strlen(argv[1].name) + 31 + 1);
+        strcpy(err, "types 'int' and '");
+        strcat(err, argv[1].name);
+        strcat(err, "' can not be compared with '>='");
+        error(err, line_num);
+    }
+
+    int * first = (int *)objectGetAttr(argv[0], "value");
+    int * secnd = (int *)objectGetAttr(argv[1], "value");
+
+    if (!secnd[0])
+        return makeInteger(makeIntPtr(0));
+
+    if (first[0] >= secnd[0])
         return makeInteger(&truePtr);
     return makeInteger(&falsePtr);
 }
@@ -184,9 +221,17 @@ Object makeInteger(int * value)
     self = addObjectValue(self, "__lt__argc", &twoArgc);
     self = addObjectValue(self, "__lt__", &__lt___integer);
 
+    // __le__
+    self = addObjectValue(self, "__le__argc", &twoArgc);
+    self = addObjectValue(self, "__le__", &__le___integer);
+
     // __gt__
     self = addObjectValue(self, "__gt__argc", &twoArgc);
     self = addObjectValue(self, "__gt__", &__gt___integer);
+
+    // __ge__
+    self = addObjectValue(self, "__ge__argc", &twoArgc);
+    self = addObjectValue(self, "__ge__", &__ge___integer);
 
     // __bool__
     self = addObjectValue(self, "__bool__argc", &oneArgc);

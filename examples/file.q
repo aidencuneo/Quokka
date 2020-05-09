@@ -22,8 +22,14 @@
 //     println('Oh.')
 // end
 
-i = 100
+i = 50
 while i
-    print(i)
+    if i > 20
+        println('> 20')
+    elif i == 20
+        println('  20')
+    else
+        println('< 20')
+    end
     i = i - 1
 end

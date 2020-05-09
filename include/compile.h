@@ -479,8 +479,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcat(bytecode, SEPARATOR);
         strcat(bytecode, String(next).value);
         strcat(bytecode, INSTRUCTION_END);
-
-        scope++;
     }
     else if (!strcmp(line[0], "else"))
     {
@@ -501,8 +499,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // Set new line
         strcat(bytecode, String(current_line + 1).value);
         strcat(bytecode, INSTRUCTION_END);
-
-        scope++;
     }
     else if (!strcmp(line[0], "end"))
     {
@@ -1094,7 +1090,8 @@ char ** quokka_line_tok(char * line)
         ) && !(
             t == '+' && c == '+' // Join pluses together ++, +++, etc
         ) && !(
-            (t == '-' || t == '+' || t == '*' || t == '/' || t == '=') && c == '=' // Join together operators: -= += *= /= ==
+            // Join together operators: -= += *= /= == >= <=
+            (t == '-' || t == '+' || t == '*' || t == '/' || t == '=' || t == '>' || t == '>') && c == '='
         ) && !(
             q == 'A' && c == '.' // Join together names like `word.upper` (second part is below)
         ) && !(
