@@ -234,6 +234,68 @@ void quokka_interpret_line_tokens(char ** line)
     {
         pushTop(getVar(line[1]));
     }
+    else if (!strcmp(line[0], "UNARY_ADD"))
+    {
+        Object first = popTop();
+
+        if (!objectHasAttr(first, "__pos__"))
+        {
+            char * err = malloc(6 + strlen(first.name) + 38 + 1);
+            strcpy(err, "type '");
+            strcat(err, first.name);
+            strcat(err, "' does not have a method for unary '+'");
+            error(err, line_num);
+        }
+
+        if (!objectHasAttr(first, "__pos__argc"))
+        {
+            char * err = malloc(28 + strlen(first.name) + 56 + 1);
+            strcpy(err, "the __pos__ method of type '");
+            strcat(err, first.name);
+            strcat(err, "' is missing an argument limit, this should never happen");
+            error(err, line_num);
+        }
+
+        int funcargc = ((int *)objectGetAttr(first, "__pos__argc"))[0];
+        if (funcargc != 1)
+            error("__pos__ function requires an invalid amount of arguments, should be 1", line_num);
+
+        Object arglist[1];
+        arglist[0] = first;
+
+        pushTop(((standard_func_def)objectGetAttr(first, "__pos__"))(arglist));
+    }
+    else if (!strcmp(line[0], "UNARY_SUB"))
+    {
+        Object first = popTop();
+
+        if (!objectHasAttr(first, "__neg__"))
+        {
+            char * err = malloc(6 + strlen(first.name) + 38 + 1);
+            strcpy(err, "type '");
+            strcat(err, first.name);
+            strcat(err, "' does not have a method for unary '-'");
+            error(err, line_num);
+        }
+
+        if (!objectHasAttr(first, "__neg__argc"))
+        {
+            char * err = malloc(28 + strlen(first.name) + 56 + 1);
+            strcpy(err, "the __neg__ method of type '");
+            strcat(err, first.name);
+            strcat(err, "' is missing an argument limit, this should never happen");
+            error(err, line_num);
+        }
+
+        int funcargc = ((int *)objectGetAttr(first, "__neg__argc"))[0];
+        if (funcargc != 1)
+            error("__neg__ function requires an invalid amount of arguments, should be 1", line_num);
+
+        Object arglist[1];
+        arglist[0] = first;
+
+        pushTop(((standard_func_def)objectGetAttr(first, "__neg__"))(arglist));
+    }
     else if (!strcmp(line[0], "BINARY_ADD"))
     {
         Object secnd = popTop();

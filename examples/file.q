@@ -12,45 +12,21 @@
 // println
 // input
 // string
+// bool
 // int (not complete)
 
+a = 1
+if a < 1 // if statement missing 'end' keyword
+    print('yo')
+end
+
+print('> ')
 i = input()
 
 a = 0
 while a < 50
     print(i[a])
-    a +=  ++1  +  +++1
+    a += --1 + --1
 end
 
 print('\n')
-
-// LOAD_NAME a
-// LOAD_INT 1
-// LOAD_INT 1
-// BINARY_ADD
-// BINARY_ADD
-// STORE_NAME a
-
-
-// a
-// 1
-// 1
-// UNARY_ADD
-// BINARY_ADD
-// UNARY_ADD
-// BINARY_ADD
-// a=
-
-// a
-// 1
-// +1
-// BINARY_ADD
-// UNARY_ADD
-// BINARY_ADD
-// a=
-
-// a
-// +(1 + (+1))
-// UNARY_ADD
-// BINARY_ADD
-// a=

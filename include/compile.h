@@ -909,17 +909,37 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         {
             if (!strcmp(line[i], "+"))
             {
-                // I need to fix this whole bit
                 if (lastwasop)
                 {
                     if (i + 1 < len)
                     {
+                        // Used for multiple unaries in a row '+++', etc
                         if (!strcmp(line[i + 1], "+"))
                         {
-                            lastwasop = 1;
+                            int count = 0;
+
+                            for (i = i; i < len && !strcmp(line[i], "+"); i++)
+                                count++;
+
+                            char * temp = quokka_compile_line(line[i], num, -1, 1);
+                            valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+                            strcat(valuelist, strdup(temp));
+                            free(temp);
+
+                            for (int a = 0; a < count; a++)
+                            {
+                                valuelist = realloc(valuelist, strlen(valuelist) + 9 + strlen(INSTRUCTION_END) + 1);
+                                strcat(valuelist, "UNARY_ADD");
+                                strcat(valuelist, INSTRUCTION_END);
+                            }
+
+                            latestvalue = realloc(latestvalue, 1);
+                            memset(latestvalue, 0, 1);
                         }
+                        // Used for singular unary '+'
                         else
                         {
+                            println("HERE");
                             char * temp = quokka_compile_line(line[i + 1], num, -1, 1);
                             valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
                             strcat(valuelist, strdup(temp));
@@ -932,18 +952,22 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                             latestvalue = realloc(latestvalue, 1);
                             memset(latestvalue, 0, 1);
 
-                            lastwasop = 1;
+                            i++;
                         }
+
+                        lastwasop = 0;
                     }
-                    else error("invalid syntax at '+'", num);
+                    else error("'+' missing an argument", num);
                 }
-                // I need to fix everything above this
                 else
                 {
                     char * temp = quokka_compile_line(latestvalue, num, -1, 1);
                     valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
                     strcat(valuelist, strdup(temp));
                     free(temp);
+
+                    latestvalue = realloc(latestvalue, 1);
+                    memset(latestvalue, 0, 1);
 
                     operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
 
@@ -961,26 +985,78 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             }
             else if (!strcmp(line[i], "-"))
             {
-                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, strdup(temp));
-                free(temp);
-
                 if (lastwasop)
-                    error("invalid syntax at '-'", num);
+                {
+                    if (i + 1 < len)
+                    {
+                        // Used for multiple unaries in a row '---', etc
+                        if (!strcmp(line[i + 1], "-"))
+                        {
+                            int count = 0;
 
-                operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
+                            for (i = i; i < len && !strcmp(line[i], "-"); i++)
+                                count++;
 
-                char * tmp = strdup(operslist);
+                            char * temp = quokka_compile_line(line[i], num, -1, 1);
+                            valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+                            strcat(valuelist, strdup(temp));
+                            free(temp);
 
-                memset(operslist, 0, strlen(operslist));
-                strcpy(operslist, "BINARY_SUB");
-                strcat(operslist, INSTRUCTION_END);
-                strcat(operslist, tmp);
+                            for (int a = 0; a < count; a++)
+                            {
+                                valuelist = realloc(valuelist, strlen(valuelist) + 9 + strlen(INSTRUCTION_END) + 1);
+                                strcat(valuelist, "UNARY_SUB");
+                                strcat(valuelist, INSTRUCTION_END);
+                            }
 
-                free(tmp);
+                            latestvalue = realloc(latestvalue, 1);
+                            memset(latestvalue, 0, 1);
+                        }
+                        // Used for singular unary '-'
+                        else
+                        {
+                            char * temp = quokka_compile_line(line[i + 1], num, -1, 1);
+                            valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+                            strcat(valuelist, strdup(temp));
+                            free(temp);
 
-                lastwasop = 1;
+                            valuelist = realloc(valuelist, strlen(valuelist) + 9 + strlen(INSTRUCTION_END) + 1);
+                            strcat(valuelist, "UNARY_SUB");
+                            strcat(valuelist, INSTRUCTION_END);
+
+                            latestvalue = realloc(latestvalue, 1);
+                            memset(latestvalue, 0, 1);
+
+                            i++;
+                        }
+
+                        lastwasop = 0;
+                    }
+                    else error("'-' missing an argument", num);
+                }
+                else
+                {
+                    char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                    valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+                    strcat(valuelist, strdup(temp));
+                    free(temp);
+
+                    latestvalue = realloc(latestvalue, 1);
+                    memset(latestvalue, 0, 1);
+
+                    operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
+
+                    char * tmp = strdup(operslist);
+
+                    memset(operslist, 0, strlen(operslist));
+                    strcpy(operslist, "BINARY_SUB");
+                    strcat(operslist, INSTRUCTION_END);
+                    strcat(operslist, tmp);
+
+                    free(tmp);
+
+                    lastwasop = 1;
+                }
             }
             else if (!strcmp(line[i], "*"))
             {
@@ -991,6 +1067,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
                 if (lastwasop)
                     error("invalid syntax at '*'", num);
+
+                latestvalue = realloc(latestvalue, 1);
+                memset(latestvalue, 0, 1);
 
                 operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
 
@@ -1014,6 +1093,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
                 if (lastwasop)
                     error("invalid syntax at '/'", num);
+
+                latestvalue = realloc(latestvalue, 1);
+                memset(latestvalue, 0, 1);
 
                 operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
 
@@ -1047,6 +1129,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 lastwasop = 0;
             }
         }
+
+        println(latestvalue);
+
+        if (!lastwasop && strlen(latestvalue))
+            error("invalid syntax", num);
 
         char * temp = quokka_compile_line(latestvalue, num, -1, 1);
         valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);

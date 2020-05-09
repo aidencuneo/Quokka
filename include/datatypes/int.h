@@ -176,6 +176,18 @@ Object __ge___integer(Object * argv)
     return makeInteger(&falsePtr);
 }
 
+Object __pos___integer(Object * argv)
+{
+    return argv[0];
+}
+
+Object __neg___integer(Object * argv)
+{
+    int * first = (int *)objectGetAttr(argv[0], "value");
+
+    return makeInteger(makeIntPtr(-first[0]));
+}
+
 Object __bool___integer(Object * argv)
 {
     int * thisvalue = ((int *)objectGetAttr(argv[0], "value"));
@@ -196,6 +208,8 @@ Object makeInteger(int * value)
     Object self;
 
     self = makeObject("int", value);
+
+    // Two argument methods
 
     // __add__
     self = addObjectValue(self, "__add__argc", &twoArgc);
@@ -232,6 +246,16 @@ Object makeInteger(int * value)
     // __ge__
     self = addObjectValue(self, "__ge__argc", &twoArgc);
     self = addObjectValue(self, "__ge__", &__ge___integer);
+
+    // One argument methods
+
+    // __pos__
+    self = addObjectValue(self, "__pos__argc", &oneArgc);
+    self = addObjectValue(self, "__pos__", &__pos___integer);
+
+    // __neg__
+    self = addObjectValue(self, "__neg__argc", &oneArgc);
+    self = addObjectValue(self, "__neg__", &__neg___integer);
 
     // __bool__
     self = addObjectValue(self, "__bool__argc", &oneArgc);
