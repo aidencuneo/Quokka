@@ -1,6 +1,3 @@
-#include "qdef.h"
-#include "qstring.h"
-
 // File stuff
 char * current_file;
 
@@ -11,11 +8,11 @@ char * current_file;
 #ifdef _WIN32
     #include <direct.h>
     #define chdir(value) _chdir(value)
-    #define realpath(first, second) _fullpath(first, second, _MAX_PATH)
+    #define realpath(first, second) _fullpath(NULL, first, _MAX_PATH)
 
-    char *strndup(const char *s1, size_t n)
+    char * strndup(const char * s1, size_t n)
     {
-    	char *copy = (char *)malloc(n + 1);
+    	char * copy = malloc(n + 1);
     	memcpy(copy, s1, n);
     	copy[n] = 0;
     	return copy;
@@ -23,6 +20,13 @@ char * current_file;
 #else
     #include <unistd.h>
 #endif
+
+//
+/// Includes deliberately after OS-related definitions
+//
+
+#include "qdef.h"
+#include "qstring.h"
 
 //
 /// Function declarations

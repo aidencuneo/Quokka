@@ -6,6 +6,7 @@
 // CLI options (bools):
 int verbose = 0;
 int export_bytecode = 0;
+int execute_code = 1;
 
 int line_num;
 
@@ -25,6 +26,11 @@ int main(int argc, char ** argv)
             verbose = 1;
         else if (!strcmp(argv[i], "-c") || !strcmp(argv[i], "--compile"))
             export_bytecode = 1;
+        else if (!strcmp(argv[i], "-C") || !strcmp(argv[i], "--compile-only"))
+        {
+            export_bytecode = 1;
+            execute_code = 0;
+        }
         else
         {
             args[newargc] = argv[i];
@@ -43,8 +49,8 @@ int main(int argc, char ** argv)
     }
 
     // Full path directing to first file to compile
-    char * fullname = getrealpath(argv[1]);
-    if (fullname == 0)
+    char * fullname = getrealpath(args[0]);
+    if (!fullname)
     {
         println("Input file path not found or not accessible.");
 
@@ -91,15 +97,17 @@ int main(int argc, char ** argv)
         fclose(fp);
 
         free(outputfile);
-
-        return 0;
     }
 
-    if (verbose) println("\n--OUTPUT--");
-    interp_init();
-    quokka_interpret(bytecode);
+    if (execute_code)
+    {
+        if (verbose) println("\n--OUTPUT--");
 
-    if (verbose) println("--SUCCESS--");
+        interp_init();
+        quokka_interpret(bytecode);
+
+        if (verbose) println("--SUCCESS--");
+    }
 
     return 0;
 }
