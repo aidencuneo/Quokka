@@ -15,7 +15,9 @@
 // bool
 // int (not complete)
 
-a = 1
+a = +++1 + ++----------+1 + +1
+println(a)
+
 if a < 1 // if statement missing 'end' keyword
     print('yo')
 end
@@ -23,10 +25,10 @@ end
 print('> ')
 i = input()
 
-a = 0
+a = 1
 while a < 50
     print(i[a])
-    a += --1 + --1
+    a += --++++++1 + --+++++--++++++++1
 end
 
 print('\n')

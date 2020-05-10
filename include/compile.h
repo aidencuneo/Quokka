@@ -903,61 +903,53 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcpy(latestvalue, "");
 
         int lastwasop = 1;
+        int lastwasunary = 0;
 
         int i;
         for (i = 0; i < len; i++)
         {
             if (!strcmp(line[i], "+"))
             {
+                if (i + 1 >= len)
+                    error("'+' missing an argument", num);
+
                 if (lastwasop)
                 {
-                    if (i + 1 < len)
+                    // Used for unaries beginning with '+', for example: '++--+'
+                    char * tmp = malloc(1);
+                    strcpy(tmp, "");
+
+                    for (i = i; i < len; i++)
                     {
-                        // Used for multiple unaries in a row '+++', etc
-                        if (!strcmp(line[i + 1], "+"))
+                        if (!strcmp(line[i], "+"))
                         {
-                            int count = 0;
-
-                            for (i = i; i < len && !strcmp(line[i], "+"); i++)
-                                count++;
-
-                            char * temp = quokka_compile_line(line[i], num, -1, 1);
-                            valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                            strcat(valuelist, strdup(temp));
-                            free(temp);
-
-                            for (int a = 0; a < count; a++)
-                            {
-                                valuelist = realloc(valuelist, strlen(valuelist) + 9 + strlen(INSTRUCTION_END) + 1);
-                                strcat(valuelist, "UNARY_ADD");
-                                strcat(valuelist, INSTRUCTION_END);
-                            }
-
-                            latestvalue = realloc(latestvalue, 1);
-                            memset(latestvalue, 0, 1);
+                            tmp = realloc(tmp, strlen(tmp) + 9 + strlen(INSTRUCTION_END) + 1);
+                            strcat(tmp, "UNARY_ADD");
+                            strcat(tmp, INSTRUCTION_END);
                         }
-                        // Used for singular unary '+'
-                        else
+                        else if (!strcmp(line[i], "-"))
                         {
-                            println("HERE");
-                            char * temp = quokka_compile_line(line[i + 1], num, -1, 1);
-                            valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                            strcat(valuelist, strdup(temp));
-                            free(temp);
-
-                            valuelist = realloc(valuelist, strlen(valuelist) + 9 + strlen(INSTRUCTION_END) + 1);
-                            strcat(valuelist, "UNARY_ADD");
-                            strcat(valuelist, INSTRUCTION_END);
-
-                            latestvalue = realloc(latestvalue, 1);
-                            memset(latestvalue, 0, 1);
-
-                            i++;
+                            tmp = realloc(tmp, strlen(tmp) + 9 + strlen(INSTRUCTION_END) + 1);
+                            strcat(tmp, "UNARY_SUB");
+                            strcat(tmp, INSTRUCTION_END);
                         }
-
-                        lastwasop = 0;
+                        else break;
                     }
-                    else error("'+' missing an argument", num);
+
+                    char * temp = quokka_compile_line(line[i], num, -1, 1);
+                    valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + strlen(tmp) + 1);
+
+                    strcat(valuelist, strndup(temp, strlen(temp)));
+                    free(temp);
+
+                    strcat(valuelist, strndup(tmp, strlen(tmp)));
+                    free(tmp);
+
+                    latestvalue = realloc(latestvalue, 1);
+                    memset(latestvalue, 0, 1);
+
+                    lastwasop = 0;
+                    lastwasunary = 1;
                 }
                 else
                 {
@@ -981,58 +973,51 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                     free(tmp);
 
                     lastwasop = 1;
+                    lastwasunary = 0;
                 }
             }
             else if (!strcmp(line[i], "-"))
             {
+                if (i + 1 >= len)
+                    error("'-' missing an argument", num);
+
                 if (lastwasop)
                 {
-                    if (i + 1 < len)
+                    // Used for unaries beginning with '-', for example: '-+-+'
+                    char * tmp = malloc(1);
+                    strcpy(tmp, "");
+
+                    for (i = i; i < len; i++)
                     {
-                        // Used for multiple unaries in a row '---', etc
-                        if (!strcmp(line[i + 1], "-"))
+                        if (!strcmp(line[i], "+"))
                         {
-                            int count = 0;
-
-                            for (i = i; i < len && !strcmp(line[i], "-"); i++)
-                                count++;
-
-                            char * temp = quokka_compile_line(line[i], num, -1, 1);
-                            valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                            strcat(valuelist, strdup(temp));
-                            free(temp);
-
-                            for (int a = 0; a < count; a++)
-                            {
-                                valuelist = realloc(valuelist, strlen(valuelist) + 9 + strlen(INSTRUCTION_END) + 1);
-                                strcat(valuelist, "UNARY_SUB");
-                                strcat(valuelist, INSTRUCTION_END);
-                            }
-
-                            latestvalue = realloc(latestvalue, 1);
-                            memset(latestvalue, 0, 1);
+                            tmp = realloc(tmp, strlen(tmp) + 9 + strlen(INSTRUCTION_END) + 1);
+                            strcat(tmp, "UNARY_ADD");
+                            strcat(tmp, INSTRUCTION_END);
                         }
-                        // Used for singular unary '-'
-                        else
+                        else if (!strcmp(line[i], "-"))
                         {
-                            char * temp = quokka_compile_line(line[i + 1], num, -1, 1);
-                            valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                            strcat(valuelist, strdup(temp));
-                            free(temp);
-
-                            valuelist = realloc(valuelist, strlen(valuelist) + 9 + strlen(INSTRUCTION_END) + 1);
-                            strcat(valuelist, "UNARY_SUB");
-                            strcat(valuelist, INSTRUCTION_END);
-
-                            latestvalue = realloc(latestvalue, 1);
-                            memset(latestvalue, 0, 1);
-
-                            i++;
+                            tmp = realloc(tmp, strlen(tmp) + 9 + strlen(INSTRUCTION_END) + 1);
+                            strcat(tmp, "UNARY_SUB");
+                            strcat(tmp, INSTRUCTION_END);
                         }
-
-                        lastwasop = 0;
+                        else break;
                     }
-                    else error("'-' missing an argument", num);
+
+                    char * temp = quokka_compile_line(line[i], num, -1, 1);
+                    valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + strlen(tmp) + 1);
+
+                    strcat(valuelist, strndup(temp, strlen(temp)));
+                    free(temp);
+
+                    strcat(valuelist, strndup(tmp, strlen(tmp)));
+                    free(tmp);
+
+                    latestvalue = realloc(latestvalue, 1);
+                    memset(latestvalue, 0, 1);
+
+                    lastwasop = 0;
+                    lastwasunary = 1;
                 }
                 else
                 {
@@ -1056,6 +1041,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                     free(tmp);
 
                     lastwasop = 1;
+                    lastwasunary = 0;
                 }
             }
             else if (!strcmp(line[i], "*"))
@@ -1083,6 +1069,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(tmp);
 
                 lastwasop = 1;
+                lastwasunary = 0;
             }
             else if (!strcmp(line[i], "/"))
             {
@@ -1109,6 +1096,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(tmp);
 
                 lastwasop = 1;
+                lastwasunary = 0;
             }
             else
             {
@@ -1130,9 +1118,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             }
         }
 
-        println(latestvalue);
-
-        if (!lastwasop && strlen(latestvalue))
+        if (!lastwasop && strlen(latestvalue) && lastwasunary)
             error("invalid syntax", num);
 
         char * temp = quokka_compile_line(latestvalue, num, -1, 1);
