@@ -26,32 +26,29 @@ char * current_file;
 //
 
 #include "qdef.h"
-#include "qstring.h"
 
 //
 /// Function declarations
 //
 
+char * strSlice(char * st, int start, int stop);
+char * strReplace(char * orig, char * rep, char * with);
+
 // arrsize
 int carrsize(char * arr[]);
 int iarrsize(int * arr);
-int sarrsize(string * arr);
 
 // println
 int iprintln(int value);
 long lprintln(long value);
 char cprintln(char value);
 char * cpprintln(char * value);
-string sprintln(string value);
-string * saprintln(string value[]);
 
 // print
 int iprint(int value);
 long lprint(long value);
 char cprint(char value);
 char * cpprint(char * value);
-string sprint(string value);
-string * saprint(string value[]);
 
 // Definitions
 #define arrsize(value) _Generic((value),\
@@ -64,7 +61,6 @@ string * saprint(string value[]);
     long     : lprint,\
     char     : cprint,\
     char *   : cpprint,\
-    string   : sprint,\
     default  : cpprint)(value)
 
 #define println(value) _Generic((value),\
@@ -72,11 +68,10 @@ string * saprint(string value[]);
     long     : lprintln,\
     char     : cprintln,\
     char *   : cpprintln,\
-    string   : sprintln,\
     default  : cpprintln)(value)
 
 // Used to typecast Object pointers into Quokka functions
-typedef Object (*standard_func_def)(Object * argv);
+typedef Object (*standard_func_def)(int argc, Object * argv);
 
 //
 /// All the rest
@@ -105,7 +100,7 @@ char * getrealpath(char * path)
         return 0;
     }
 
-    char * res = __replace_string__(String(rp), String("\\"), String("/")).value;
+    char * res = strReplace(rp, "\\", "/");
     free(rp);
 
     return res;
@@ -197,15 +192,15 @@ char * cpstrip(char * s)
     return s;
 }
 
-int charCount(char * chst, char ch)
+int charCount(char * st, char ch)
 {
-    string st = String(chst);
+    int len = strlen(st);
 
     int count = 0;
 
-    for (int i = 0; i < st.length; i++)
+    for (int i = 0; i < len; i++)
     {
-        if (st.value[i] == ch)
+        if (st[i] == ch)
             count++;
     }
 
@@ -238,7 +233,7 @@ char * makeLiteralString(char * str)
 {
     if ((startswith(str, "'") && endswith(str, "'")) ||
         (startswith(str, "\"") && endswith(str, "\"")))
-        str = __slice_string__(String(str), 1, 1).value;
+        str = strSlice(str, 1, 1);
 
     char * newstr = malloc(strlen(str) + 1);
     memset(newstr, 0, strlen(str) + 1);
@@ -304,6 +299,83 @@ int ipowMath(int base, int exp)
     return result;
 }
 
+char * strSlice(char * st, int start, int stop)
+{
+    int len = strlen(st);
+
+    char * x = malloc(len + 1);
+    strcpy(x, st);
+
+    if (!st || !len)
+    {
+        free(x);
+        return st;
+    }
+
+    char * end;
+
+    end = x + len - 1;
+    end -= stop;
+    *(end + 1) = '\0';
+
+    char * out = strndup(x, strlen(x));
+    free(x);
+
+    return out + start;
+}
+
+char * strReplace(char * orig, char * rep, char * with)
+{
+    char * result; // the return string
+    char * ins;    // the next insert point
+    char * tmp;    // varies
+    int len_rep;  // length of rep (the string to remove)
+    int len_with; // length of with (the string to replace rep with)
+    int len_front; // distance between rep and end of last rep
+    int count;    // number of replacements
+
+    // sanity checks and initialization
+    if (!orig || !rep)
+        return 0;
+    len_rep = strlen(rep);
+    if (len_rep == 0)
+        return 0; // empty rep causes infinite loop during count
+    if (!with)
+        with = "";
+    len_with = strlen(with);
+
+    // count the number of replacements needed
+    ins = orig;
+    for (count = 0; (tmp = strstr(ins, rep)); ++count) {
+        ins = tmp + len_rep;
+    }
+
+    tmp = result = malloc(strlen(orig) + (len_with - len_rep) * count + 1);
+
+    if (!result)
+    {
+        free(tmp);
+        return 0;
+    }
+
+    // first time through the loop, all the variable are set correctly
+    // from here on,
+    //    tmp points to the end of the result string
+    //    ins points to the next occurrence of rep in orig
+    //    orig points to the remainder of orig after "end of rep"
+    while (count--) {
+        ins = strstr(orig, rep);
+        len_front = ins - orig;
+        tmp = strncpy(tmp, orig, len_front) + len_front;
+        tmp = strcpy(tmp, with) + len_with;
+        orig += len_front + len_rep; // move to next "end of rep"
+    }
+
+    strcpy(tmp, orig);
+
+    return result;
+}
+
 // print
 
 int iprint(int value)
@@ -330,12 +402,6 @@ char * cpprint(char * value)
     return value;
 }
 
-string sprint(string value)
-{
-    printf("%s", value.value);
-    return value;
-}
-
 // println
 
 int iprintln(int value)
@@ -359,11 +425,5 @@ char cprintln(char value)
 char * cpprintln(char * value)
 {
     printf("%s\n", value);
-    return value;
-}
-
-string sprintln(string value)
-{
-    printf("%s\n", value.value);
     return value;
 }

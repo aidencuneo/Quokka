@@ -23,6 +23,8 @@ int isinteger(char * word);
 int stringInList(char ** arr, char * key);
 void arrlstrip(char ** line);
 int stringHasChar(char * s, char c);
+int stringCount(char ** lst, char * st);
+int stringCountUntil(char ** lst, char * st, int len);
 
 char * quokka_compile_line(char * linetext, int num, int lineLen, int isInline);
 char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInline);
@@ -145,6 +147,16 @@ void arrlstrip(char ** line)
     line[n - 1] = "";
 }
 
+void arrdelindex(char ** line, int index)
+{
+    int n = arrsize(line);
+
+    for (int c = index; c < n - 1; c++)
+        line[c] = line[c + 1];
+
+    line[n - 1] = "";
+}
+
 int stringHasChar(char * s, char c)
 {
     for (int i = 0; i < strlen(s); ++i)
@@ -161,6 +173,19 @@ int stringCount(char ** lst, char * st)
     int count = 0;
 
     for (int i = 0; i < len; i++)
+    {
+        if (!strcmp(lst[i], st))
+            count++;
+    }
+
+    return count;
+}
+
+int stringCountUntil(char ** lst, char * st, int len)
+{
+    int count = 0;
+
+    for (int i = 0; i < len && lst[i] != NULL; i++)
     {
         if (!strcmp(lst[i], st))
             count++;
@@ -1186,7 +1211,29 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // If arguments were given to the function
         if (strlen(line[1]) > 2)
         {
-            char * temp = quokka_compile_line(__slice_string__(String(line[1]), 1, 1).value, num, -1, 1);
+            // Split up the argument list into it's elements
+            char ** templine = quokka_line_tok(strSlice(line[1], 1, 1));
+
+            int templen = arrsize(templine);
+            int lastwascomma = 0;
+            for (int i = 0; i < templen; i++)
+            {
+                if (!strcmp(templine[i], ","))
+                {
+                    if (lastwascomma)
+                    {
+                        arrdelindex(templine, i);
+                        templen--;
+                    }
+                    lastwascomma = 1;
+                }
+                else lastwascomma = 0;
+            }
+
+            while (!strcmp(templine[templen - 1], ","))
+                templen--;
+
+            char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
 
             strcat(bytecode, strndup(temp, strlen(temp)));
 
@@ -1194,8 +1241,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
             strcat(bytecode, "CALL_FUNCTION");
             strcat(bytecode, SEPARATOR);
-            strcat(bytecode, intToStr(stringCount(line, ",") + 1));
+            strcat(bytecode, intToStr(stringCountUntil(templine, ",", templen) + 1));
             strcat(bytecode, INSTRUCTION_END);
+
+            free(templine);
         }
         // If no arguments were given
         else
@@ -1218,7 +1267,29 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (len > 2)
             error("invalid syntax", num);
 
-        char * temp = quokka_compile_line(__slice_string__(String(line[0]), 1, 1).value, num, -1, 0);
+        // Split up the list into it's elements
+        char ** templine = quokka_line_tok(strSlice(line[0], 1, 1));
+
+        int templen = arrsize(templine);
+        int lastwascomma = 0;
+        for (int i = 0; i < templen; i++)
+        {
+            if (!strcmp(templine[i], ","))
+            {
+                if (lastwascomma)
+                {
+                    arrdelindex(templine, i);
+                    templen--;
+                }
+                lastwascomma = 1;
+            }
+            else lastwascomma = 0;
+        }
+
+        while (!strcmp(templine[templen - 1], ","))
+            templen--;
+
+        char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
 
         strcat(bytecode, strndup(temp, strlen(temp)));
 
@@ -1226,13 +1297,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         strcat(bytecode, "MAKE_LIST");
         strcat(bytecode, SEPARATOR);
-        strcat(bytecode, intToStr(stringCount(line, ",") + 1));
+        strcat(bytecode, intToStr(stringCountUntil(templine, ",", templen) + 1));
         strcat(bytecode, INSTRUCTION_END);
 
-        println(bytecode);
-
-        println("Build a list.");
-        exit(1);
+        free(templine);
     }
     else if (isidentifier(line[0]) && startswith(line[1], "[") && endswith(line[1], "]"))
     {
@@ -1254,7 +1322,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // If arguments were given to the function
         if (strlen(line[1]) > 2)
         {
-            char * temp = quokka_compile_line(__slice_string__(String(line[1]), 1, 1).value, num, -1, 1);
+            char * temp = quokka_compile_line(strSlice(line[1], 1, 1), num, -1, 1);
 
             strcat(bytecode, strndup(temp, strlen(temp)));
 
@@ -1322,6 +1390,36 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcat(bytecode, SEPARATOR);
         strcat(bytecode, line[0]);
         strcat(bytecode, INSTRUCTION_END);
+    }
+    else if (stringInList(line, ","))
+    {
+        int lastwascomma = 0;
+
+        for (int p = 0; p < len; p++)
+        {
+            if (!strcmp(line[p], ","))
+            {
+                lastwascomma = 1;
+                continue;
+            }
+
+            if (!lastwascomma && p > 0)
+            {
+                error("invalid syntax, expression is missing commas for value separation", num);
+                break;
+            }
+
+            if (!strlen(line[p]))
+                break;
+
+            char * temp = quokka_compile_line(line[p], num, 1, 1);
+
+            strcat(bytecode, strndup(temp, strlen(temp)));
+
+            free(temp);
+
+            lastwascomma = 0;
+        }
     }
     else
     {

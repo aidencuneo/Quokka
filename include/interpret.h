@@ -203,6 +203,7 @@ int getVarIndex(char * name)
 
 #include "datatypes/int.h"
 #include "datatypes/string.h"
+#include "datatypes/list.h"
 
 // Object makeMethod(Object (*func)(Object * argv), int * argc)
 // {
@@ -245,6 +246,17 @@ void quokka_interpret_line_tokens(char ** line)
     {
         pushTop(getVar(line[1]));
     }
+    else if (!strcmp(line[0], "MAKE_LIST"))
+    {
+        int lstsize = strtol(line[1], NULL, 10);
+
+        Object * value = malloc((lstsize + 1) * sizeof(Object));
+
+        for (int i = 0; i < lstsize; i++)
+            value[i] = popTop();
+
+        pushTop(makeList(lstsize, value));
+    }
     else if (!strcmp(line[0], "UNARY_ADD"))
     {
         Object first = popTop();
@@ -274,7 +286,7 @@ void quokka_interpret_line_tokens(char ** line)
         Object arglist[1];
         arglist[0] = first;
 
-        pushTop(((standard_func_def)objectGetAttr(first, "__pos__"))(arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__pos__"))(1, arglist));
     }
     else if (!strcmp(line[0], "UNARY_SUB"))
     {
@@ -305,7 +317,7 @@ void quokka_interpret_line_tokens(char ** line)
         Object arglist[1];
         arglist[0] = first;
 
-        pushTop(((standard_func_def)objectGetAttr(first, "__neg__"))(arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__neg__"))(1, arglist));
     }
     else if (!strcmp(line[0], "BINARY_ADD"))
     {
@@ -338,7 +350,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTop(((standard_func_def)objectGetAttr(first, "__add__"))(arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__add__"))(2, arglist));
     }
     else if (!strcmp(line[0], "BINARY_SUB"))
     {
@@ -371,7 +383,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTop(((standard_func_def)objectGetAttr(first, "__sub__"))(arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__sub__"))(2, arglist));
     }
     else if (!strcmp(line[0], "BINARY_MUL"))
     {
@@ -394,7 +406,6 @@ void quokka_interpret_line_tokens(char ** line)
             strcat(err, first.name);
             strcat(err, "' is missing an argument limit, this should never happen");
             error(err, line_num);
-            exit(1);
         }
 
         int funcargc = ((int *)objectGetAttr(first, "__mul__argc"))[0];
@@ -405,7 +416,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTop(((standard_func_def)objectGetAttr(first, "__mul__"))(arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__mul__"))(2, arglist));
     }
     else if (!strcmp(line[0], "BINARY_DIV"))
     {
@@ -438,7 +449,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTop(((standard_func_def)objectGetAttr(first, "__div__"))(arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__div__"))(2, arglist));
     }
     else if (!strcmp(line[0], "BINARY_POW"))
     {
@@ -471,7 +482,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTop(((standard_func_def)objectGetAttr(first, "__pow__"))(arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__pow__"))(2, arglist));
     }
     else if (!strcmp(line[0], "CMP_EQ"))
     {
@@ -504,7 +515,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTop(((standard_func_def)objectGetAttr(first, "__eq__"))(arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__eq__"))(2, arglist));
     }
     else if (!strcmp(line[0], "CMP_LT"))
     {
@@ -537,7 +548,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTop(((standard_func_def)objectGetAttr(first, "__lt__"))(arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__lt__"))(2, arglist));
     }
     else if (!strcmp(line[0], "CMP_GT"))
     {
@@ -570,7 +581,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTop(((standard_func_def)objectGetAttr(first, "__gt__"))(arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__gt__"))(2, arglist));
     }
     else if (!strcmp(line[0], "CMP_LE"))
     {
@@ -603,7 +614,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTop(((standard_func_def)objectGetAttr(first, "__le__"))(arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__le__"))(2, arglist));
     }
     else if (!strcmp(line[0], "CMP_GE"))
     {
@@ -636,7 +647,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTop(((standard_func_def)objectGetAttr(first, "__ge__"))(arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__ge__"))(2, arglist));
     }
     else if (!strcmp(line[0], "JUMP_TO"))
     {
@@ -676,7 +687,7 @@ void quokka_interpret_line_tokens(char ** line)
             error(err, line_num);
         }
 
-        Object conditionobj = ((standard_func_def)objectGetAttr(obj, "__bool__"))(arglist);
+        Object conditionobj = ((standard_func_def)objectGetAttr(obj, "__bool__"))(1, arglist);
         int condition = ((int *)objectGetAttr(conditionobj, "value"))[0];
 
         if (condition)
@@ -699,7 +710,7 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "CALL_FUNCTION"))
     {
-        int argcount = strtol(line[1], (char **)NULL, 10);
+        int argcount = strtol(line[1], NULL, 10);
         Object * arglist = malloc(argcount * sizeof(Object));
 
         for (int i = 0; i < argcount; i++)
@@ -714,6 +725,12 @@ void quokka_interpret_line_tokens(char ** line)
 
         int funcmin = 0;
         int funcmax = -1;
+
+        if (objectHasAttr(func, "__call__argc"))
+        {
+            funcmin = ((int *)objectGetAttr(func, "__call__argc"))[0];
+            funcmax = funcmin;
+        }
 
         if (objectHasAttr(func, "__call__argmin"))
             funcmin = ((int *)objectGetAttr(func, "__call__argmin"))[0];
@@ -744,7 +761,7 @@ void quokka_interpret_line_tokens(char ** line)
             error(err, line_num);
         }
 
-        pushTop(((standard_func_def)objectGetAttr(func, "__call__"))(arglist));
+        pushTop(((standard_func_def)objectGetAttr(func, "__call__"))(argcount, arglist));
     }
     else if (!strcmp(line[0], "GET_INDEX"))
     {
@@ -766,7 +783,7 @@ void quokka_interpret_line_tokens(char ** line)
             Object * arglist = malloc(sizeof(Object));
             arglist[0] = obj;
 
-            pushTop(((standard_func_def)objectGetAttr(obj, "__copy__"))(arglist));
+            pushTop(((standard_func_def)objectGetAttr(obj, "__copy__"))(1, arglist));
 
             return;
         }
@@ -793,7 +810,7 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__index__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        pushTop(((standard_func_def)objectGetAttr(obj, "__index__"))(arglist));
+        pushTop(((standard_func_def)objectGetAttr(obj, "__index__"))(2, arglist));
     }
 }
 
@@ -811,7 +828,7 @@ void quokka_interpret_tokens(char ** tokens)
 
         if (isinteger(t))
         {
-            line_num = strtol(t, (char **)NULL, 10) - 1;
+            line_num = strtol(t, NULL, 10) - 1;
             resetStack();
 
             bc_line++;

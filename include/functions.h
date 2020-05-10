@@ -1,58 +1,98 @@
-Object q_function_print(Object * argv)
-{
-    // Iterate over args and print all of them with nothing in between
+Object q_function_println(int argc, Object * argv);
 
+Object q_function_print(int argc, Object * argv)
+{
     int ret = 0;
 
-    if (!strcmp(argv[0].name, "string"))
+    for (int i = 0; i < argc; i++)
     {
-        char * text = (char *)objectGetAttr(argv[0], "value");
+        if (!strcmp(argv[i].name, "string"))
+        {
+            char * text = (char *)objectGetAttr(argv[i], "value");
 
-        ret += strlen(text);
-        printf("%s", text);
-    }
-    else if (!strcmp(argv[0].name, "int"))
-    {
-        int num = ((int *)objectGetAttr(argv[0], "value"))[0];
-        char * text = intToStr(num);
+            ret += strlen(text);
+            printf("%s", text);
+        }
+        else if (!strcmp(argv[i].name, "int"))
+        {
+            int num = ((int *)objectGetAttr(argv[i], "value"))[0];
+            char * text = intToStr(num);
 
-        ret += strlen(text);
-        printf("%s", text);
+            ret += strlen(text);
+            printf("%s", text);
+        }
+        else if (!strcmp(argv[i].name, "list"))
+        {
+            println("STARTED");
+
+            Object lst = ((Object *)objectGetAttr(argv[i], "value"))[0];
+            println("got list");
+            int lstlen = ((int *)objectGetAttr(argv[i], "length"))[0];
+            println("got len");
+            println(lstlen);
+
+            ret += 2;
+            print("[");
+            println("p");
+
+            for (int p = 0; p < lstlen; p++)
+            {
+                Object * arglist = malloc(sizeof(Object));
+                Object * lstobj = ((Object *)objectGetAttr(lst, "value"));
+                println("YO");
+
+                q_function_println(1, lstobj);
+                println("YO");
+            }
+
+            Object printlen = q_function_print(lstlen, objectGetAttr(lst, "value"));
+            println("printed");
+
+            ret += ((int *)objectGetAttr(printlen, "value"))[0] + 2;
+            ret += 2;
+
+            print("]");
+        }
+        else
+            error("'print' can only print standard Quokka types (for now)", line_num);
     }
-    else
-        error("'print' can only print standard Quokka types (for now)", line_num);
 
     return makeInteger(makeIntPtr(ret));
 }
 
-Object q_function_println(Object * argv)
+Object q_function_println(int argc, Object * argv)
 {
-    // Iterate over args and print all of them with a newline in between
-
     int ret = 0;
 
-    if (!strcmp(argv[0].name, "string"))
+    for (int i = 0; i < argc; i++)
     {
-        char * text = (char *)objectGetAttr(argv[0], "value");
+        if (!strcmp(argv[i].name, "string"))
+        {
+            char * text = (char *)objectGetAttr(argv[i], "value");
 
-        ret += strlen(text);
-        printf("%s\n", text);
-    }
-    else if (!strcmp(argv[0].name, "int"))
-    {
-        int num = ((int *)objectGetAttr(argv[0], "value"))[0];
-        char * text = intToStr(num);
+            ret += strlen(text);
+            printf("%s\n", text);
+        }
+        else if (!strcmp(argv[i].name, "int"))
+        {
+            int num = ((int *)objectGetAttr(argv[i], "value"))[0];
+            char * text = intToStr(num);
 
-        ret += strlen(text);
-        printf("%s\n", text);
+            ret += strlen(text);
+            printf("%s\n", text);
+        }
+        else if (!strcmp(argv[i].name, "list"))
+        {
+            // Print a list, using the print function on each item in it.
+        }
+        else
+            error("'println' can only print standard Quokka types (for now)", line_num);
     }
-    else
-        error("'println' can only print standard Quokka types (for now)", line_num);
 
     return makeInteger(makeIntPtr(ret));
 }
 
-Object q_function_input(Object * argv)
+Object q_function_input(int argc, Object * argv)
 {
     char * buffer = malloc(1);
     strcpy(buffer, "");
@@ -76,7 +116,7 @@ Object q_function_input(Object * argv)
 }
 
 
-Object q_function_bool(Object * argv)
+Object q_function_bool(int argc, Object * argv)
 {
     if (!objectHasAttr(argv[0], "__bool__"))
     {
@@ -85,13 +125,12 @@ Object q_function_bool(Object * argv)
         strcat(err, argv[0].name);
         strcat(err, "' can not be converted into a bool");
         error(err, line_num);
-        exit(1);
     }
-    return ((standard_func_def)objectGetAttr(argv[0], "__bool__"))(argv);
+    return ((standard_func_def)objectGetAttr(argv[0], "__bool__"))(1, argv);
 }
 
 
-Object q_function_string(Object * argv)
+Object q_function_string(int argc, Object * argv)
 {
     if (!objectHasAttr(argv[0], "__str__"))
     {
@@ -100,12 +139,11 @@ Object q_function_string(Object * argv)
         strcat(err, argv[0].name);
         strcat(err, "' can not be converted into a string");
         error(err, line_num);
-        exit(1);
     }
-    return ((standard_func_def)objectGetAttr(argv[0], "__str__"))(argv);
+    return ((standard_func_def)objectGetAttr(argv[0], "__str__"))(1, argv);
 }
 
-Object q_function_int(Object * argv)
+Object q_function_int(int argc, Object * argv)
 {
     if (!objectHasAttr(argv[0], "__int__"))
     {
@@ -114,7 +152,6 @@ Object q_function_int(Object * argv)
         strcat(err, argv[0].name);
         strcat(err, "' can not be converted into an integer");
         error(err, line_num);
-        exit(1);
     }
-    return ((standard_func_def)objectGetAttr(argv[0], "__int__"))(argv);
+    return ((standard_func_def)objectGetAttr(argv[0], "__int__"))(1, argv);
 }

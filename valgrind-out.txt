@@ -1,0 +1,540 @@
+==2575== Memcheck, a memory error detector
+==2575== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==2575== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==2575== Command: bin/quokka examples/lists.q
+==2575== Parent PID: 2569
+==2575== 
+==2575== error calling PR_SET_PTRACER, vgdb might block
+==2575== 
+==2575== HEAP SUMMARY:
+==2575==     in use at exit: 72,992 bytes in 92 blocks
+==2575==   total heap usage: 536 allocs, 444 frees, 123,728 bytes allocated
+==2575== 
+==2575== 1 bytes in 1 blocks are definitely lost in loss record 1 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x1107DF: quokka_line_tok (compile.h:1522)
+==2575==    by 0x10B23B: quokka_compile_line (compile.h:347)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 2 bytes in 1 blocks are definitely lost in loss record 2 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x10A074: intToStr (quokka.h:280)
+==2575==    by 0x10F949: quokka_compile_line_tokens (compile.h:1300)
+==2575==    by 0x10B498: quokka_compile_line_tokens (compile.h:395)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 2 bytes in 1 blocks are definitely lost in loss record 3 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x10A074: intToStr (quokka.h:280)
+==2575==    by 0x10F521: quokka_compile_line_tokens (compile.h:1244)
+==2575==    by 0x10B498: quokka_compile_line_tokens (compile.h:395)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 2 bytes in 1 blocks are definitely lost in loss record 4 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x10A074: intToStr (quokka.h:280)
+==2575==    by 0x10F187: quokka_compile_line_tokens (compile.h:1199)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 2 bytes in 1 blocks are definitely lost in loss record 5 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x10A074: intToStr (quokka.h:280)
+==2575==    by 0x10F521: quokka_compile_line_tokens (compile.h:1244)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 4 bytes in 1 blocks are definitely lost in loss record 6 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x110D10: quokka_line_tok (compile.h:1632)
+==2575==    by 0x10F31E: quokka_compile_line_tokens (compile.h:1215)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 4 bytes in 2 blocks are definitely lost in loss record 7 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x10A074: intToStr (quokka.h:280)
+==2575==    by 0x10B343: quokka_compile_line_tokens (compile.h:375)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 5 bytes in 1 blocks are definitely lost in loss record 8 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x10A181: strSlice (quokka.h:321)
+==2575==    by 0x10F316: quokka_compile_line_tokens (compile.h:1215)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 6 bytes in 3 blocks are indirectly lost in loss record 9 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x110D10: quokka_line_tok (compile.h:1632)
+==2575==    by 0x10B23B: quokka_compile_line (compile.h:347)
+==2575==    by 0x11038B: quokka_compile_line_tokens (compile.h:1415)
+==2575==    by 0x10F85E: quokka_compile_line_tokens (compile.h:1292)
+==2575==    by 0x10B498: quokka_compile_line_tokens (compile.h:395)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 6 bytes in 1 blocks are definitely lost in loss record 10 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x10F28D: quokka_compile_line_tokens (compile.h:1208)
+==2575==    by 0x10B498: quokka_compile_line_tokens (compile.h:395)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 8 bytes in 1 blocks are still reachable in loss record 11 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x112167: addObjectValue (interpret.h:111)
+==2575==    by 0x1119D3: interp_init (interpret.h:46)
+==2575==    by 0x118CB1: main (quokka.c:106)
+==2575== 
+==2575== 8 bytes in 1 blocks are still reachable in loss record 12 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x11218A: addObjectValue (interpret.h:112)
+==2575==    by 0x1119D3: interp_init (interpret.h:46)
+==2575==    by 0x118CB1: main (quokka.c:106)
+==2575== 
+==2575== 8 bytes in 1 blocks are still reachable in loss record 13 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x112167: addObjectValue (interpret.h:111)
+==2575==    by 0x111A82: interp_init (interpret.h:52)
+==2575==    by 0x118CB1: main (quokka.c:106)
+==2575== 
+==2575== 8 bytes in 1 blocks are still reachable in loss record 14 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x11218A: addObjectValue (interpret.h:112)
+==2575==    by 0x111A82: interp_init (interpret.h:52)
+==2575==    by 0x118CB1: main (quokka.c:106)
+==2575== 
+==2575== 8 bytes in 2 blocks are indirectly lost in loss record 15 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x110D10: quokka_line_tok (compile.h:1632)
+==2575==    by 0x10B23B: quokka_compile_line (compile.h:347)
+==2575==    by 0x11038B: quokka_compile_line_tokens (compile.h:1415)
+==2575==    by 0x10F42F: quokka_compile_line_tokens (compile.h:1236)
+==2575==    by 0x10B498: quokka_compile_line_tokens (compile.h:395)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 8 bytes in 1 blocks are definitely lost in loss record 16 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x10F28D: quokka_compile_line_tokens (compile.h:1208)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 8 bytes in 2 blocks are definitely lost in loss record 17 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x110B18: quokka_line_tok (compile.h:1594)
+==2575==    by 0x10B23B: quokka_compile_line (compile.h:347)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 8 bytes in 2 blocks are definitely lost in loss record 18 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x10B44F: quokka_compile_line_tokens (compile.h:390)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 10 bytes in 1 blocks are definitely lost in loss record 19 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x10A181: strSlice (quokka.h:321)
+==2575==    by 0x10F316: quokka_compile_line_tokens (compile.h:1215)
+==2575==    by 0x10B498: quokka_compile_line_tokens (compile.h:395)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 11 bytes in 1 blocks are definitely lost in loss record 20 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x10A181: strSlice (quokka.h:321)
+==2575==    by 0x10F745: quokka_compile_line_tokens (compile.h:1271)
+==2575==    by 0x10B498: quokka_compile_line_tokens (compile.h:395)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 11 bytes in 1 blocks are definitely lost in loss record 21 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x110D10: quokka_line_tok (compile.h:1632)
+==2575==    by 0x10F31E: quokka_compile_line_tokens (compile.h:1215)
+==2575==    by 0x10B498: quokka_compile_line_tokens (compile.h:395)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 12 bytes in 3 blocks are still reachable in loss record 22 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x1095A2: makeIntPtrFromStr (qdef.h:9)
+==2575==    by 0x114FF9: quokka_interpret_line_tokens (interpret.h:241)
+==2575==    by 0x114F01: quokka_interpret_line (interpret.h:221)
+==2575==    by 0x118803: quokka_interpret_tokens (interpret.h:838)
+==2575==    by 0x118882: quokka_interpret (interpret.h:852)
+==2575==    by 0x118CBD: main (quokka.c:107)
+==2575== 
+==2575== 12 bytes in 1 blocks are definitely lost in loss record 23 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x110D10: quokka_line_tok (compile.h:1632)
+==2575==    by 0x10F74D: quokka_compile_line_tokens (compile.h:1271)
+==2575==    by 0x10B498: quokka_compile_line_tokens (compile.h:395)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 13 bytes in 1 blocks are still reachable in loss record 24 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x110D10: quokka_line_tok (compile.h:1632)
+==2575==    by 0x114EF1: quokka_interpret_line (interpret.h:220)
+==2575==    by 0x118803: quokka_interpret_tokens (interpret.h:838)
+==2575==    by 0x118882: quokka_interpret (interpret.h:852)
+==2575==    by 0x118CBD: main (quokka.c:107)
+==2575== 
+==2575== 15 bytes in 1 blocks are definitely lost in loss record 25 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x10F45A: quokka_compile_line_tokens (compile.h:1238)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 16 bytes in 1 blocks are still reachable in loss record 26 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x1188AA: main (quokka.c:20)
+==2575== 
+==2575== 24 bytes in 1 blocks are still reachable in loss record 27 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x112167: addObjectValue (interpret.h:111)
+==2575==    by 0x111BF5: interp_init (interpret.h:59)
+==2575==    by 0x118CB1: main (quokka.c:106)
+==2575== 
+==2575== 24 bytes in 1 blocks are still reachable in loss record 28 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x11218A: addObjectValue (interpret.h:112)
+==2575==    by 0x111BF5: interp_init (interpret.h:59)
+==2575==    by 0x118CB1: main (quokka.c:106)
+==2575== 
+==2575== 24 bytes in 1 blocks are still reachable in loss record 29 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x112167: addObjectValue (interpret.h:111)
+==2575==    by 0x111D3B: interp_init (interpret.h:65)
+==2575==    by 0x118CB1: main (quokka.c:106)
+==2575== 
+==2575== 24 bytes in 1 blocks are still reachable in loss record 30 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x11218A: addObjectValue (interpret.h:112)
+==2575==    by 0x111D3B: interp_init (interpret.h:65)
+==2575==    by 0x118CB1: main (quokka.c:106)
+==2575== 
+==2575== 24 bytes in 1 blocks are still reachable in loss record 31 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x112167: addObjectValue (interpret.h:111)
+==2575==    by 0x111E75: interp_init (interpret.h:71)
+==2575==    by 0x118CB1: main (quokka.c:106)
+==2575== 
+==2575== 24 bytes in 1 blocks are still reachable in loss record 32 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x11218A: addObjectValue (interpret.h:112)
+==2575==    by 0x111E75: interp_init (interpret.h:71)
+==2575==    by 0x118CB1: main (quokka.c:106)
+==2575== 
+==2575== 24 bytes in 1 blocks are still reachable in loss record 33 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x112167: addObjectValue (interpret.h:111)
+==2575==    by 0x111FAF: interp_init (interpret.h:77)
+==2575==    by 0x118CB1: main (quokka.c:106)
+==2575== 
+==2575== 24 bytes in 1 blocks are still reachable in loss record 34 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x11218A: addObjectValue (interpret.h:112)
+==2575==    by 0x111FAF: interp_init (interpret.h:77)
+==2575==    by 0x118CB1: main (quokka.c:106)
+==2575== 
+==2575== 29 bytes in 1 blocks are definitely lost in loss record 35 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x10F45A: quokka_compile_line_tokens (compile.h:1238)
+==2575==    by 0x10B498: quokka_compile_line_tokens (compile.h:395)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 30 bytes in 2 blocks are definitely lost in loss record 36 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x1103B6: quokka_compile_line_tokens (compile.h:1417)
+==2575==    by 0x10F42F: quokka_compile_line_tokens (compile.h:1236)
+==2575==    by 0x10B498: quokka_compile_line_tokens (compile.h:395)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 32 bytes in 1 blocks are still reachable in loss record 37 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x110E1E: quokka_line_tok (compile.h:1651)
+==2575==    by 0x114EF1: quokka_interpret_line (interpret.h:220)
+==2575==    by 0x118803: quokka_interpret_tokens (interpret.h:838)
+==2575==    by 0x118882: quokka_interpret (interpret.h:852)
+==2575==    by 0x118CBD: main (quokka.c:107)
+==2575== 
+==2575== 32 bytes in 1 blocks are definitely lost in loss record 38 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x111924: resetStack (interpret.h:30)
+==2575==    by 0x111960: interp_init (interpret.h:36)
+==2575==    by 0x118CB1: main (quokka.c:106)
+==2575== 
+==2575== 34 bytes in 1 blocks are definitely lost in loss record 39 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x10F889: quokka_compile_line_tokens (compile.h:1294)
+==2575==    by 0x10B498: quokka_compile_line_tokens (compile.h:395)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 36 bytes in 3 blocks are definitely lost in loss record 40 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x1103B6: quokka_compile_line_tokens (compile.h:1417)
+==2575==    by 0x10F85E: quokka_compile_line_tokens (compile.h:1292)
+==2575==    by 0x10B498: quokka_compile_line_tokens (compile.h:395)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 36 bytes in 3 blocks are definitely lost in loss record 41 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x110D10: quokka_line_tok (compile.h:1632)
+==2575==    by 0x114EF1: quokka_interpret_line (interpret.h:220)
+==2575==    by 0x118803: quokka_interpret_tokens (interpret.h:838)
+==2575==    by 0x118882: quokka_interpret (interpret.h:852)
+==2575==    by 0x118CBD: main (quokka.c:107)
+==2575== 
+==2575== 43 bytes in 1 blocks are still reachable in loss record 42 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x118AEB: main (quokka.c:62)
+==2575== 
+==2575== 48 bytes in 1 blocks are still reachable in loss record 43 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x112437: addVar (interpret.h:162)
+==2575==    by 0x111FF7: interp_init (interpret.h:78)
+==2575==    by 0x118CB1: main (quokka.c:106)
+==2575== 
+==2575== 51 bytes in 1 blocks are still reachable in loss record 44 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x10A27C: strReplace (quokka.h:353)
+==2575==    by 0x10969C: getrealpath (quokka.h:103)
+==2575==    by 0x118A81: main (quokka.c:52)
+==2575== 
+==2575== 56 (48 direct, 8 indirect) bytes in 2 blocks are definitely lost in loss record 45 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x110E1E: quokka_line_tok (compile.h:1651)
+==2575==    by 0x10B23B: quokka_compile_line (compile.h:347)
+==2575==    by 0x11038B: quokka_compile_line_tokens (compile.h:1415)
+==2575==    by 0x10F42F: quokka_compile_line_tokens (compile.h:1236)
+==2575==    by 0x10B498: quokka_compile_line_tokens (compile.h:395)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 59 bytes in 3 blocks are indirectly lost in loss record 46 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x110D10: quokka_line_tok (compile.h:1632)
+==2575==    by 0x10B23B: quokka_compile_line (compile.h:347)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 64 bytes in 1 blocks are still reachable in loss record 47 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x11235E: popTop (interpret.h:147)
+==2575==    by 0x115127: quokka_interpret_line_tokens (interpret.h:256)
+==2575==    by 0x114F01: quokka_interpret_line (interpret.h:221)
+==2575==    by 0x118803: quokka_interpret_tokens (interpret.h:838)
+==2575==    by 0x118882: quokka_interpret (interpret.h:852)
+==2575==    by 0x118CBD: main (quokka.c:107)
+==2575== 
+==2575== 78 bytes in 1 blocks are definitely lost in loss record 48 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x109855: readfile (quokka.h:147)
+==2575==    by 0x110773: quokka_compile_fname (compile.h:1508)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 78 (72 direct, 6 indirect) bytes in 3 blocks are definitely lost in loss record 49 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x110E1E: quokka_line_tok (compile.h:1651)
+==2575==    by 0x10B23B: quokka_compile_line (compile.h:347)
+==2575==    by 0x11038B: quokka_compile_line_tokens (compile.h:1415)
+==2575==    by 0x10F85E: quokka_compile_line_tokens (compile.h:1292)
+==2575==    by 0x10B498: quokka_compile_line_tokens (compile.h:395)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 96 bytes in 1 blocks are still reachable in loss record 50 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x114DF7: makeList (list.h:49)
+==2575==    by 0x115185: quokka_interpret_line_tokens (interpret.h:258)
+==2575==    by 0x114F01: quokka_interpret_line (interpret.h:221)
+==2575==    by 0x118803: quokka_interpret_tokens (interpret.h:838)
+==2575==    by 0x118882: quokka_interpret (interpret.h:852)
+==2575==    by 0x118CBD: main (quokka.c:107)
+==2575== 
+==2575== 107 bytes in 2 blocks are definitely lost in loss record 51 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x10B4BA: quokka_compile_line_tokens (compile.h:397)
+==2575==    by 0x10B254: quokka_compile_line (compile.h:349)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 128 bytes in 1 blocks are still reachable in loss record 52 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x1150E6: quokka_interpret_line_tokens (interpret.h:253)
+==2575==    by 0x114F01: quokka_interpret_line (interpret.h:221)
+==2575==    by 0x118803: quokka_interpret_tokens (interpret.h:838)
+==2575==    by 0x118882: quokka_interpret (interpret.h:852)
+==2575==    by 0x118CBD: main (quokka.c:107)
+==2575== 
+==2575== 192 bytes in 1 blocks are still reachable in loss record 53 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x112462: addVar (interpret.h:163)
+==2575==    by 0x111FF7: interp_init (interpret.h:78)
+==2575==    by 0x118CB1: main (quokka.c:106)
+==2575== 
+==2575== 195 bytes in 6 blocks are definitely lost in loss record 54 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x48F454E: strndup (strndup.c:43)
+==2575==    by 0x11068F: quokka_compile_tokens (compile.h:1483)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 227 (168 direct, 59 indirect) bytes in 6 blocks are definitely lost in loss record 55 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x110E1E: quokka_line_tok (compile.h:1651)
+==2575==    by 0x10B23B: quokka_compile_line (compile.h:347)
+==2575==    by 0x11066D: quokka_compile_tokens (compile.h:1481)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 696 bytes in 3 blocks are still reachable in loss record 56 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x112167: addObjectValue (interpret.h:111)
+==2575==    by 0x11425C: makeInteger (int.h:289)
+==2575==    by 0x11500B: quokka_interpret_line_tokens (interpret.h:241)
+==2575==    by 0x114F01: quokka_interpret_line (interpret.h:221)
+==2575==    by 0x118803: quokka_interpret_tokens (interpret.h:838)
+==2575==    by 0x118882: quokka_interpret (interpret.h:852)
+==2575==    by 0x118CBD: main (quokka.c:107)
+==2575== 
+==2575== 696 bytes in 3 blocks are still reachable in loss record 57 of 59
+==2575==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x11218A: addObjectValue (interpret.h:112)
+==2575==    by 0x11425C: makeInteger (int.h:289)
+==2575==    by 0x11500B: quokka_interpret_line_tokens (interpret.h:241)
+==2575==    by 0x114F01: quokka_interpret_line (interpret.h:221)
+==2575==    by 0x118803: quokka_interpret_tokens (interpret.h:838)
+==2575==    by 0x118882: quokka_interpret (interpret.h:852)
+==2575==    by 0x118CBD: main (quokka.c:107)
+==2575== 
+==2575== 4,096 bytes in 1 blocks are still reachable in loss record 58 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x1105FE: quokka_compile_tokens (compile.h:1468)
+==2575==    by 0x11074D: quokka_compile_raw (compile.h:1501)
+==2575==    by 0x11079B: quokka_compile_fname (compile.h:1513)
+==2575==    by 0x118B5E: main (quokka.c:80)
+==2575== 
+==2575== 65,536 bytes in 1 blocks are still reachable in loss record 59 of 59
+==2575==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2575==    by 0x11884F: quokka_interpret (interpret.h:849)
+==2575==    by 0x118CBD: main (quokka.c:107)
+==2575== 
+==2575== LEAK SUMMARY:
+==2575==    definitely lost: 976 bytes in 51 blocks
+==2575==    indirectly lost: 73 bytes in 8 blocks
+==2575==      possibly lost: 0 bytes in 0 blocks
+==2575==    still reachable: 71,943 bytes in 33 blocks
+==2575==         suppressed: 0 bytes in 0 blocks
+==2575== 
+==2575== For lists of detected and suppressed errors, rerun with: -s
+==2575== ERROR SUMMARY: 29 errors from 29 contexts (suppressed: 0 from 0)
