@@ -10,9 +10,6 @@
 // Special functions `__funcname__`
 string __add__string__(string self, string other);
 
-// Type functions `__typename__`
-string __type__string__(string self);
-
 // Regular functions `funcname`
 string __lstrip_string__(string st);
 string __rstrip_string__(string st);
@@ -40,8 +37,6 @@ string StringFromCharPointer(char * value)
     self.length = strlen(value);
 
     self.__add__ = __add__string__;
-
-    self.__type__ = __type__string__;
 
     self.lstrip = __lstrip_string__;
     self.rstrip = __rstrip_string__;
@@ -107,11 +102,6 @@ string __add__string__(string self, string other)
     free(x);
 
     return out;
-}
-
-string __type__string__(string self)
-{
-    return String("string");
 }
 
 // Regular functions `funcname`

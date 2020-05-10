@@ -15,20 +15,21 @@
 // bool
 // int (not complete)
 
-a = +++1 + ++----------+1 + +1
-println(a)
+i = 0
+str = ''
 
-if a < 1 // if statement missing 'end' keyword
-    print('yo')
+while i < 2 ** 3
+    str += 'Potatoes. '
+    i += 1
 end
 
-print('> ')
-i = input()
+i = 0
+last_ch = ' '
 
-a = 1
-while a < 50
-    print(i[a])
-    a += --++++++1 + --+++++--++++++++1
+while last_ch
+    last_ch = str[i]
+    print(last_ch)
+    i += 1
 end
 
 print('\n')

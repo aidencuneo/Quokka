@@ -2,10 +2,10 @@ Object __add___integer(Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
-        char * err = malloc(17 + strlen(argv[1].name) + 27 + 1);
+        char * err = malloc(17 + strlen(argv[1].name) + 30 + 1);
         strcpy(err, "types 'int' and '");
         strcat(err, argv[1].name);
-        strcat(err, "' can not be added with '+'");
+        strcat(err, "' are invalid operands for '+'");
         error(err, line_num);
     }
 
@@ -18,10 +18,10 @@ Object __sub___integer(Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
-        char * err = malloc(17 + strlen(argv[1].name) + 32 + 1);
+        char * err = malloc(17 + strlen(argv[1].name) + 30 + 1);
         strcpy(err, "types 'int' and '");
         strcat(err, argv[1].name);
-        strcat(err, "' can not be subtracted with '-'");
+        strcat(err, "' are invalid operands for '-'");
         error(err, line_num);
     }
 
@@ -34,10 +34,10 @@ Object __mul___integer(Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
-        char * err = malloc(17 + strlen(argv[1].name) + 32 + 1);
+        char * err = malloc(17 + strlen(argv[1].name) + 30 + 1);
         strcpy(err, "types 'int' and '");
         strcat(err, argv[1].name);
-        strcat(err, "' can not be multiplied with '*'");
+        strcat(err, "' are invalid operands for '*'");
         error(err, line_num);
     }
 
@@ -50,10 +50,10 @@ Object __div___integer(Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
-        char * err = malloc(17 + strlen(argv[1].name) + 29 + 1);
+        char * err = malloc(17 + strlen(argv[1].name) + 30 + 1);
         strcpy(err, "types 'int' and '");
         strcat(err, argv[1].name);
-        strcat(err, "' can not be divided with '/'");
+        strcat(err, "' are invalid operands for '/'");
         error(err, line_num);
     }
 
@@ -64,6 +64,25 @@ Object __div___integer(Object * argv)
         return makeInteger(makeIntPtr(0));
 
     return makeInteger(makeIntPtr(first[0] / secnd[0]));
+}
+
+Object __pow___integer(Object * argv)
+{
+    if (strcmp(argv[1].name, "int"))
+    {
+        char * err = malloc(17 + strlen(argv[1].name) + 31 + 1);
+        strcpy(err, "types 'int' and '");
+        strcat(err, argv[1].name);
+        strcat(err, "' are invalid operands for '**'");
+        error(err, line_num);
+    }
+
+    int * first = (int *)objectGetAttr(argv[0], "value");
+    int * secnd = (int *)objectGetAttr(argv[1], "value");
+
+    if (!secnd[0])
+        return makeInteger(makeIntPtr(0));
+    return makeInteger(makeIntPtr(ipowMath(first[0], secnd[0])));
 }
 
 Object __eq___integer(Object * argv)
@@ -226,6 +245,10 @@ Object makeInteger(int * value)
     // __div__
     self = addObjectValue(self, "__div__argc", &twoArgc);
     self = addObjectValue(self, "__div__", &__div___integer);
+
+    // __pow__
+    self = addObjectValue(self, "__pow__argc", &twoArgc);
+    self = addObjectValue(self, "__pow__", &__pow___integer);
 
     // __eq__
     self = addObjectValue(self, "__eq__argc", &twoArgc);

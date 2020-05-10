@@ -277,6 +277,33 @@ char * makeLiteralString(char * str)
     return newstr;
 }
 
+char * intToStr(int value)
+{
+    char * newval = malloc(11);
+    sprintf(newval, "%d", value);
+
+    char * out = strndup(newval, strlen(newval));
+    free(newval);
+
+    return out;
+}
+
+int ipowMath(int base, int exp)
+{
+    int result = 1;
+    for (;;)
+    {
+        if (exp & 1)
+            result *= base;
+        exp >>= 1;
+        if (!exp)
+            break;
+        base *= base;
+    }
+
+    return result;
+}
+
 // print
 
 int iprint(int value)

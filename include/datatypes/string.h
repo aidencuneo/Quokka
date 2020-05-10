@@ -74,11 +74,22 @@ Object __copy___string(Object * argv)
     return makeString((char *)objectGetAttr(argv[0], "value"));
 }
 
+Object __bool___string(Object * argv)
+{
+    char * thisvalue = ((char *)objectGetAttr(argv[0], "value"));
+
+    if (strlen(thisvalue))
+        return makeInteger(&truePtr);
+    return makeInteger(&falsePtr);
+}
+
 Object makeString(char * value)
 {
     Object self;
 
     self = makeObject("string", value);
+
+    // Two argument methods
 
     // __add__
     self = addObjectValue(self, "__add__argc", &twoArgc);
@@ -95,6 +106,12 @@ Object makeString(char * value)
     // __copy__
     self = addObjectValue(self, "__copy__argc", &twoArgc);
     self = addObjectValue(self, "__copy__", &__copy___string);
+
+    // One argument methods
+
+    // __bool__
+    self = addObjectValue(self, "__bool__argc", &oneArgc);
+    self = addObjectValue(self, "__bool__", &__bool___string);
 
     return self;
 }

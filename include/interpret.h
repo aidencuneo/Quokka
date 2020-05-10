@@ -41,30 +41,41 @@ void interp_init()
     truePtr = 1;
     falsePtr = 0;
 
-    Object printFunction = makeObject("function", &oneArgc);
+    // No argument restraints
+    Object printFunction = emptyObject("function");
     printFunction = addObjectValue(printFunction, "__call__", &q_function_print);
-    printFunction = addObjectValue(printFunction, "__call__argc", &oneArgc);
+    // printFunction = addObjectValue(printFunction, "__call__argc", &oneArgc);
     addVar("print", printFunction);
 
-    Object printlnFunction = makeObject("function", &oneArgc);
+    // No argument restraints
+    Object printlnFunction = emptyObject("function");
     printlnFunction = addObjectValue(printlnFunction, "__call__", &q_function_println);
-    printlnFunction = addObjectValue(printlnFunction, "__call__argc", &oneArgc);
+    // printlnFunction = addObjectValue(printlnFunction, "__call__argc", &oneArgc);
     addVar("println", printlnFunction);
 
-    Object stringFunction = makeObject("function", &oneArgc);
+    Object inputFunction = emptyObject("function");
+    inputFunction = addObjectValue(inputFunction, "__call__", &q_function_input);
+    inputFunction = addObjectValue(inputFunction, "__call__argmin", &falsePtr);
+    inputFunction = addObjectValue(inputFunction, "__call__argmax", &oneArgc);
+    addVar("input", inputFunction);
+
+    Object stringFunction = emptyObject("function");
     stringFunction = addObjectValue(stringFunction, "__call__", &q_function_string);
-    stringFunction = addObjectValue(stringFunction, "__call__argc", &oneArgc);
+    stringFunction = addObjectValue(stringFunction, "__call__argmin", &oneArgc);
+    stringFunction = addObjectValue(stringFunction, "__call__argmax", &oneArgc);
     addVar("string", stringFunction);
 
-    Object intFunction = makeObject("function", &oneArgc);
+    Object intFunction = emptyObject("function");
     intFunction = addObjectValue(intFunction, "__call__", &q_function_int);
-    intFunction = addObjectValue(intFunction, "__call__argc", &oneArgc);
+    intFunction = addObjectValue(intFunction, "__call__argcmin", &oneArgc);
+    intFunction = addObjectValue(intFunction, "__call__argcmax", &oneArgc);
     addVar("int", intFunction);
 
-    Object inputFunction = makeObject("function", &oneArgc);
-    inputFunction = addObjectValue(inputFunction, "__call__", &q_function_input);
-    inputFunction = addObjectValue(inputFunction, "__call__argc", &falsePtr);
-    addVar("input", inputFunction);
+    Object boolFunction = emptyObject("function");
+    boolFunction = addObjectValue(boolFunction, "__call__", &q_function_bool);
+    boolFunction = addObjectValue(boolFunction, "__call__argmin", &oneArgc);
+    boolFunction = addObjectValue(boolFunction, "__call__argmax", &oneArgc);
+    addVar("bool", boolFunction);
 }
 
 Object emptyObject(char * name)
@@ -429,6 +440,39 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(first, "__div__"))(arglist));
     }
+    else if (!strcmp(line[0], "BINARY_POW"))
+    {
+        Object secnd = popTop();
+        Object first = popTop();
+
+        if (!objectHasAttr(first, "__pow__"))
+        {
+            char * err = malloc(6 + strlen(first.name) + 37 + 1);
+            strcpy(err, "type '");
+            strcat(err, first.name);
+            strcat(err, "' does not have a method for indices");
+            error(err, line_num);
+        }
+
+        if (!objectHasAttr(first, "__pow__argc"))
+        {
+            char * err = malloc(28 + strlen(first.name) + 56 + 1);
+            strcpy(err, "the __pow__ method of type '");
+            strcat(err, first.name);
+            strcat(err, "' is missing an argument limit, this should never happen");
+            error(err, line_num);
+        }
+
+        int funcargc = ((int *)objectGetAttr(first, "__pow__argc"))[0];
+        if (funcargc != 2)
+            error("__pow__ function requires an invalid amount of arguments, should be 2", line_num);
+
+        Object arglist[2];
+        arglist[0] = first;
+        arglist[1] = secnd;
+
+        pushTop(((standard_func_def)objectGetAttr(first, "__pow__"))(arglist));
+    }
     else if (!strcmp(line[0], "CMP_EQ"))
     {
         Object secnd = popTop();
@@ -666,25 +710,31 @@ void quokka_interpret_line_tokens(char ** line)
         Object func = popTop();
 
         if (!objectHasAttr(func, "__call__"))
-            error("not callable", line_num);
+            error("not a callable type", line_num);
 
-        int funcargs = 0;
-        funcargs = ((int *)objectGetAttr(func, "__call__argc"))[0];
+        int funcmin = 0;
+        int funcmax = -1;
 
-        if (argcount > funcargs)
+        if (objectHasAttr(func, "__call__argmin"))
+            funcmin = ((int *)objectGetAttr(func, "__call__argmin"))[0];
+
+        if (objectHasAttr(func, "__call__argmax"))
+            funcmax = ((int *)objectGetAttr(func, "__call__argmax"))[0];
+
+        if (argcount > funcmax && funcmax != -1)
             error("function received too many arguments", line_num);
-        if (argcount < funcargs)
+        if (argcount < funcmin)
         {
-            int diff = funcargs - argcount;
+            int diff = funcmin - argcount;
             char * diffstr = malloc(11);
             sprintf(diffstr, "%d", diff);
 
             char * err;
             if (diff != 1)
-                err = malloc(18 + strlen(diffstr) + 23 + 1 + 1);
-            else err = malloc(18 + strlen(diffstr) + 23 + 1);
+                err = malloc(27 + strlen(diffstr) + 23 + 1 + 1);
+            else err = malloc(27 + strlen(diffstr) + 23 + 1);
 
-            strcpy(err, "function requires ");
+            strcpy(err, "function requires at least ");
             strcat(err, strndup(diffstr, strlen(diffstr)));
             strcat(err, " more argument");
             if (diff != 1)
