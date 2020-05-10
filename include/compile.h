@@ -1206,6 +1206,34 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             strcat(bytecode, INSTRUCTION_END);
         }
     }
+    else if (startswith(line[0], "[") && endswith(line[0], "]"))
+    {
+        // Set new line
+        if (!isInline)
+        {
+            strcat(bytecode, intToStr(current_line + 1));
+            strcat(bytecode, INSTRUCTION_END);
+        }
+
+        if (len > 2)
+            error("invalid syntax", num);
+
+        char * temp = quokka_compile_line(__slice_string__(String(line[0]), 1, 1).value, num, -1, 0);
+
+        strcat(bytecode, strndup(temp, strlen(temp)));
+
+        free(temp);
+
+        strcat(bytecode, "MAKE_LIST");
+        strcat(bytecode, SEPARATOR);
+        strcat(bytecode, intToStr(stringCount(line, ",") + 1));
+        strcat(bytecode, INSTRUCTION_END);
+
+        println(bytecode);
+
+        println("Build a list.");
+        exit(1);
+    }
     else if (isidentifier(line[0]) && startswith(line[1], "[") && endswith(line[1], "]"))
     {
         // Set new line
