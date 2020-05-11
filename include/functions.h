@@ -23,35 +23,31 @@ Object q_function_print(int argc, Object * argv)
         }
         else if (!strcmp(argv[i].name, "list"))
         {
-            println("STARTED");
-
-            Object lst = ((Object *)objectGetAttr(argv[i], "value"))[0];
-            println("got list");
+            Object * lst = ((Object *)objectGetAttr(argv[i], "value"));
             int lstlen = ((int *)objectGetAttr(argv[i], "length"))[0];
-            println("got len");
-            println(lstlen);
 
-            ret += 2;
             print("[");
-            println("p");
+            ret++;
 
             for (int p = 0; p < lstlen; p++)
             {
                 Object * arglist = malloc(sizeof(Object));
-                Object * lstobj = ((Object *)objectGetAttr(lst, "value"));
-                println("YO");
+                arglist[0] = lst[p];
 
-                q_function_println(1, lstobj);
-                println("YO");
+                Object printlen = q_function_print(1, arglist);
+                ret += ((int *)objectGetAttr(printlen, "value"))[0];
+
+                if (p + 1 < lstlen)
+                {
+                    print(", ");
+                    ret += 2;
+                }
+
+                free(arglist);
             }
 
-            Object printlen = q_function_print(lstlen, objectGetAttr(lst, "value"));
-            println("printed");
-
-            ret += ((int *)objectGetAttr(printlen, "value"))[0] + 2;
-            ret += 2;
-
             print("]");
+            ret += 1;
         }
         else
             error("'print' can only print standard Quokka types (for now)", line_num);
@@ -71,7 +67,7 @@ Object q_function_println(int argc, Object * argv)
             char * text = (char *)objectGetAttr(argv[i], "value");
 
             ret += strlen(text);
-            printf("%s\n", text);
+            printf("%s", text);
         }
         else if (!strcmp(argv[i].name, "int"))
         {
@@ -79,14 +75,49 @@ Object q_function_println(int argc, Object * argv)
             char * text = intToStr(num);
 
             ret += strlen(text);
-            printf("%s\n", text);
+            printf("%s", text);
         }
         else if (!strcmp(argv[i].name, "list"))
         {
-            // Print a list, using the print function on each item in it.
+            Object * lst = ((Object *)objectGetAttr(argv[i], "value"));
+            int lstlen = ((int *)objectGetAttr(argv[i], "length"))[0];
+
+            ret += 1;
+            print("[");
+
+            for (int p = 0; p < lstlen; p++)
+            {
+                Object * arglist = malloc(sizeof(Object));
+                arglist[0] = lst[p];
+
+                Object printlen = q_function_print(1, arglist);
+                ret += ((int *)objectGetAttr(printlen, "value"))[0];
+
+                if (p + 1 < lstlen)
+                {
+                    print(", ");
+                    ret += 2;
+                }
+
+                free(arglist);
+            }
+
+            print("]");
+            ret += 1;
         }
         else
             error("'println' can only print standard Quokka types (for now)", line_num);
+
+        if (i + 1 < argc)
+        {
+            print(" ");
+            ret++;
+        }
+        else
+        {
+            print("\n");
+            ret++;
+        }
     }
 
     return makeInteger(makeIntPtr(ret));

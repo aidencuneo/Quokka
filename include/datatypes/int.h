@@ -1,4 +1,4 @@
-Object __add___integer(Object * argv)
+Object __add___integer(int argc, Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
@@ -14,7 +14,7 @@ Object __add___integer(Object * argv)
     return makeInteger(makeIntPtr(first[0] + secnd[0]));
 }
 
-Object __sub___integer(Object * argv)
+Object __sub___integer(int argc, Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
@@ -30,7 +30,7 @@ Object __sub___integer(Object * argv)
     return makeInteger(makeIntPtr(first[0] - secnd[0]));
 }
 
-Object __mul___integer(Object * argv)
+Object __mul___integer(int argc, Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
@@ -46,7 +46,7 @@ Object __mul___integer(Object * argv)
     return makeInteger(makeIntPtr(first[0] * secnd[0]));
 }
 
-Object __div___integer(Object * argv)
+Object __div___integer(int argc, Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
@@ -66,7 +66,7 @@ Object __div___integer(Object * argv)
     return makeInteger(makeIntPtr(first[0] / secnd[0]));
 }
 
-Object __pow___integer(Object * argv)
+Object __pow___integer(int argc, Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
@@ -85,7 +85,7 @@ Object __pow___integer(Object * argv)
     return makeInteger(makeIntPtr(ipowMath(first[0], secnd[0])));
 }
 
-Object __eq___integer(Object * argv)
+Object __eq___integer(int argc, Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
@@ -107,7 +107,7 @@ Object __eq___integer(Object * argv)
     return makeInteger(&falsePtr);
 }
 
-Object __lt___integer(Object * argv)
+Object __lt___integer(int argc, Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
@@ -129,7 +129,7 @@ Object __lt___integer(Object * argv)
     return makeInteger(&falsePtr);
 }
 
-Object __le___integer(Object * argv)
+Object __le___integer(int argc, Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
@@ -151,7 +151,7 @@ Object __le___integer(Object * argv)
     return makeInteger(&falsePtr);
 }
 
-Object __gt___integer(Object * argv)
+Object __gt___integer(int argc, Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
@@ -173,7 +173,7 @@ Object __gt___integer(Object * argv)
     return makeInteger(&falsePtr);
 }
 
-Object __ge___integer(Object * argv)
+Object __ge___integer(int argc, Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
@@ -195,19 +195,19 @@ Object __ge___integer(Object * argv)
     return makeInteger(&falsePtr);
 }
 
-Object __pos___integer(Object * argv)
+Object __pos___integer(int argc, Object * argv)
 {
     return argv[0];
 }
 
-Object __neg___integer(Object * argv)
+Object __neg___integer(int argc, Object * argv)
 {
     int * first = (int *)objectGetAttr(argv[0], "value");
 
     return makeInteger(makeIntPtr(-first[0]));
 }
 
-Object __bool___integer(Object * argv)
+Object __bool___integer(int argc, Object * argv)
 {
     int * thisvalue = ((int *)objectGetAttr(argv[0], "value"));
 
@@ -216,7 +216,7 @@ Object __bool___integer(Object * argv)
     return makeInteger(&falsePtr);
 }
 
-Object __str___integer(Object * argv)
+Object __str___integer(int argc, Object * argv)
 {
     int * thisvalue = ((int *)objectGetAttr(argv[0], "value"));
     return makeString(intToStr(thisvalue[0]));

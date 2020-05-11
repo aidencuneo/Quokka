@@ -1,4 +1,4 @@
-Object __add___string(Object * argv)
+Object __add___string(int argc, Object * argv)
 {
     if (strcmp(argv[1].name, "string"))
     {
@@ -20,7 +20,7 @@ Object __add___string(Object * argv)
     return makeString(third);
 }
 
-Object __eq___string(Object * argv)
+Object __eq___string(int argc, Object * argv)
 {
     if (strcmp(argv[1].name, "string"))
     {
@@ -40,7 +40,7 @@ Object __eq___string(Object * argv)
     return makeInteger(&falsePtr);
 }
 
-Object __index___string(Object * argv)
+Object __index___string(int argc, Object * argv)
 {
     if (strcmp(argv[1].name, "int"))
     {
@@ -69,12 +69,12 @@ Object __index___string(Object * argv)
     return makeString(chst);
 }
 
-Object __copy___string(Object * argv)
+Object __copy___string(int argc, Object * argv)
 {
     return makeString((char *)objectGetAttr(argv[0], "value"));
 }
 
-Object __bool___string(Object * argv)
+Object __bool___string(int argc, Object * argv)
 {
     char * thisvalue = ((char *)objectGetAttr(argv[0], "value"));
 

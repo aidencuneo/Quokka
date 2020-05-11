@@ -1,32 +1,33 @@
-// Object __index___list(Object * argv)
-// {
-//     if (strcmp(argv[1].name, "int"))
-//     {
-//         char * err = malloc(40 + strlen(argv[1].name) + 1 + 1);
-//         strcpy(err, "list index argument must be 'int', not '");
-//         strcat(err, argv[1].name);
-//         strcat(err, "'");
-//         error(err, line_num);
-//     }
+Object __index___list(int argc, Object * argv)
+{
+    if (strcmp(argv[1].name, "int"))
+    {
+        char * err = malloc(40 + strlen(argv[1].name) + 1 + 1);
+        strcpy(err, "list index argument must be 'int', not '");
+        strcat(err, argv[1].name);
+        strcat(err, "'");
+        error(err, line_num);
+    }
 
-//     int ind = ((int *)objectGetAttr(argv[1], "value"))[0];
-//     int len = strlen((char *)objectGetAttr(argv[0], "value"));
+    int ind = ((int *)objectGetAttr(argv[1], "value"))[0];
+    int length = ((int *)objectGetAttr(argv[0], "length"))[0];
 
-//     if (ind >= len)
-//         return makeString("");
-//     else if (ind < 0)
-//         return makeString("");
+    // If index is -1, retrieve length - 1
+    if (ind < 0)
+        ind = length + ind;
 
-//     char ch = ((char *)objectGetAttr(argv[0], "value"))[ind];
+    // Check bounds
+    if (ind >= length)
+        return makeNull();
+    else if (ind < 0)
+        return makeNull();
 
-//     char * chst = malloc(2);
-//     chst[0] = ch;
-//     chst[1] = '\0';
+    Object obj = ((Object *)objectGetAttr(argv[0], "value"))[ind];
 
-//     return makeString(chst);
-// }
+    return obj;
+}
 
-Object __copy___list(Object * argv)
+Object __copy___list(int argc, Object * argv)
 {
     return makeList(
         ((int *)objectGetAttr(argv[0], "length"))[0],
@@ -48,19 +49,18 @@ Object makeList(int length, Object * value)
 
     Object * lst = malloc(length * sizeof(Object));
 
+    // Reverse items before creating list
     for (int i = 0; i < length; i++)
-        lst[i] = value[i];
+        lst[length - i - 1] = value[i];
 
     self = makeObject("list", lst);
     self = addObjectValue(self, "length", makeIntPtr(length));
 
-    println(((int *)objectGetAttr(self, "length"))[0]);
-
     // Two argument methods
 
-    // // __index__
-    // self = addObjectValue(self, "__index__argc", &twoArgc);
-    // self = addObjectValue(self, "__index__", &__index___list);
+    // __index__
+    self = addObjectValue(self, "__index__argc", &twoArgc);
+    self = addObjectValue(self, "__index__", &__index___list);
 
     // __copy__
     self = addObjectValue(self, "__copy__argc", &twoArgc);

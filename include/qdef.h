@@ -42,6 +42,7 @@ struct __Varlist_Struct__
 };
 
 // Function declarations
+void resetStack();
 Object emptyObject(char * name);
 Object makeObject(char * name, void * value);
 Object addObjectValue(Object obj, char * name, void * value);
@@ -80,6 +81,9 @@ Object makeString(char * value);
 
 // list
 Object makeList(int length, Object * value);
+
+// null
+Object makeNull();
 
 // function
 Object makeFunction(Object (*func)(Object * argv), int argc);

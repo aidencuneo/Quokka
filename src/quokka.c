@@ -40,12 +40,91 @@ int main(int argc, char ** argv)
 
     if (verbose) println("--START--\n");
 
-    if (argc < 2)
+    if (argc < 2 || !newargc)
     {
-        println("Input file path not given, no data to compile.");
-
         free(args);
-        return 1;
+
+        print("Quokka ");
+        print(VERSION);
+        println(":");
+
+        current_file = "[CLI]";
+        in_cli_mode = 1;
+        cli_current_line = malloc(1);
+        strcpy(cli_current_line, "");
+
+        compile_init();
+        interp_init(); // Test it without these init lines
+
+        int in_compound_line = 0;
+        for (;;)
+        {
+            if (in_compound_line)
+            {
+                print("  > ");
+                char * line = cpstrip(getinput());
+
+                cli_current_line = realloc(cli_current_line, strlen(cli_current_line) + strlen(line) + 1 + 1);
+                strcat(cli_current_line, line);
+                strcat(cli_current_line, "\n");
+
+                if (!strcmp(line, "end"))
+                {
+                    char * bytecode = quokka_compile_raw(cli_current_line, -1, 0);
+                    quokka_interpret(bytecode);
+
+                    if (stack_size)
+                    {
+                        // Get top of stack
+                        Object * arglist = malloc(sizeof(Object));
+                        arglist[0] = stack[stack_size - 1];
+
+                        // Print it
+                        q_function_println(1, arglist);
+
+                        free(arglist);
+                    }
+
+                    free(bytecode);
+
+                    in_compound_line = 0;
+                }
+            }
+            else
+            {
+                print("--> ");
+                char * line = cpstrip(getinput());
+                cli_current_line = realloc(cli_current_line, strlen(cli_current_line) + strlen(line) + 1 + 1);
+                strcpy(cli_current_line, line);
+                strcat(cli_current_line, "\n");
+
+                if (startswith(line, "if ") ||
+                    startswith(line, "while "))
+                {
+                    in_compound_line = 1;
+                    continue;
+                }
+
+                char * bytecode = quokka_compile_line(line, 0, -1, 0);
+                quokka_interpret(bytecode);
+
+                if (stack_size)
+                {
+                    // Get top of stack
+                    Object * arglist = malloc(sizeof(Object));
+                    arglist[0] = stack[stack_size - 1];
+
+                    // Print it
+                    q_function_println(1, arglist);
+
+                    free(arglist);
+                }
+
+                free(bytecode);
+            }
+        }
+
+        return 0;
     }
 
     // Full path directing to first file to compile

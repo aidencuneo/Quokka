@@ -204,6 +204,7 @@ int getVarIndex(char * name)
 #include "datatypes/int.h"
 #include "datatypes/string.h"
 #include "datatypes/list.h"
+#include "datatypes/null.h"
 
 // Object makeMethod(Object (*func)(Object * argv), int * argc)
 // {
@@ -250,7 +251,7 @@ void quokka_interpret_line_tokens(char ** line)
     {
         int lstsize = strtol(line[1], NULL, 10);
 
-        Object * value = malloc((lstsize + 1) * sizeof(Object));
+        Object * value = malloc(lstsize * sizeof(Object));
 
         for (int i = 0; i < lstsize; i++)
             value[i] = popTop();
@@ -714,9 +715,7 @@ void quokka_interpret_line_tokens(char ** line)
         Object * arglist = malloc(argcount * sizeof(Object));
 
         for (int i = 0; i < argcount; i++)
-        {
-            arglist[i] = popTop();
-        }
+            arglist[argcount - i - 1] = popTop();
 
         Object func = popTop();
 

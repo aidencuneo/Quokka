@@ -38,7 +38,15 @@ void error(char * text, int line)
 {
     int MAXLINE = 128;
 
-    char * fullfile = readfile(current_file);
+    char * fullfile;
+
+    if (in_cli_mode)
+    {
+        fullfile = cli_current_line;
+        resetStack();
+    }
+    else
+        fullfile = readfile(current_file);
 
     char * lineprevious = malloc(MAXLINE);
     char * linepreview = malloc(MAXLINE);
@@ -49,7 +57,7 @@ void error(char * text, int line)
     strcpy(linenext, "");
 
     int c = 0;
-    for (int i = 0; i < strlen(fullfile) - 1; i++)
+    for (int i = 0; i < strlen(fullfile); i++)
     {
         if (fullfile[i] == '\n')
             c++;
@@ -71,20 +79,23 @@ void error(char * text, int line)
 
     if (line - 1 > 0)
         printf("  %d | %s\n", line - 1, lineprevious);
-    printf("> %d > %s\n", line, linepreview);
+    printf("> %d | %s\n", line, linepreview);
     if (line < charCount(fullfile, '\n') + 1)
         printf("  %d | %s\n", line + 1, linenext);
     print("\n");
 
     printf("Error: %s\n\n", text);
 
-    free(fullfile);
+    if (!in_cli_mode)
+        free(fullfile);
+
     free(lineprevious);
     free(linepreview);
     free(linenext);
 
     // Exit
-    exit(1);
+    if (!in_cli_mode)
+        exit(1);
 }
 
 int isidentifier(char * word)
@@ -351,8 +362,9 @@ char * quokka_compile_line(char * linetext, int num, int lineLen, int isInline)
 
 char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInline)
 {
-    char * bytecode = malloc(1024);
-    strcpy(bytecode, "");
+    char * bytecode = malloc(1);
+    bytecode[0] = '\0';
+    //strcpy(bytecode, "");
 
     int len;
     if (lineLen == -1)
@@ -372,8 +384,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     if (stringInList(line, "="))
     {
         // Set new line
-        strcat(bytecode, intToStr(current_line + 1));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         if (isInline)
             error("variables must be defined at the start of a line", num);
@@ -394,20 +405,19 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         len -= 2;
         char * temp = quokka_compile_line_tokens(line, num, len, 1);
 
-        strcat(bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, strndup(temp, strlen(temp)));
 
         free(temp);
 
-        strcat(bytecode, "STORE_NAME");
-        strcat(bytecode, SEPARATOR);
-        strcat(bytecode, varname);
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcat(&bytecode, "STORE_NAME");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, varname);
+        mstrcat(&bytecode, INSTRUCTION_END);
     }
     else if (stringInList(line, "+="))
     {
         // Set new line
-        strcat(bytecode, intToStr(current_line + 1));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         if (isInline)
             error("variables must be defined at the start of a line", num);
@@ -443,15 +453,14 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line_tokens(templine, num, size, 0);
 
-        strcat(bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, strndup(temp, strlen(temp)));
 
         free(temp);
     }
     else if (stringInList(line, "-="))
     {
         // Set new line
-        strcat(bytecode, intToStr(current_line + 1));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         if (isInline)
             error("variables must be defined at the start of a line", num);
@@ -487,15 +496,14 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line_tokens(templine, num, size, 0);
 
-        strcat(bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, strndup(temp, strlen(temp)));
 
         free(temp);
     }
     else if (stringInList(line, "*="))
     {
         // Set new line
-        strcat(bytecode, intToStr(current_line + 1));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         if (isInline)
             error("variables must be defined at the start of a line", num);
@@ -531,15 +539,14 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line_tokens(templine, num, size, 0);
 
-        strcat(bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, strndup(temp, strlen(temp)));
 
         free(temp);
     }
     else if (stringInList(line, "/="))
     {
         // Set new line
-        strcat(bytecode, intToStr(current_line + 1));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         if (isInline)
             error("variables must be defined at the start of a line", num);
@@ -575,7 +582,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line_tokens(templine, num, size, 0);
 
-        strcat(bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, strndup(temp, strlen(temp)));
 
         free(temp);
     }
@@ -591,15 +598,15 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcpy(numstr, "");
         snprintf(numstr, 10, "%d", current_line + 1);
 
-        strcat(bytecode, numstr);
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcat(&bytecode, numstr);
+        mstrcat(&bytecode, INSTRUCTION_END);
 
         arrlstrip(line);
         len--;
 
         char * temp = quokka_compile_line_tokens(line, num, len, 1);
 
-        strcat(bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, strndup(temp, strlen(temp)));
 
         free(temp);
 
@@ -607,10 +614,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (next == -1)
             error("if statement missing 'end' keyword", num);
 
-        strcat(bytecode, "JUMP_IF_FALSE");
-        strcat(bytecode, SEPARATOR);
-        strcat(bytecode, intToStr(next));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcat(&bytecode, "JUMP_IF_FALSE");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, intToStr(next));
+        mstrcat(&bytecode, INSTRUCTION_END);
 
         scpstkPush("while", scope, current_line + 1);
 
@@ -624,15 +631,14 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             error("if statement requires a condition", num);
 
         // Set new line
-        strcat(bytecode, intToStr(current_line + 1));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         arrlstrip(line);
         len--;
 
         char * temp = quokka_compile_line_tokens(line, num, len, 1);
 
-        strcat(bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, strndup(temp, strlen(temp)));
 
         free(temp);
 
@@ -640,10 +646,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (next == -1)
             error("if statement missing 'end' keyword", num);
 
-        strcat(bytecode, "JUMP_IF_FALSE");
-        strcat(bytecode, SEPARATOR);
-        strcat(bytecode, intToStr(next));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcat(&bytecode, "JUMP_IF_FALSE");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, intToStr(next));
+        mstrcat(&bytecode, INSTRUCTION_END);
 
         scope++;
     }
@@ -658,21 +664,20 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (nextend == -1)
             error("elif statement missing 'end' keyword", num);
 
-        strcat(bytecode, "JUMP_TO");
-        strcat(bytecode, SEPARATOR);
-        strcat(bytecode, intToStr(nextend));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcat(&bytecode, "JUMP_TO");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, intToStr(nextend));
+        mstrcat(&bytecode, INSTRUCTION_END);
 
         // Set new line
-        strcat(bytecode, intToStr(current_line + 1));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         arrlstrip(line);
         len--;
 
         char * temp = quokka_compile_line_tokens(line, num, len, 1);
 
-        strcat(bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, strndup(temp, strlen(temp)));
 
         free(temp);
 
@@ -680,10 +685,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (next == -1)
             error("elif statement missing 'end' keyword", num);
 
-        strcat(bytecode, "JUMP_IF_FALSE");
-        strcat(bytecode, SEPARATOR);
-        strcat(bytecode, intToStr(next));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcat(&bytecode, "JUMP_IF_FALSE");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, intToStr(next));
+        mstrcat(&bytecode, INSTRUCTION_END);
     }
     else if (!strcmp(line[0], "else"))
     {
@@ -696,14 +701,13 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (nextend == -1)
             error("else statement missing 'end' keyword", num);
 
-        strcat(bytecode, "JUMP_TO");
-        strcat(bytecode, SEPARATOR);
-        strcat(bytecode, intToStr(nextend));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcat(&bytecode, "JUMP_TO");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, intToStr(nextend));
+        mstrcat(&bytecode, INSTRUCTION_END);
 
         // Set new line
-        strcat(bytecode, intToStr(current_line + 1));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
     }
     else if (!strcmp(line[0], "end"))
     {
@@ -723,10 +727,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             {
                 if (!strcmp(kw, "while"))
                 {
-                    strcat(bytecode, "JUMP_BACK");
-                    strcat(bytecode, SEPARATOR);
-                    strcat(bytecode, intToStr(scpline));
-                    strcat(bytecode, INSTRUCTION_END);
+                    mstrcat(&bytecode, "JUMP_BACK");
+                    mstrcat(&bytecode, SEPARATOR);
+                    mstrcat(&bytecode, intToStr(scpline));
+                    mstrcat(&bytecode, INSTRUCTION_END);
 
                     scpstkPop();
                 }
@@ -734,8 +738,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         }
 
         // Set new line
-        strcat(bytecode, intToStr(current_line + 1));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         scope--;
     }
@@ -744,8 +747,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // Set new line
         if (!isInline)
         {
-            strcat(bytecode, intToStr(current_line + 1));
-            strcat(bytecode, INSTRUCTION_END);
+            mstrcat(&bytecode, intToStr(current_line + 1));
+            mstrcat(&bytecode, INSTRUCTION_END);
         }
 
         char * operslist = malloc(1);
@@ -901,8 +904,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcat(valuelist, strndup(temp, strlen(temp)));
         free(temp);
 
-        strcat(bytecode, strdup(valuelist));
-        strcat(bytecode, strdup(operslist));
+        mstrcat(&bytecode, strdup(valuelist));
+        mstrcat(&bytecode, strdup(operslist));
 
         free(valuelist);
         free(operslist);
@@ -912,8 +915,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // Set new line
         if (!isInline)
         {
-            strcat(bytecode, intToStr(current_line + 1));
-            strcat(bytecode, INSTRUCTION_END);
+            mstrcat(&bytecode, intToStr(current_line + 1));
+            mstrcat(&bytecode, INSTRUCTION_END);
         }
 
         char * operslist = malloc(1);
@@ -1185,8 +1188,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcat(valuelist, strndup(temp, strlen(temp)));
         free(temp);
 
-        strcat(bytecode, strndup(valuelist, strlen(valuelist)));
-        strcat(bytecode, strndup(operslist, strlen(operslist)));
+        mstrcat(&bytecode, strndup(valuelist, strlen(valuelist)));
+        mstrcat(&bytecode, strndup(operslist, strlen(operslist)));
 
         free(valuelist);
         free(operslist);
@@ -1196,17 +1199,17 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // Set new line
         if (!isInline)
         {
-            strcat(bytecode, intToStr(current_line + 1));
-            strcat(bytecode, INSTRUCTION_END);
+            mstrcat(&bytecode, intToStr(current_line + 1));
+            mstrcat(&bytecode, INSTRUCTION_END);
         }
 
         if (len > 2)
             error("invalid syntax", num);
 
-        strcat(bytecode, "LOAD_NAME");
-        strcat(bytecode, SEPARATOR);
-        strcat(bytecode, strndup(line[0], strlen(line[0])));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcat(&bytecode, "LOAD_NAME");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, strndup(line[0], strlen(line[0])));
+        mstrcat(&bytecode, INSTRUCTION_END);
 
         // If arguments were given to the function
         if (strlen(line[1]) > 2)
@@ -1235,24 +1238,24 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
             char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
 
-            strcat(bytecode, strndup(temp, strlen(temp)));
+            mstrcat(&bytecode, strndup(temp, strlen(temp)));
 
             free(temp);
 
-            strcat(bytecode, "CALL_FUNCTION");
-            strcat(bytecode, SEPARATOR);
-            strcat(bytecode, intToStr(stringCountUntil(templine, ",", templen) + 1));
-            strcat(bytecode, INSTRUCTION_END);
+            mstrcat(&bytecode, "CALL_FUNCTION");
+            mstrcat(&bytecode, SEPARATOR);
+            mstrcat(&bytecode, intToStr(stringCountUntil(templine, ",", templen) + 1));
+            mstrcat(&bytecode, INSTRUCTION_END);
 
             free(templine);
         }
         // If no arguments were given
         else
         {
-            strcat(bytecode, "CALL_FUNCTION");
-            strcat(bytecode, SEPARATOR);
-            strcat(bytecode, "0");
-            strcat(bytecode, INSTRUCTION_END);
+            mstrcat(&bytecode, "CALL_FUNCTION");
+            mstrcat(&bytecode, SEPARATOR);
+            mstrcat(&bytecode, "0");
+            mstrcat(&bytecode, INSTRUCTION_END);
         }
     }
     else if (startswith(line[0], "[") && endswith(line[0], "]"))
@@ -1260,8 +1263,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // Set new line
         if (!isInline)
         {
-            strcat(bytecode, intToStr(current_line + 1));
-            strcat(bytecode, INSTRUCTION_END);
+            mstrcat(&bytecode, intToStr(current_line + 1));
+            mstrcat(&bytecode, INSTRUCTION_END);
         }
 
         if (len > 2)
@@ -1291,14 +1294,14 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
 
-        strcat(bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, strndup(temp, strlen(temp)));
 
         free(temp);
 
-        strcat(bytecode, "MAKE_LIST");
-        strcat(bytecode, SEPARATOR);
-        strcat(bytecode, intToStr(stringCountUntil(templine, ",", templen) + 1));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcat(&bytecode, "MAKE_LIST");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, intToStr(stringCountUntil(templine, ",", templen) + 1));
+        mstrcat(&bytecode, INSTRUCTION_END);
 
         free(templine);
     }
@@ -1307,39 +1310,39 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // Set new line
         if (!isInline)
         {
-            strcat(bytecode, intToStr(current_line + 1));
-            strcat(bytecode, INSTRUCTION_END);
+            mstrcat(&bytecode, intToStr(current_line + 1));
+            mstrcat(&bytecode, INSTRUCTION_END);
         }
 
         if (len > 2)
             error("invalid syntax", num);
 
-        strcat(bytecode, "LOAD_NAME");
-        strcat(bytecode, SEPARATOR);
-        strcat(bytecode, strndup(line[0], strlen(line[0])));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcat(&bytecode, "LOAD_NAME");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, strndup(line[0], strlen(line[0])));
+        mstrcat(&bytecode, INSTRUCTION_END);
 
         // If arguments were given to the function
         if (strlen(line[1]) > 2)
         {
             char * temp = quokka_compile_line(strSlice(line[1], 1, 1), num, -1, 1);
 
-            strcat(bytecode, strndup(temp, strlen(temp)));
+            mstrcat(&bytecode, strndup(temp, strlen(temp)));
 
             free(temp);
 
-            strcat(bytecode, "GET_INDEX");
-            strcat(bytecode, SEPARATOR);
-            strcat(bytecode, "1");
-            strcat(bytecode, INSTRUCTION_END);
+            mstrcat(&bytecode, "GET_INDEX");
+            mstrcat(&bytecode, SEPARATOR);
+            mstrcat(&bytecode, "1");
+            mstrcat(&bytecode, INSTRUCTION_END);
         }
         // If no arguments were given
         else
         {
-            strcat(bytecode, "GET_INDEX");
-            strcat(bytecode, SEPARATOR);
-            strcat(bytecode, "*");
-            strcat(bytecode, INSTRUCTION_END);
+            mstrcat(&bytecode, "GET_INDEX");
+            mstrcat(&bytecode, SEPARATOR);
+            mstrcat(&bytecode, "*");
+            mstrcat(&bytecode, INSTRUCTION_END);
         }
     }
     else if (isinteger(line[0]) && len == 1)
@@ -1347,18 +1350,18 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // Set new line
         if (!isInline)
         {
-            strcat(bytecode, intToStr(current_line + 1));
-            strcat(bytecode, INSTRUCTION_END);
+            mstrcat(&bytecode, intToStr(current_line + 1));
+            mstrcat(&bytecode, INSTRUCTION_END);
         }
 
         // Clear leading 0's on integers
         while (startswith(line[0], "0") && strlen(line[0]) > 1)
             line[0]++;
 
-        strcat(bytecode, "LOAD_INT");
-        strcat(bytecode, SEPARATOR);
-        strcat(bytecode, line[0]);
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcat(&bytecode, "LOAD_INT");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, line[0]);
+        mstrcat(&bytecode, INSTRUCTION_END);
     }
     else if ((
         (startswith(line[0], "'") && endswith(line[0], "'")) ||
@@ -1368,67 +1371,81 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // Set new line
         if (!isInline)
         {
-            strcat(bytecode, intToStr(current_line + 1));
-            strcat(bytecode, INSTRUCTION_END);
+            mstrcat(&bytecode, intToStr(current_line + 1));
+            mstrcat(&bytecode, INSTRUCTION_END);
         }
 
-        strcat(bytecode, "LOAD_STRING");
-        strcat(bytecode, SEPARATOR);
-        strcat(bytecode, line[0]);
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcat(&bytecode, "LOAD_STRING");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, line[0]);
+        mstrcat(&bytecode, INSTRUCTION_END);
     }
     else if (isidentifier(line[0]) && len == 1)
     {
         // Set new line
         if (!isInline)
         {
-            strcat(bytecode, intToStr(current_line + 1));
-            strcat(bytecode, INSTRUCTION_END);
+            mstrcat(&bytecode, intToStr(current_line + 1));
+            mstrcat(&bytecode, INSTRUCTION_END);
         }
 
-        strcat(bytecode, "LOAD_NAME");
-        strcat(bytecode, SEPARATOR);
-        strcat(bytecode, line[0]);
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcat(&bytecode, "LOAD_NAME");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, line[0]);
+        mstrcat(&bytecode, INSTRUCTION_END);
     }
     else if (stringInList(line, ","))
     {
+        char * latestvalue = malloc(1);
+        strcpy(latestvalue, "");
+
         int lastwascomma = 0;
 
         for (int p = 0; p < len; p++)
         {
-            if (!strcmp(line[p], ","))
-            {
-                lastwascomma = 1;
-                continue;
-            }
-
-            if (!lastwascomma && p > 0)
-            {
-                error("invalid syntax, expression is missing commas for value separation", num);
-                break;
-            }
-
             if (!strlen(line[p]))
                 break;
 
-            char * temp = quokka_compile_line(line[p], num, 1, 1);
+            if (!strcmp(line[p], ","))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                mstrcat(&bytecode, strndup(temp, strlen(temp)));
+                free(temp);
 
-            strcat(bytecode, strndup(temp, strlen(temp)));
+                latestvalue = realloc(latestvalue, 1);
+                strcpy(latestvalue, "");
 
-            free(temp);
+                lastwascomma = 1;
+            }
+            else
+            {
+                latestvalue = realloc(latestvalue, strlen(latestvalue) + strlen(line[p]) + 1 + 1);
+                strcat(latestvalue, line[p]);
+                strcat(latestvalue, " ");
 
-            lastwascomma = 0;
+                lastwascomma = 0;
+            }
         }
+
+        if (strlen(latestvalue))
+        {
+            char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+            mstrcat(&bytecode, strndup(temp, strlen(temp)));
+            free(temp);
+        }
+
+        free(latestvalue);
     }
     else
     {
         if (isInline)
+        {
             error("invalid syntax", num);
+            return bytecode;
+        }
 
         // Set new line
-        strcat(bytecode, intToStr(current_line + 1));
-        strcat(bytecode, INSTRUCTION_END);
+        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         int lastwascomma = 0;
 
@@ -1451,7 +1468,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
             char * temp = quokka_compile_line(line[p], num, 1, 1);
 
-            strcat(bytecode, strndup(temp, strlen(temp)));
+            mstrcat(&bytecode, strndup(temp, strlen(temp)));
 
             free(temp);
 

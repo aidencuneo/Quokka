@@ -1,5 +1,10 @@
-// File stuff
+// VERSION STUFF
+#define VERSION "0.0.1"
+
+// Global file stuff
 char * current_file;
+char * cli_current_line;
+int in_cli_mode = 0;
 
 //
 /// OS-related definitions
@@ -374,6 +379,46 @@ char * strReplace(char * orig, char * rep, char * with)
     strcpy(tmp, orig);
 
     return result;
+}
+
+char * getinput()
+{
+    char * buffer = malloc(1);
+    strcpy(buffer, "");
+    int buflen = 0;
+
+    char last = 0;
+
+    while (last != '\n' && last != '\r')
+    {
+        last = getchar();
+
+        buffer = realloc(buffer, strlen(buffer) + 1);
+        buffer[buflen] = last;
+
+        buflen++;
+    }
+
+    buffer[buflen - 1] = '\0';
+
+    return buffer;
+}
+
+void mstrcat(char ** charptr, char * newstr)
+{
+    int len = strlen(*charptr) + strlen(newstr);
+    *charptr = realloc(*charptr, len + 1);
+    strcat(*charptr, newstr);
+    (*charptr)[len] = '\0';
+}
+
+void mstrcattrip(char ** charptr, char * newstr, char * endstr)
+{
+    int len = strlen(*charptr) + strlen(newstr) + strlen(endstr);
+    *charptr = realloc(*charptr, len + 1);
+    strcat(*charptr, newstr);
+    strcat(*charptr, endstr);
+    (*charptr)[len] = '\0';
 }
 
 // print
