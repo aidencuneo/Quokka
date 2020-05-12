@@ -34,14 +34,14 @@ Object __copy___list(int argc, Object * argv)
         (Object *)objectGetAttr(argv[0], "value"));
 }
 
-// Object __bool___list(Object * argv)
-// {
-//     Object * thisvalue = ((Object *)objectGetAttr(argv[0], "value"));
+Object __bool___list(int argc, Object * argv)
+{
+    int length = ((int *)objectGetAttr(argv[0], "length"))[0];
 
-//     if (thisvalue[0] != NULL)
-//         return makeInteger(&truePtr);
-//     return makeInteger(&falsePtr);
-// }
+    if (length)
+        return makeInteger(&truePtr);
+    return makeInteger(&falsePtr);
+}
 
 Object makeList(int length, Object * value)
 {
@@ -59,18 +59,18 @@ Object makeList(int length, Object * value)
     // Two argument methods
 
     // __index__
-    self = addObjectValue(self, "__index__argc", &twoArgc);
     self = addObjectValue(self, "__index__", &__index___list);
+    self = addObjectValue(self, "__index__argc", &twoArgc);
 
     // __copy__
-    self = addObjectValue(self, "__copy__argc", &twoArgc);
     self = addObjectValue(self, "__copy__", &__copy___list);
+    self = addObjectValue(self, "__copy__argc", &twoArgc);
 
     // One argument methods
 
-    // // __bool__
-    // self = addObjectValue(self, "__bool__argc", &oneArgc);
-    // self = addObjectValue(self, "__bool__", &__bool___list);
+    // __bool__
+    self = addObjectValue(self, "__bool__", &__bool___list);
+    self = addObjectValue(self, "__bool__argc", &oneArgc);
 
     return self;
 }

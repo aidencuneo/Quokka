@@ -76,6 +76,12 @@ void interp_init()
     boolFunction = addObjectValue(boolFunction, "__call__argmin", &oneArgc);
     boolFunction = addObjectValue(boolFunction, "__call__argmax", &oneArgc);
     addVar("bool", boolFunction);
+
+    Object typeFunction = emptyObject("function");
+    typeFunction = addObjectValue(typeFunction, "__call__", &q_function_type);
+    typeFunction = addObjectValue(typeFunction, "__call__argmin", &oneArgc);
+    typeFunction = addObjectValue(typeFunction, "__call__argmax", &oneArgc);
+    addVar("type", typeFunction);
 }
 
 Object emptyObject(char * name)

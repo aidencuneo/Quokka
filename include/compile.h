@@ -1267,7 +1267,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             mstrcat(&bytecode, INSTRUCTION_END);
         }
 
-        if (len > 2)
+        if (len > 1)
             error("invalid syntax", num);
 
         // Split up the list into it's elements
@@ -1288,9 +1288,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             }
             else lastwascomma = 0;
         }
-
-        while (!strcmp(templine[templen - 1], ","))
-            templen--;
+        if (templen)
+            while (!strcmp(templine[templen - 1], ","))
+                templen--;
 
         char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
 
@@ -1300,50 +1300,13 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         mstrcat(&bytecode, "MAKE_LIST");
         mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, intToStr(stringCountUntil(templine, ",", templen) + 1));
+        if (templen)
+            mstrcat(&bytecode, intToStr(stringCountUntil(templine, ",", templen) + 1));
+        else
+            mstrcat(&bytecode, "0");
         mstrcat(&bytecode, INSTRUCTION_END);
 
         free(templine);
-    }
-    else if (isidentifier(line[0]) && startswith(line[1], "[") && endswith(line[1], "]"))
-    {
-        // Set new line
-        if (!isInline)
-        {
-            mstrcat(&bytecode, intToStr(current_line + 1));
-            mstrcat(&bytecode, INSTRUCTION_END);
-        }
-
-        if (len > 2)
-            error("invalid syntax", num);
-
-        mstrcat(&bytecode, "LOAD_NAME");
-        mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, strndup(line[0], strlen(line[0])));
-        mstrcat(&bytecode, INSTRUCTION_END);
-
-        // If arguments were given to the function
-        if (strlen(line[1]) > 2)
-        {
-            char * temp = quokka_compile_line(strSlice(line[1], 1, 1), num, -1, 1);
-
-            mstrcat(&bytecode, strndup(temp, strlen(temp)));
-
-            free(temp);
-
-            mstrcat(&bytecode, "GET_INDEX");
-            mstrcat(&bytecode, SEPARATOR);
-            mstrcat(&bytecode, "1");
-            mstrcat(&bytecode, INSTRUCTION_END);
-        }
-        // If no arguments were given
-        else
-        {
-            mstrcat(&bytecode, "GET_INDEX");
-            mstrcat(&bytecode, SEPARATOR);
-            mstrcat(&bytecode, "*");
-            mstrcat(&bytecode, INSTRUCTION_END);
-        }
     }
     else if (isinteger(line[0]) && len == 1)
     {
@@ -1435,6 +1398,49 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         }
 
         free(latestvalue);
+    }
+    else if (startswith(line[len - 1], "[") && endswith(line[len - 1], "]"))
+    {
+        // Set new line
+        if (!isInline)
+        {
+            mstrcat(&bytecode, intToStr(current_line + 1));
+            mstrcat(&bytecode, INSTRUCTION_END);
+        }
+
+        if (len > 2)
+            error("invalid syntax", num);
+
+        char * indexarg = strndup(line[len - 1], strlen(line[len - 1]));
+
+        char * temp = quokka_compile_line_tokens(line, num, len - 1, 1);
+
+        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+
+        free(temp);
+
+        // If index received an item, for example: [0]
+        if (strlen(indexarg) > 2)
+        {
+            char * temp = quokka_compile_line(strSlice(indexarg, 1, 1), num, -1, 1);
+
+            mstrcat(&bytecode, strndup(temp, strlen(temp)));
+
+            free(temp);
+
+            mstrcat(&bytecode, "GET_INDEX");
+            mstrcat(&bytecode, SEPARATOR);
+            mstrcat(&bytecode, "1");
+            mstrcat(&bytecode, INSTRUCTION_END);
+        }
+        // If nothing was given, for example: []
+        else
+        {
+            mstrcat(&bytecode, "GET_INDEX");
+            mstrcat(&bytecode, SEPARATOR);
+            mstrcat(&bytecode, "*");
+            mstrcat(&bytecode, INSTRUCTION_END);
+        }
     }
     else
     {

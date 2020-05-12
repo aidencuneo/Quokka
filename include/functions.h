@@ -49,6 +49,11 @@ Object q_function_print(int argc, Object * argv)
             print("]");
             ret += 1;
         }
+        else if (!strcmp(argv[i].name, "null"))
+        {
+            print("null");
+            ret += 4;
+        }
         else
             error("'print' can only print standard Quokka types (for now)", line_num);
     }
@@ -104,6 +109,11 @@ Object q_function_println(int argc, Object * argv)
 
             print("]");
             ret += 1;
+        }
+        else if (!strcmp(argv[i].name, "null"))
+        {
+            print("null");
+            ret += 4;
         }
         else
             error("'println' can only print standard Quokka types (for now)", line_num);
@@ -185,4 +195,9 @@ Object q_function_int(int argc, Object * argv)
         error(err, line_num);
     }
     return ((standard_func_def)objectGetAttr(argv[0], "__int__"))(1, argv);
+}
+
+Object q_function_type(int argc, Object * argv)
+{
+    return makeString(argv[0].name);
 }
