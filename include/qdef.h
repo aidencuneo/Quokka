@@ -48,6 +48,7 @@ Object makeObject(char * name, void * value);
 Object addObjectValue(Object obj, char * name, void * value);
 int objectHasAttr(Object obj, char * name);
 void * objectGetAttr(Object obj, char * name);
+void freeObject(Object obj);
 void pushTop(Object obj);
 Object popTop();
 void addVar(char * name, Object obj);
@@ -80,7 +81,7 @@ Object makeInteger(int * value);
 Object makeString(char * value);
 
 // list
-Object makeList(int length, Object * value);
+Object makeList(int length, Object * value, int flipped);
 
 // null
 Object makeNull();

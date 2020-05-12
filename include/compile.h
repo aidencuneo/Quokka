@@ -93,9 +93,12 @@ void error(char * text, int line)
     free(linepreview);
     free(linenext);
 
-    // Exit
+    // Exit and free the stack (if not in CLI mode)
     if (!in_cli_mode)
+    {
+        resetStack();
         exit(1);
+    }
 }
 
 int isidentifier(char * word)
@@ -1194,6 +1197,32 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         free(valuelist);
         free(operslist);
     }
+    else if (startswith(line[len - 1], "."))
+    {
+        char * templine = malloc(1);
+        int is_first_item = 1;
+
+        for (int i = 0; i < len; i++)
+        {
+            if (startswith(line[i], "."))
+            {
+                char ** temp = quokka_line_tok(line[i]);
+                println("get attr");
+            }
+            else println(line[i]);
+        }
+
+        exit(1);
+
+        char * temp = quokka_compile_line(templine, num, -1, 1);
+        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+
+        free(temp);
+        free(templine);
+
+        mstrcat(&bytecode, "GET_ATTR");
+        mstrcat(&bytecode, INSTRUCTION_END);
+    }
     else if (isidentifier(line[0]) && startswith(line[1], "(") && endswith(line[1], ")"))
     {
         // Set new line
@@ -1594,8 +1623,8 @@ char ** quokka_line_tok(char * line)
         ) && !(
             // Join together operators: -= += *= /= == >= <=
             (t == '-' || t == '+' || t == '*' || t == '/' || t == '=' || t == '>' || t == '>') && c == '='
-        ) && !(
-            q == 'A' && c == '.' // Join together names like `word.upper` (second part is below)
+        // ) && !(
+        //     q == 'A' && c == '.' // Join together names like `word.upper` (second part is below)
         ) && !(
             p == 'A' && t == '.' // Second part to the line above.
         ) && !(

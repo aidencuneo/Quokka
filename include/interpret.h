@@ -27,6 +27,9 @@ int falsePtr;
 
 void resetStack()
 {
+    for (int i = 0; i < stack_size; i++)
+        freeObject(stack[i]);
+
     stack = malloc(sizeof(Object));
     stack_size = 0;
 }
@@ -139,6 +142,12 @@ void * objectGetAttr(Object obj, char * name)
     for (int i = 0; i < obj.value_count; i++)
         if (!strcmp(obj.names[i], name))
             return obj.values[i];
+}
+
+void freeObject(Object obj)
+{
+    free(obj.names);
+    free(obj.values);
 }
 
 void pushTop(Object obj)
@@ -262,7 +271,20 @@ void quokka_interpret_line_tokens(char ** line)
         for (int i = 0; i < lstsize; i++)
             value[i] = popTop();
 
-        pushTop(makeList(lstsize, value));
+        pushTop(makeList(lstsize, value, 1));
+    }
+    else if (!strcmp(line[0], "GET_ATTR"))
+    {
+        Object obj = popTop();
+
+        if (!objectHasAttr(obj, "__pos__"))
+        {
+            char * err = malloc(6 + strlen(obj.name) + 38 + 1);
+            strcpy(err, "type '");
+            strcat(err, obj.name);
+            strcat(err, "' does not have a method for unary '+'");
+            error(err, line_num);
+        }
     }
     else if (!strcmp(line[0], "UNARY_ADD"))
     {

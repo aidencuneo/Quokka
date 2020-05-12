@@ -185,6 +185,8 @@ int main(int argc, char ** argv)
         interp_init();
         quokka_interpret(bytecode);
 
+        resetStack();
+
         if (verbose) println("--SUCCESS--");
     }
 
