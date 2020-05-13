@@ -1,5 +1,5 @@
 // VERSION STUFF
-#define VERSION "0.0.1"
+#define VERSION "0.0.2"
 
 // Global file stuff
 char * current_file;
@@ -38,6 +38,8 @@ int in_cli_mode = 0;
 
 char * strSlice(char * st, int start, int stop);
 char * strReplace(char * orig, char * rep, char * with);
+void mstrcat(char ** charptr, char * newstr);
+void mstrcattrip(char ** charptr, char * newstr, char * endstr);
 
 // arrsize
 int carrsize(char * arr[]);
@@ -197,6 +199,16 @@ char * cpstrip(char * s)
     return s;
 }
 
+int stringHasChar(char * s, char c)
+{
+    for (int i = 0; i < strlen(s); ++i)
+    {
+        if (s[i] == c)
+            return 1;
+    }
+    return 0;
+}
+
 int charCount(char * st, char ch)
 {
     int len = strlen(st);
@@ -273,6 +285,53 @@ char * makeLiteralString(char * str)
             escaped = 0;
         }
     }
+
+    return newstr;
+}
+
+char * makeRawString(char * str)
+{
+    int dquotes;
+
+    char * newstr = malloc(1);
+
+    if (stringHasChar(str, '\''))
+    {
+        strcpy(newstr, "\"");
+        dquotes = 1;
+    }
+    else
+    {
+        strcpy(newstr, "'");
+        dquotes = 0;
+    }
+
+    int len = strlen(str);
+    int escaped = 0;
+
+    for (int i = 0; i < len; i++)
+    {
+        if      (str[i] == '\a') mstrcat(&newstr, "\\a");
+        else if (str[i] == '\b') mstrcat(&newstr, "\\b");
+        else if (str[i] == '\e') mstrcat(&newstr, "\\e");
+        else if (str[i] == '\f') mstrcat(&newstr, "\\f");
+        else if (str[i] == '\n') mstrcat(&newstr, "\\n");
+        else if (str[i] == '\r') mstrcat(&newstr, "\\r");
+        else if (str[i] == '\t') mstrcat(&newstr, "\\t");
+        else if (str[i] == '\v') mstrcat(&newstr, "\\v");
+        else if (str[i] == '\\') mstrcat(&newstr, "\\\\");
+        else if (str[i] == '\'' && !dquotes) mstrcat(&newstr, "\\'");
+        else if (str[i] == '"' && dquotes)   mstrcat(&newstr, "\\\"");
+        else
+        {
+            newstr = realloc(newstr, strlen(newstr) + 1 + 1);
+            strncat(newstr, &str[i], 1);
+        }
+    }
+
+    if (dquotes)
+        mstrcat(&newstr, "\"");
+    else mstrcat(&newstr, "'");
 
     return newstr;
 }

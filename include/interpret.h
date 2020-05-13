@@ -45,42 +45,42 @@ void interp_init()
     falsePtr = 0;
 
     // No argument restraints
-    Object printFunction = emptyObject("function");
+    Object printFunction = emptyObject("bfunction");
     printFunction = addObjectValue(printFunction, "__call__", &q_function_print);
     // printFunction = addObjectValue(printFunction, "__call__argc", &oneArgc);
     addVar("print", printFunction);
 
     // No argument restraints
-    Object printlnFunction = emptyObject("function");
+    Object printlnFunction = emptyObject("bfunction");
     printlnFunction = addObjectValue(printlnFunction, "__call__", &q_function_println);
     // printlnFunction = addObjectValue(printlnFunction, "__call__argc", &oneArgc);
     addVar("println", printlnFunction);
 
-    Object inputFunction = emptyObject("function");
+    Object inputFunction = emptyObject("bfunction");
     inputFunction = addObjectValue(inputFunction, "__call__", &q_function_input);
     inputFunction = addObjectValue(inputFunction, "__call__argmin", &falsePtr);
     inputFunction = addObjectValue(inputFunction, "__call__argmax", &oneArgc);
     addVar("input", inputFunction);
 
-    Object stringFunction = emptyObject("function");
+    Object stringFunction = emptyObject("bfunction");
     stringFunction = addObjectValue(stringFunction, "__call__", &q_function_string);
     stringFunction = addObjectValue(stringFunction, "__call__argmin", &oneArgc);
     stringFunction = addObjectValue(stringFunction, "__call__argmax", &oneArgc);
     addVar("string", stringFunction);
 
-    Object intFunction = emptyObject("function");
+    Object intFunction = emptyObject("bfunction");
     intFunction = addObjectValue(intFunction, "__call__", &q_function_int);
     intFunction = addObjectValue(intFunction, "__call__argcmin", &oneArgc);
     intFunction = addObjectValue(intFunction, "__call__argcmax", &oneArgc);
     addVar("int", intFunction);
 
-    Object boolFunction = emptyObject("function");
+    Object boolFunction = emptyObject("bfunction");
     boolFunction = addObjectValue(boolFunction, "__call__", &q_function_bool);
     boolFunction = addObjectValue(boolFunction, "__call__argmin", &oneArgc);
     boolFunction = addObjectValue(boolFunction, "__call__argmax", &oneArgc);
     addVar("bool", boolFunction);
 
-    Object typeFunction = emptyObject("function");
+    Object typeFunction = emptyObject("bfunction");
     typeFunction = addObjectValue(typeFunction, "__call__", &q_function_type);
     typeFunction = addObjectValue(typeFunction, "__call__argmin", &oneArgc);
     typeFunction = addObjectValue(typeFunction, "__call__argmax", &oneArgc);
@@ -203,6 +203,14 @@ int getVarIndex(char * name)
             return i;
 
     return -1;
+}
+
+Object * makeArglist(Object obj)
+{
+    Object * arglist = malloc(sizeof(Object));
+    arglist[0] = obj;
+
+    return arglist;
 }
 
 // void addMethod(Object method)
@@ -704,8 +712,7 @@ void quokka_interpret_line_tokens(char ** line)
     {
         Object obj = popTop();
 
-        Object * arglist = malloc(sizeof(Object));
-        arglist[0] = obj;
+        Object * arglist = makeArglist(obj);
 
         if (!objectHasAttr(obj, "__bool__"))
         {
@@ -717,6 +724,9 @@ void quokka_interpret_line_tokens(char ** line)
         }
 
         Object conditionobj = ((standard_func_def)objectGetAttr(obj, "__bool__"))(1, arglist);
+
+        free(arglist);
+
         int condition = ((int *)objectGetAttr(conditionobj, "value"))[0];
 
         if (condition)
@@ -807,10 +817,11 @@ void quokka_interpret_line_tokens(char ** line)
                 error(err, line_num);
             }
 
-            Object * arglist = malloc(sizeof(Object));
-            arglist[0] = obj;
+            Object * arglist = makeArglist(obj);
 
             pushTop(((standard_func_def)objectGetAttr(obj, "__copy__"))(1, arglist));
+
+            free(arglist);
 
             return;
         }

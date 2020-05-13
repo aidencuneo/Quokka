@@ -74,6 +74,34 @@ Object __bool___list(int argc, Object * argv)
     return makeInteger(&falsePtr);
 }
 
+Object __str___list(int argc, Object * argv)
+{
+    char * out = malloc(2);
+    strcpy(out, "[");
+
+    Object * lst = ((Object *)objectGetAttr(argv[0], "value"));
+    int lstlen = ((int *)objectGetAttr(argv[0], "length"))[0];
+
+    for (int p = 0; p < lstlen; p++)
+    {
+        Object * arglist = makeArglist(lst[p]);
+
+        Object disp = q_function_display(1, arglist);
+
+        free(arglist);
+
+        mstrcat(&out, (char *)objectGetAttr(disp, "value"));
+
+        if (p + 1 < lstlen)
+            mstrcat(&out, ", ");
+    }
+
+    out = realloc(out, strlen(out) + 1 + 1);
+    strcat(out, "]");
+
+    return makeString(out);
+}
+
 Object makeList(int length, Object * value, int flipped)
 {
     Object self;
@@ -111,6 +139,10 @@ Object makeList(int length, Object * value, int flipped)
     // __bool__
     self = addObjectValue(self, "__bool__", &__bool___list);
     self = addObjectValue(self, "__bool__argc", &oneArgc);
+
+    // __str__
+    self = addObjectValue(self, "__str__", &__str___list);
+    self = addObjectValue(self, "__str__argc", &oneArgc);
 
     return self;
 }

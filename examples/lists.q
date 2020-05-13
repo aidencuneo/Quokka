@@ -1,8 +1,7 @@
-lst1 = [2, 4, 6]
-len1 = lst1.length
-len2 = [2, 3].length
+lst = [2, 4, 6, 'aid\te\nn']
 
-println(lst1, len1, len2)
+println(lst, lst[-1])
+println(lst[-1])
 
 // Method 1:
 // lst += [5]

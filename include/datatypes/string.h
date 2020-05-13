@@ -74,6 +74,13 @@ Object __copy___string(int argc, Object * argv)
     return makeString((char *)objectGetAttr(argv[0], "value"));
 }
 
+Object __disp___string(int argc, Object * argv)
+{
+    char * selftext = (char *)objectGetAttr(argv[0], "value");
+
+    return makeString(makeRawString(selftext));
+}
+
 Object __bool___string(int argc, Object * argv)
 {
     char * thisvalue = ((char *)objectGetAttr(argv[0], "value"));
@@ -81,6 +88,11 @@ Object __bool___string(int argc, Object * argv)
     if (strlen(thisvalue))
         return makeInteger(&truePtr);
     return makeInteger(&falsePtr);
+}
+
+Object __str___string(int argc, Object * argv)
+{
+    return argv[0];
 }
 
 Object makeString(char * value)
@@ -92,26 +104,34 @@ Object makeString(char * value)
     // Two argument methods
 
     // __add__
-    self = addObjectValue(self, "__add__argc", &twoArgc);
     self = addObjectValue(self, "__add__", &__add___string);
+    self = addObjectValue(self, "__add__argc", &twoArgc);
 
     // __eq__
-    self = addObjectValue(self, "__eq__argc", &twoArgc);
     self = addObjectValue(self, "__eq__", &__eq___string);
+    self = addObjectValue(self, "__eq__argc", &twoArgc);
 
     // __index__
-    self = addObjectValue(self, "__index__argc", &twoArgc);
     self = addObjectValue(self, "__index__", &__index___string);
+    self = addObjectValue(self, "__index__argc", &twoArgc);
 
     // __copy__
-    self = addObjectValue(self, "__copy__argc", &twoArgc);
     self = addObjectValue(self, "__copy__", &__copy___string);
+    self = addObjectValue(self, "__copy__argc", &twoArgc);
 
     // One argument methods
 
+    // __disp__
+    self = addObjectValue(self, "__disp__", &__disp___string);
+    self = addObjectValue(self, "__disp__argc", &oneArgc);
+
     // __bool__
-    self = addObjectValue(self, "__bool__argc", &oneArgc);
     self = addObjectValue(self, "__bool__", &__bool___string);
+    self = addObjectValue(self, "__bool__argc", &oneArgc);
+
+    // __str__
+    self = addObjectValue(self, "__str__", &__str___string);
+    self = addObjectValue(self, "__str__argc", &oneArgc);
 
     return self;
 }

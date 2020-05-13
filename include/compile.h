@@ -22,7 +22,6 @@ int isidentifier(char * word);
 int isinteger(char * word);
 int stringInList(char ** arr, char * key);
 void arrlstrip(char ** line);
-int stringHasChar(char * s, char c);
 int stringCount(char ** lst, char * st);
 int stringCountUntil(char ** lst, char * st, int len);
 
@@ -169,16 +168,6 @@ void arrdelindex(char ** line, int index)
         line[c] = line[c + 1];
 
     line[n - 1] = "";
-}
-
-int stringHasChar(char * s, char c)
-{
-    for (int i = 0; i < strlen(s); ++i)
-    {
-        if (s[i] == c)
-            return 1;
-    }
-    return 0;
 }
 
 int stringCount(char ** lst, char * st)
@@ -1197,6 +1186,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         free(valuelist);
         free(operslist);
     }
+    /* Will fix this another time
+
     else if (startswith(line[len - 1], "."))
     {
         char * templine = malloc(1);
@@ -1223,6 +1214,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcat(&bytecode, "GET_ATTR");
         mstrcat(&bytecode, INSTRUCTION_END);
     }
+
+    */
     else if (isidentifier(line[0]) && startswith(line[1], "(") && endswith(line[1], ")"))
     {
         // Set new line

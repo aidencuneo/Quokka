@@ -54,6 +54,7 @@ Object popTop();
 void addVar(char * name, Object obj);
 Object getVar(char * name);
 int getVarIndex(char * name);
+Object * makeArglist(Object obj);
 
 //
 /// Function

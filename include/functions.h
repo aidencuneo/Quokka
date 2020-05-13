@@ -1,5 +1,39 @@
 Object q_function_println(int argc, Object * argv);
 
+Object q_function_display(int argc, Object * argv)
+{
+    char * out = malloc(1);
+    strcpy(out, "");
+
+    if (objectHasAttr(argv[0], "__disp__"))
+    {
+        Object * arglist = makeArglist(argv[0]);
+        Object strtext = ((standard_func_def)objectGetAttr(argv[0], "__disp__"))(1, arglist);
+
+        if (!strcmp(objectGetAttr(strtext, "value"), "string"))
+        {
+            char * err = malloc(25 + strlen(strtext.name) + 26 + 1);
+            strcpy(err, "__disp__ method of type '");
+            strcat(err, strtext.name);
+            strcat(err, "' does not return a string");
+            error(err, line_num);
+        }
+
+        char * text = (char *)objectGetAttr(strtext, "value");
+
+        free(arglist);
+
+        mstrcat(&out, text);
+    }
+    else
+    {
+        mstrcattrip(&out, "<", argv[0].name);
+        mstrcat(&out, ">");
+    }
+
+    return makeString(out);
+}
+
 Object q_function_print(int argc, Object * argv)
 {
     int ret = 0;
@@ -67,65 +101,49 @@ Object q_function_println(int argc, Object * argv)
 
     for (int i = 0; i < argc; i++)
     {
-        if (!strcmp(argv[i].name, "string"))
+        if (objectHasAttr(argv[i], "__str__"))
         {
-            char * text = (char *)objectGetAttr(argv[i], "value");
+            Object * arglist = malloc(sizeof(Object));
+            arglist[0] = argv[i];
+            Object strtext = ((standard_func_def)objectGetAttr(argv[i], "__str__"))(1, arglist);
 
-            ret += strlen(text);
-            printf("%s", text);
-        }
-        else if (!strcmp(argv[i].name, "int"))
-        {
-            int num = ((int *)objectGetAttr(argv[i], "value"))[0];
-            char * text = intToStr(num);
-
-            ret += strlen(text);
-            printf("%s", text);
-        }
-        else if (!strcmp(argv[i].name, "list"))
-        {
-            Object * lst = ((Object *)objectGetAttr(argv[i], "value"));
-            int lstlen = ((int *)objectGetAttr(argv[i], "length"))[0];
-
-            ret += 1;
-            print("[");
-
-            for (int p = 0; p < lstlen; p++)
+            if (!strcmp(objectGetAttr(strtext, "value"), "string"))
             {
-                Object * arglist = malloc(sizeof(Object));
-                arglist[0] = lst[p];
-
-                Object printlen = q_function_print(1, arglist);
-                ret += ((int *)objectGetAttr(printlen, "value"))[0];
-
-                if (p + 1 < lstlen)
-                {
-                    print(", ");
-                    ret += 2;
-                }
-
-                free(arglist);
+                char * err = malloc(24 + strlen(strtext.name) + 26 + 1);
+                strcpy(err, "__str__ method of type '");
+                strcat(err, strtext.name);
+                strcat(err, "' does not return a string");
+                error(err, line_num);
             }
 
-            print("]");
-            ret += 1;
-        }
-        else if (!strcmp(argv[i].name, "null"))
-        {
-            print("null");
-            ret += 4;
+            char * text = (char *)objectGetAttr(strtext, "value");
+
+            free(arglist);
+
+            ret += strlen(text);
+            printf("%s", text);
         }
         else
-            error("'println' can only print standard Quokka types (for now)", line_num);
+        {
+            Object * arglist = makeArglist(argv[i]);
+            Object strtext = q_function_display(1, arglist);
+
+            free(arglist);
+
+            char * text = (char *)objectGetAttr(strtext, "value");
+            
+            ret += strlen(text);
+            printf("%s", text);
+        }
 
         if (i + 1 < argc)
         {
-            print(" ");
+            printf(" ");
             ret++;
         }
         else
         {
-            print("\n");
+            printf("\n");
             ret++;
         }
     }
