@@ -1,7 +1,15 @@
-lst = [2, 4, 6, 'aid\te\nn']
+nulls = []
+a = 0
 
-println(lst, lst[-1])
-println(lst[-1])
+while a < 10000
+    nulls += [null]
+    a += 1
+end
+
+println(nulls)
+println(nulls[-1])
+println(string(100))
+println(null)
 
 // Method 1:
 // lst += [5]

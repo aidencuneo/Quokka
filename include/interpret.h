@@ -266,6 +266,10 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(item);
     }
+    if (!strcmp(line[0], "LOAD_NULL"))
+    {
+        pushTop(makeNull());
+    }
     else if (!strcmp(line[0], "LOAD_NAME"))
     {
         pushTop(getVar(line[1]));

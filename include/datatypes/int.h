@@ -207,6 +207,12 @@ Object __neg___integer(int argc, Object * argv)
     return makeInteger(makeIntPtr(-first[0]));
 }
 
+Object __disp___integer(int argc, Object * argv)
+{
+    int * thisvalue = ((int *)objectGetAttr(argv[0], "value"));
+    return makeString(intToStr(thisvalue[0]));
+}
+
 Object __bool___integer(int argc, Object * argv)
 {
     int * thisvalue = ((int *)objectGetAttr(argv[0], "value"));
@@ -214,12 +220,6 @@ Object __bool___integer(int argc, Object * argv)
     if (thisvalue[0])
         return makeInteger(&truePtr);
     return makeInteger(&falsePtr);
-}
-
-Object __str___integer(int argc, Object * argv)
-{
-    int * thisvalue = ((int *)objectGetAttr(argv[0], "value"));
-    return makeString(intToStr(thisvalue[0]));
 }
 
 Object makeInteger(int * value)
@@ -280,13 +280,17 @@ Object makeInteger(int * value)
     self = addObjectValue(self, "__neg__", &__neg___integer);
     self = addObjectValue(self, "__neg__argc", &oneArgc);
 
+    // __disp__
+    self = addObjectValue(self, "__disp__", &__disp___integer);
+    self = addObjectValue(self, "__disp__argc", &oneArgc);
+
     // __bool__
     self = addObjectValue(self, "__bool__", &__bool___integer);
     self = addObjectValue(self, "__bool__argc", &oneArgc);
 
-    // __str__
-    self = addObjectValue(self, "__str__", &__str___integer);
-    self = addObjectValue(self, "__str__argc", &oneArgc);
+    // // __str__
+    // self = addObjectValue(self, "__str__", &__str___integer);
+    // self = addObjectValue(self, "__str__argc", &oneArgc);
 
     return self;
 }

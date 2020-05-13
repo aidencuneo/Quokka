@@ -191,15 +191,16 @@ Object q_function_bool(int argc, Object * argv)
 
 Object q_function_string(int argc, Object * argv)
 {
-    if (!objectHasAttr(argv[0], "__str__"))
-    {
-        char * err = malloc(6 + strlen(argv[0].name) + 36 + 1);
-        strcpy(err, "type '");
-        strcat(err, argv[0].name);
-        strcat(err, "' can not be converted into a string");
-        error(err, line_num);
-    }
-    return ((standard_func_def)objectGetAttr(argv[0], "__str__"))(1, argv);
+    if (objectHasAttr(argv[0], "__str__"))
+        return ((standard_func_def)objectGetAttr(argv[0], "__str__"))(1, argv);
+    else if (objectHasAttr(argv[0], "__disp__"))
+        return ((standard_func_def)objectGetAttr(argv[0], "__disp__"))(1, argv);
+
+    char * err = malloc(6 + strlen(argv[0].name) + 36 + 1);
+    strcpy(err, "type '");
+    strcat(err, argv[0].name);
+    strcat(err, "' can not be converted into a string");
+    error(err, line_num);
 }
 
 Object q_function_int(int argc, Object * argv)

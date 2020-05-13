@@ -738,10 +738,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-        {
-            mstrcat(&bytecode, intToStr(current_line + 1));
-            mstrcat(&bytecode, INSTRUCTION_END);
-        }
+            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         char * operslist = malloc(1);
         strcpy(operslist, "");
@@ -906,10 +903,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-        {
-            mstrcat(&bytecode, intToStr(current_line + 1));
-            mstrcat(&bytecode, INSTRUCTION_END);
-        }
+            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         char * operslist = malloc(1);
         strcpy(operslist, "");
@@ -1220,10 +1214,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-        {
-            mstrcat(&bytecode, intToStr(current_line + 1));
-            mstrcat(&bytecode, INSTRUCTION_END);
-        }
+            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         if (len > 2)
             error("invalid syntax", num);
@@ -1284,10 +1275,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-        {
-            mstrcat(&bytecode, intToStr(current_line + 1));
-            mstrcat(&bytecode, INSTRUCTION_END);
-        }
+            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         if (len > 1)
             error("invalid syntax", num);
@@ -1334,10 +1322,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-        {
-            mstrcat(&bytecode, intToStr(current_line + 1));
-            mstrcat(&bytecode, INSTRUCTION_END);
-        }
+            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         // Clear leading 0's on integers
         while (startswith(line[0], "0") && strlen(line[0]) > 1)
@@ -1348,6 +1333,14 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcat(&bytecode, line[0]);
         mstrcat(&bytecode, INSTRUCTION_END);
     }
+    else if (!strcmp(line[0], "null") && len == 1)
+    {
+        // Set new line
+        if (!isInline)
+            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+
+        mstrcattrip(&bytecode, "LOAD_NULL", INSTRUCTION_END);
+    }
     else if ((
         (startswith(line[0], "'") && endswith(line[0], "'")) ||
         (startswith(line[0], "\"") && endswith(line[0], "\""))
@@ -1355,10 +1348,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-        {
-            mstrcat(&bytecode, intToStr(current_line + 1));
-            mstrcat(&bytecode, INSTRUCTION_END);
-        }
+            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         mstrcat(&bytecode, "LOAD_STRING");
         mstrcat(&bytecode, SEPARATOR);
@@ -1369,10 +1359,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-        {
-            mstrcat(&bytecode, intToStr(current_line + 1));
-            mstrcat(&bytecode, INSTRUCTION_END);
-        }
+            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         mstrcat(&bytecode, "LOAD_NAME");
         mstrcat(&bytecode, SEPARATOR);
@@ -1425,10 +1412,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-        {
-            mstrcat(&bytecode, intToStr(current_line + 1));
-            mstrcat(&bytecode, INSTRUCTION_END);
-        }
+            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         if (len > 2)
             error("invalid syntax", num);
