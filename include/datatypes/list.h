@@ -94,6 +94,8 @@ Object __str___list(int argc, Object * argv)
 
         if (p + 1 < lstlen)
             mstrcat(&out, ", ");
+
+        freeObject(disp);
     }
 
     out = realloc(out, strlen(out) + 1 + 1);
@@ -116,6 +118,8 @@ Object makeList(int length, Object * value, int flipped)
         else
             lst[i] = value[i];
     }
+
+    free(value);
 
     self = makeObject("list", lst);
     self = addObjectValue(self, "length", makeIntPtr(length));

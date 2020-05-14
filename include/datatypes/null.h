@@ -17,12 +17,12 @@ Object makeNull()
     // One argument methods
 
     // __disp__
-    self = addObjectValue(self, "__disp__argc", &oneArgc);
     self = addObjectValue(self, "__disp__", &__disp___null);
+    self = addObjectValue(self, "__disp__argc", &oneArgc);
 
     // __bool__
-    self = addObjectValue(self, "__bool__argc", &oneArgc);
     self = addObjectValue(self, "__bool__", &__bool___null);
+    self = addObjectValue(self, "__bool__argc", &oneArgc);
 
     return self;
 }

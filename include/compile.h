@@ -340,6 +340,40 @@ int findNextEnd(char * kwtype, int cur_line, int scp)
     return ind + 1;
 }
 
+int compile_comma_list(char *** outptr, char ** comma_list)
+{
+    outptr[0] = comma_list;
+
+    int templen = arrsize(outptr[0]);
+    int lastwascomma = 0;
+    for (int i = 0; i < templen; i++)
+    {
+        if (!strcmp(outptr[0][i], ","))
+        {
+            if (lastwascomma)
+            {
+                arrdelindex(outptr[0], i);
+                templen--;
+            }
+            lastwascomma = 1;
+        }
+        else lastwascomma = 0;
+    }
+    if (templen)
+        while (!strcmp(outptr[0][templen - 1], ","))
+            templen--;
+
+    return templen;
+}
+
+int compile_comma_list_string(char *** outptr, char * comma_string)
+{
+    char ** comma_list = quokka_line_tok(comma_string);
+    int templen = compile_comma_list(outptr, comma_list);
+
+    return templen;
+}
+
 void compile_init()
 {
     scope = 0;
@@ -604,7 +638,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         int next = findNextEnd("while", num, scope);
         if (next == -1)
-            error("if statement missing 'end' keyword", num);
+            error("while loop missing 'end' keyword", num);
 
         mstrcat(&bytecode, "JUMP_IF_FALSE");
         mstrcat(&bytecode, SEPARATOR);
@@ -612,6 +646,43 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcat(&bytecode, INSTRUCTION_END);
 
         scpstkPush("while", scope, current_line + 1);
+
+        scope++;
+    }
+    else if (!strcmp(line[0], "until"))
+    {
+        if (isInline)
+            error("until loop can only be at the start of a line", num);
+        if (len <= 1)
+            error("until loop requires a condition", num);
+
+        // Set new line
+        char * numstr = malloc(11);
+        strcpy(numstr, "");
+        snprintf(numstr, 10, "%d", current_line + 1);
+
+        mstrcat(&bytecode, numstr);
+        mstrcat(&bytecode, INSTRUCTION_END);
+
+        arrlstrip(line);
+        len--;
+
+        char * temp = quokka_compile_line_tokens(line, num, len, 1);
+
+        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+
+        free(temp);
+
+        int next = findNextEnd("until", num, scope);
+        if (next == -1)
+            error("until loop missing 'end' keyword", num);
+
+        mstrcat(&bytecode, "JUMP_IF_TRUE");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, intToStr(next));
+        mstrcat(&bytecode, INSTRUCTION_END);
+
+        scpstkPush("until", scope, current_line + 1);
 
         scope++;
     }
@@ -717,7 +788,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
             if (scope - 1 == scp)
             {
-                if (!strcmp(kw, "while"))
+                if (!strcmp(kw, "while") || !strcmp(kw, "until"))
                 {
                     mstrcat(&bytecode, "JUMP_BACK");
                     mstrcat(&bytecode, SEPARATOR);
@@ -959,6 +1030,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
                     latestvalue = realloc(latestvalue, 1);
                     memset(latestvalue, 0, 1);
+                    strcpy(latestvalue, "");
 
                     lastwasop = 0;
                     lastwasunary = 1;
@@ -972,6 +1044,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
                     latestvalue = realloc(latestvalue, 1);
                     memset(latestvalue, 0, 1);
+                    strcpy(latestvalue, "");
 
                     operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
 
@@ -1027,6 +1100,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
                     latestvalue = realloc(latestvalue, 1);
                     memset(latestvalue, 0, 1);
+                    strcpy(latestvalue, "");
 
                     lastwasop = 0;
                     lastwasunary = 1;
@@ -1040,6 +1114,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
                     latestvalue = realloc(latestvalue, 1);
                     memset(latestvalue, 0, 1);
+                    strcpy(latestvalue, "");
 
                     operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
 
@@ -1157,7 +1232,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 }
                 else
                 {
-                    latestvalue = realloc(latestvalue, strlen(line[i]) + 1 + 1);
+                    latestvalue = realloc(latestvalue, strlen(latestvalue) + strlen(line[i]) + 1 + 1);
                     strcat(latestvalue, line[i]);
                     strcat(latestvalue, " ");
                 }
@@ -1228,26 +1303,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (strlen(line[1]) > 2)
         {
             // Split up the argument list into it's elements
-            char ** templine = quokka_line_tok(strSlice(line[1], 1, 1));
-
-            int templen = arrsize(templine);
-            int lastwascomma = 0;
-            for (int i = 0; i < templen; i++)
-            {
-                if (!strcmp(templine[i], ","))
-                {
-                    if (lastwascomma)
-                    {
-                        arrdelindex(templine, i);
-                        templen--;
-                    }
-                    lastwascomma = 1;
-                }
-                else lastwascomma = 0;
-            }
-
-            while (!strcmp(templine[templen - 1], ","))
-                templen--;
+            char ** templine;
+            int templen = compile_comma_list_string(&templine, strSlice(line[1], 1, 1));
 
             char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
 
@@ -1281,26 +1338,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             error("invalid syntax", num);
 
         // Split up the list into it's elements
-        char ** templine = quokka_line_tok(strSlice(line[0], 1, 1));
-
-        int templen = arrsize(templine);
-        int lastwascomma = 0;
-        for (int i = 0; i < templen; i++)
-        {
-            if (!strcmp(templine[i], ","))
-            {
-                if (lastwascomma)
-                {
-                    arrdelindex(templine, i);
-                    templen--;
-                }
-                lastwascomma = 1;
-            }
-            else lastwascomma = 0;
-        }
-        if (templen)
-            while (!strcmp(templine[templen - 1], ","))
-                templen--;
+        char ** templine;
+        int templen = compile_comma_list_string(&templine, strSlice(line[0], 1, 1));
 
         char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
 
@@ -1317,6 +1356,27 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcat(&bytecode, INSTRUCTION_END);
 
         free(templine);
+    }
+    else if (!strcmp(line[0], "del"))
+    {
+        if (isInline)
+            error("del statement must be at the start of a line", num);
+
+        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+
+        for (int i = 1; i < len; i++)
+        {
+            if (!strcmp(line[i], ","))
+                continue;
+
+            if (!isidentifier(line[i]))
+                error("invalid syntax", num);
+
+            mstrcat(&bytecode, "DEL_VAR");
+            mstrcat(&bytecode, SEPARATOR);
+            mstrcat(&bytecode, line[i]);
+            mstrcat(&bytecode, INSTRUCTION_END);
+        }
     }
     else if (isinteger(line[0]) && len == 1)
     {
@@ -1494,7 +1554,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 char * quokka_compile_tokens(char ** tokens, int isInline)
 {
     // This will eventually need to be fixed and made dynamic
-    char * compiled = malloc(4096);
+    char * compiled = malloc(1);
     strcpy(compiled, "");
 
     file_line_count = arrsize(tokens);
@@ -1509,7 +1569,7 @@ char * quokka_compile_tokens(char ** tokens, int isInline)
 
         char * ins = quokka_compile_line(t, current_line, -1, isInline);
 
-        strcat(compiled, strndup(ins, strlen(ins)));
+        mstrcat(&compiled, strndup(ins, strlen(ins)));
         free(ins);
 
         current_line++;

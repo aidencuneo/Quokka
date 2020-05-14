@@ -1,5 +1,5 @@
 // VERSION STUFF
-#define VERSION "0.0.2"
+#define VERSION "0.0.3"
 
 // Global file stuff
 char * current_file;
@@ -293,7 +293,7 @@ char * makeRawString(char * str)
 {
     int dquotes;
 
-    char * newstr = malloc(1);
+    char * newstr = malloc(2);
 
     if (stringHasChar(str, '\''))
     {

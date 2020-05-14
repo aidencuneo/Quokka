@@ -5,7 +5,8 @@ void quokka_interpret_tokens(char ** tokens);
 void quokka_interpret(char * bytecode);
 
 // Important stuff
-Varlist vars;
+Varlist globals;
+Varlist locals;
 
 Object * methods;
 int method_count;
@@ -34,6 +35,44 @@ void resetStack()
     stack_size = 0;
 }
 
+void cleanStack()
+{
+    for (int i = 0; i < stack_size; i++)
+        freeObject(stack[i]);
+
+    stack_size = 0;
+}
+
+void freeStack()
+{
+    cleanStack();
+    free(stack);
+}
+
+void freeGlobals()
+{
+    for (int i = 0; i < globals.count; i++)
+        freeObject(globals.values[i]);
+
+    free(globals.names);
+    free(globals.values);
+}
+
+void freeLocals()
+{
+    for (int i = 0; i < locals.count; i++)
+        freeObject(locals.values[i]);
+
+    free(locals.names);
+    free(locals.values);
+}
+
+void freeVars()
+{
+    freeGlobals();
+    freeLocals();
+}
+
 void interp_init()
 {
     resetStack();
@@ -48,43 +87,49 @@ void interp_init()
     Object printFunction = emptyObject("bfunction");
     printFunction = addObjectValue(printFunction, "__call__", &q_function_print);
     // printFunction = addObjectValue(printFunction, "__call__argc", &oneArgc);
-    addVar("print", printFunction);
+    addGVar("print", printFunction);
 
     // No argument restraints
     Object printlnFunction = emptyObject("bfunction");
     printlnFunction = addObjectValue(printlnFunction, "__call__", &q_function_println);
     // printlnFunction = addObjectValue(printlnFunction, "__call__argc", &oneArgc);
-    addVar("println", printlnFunction);
+    addGVar("println", printlnFunction);
 
     Object inputFunction = emptyObject("bfunction");
     inputFunction = addObjectValue(inputFunction, "__call__", &q_function_input);
     inputFunction = addObjectValue(inputFunction, "__call__argmin", &falsePtr);
     inputFunction = addObjectValue(inputFunction, "__call__argmax", &oneArgc);
-    addVar("input", inputFunction);
+    addGVar("input", inputFunction);
 
     Object stringFunction = emptyObject("bfunction");
     stringFunction = addObjectValue(stringFunction, "__call__", &q_function_string);
     stringFunction = addObjectValue(stringFunction, "__call__argmin", &oneArgc);
     stringFunction = addObjectValue(stringFunction, "__call__argmax", &oneArgc);
-    addVar("string", stringFunction);
+    addGVar("string", stringFunction);
 
     Object intFunction = emptyObject("bfunction");
     intFunction = addObjectValue(intFunction, "__call__", &q_function_int);
     intFunction = addObjectValue(intFunction, "__call__argcmin", &oneArgc);
     intFunction = addObjectValue(intFunction, "__call__argcmax", &oneArgc);
-    addVar("int", intFunction);
+    addGVar("int", intFunction);
 
     Object boolFunction = emptyObject("bfunction");
     boolFunction = addObjectValue(boolFunction, "__call__", &q_function_bool);
     boolFunction = addObjectValue(boolFunction, "__call__argmin", &oneArgc);
     boolFunction = addObjectValue(boolFunction, "__call__argmax", &oneArgc);
-    addVar("bool", boolFunction);
+    addGVar("bool", boolFunction);
 
     Object typeFunction = emptyObject("bfunction");
     typeFunction = addObjectValue(typeFunction, "__call__", &q_function_type);
     typeFunction = addObjectValue(typeFunction, "__call__argmin", &oneArgc);
     typeFunction = addObjectValue(typeFunction, "__call__argmax", &oneArgc);
-    addVar("type", typeFunction);
+    addGVar("type", typeFunction);
+
+    Object dispFunction = emptyObject("bfunction");
+    dispFunction = addObjectValue(dispFunction, "__call__", &q_function_display);
+    dispFunction = addObjectValue(dispFunction, "__call__argmin", &oneArgc);
+    dispFunction = addObjectValue(dispFunction, "__call__argmax", &oneArgc);
+    addGVar("disp", dispFunction);
 }
 
 Object emptyObject(char * name)
@@ -165,29 +210,85 @@ Object popTop()
     return stack[stack_size];
 }
 
-void addVar(char * name, Object obj)
+void addGVar(char * name, Object obj)
 {
-    int check = getVarIndex(name);
+    int check = getGVarIndex(name);
     if (check != -1)
     {
-        vars.values[check] = obj;
+        freeObject(globals.values[check]);
+        globals.values[check] = obj;
         return;
     }
 
-    vars.names = realloc(vars.names, (vars.count + 1) * sizeof(char *));
-    vars.values = realloc(vars.values, (vars.count + 1) * sizeof(Object));
+    globals.names = realloc(globals.names, (globals.count + 1) * sizeof(char *));
+    globals.values = realloc(globals.values, (globals.count + 1) * sizeof(Object));
 
-    vars.names[vars.count] = name;
-    vars.values[vars.count] = obj;
+    globals.names[globals.count] = name;
+    globals.values[globals.count] = obj;
 
-    vars.count++;
+    globals.count++;
+}
+
+// addVar adds local variables by default.
+// use addGVar to add a global variable.
+void addVar(char * name, Object obj)
+{
+    int check = getLVarIndex(name);
+    if (check != -1)
+    {
+        freeObject(locals.values[check]);
+        locals.values[check] = obj;
+        return;
+    }
+
+    locals.names = realloc(locals.names, (locals.count + 1) * sizeof(char *));
+    locals.values = realloc(locals.values, (locals.count + 1) * sizeof(Object));
+
+    locals.names[locals.count] = name;
+    locals.values[locals.count] = obj;
+
+    locals.count++;
+}
+
+Object getGVar(char * name)
+{
+    // Check globals
+    for (int i = 0; i < globals.count; i++)
+        if (!strcmp(globals.names[i], name))
+            return globals.values[i];
+
+    char * err = malloc(1 + strlen(name) + 37 + 1);
+    strcpy(err, "'");
+    strcat(err, name);
+    strcat(err, "' is not defined as a global variable");
+    error(err, line_num);
+}
+
+Object getLVar(char * name)
+{
+    // Check locals
+    for (int i = 0; i < locals.count; i++)
+        if (!strcmp(locals.names[i], name))
+            return locals.values[i];
+
+    char * err = malloc(1 + strlen(name) + 37 + 1);
+    strcpy(err, "'");
+    strcat(err, name);
+    strcat(err, "' is not defined as a local variable");
+    error(err, line_num);
 }
 
 Object getVar(char * name)
 {
-    for (int i = 0; i < vars.count; i++)
-        if (!strcmp(vars.names[i], name))
-            return vars.values[i];
+    // Check locals
+    for (int i = 0; i < locals.count; i++)
+        if (!strcmp(locals.names[i], name))
+            return locals.values[i];
+
+    // Check globals
+    for (int i = 0; i < globals.count; i++)
+        if (!strcmp(globals.names[i], name))
+            return globals.values[i];
 
     char * err = malloc(1 + strlen(name) + 16 + 1);
     strcpy(err, "'");
@@ -196,13 +297,55 @@ Object getVar(char * name)
     error(err, line_num);
 }
 
-int getVarIndex(char * name)
+int getGVarIndex(char * name)
 {
-    for (int i = 0; i < vars.count; i++)
-        if (!strcmp(vars.names[i], name))
+    // Check globals
+    for (int i = 0; i < globals.count; i++)
+        if (!strcmp(globals.names[i], name))
             return i;
 
     return -1;
+}
+
+int getLVarIndex(char * name)
+{
+    // Check locals
+    for (int i = 0; i < locals.count; i++)
+        if (!strcmp(locals.names[i], name))
+            return i;
+
+    return -1;
+}
+
+int getVarIndex(char * name)
+{
+    // Check locals
+    for (int i = 0; i < locals.count; i++)
+        if (!strcmp(locals.names[i], name))
+            return i;
+
+    // Check globals
+    for (int i = 0; i < globals.count; i++)
+        if (!strcmp(globals.names[i], name))
+            return i;
+
+    return -1;
+}
+
+void delLVarIndex(int index)
+{
+    freeObject(locals.values[index]);
+
+    for (int i = index; i < locals.count; i++)
+    {
+        locals.names[index] = locals.names[index + 1];
+        locals.values[index] = locals.values[index + 1];
+    }
+
+    locals.count--;
+
+    locals.names = realloc(locals.names, (locals.count + 1) * sizeof(char *));
+    locals.values = realloc(locals.values, (locals.count + 1) * sizeof(Object));
 }
 
 Object * makeArglist(Object obj)
@@ -285,19 +428,36 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(makeList(lstsize, value, 1));
     }
-    else if (!strcmp(line[0], "GET_ATTR"))
+    else if (!strcmp(line[0], "DEL_VAR"))
     {
-        Object obj = popTop();
+        int ind = getLVarIndex(line[1]);
 
-        if (!objectHasAttr(obj, "__pos__"))
+        if (ind == -1)
         {
-            char * err = malloc(6 + strlen(obj.name) + 38 + 1);
-            strcpy(err, "type '");
-            strcat(err, obj.name);
-            strcat(err, "' does not have a method for unary '+'");
+            char * err = malloc(1 + strlen(line[1]) + 16 + 1);
+            strcpy(err, "'");
+            strcat(err, line[1]);
+            strcat(err, "' is not defined or can not be deleted");
             error(err, line_num);
         }
+
+        delLVarIndex(ind);
     }
+    // else if (!strcmp(line[0], "GET_ATTR"))
+    // {
+    //     Object obj = popTop();
+
+    //     if (!objectHasAttr(obj, "__pos__"))
+    //     {
+    //         char * err = malloc(6 + strlen(obj.name) + 38 + 1);
+    //         strcpy(err, "type '");
+    //         strcat(err, obj.name);
+    //         strcat(err, "' does not have a method for unary '+'");
+    //         error(err, line_num);
+    //     }
+
+    //     freeObject(obj);
+    // }
     else if (!strcmp(line[0], "UNARY_ADD"))
     {
         Object first = popTop();
@@ -324,10 +484,11 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 1)
             error("__pos__ function requires an invalid amount of arguments, should be 1", line_num);
 
-        Object arglist[1];
-        arglist[0] = first;
+        Object * arglist = makeArglist(first);
 
         pushTop(((standard_func_def)objectGetAttr(first, "__pos__"))(1, arglist));
+
+        free(arglist);
     }
     else if (!strcmp(line[0], "UNARY_SUB"))
     {
@@ -355,10 +516,11 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 1)
             error("__neg__ function requires an invalid amount of arguments, should be 1", line_num);
 
-        Object arglist[1];
-        arglist[0] = first;
+        Object * arglist = makeArglist(first);
 
         pushTop(((standard_func_def)objectGetAttr(first, "__neg__"))(1, arglist));
+
+        free(arglist);
     }
     else if (!strcmp(line[0], "BINARY_ADD"))
     {
@@ -387,11 +549,13 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__add__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object arglist[2];
+        Object * arglist = malloc(2 * sizeof(Object));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__add__"))(2, arglist));
+
+        free(arglist);
     }
     else if (!strcmp(line[0], "BINARY_SUB"))
     {
@@ -420,11 +584,13 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__sub__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object arglist[2];
+        Object * arglist = malloc(2 * sizeof(Object));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__sub__"))(2, arglist));
+
+        free(arglist);
     }
     else if (!strcmp(line[0], "BINARY_MUL"))
     {
@@ -453,11 +619,13 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__mul__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object arglist[2];
+        Object * arglist = malloc(2 * sizeof(Object));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__mul__"))(2, arglist));
+
+        free(arglist);
     }
     else if (!strcmp(line[0], "BINARY_DIV"))
     {
@@ -486,11 +654,13 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__div__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object arglist[2];
+        Object * arglist = malloc(2 * sizeof(Object));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__div__"))(2, arglist));
+
+        free(arglist);
     }
     else if (!strcmp(line[0], "BINARY_POW"))
     {
@@ -519,11 +689,13 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__pow__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object arglist[2];
+        Object * arglist = malloc(2 * sizeof(Object));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__pow__"))(2, arglist));
+
+        free(arglist);
     }
     else if (!strcmp(line[0], "CMP_EQ"))
     {
@@ -552,11 +724,13 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__eq__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object arglist[2];
+        Object * arglist = malloc(2 * sizeof(Object));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__eq__"))(2, arglist));
+
+        free(arglist);
     }
     else if (!strcmp(line[0], "CMP_LT"))
     {
@@ -585,11 +759,13 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__lt__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object arglist[2];
+        Object * arglist = malloc(2 * sizeof(Object));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__lt__"))(2, arglist));
+
+        free(arglist);
     }
     else if (!strcmp(line[0], "CMP_GT"))
     {
@@ -618,11 +794,13 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__gt__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object arglist[2];
+        Object * arglist = malloc(2 * sizeof(Object));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__gt__"))(2, arglist));
+
+        free(arglist);
     }
     else if (!strcmp(line[0], "CMP_LE"))
     {
@@ -651,11 +829,13 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__le__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object arglist[2];
+        Object * arglist = malloc(2 * sizeof(Object));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__le__"))(2, arglist));
+
+        free(arglist);
     }
     else if (!strcmp(line[0], "CMP_GE"))
     {
@@ -684,11 +864,13 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__ge__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object arglist[2];
+        Object * arglist = malloc(2 * sizeof(Object));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__ge__"))(2, arglist));
+
+        free(arglist);
     }
     else if (!strcmp(line[0], "JUMP_TO"))
     {
@@ -704,6 +886,42 @@ void quokka_interpret_line_tokens(char ** line)
     else if (!strcmp(line[0], "JUMP_BACK"))
     {
         for (int i = bc_line; i >= 0; i--)
+        {
+            if (!strcmp(bc_tokens[i], line[1]))
+            {
+                bc_line = i;
+                break;
+            }
+        }
+    }
+    else if (!strcmp(line[0], "JUMP_IF_TRUE"))
+    {
+        Object obj = popTop();
+
+        Object * arglist = makeArglist(obj);
+
+        if (!objectHasAttr(obj, "__bool__"))
+        {
+            char * err = malloc(6 + strlen(obj.name) + 34 + 1);
+            strcpy(err, "type '");
+            strcat(err, obj.name);
+            strcat(err, "' can not be converted into a bool");
+            error(err, line_num);
+        }
+
+        Object conditionobj = ((standard_func_def)objectGetAttr(obj, "__bool__"))(1, arglist);
+
+        free(arglist);
+        freeObject(obj);
+
+        int condition = ((int *)objectGetAttr(conditionobj, "value"))[0];
+
+        if (!condition)
+            return;
+
+        // If true, jump
+
+        for (int i = bc_line; i < bc_line_count; i++)
         {
             if (!strcmp(bc_tokens[i], line[1]))
             {
@@ -730,13 +948,14 @@ void quokka_interpret_line_tokens(char ** line)
         Object conditionobj = ((standard_func_def)objectGetAttr(obj, "__bool__"))(1, arglist);
 
         free(arglist);
+        freeObject(obj);
 
         int condition = ((int *)objectGetAttr(conditionobj, "value"))[0];
 
         if (condition)
             return;
 
-        // If false, skip the if statement
+        // If false, jump
 
         for (int i = bc_line; i < bc_line_count; i++)
         {
@@ -803,6 +1022,8 @@ void quokka_interpret_line_tokens(char ** line)
         }
 
         pushTop(((standard_func_def)objectGetAttr(func, "__call__"))(argcount, arglist));
+
+        free(arglist);
     }
     else if (!strcmp(line[0], "GET_INDEX"))
     {
@@ -826,6 +1047,7 @@ void quokka_interpret_line_tokens(char ** line)
             pushTop(((standard_func_def)objectGetAttr(obj, "__copy__"))(1, arglist));
 
             free(arglist);
+            freeObject(obj);
 
             return;
         }
@@ -853,6 +1075,8 @@ void quokka_interpret_line_tokens(char ** line)
             error("__index__ function requires an invalid amount of arguments, should be 2", line_num);
 
         pushTop(((standard_func_def)objectGetAttr(obj, "__index__"))(2, arglist));
+
+        free(arglist);
     }
 }
 
@@ -871,7 +1095,7 @@ void quokka_interpret_tokens(char ** tokens)
         if (isinteger(t))
         {
             line_num = strtol(t, NULL, 10) - 1;
-            resetStack();
+            cleanStack();
 
             bc_line++;
             continue;

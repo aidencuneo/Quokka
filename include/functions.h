@@ -22,6 +22,7 @@ Object q_function_display(int argc, Object * argv)
         char * text = (char *)objectGetAttr(strtext, "value");
 
         free(arglist);
+        freeObject(strtext);
 
         mstrcat(&out, text);
     }
@@ -122,6 +123,8 @@ Object q_function_println(int argc, Object * argv)
 
             ret += strlen(text);
             printf("%s", text);
+
+            freeObject(strtext);
         }
         else
         {
@@ -134,6 +137,8 @@ Object q_function_println(int argc, Object * argv)
             
             ret += strlen(text);
             printf("%s", text);
+
+            freeObject(strtext);
         }
 
         if (i + 1 < argc)

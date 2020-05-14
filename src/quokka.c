@@ -185,10 +185,13 @@ int main(int argc, char ** argv)
         interp_init();
         quokka_interpret(bytecode);
 
-        resetStack();
+        freeStack();
+        freeVars();
 
         if (verbose) println("--SUCCESS--");
     }
+
+    free(bytecode);
 
     return 0;
 }

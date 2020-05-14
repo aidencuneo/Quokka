@@ -1,14 +1,16 @@
 nulls = []
 a = 0
 
-while a < 10000
+until a > 9
     nulls += [null]
+    println(nulls)
     a += 1
 end
 
-println(nulls)
+println(a)
+
 println(nulls[-1])
-println(string(100))
+println(disp(string(100) + ' another word'))
 println(null)
 
 // Method 1:

@@ -52,7 +52,10 @@ void freeObject(Object obj);
 void pushTop(Object obj);
 Object popTop();
 void addVar(char * name, Object obj);
+void addGVar(char * name, Object obj);
 Object getVar(char * name);
+int getGVarIndex(char * name);
+int getLVarIndex(char * name);
 int getVarIndex(char * name);
 Object * makeArglist(Object obj);
 
