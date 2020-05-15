@@ -1,9 +1,3 @@
-void interp_init();
-void quokka_interpret_line(char * linetext);
-void quokka_interpret_line_tokens(char ** line);
-void quokka_interpret_tokens(char ** tokens);
-void quokka_interpret(char * bytecode);
-
 // Important stuff
 Varlist globals;
 Varlist locals;
@@ -16,8 +10,6 @@ int stack_size;
 
 // Bytecode file stuff
 char ** bc_tokens;
-int bc_line;
-int bc_line_count;
 
 // Multi-use pointers
 int oneArgc;
@@ -136,6 +128,12 @@ void interp_init()
     lenFunction = addObjectValue(lenFunction, "__call__argmin", &oneArgc);
     lenFunction = addObjectValue(lenFunction, "__call__argmax", &oneArgc);
     addGVar("len", lenFunction);
+
+    Object execFunction = emptyObject("bfunction");
+    execFunction = addObjectValue(execFunction, "__call__", &q_function_exec);
+    execFunction = addObjectValue(execFunction, "__call__argmin", &oneArgc);
+    execFunction = addObjectValue(execFunction, "__call__argmax", &oneArgc);
+    addGVar("exec", execFunction);
 }
 
 Object emptyObject(char * name)

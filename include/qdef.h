@@ -4,6 +4,10 @@
 #ifndef _qdef
 #define _qdef
 
+// Interpreter global variables
+int bc_line;
+int bc_line_count;
+
 int * makeIntPtrFromStr(char * st)
 {
     int * n = malloc(sizeof(int));
@@ -42,6 +46,12 @@ struct __Varlist_Struct__
 };
 
 // Function declarations
+void interp_init();
+void quokka_interpret_line(char * linetext);
+void quokka_interpret_line_tokens(char ** line);
+void quokka_interpret_tokens(char ** tokens);
+void quokka_interpret(char * bytecode);
+
 void resetStack();
 Object emptyObject(char * name);
 Object makeObject(char * name, void * value);
