@@ -12,10 +12,10 @@ Object q_function_display(int argc, Object * argv)
 
         if (!strcmp(objectGetAttr(strtext, "value"), "string"))
         {
-            char * err = malloc(25 + strlen(strtext.name) + 26 + 1);
+            char * err = malloc(25 + strlen(strtext.name) + 27 + 1);
             strcpy(err, "__disp__ method of type '");
             strcat(err, strtext.name);
-            strcat(err, "' does not return a string");
+            strcat(err, "' must return type 'string'");
             error(err, line_num);
         }
 
@@ -102,18 +102,18 @@ Object q_function_println(int argc, Object * argv)
 
     for (int i = 0; i < argc; i++)
     {
-        if (objectHasAttr(argv[i], "__str__"))
+        if (objectHasAttr(argv[i], "__string__"))
         {
             Object * arglist = malloc(sizeof(Object));
             arglist[0] = argv[i];
-            Object strtext = ((standard_func_def)objectGetAttr(argv[i], "__str__"))(1, arglist);
+            Object strtext = ((standard_func_def)objectGetAttr(argv[i], "__string__"))(1, arglist);
 
             if (!strcmp(objectGetAttr(strtext, "value"), "string"))
             {
-                char * err = malloc(24 + strlen(strtext.name) + 26 + 1);
-                strcpy(err, "__str__ method of type '");
+                char * err = malloc(24 + strlen(strtext.name) + 27 + 1);
+                strcpy(err, "__string__ method of type '");
                 strcat(err, strtext.name);
-                strcat(err, "' does not return a string");
+                strcat(err, "' must return type 'string'");
                 error(err, line_num);
             }
 
@@ -190,16 +190,54 @@ Object q_function_bool(int argc, Object * argv)
         strcat(err, "' can not be converted into a bool");
         error(err, line_num);
     }
-    return ((standard_func_def)objectGetAttr(argv[0], "__bool__"))(1, argv);
+
+    Object ret = ((standard_func_def)objectGetAttr(argv[0], "__bool__"))(1, argv);
+
+    if (strcmp(ret.name, "bool"))
+    {
+        char * err = malloc(25 + strlen(argv[0].name) + 25 + 1);
+        strcpy(err, "__bool__ method of type '");
+        strcat(err, argv[0].name);
+        strcat(err, "' must return type 'bool'");
+        error(err, line_num);
+    }
+
+    return ret;
 }
 
 
 Object q_function_string(int argc, Object * argv)
 {
-    if (objectHasAttr(argv[0], "__str__"))
-        return ((standard_func_def)objectGetAttr(argv[0], "__str__"))(1, argv);
+    if (objectHasAttr(argv[0], "__string__"))
+    {
+        Object ret = ((standard_func_def)objectGetAttr(argv[0], "__string__"))(1, argv);
+
+        if (strcmp(ret.name, "string"))
+        {
+            char * err = malloc(27 + strlen(argv[0].name) + 27 + 1);
+            strcpy(err, "__string__ method of type '");
+            strcat(err, argv[0].name);
+            strcat(err, "' must return type 'string'");
+            error(err, line_num);
+        }
+
+        return ret;
+    }
     else if (objectHasAttr(argv[0], "__disp__"))
-        return ((standard_func_def)objectGetAttr(argv[0], "__disp__"))(1, argv);
+    {
+        Object ret = ((standard_func_def)objectGetAttr(argv[0], "__disp__"))(1, argv);
+
+        if (strcmp(ret.name, "string"))
+        {
+            char * err = malloc(25 + strlen(argv[0].name) + 27 + 1);
+            strcpy(err, "__disp__ method of type '");
+            strcat(err, argv[0].name);
+            strcat(err, "' must return type 'string'");
+            error(err, line_num);
+        }
+
+        return ret;
+    }
 
     char * err = malloc(6 + strlen(argv[0].name) + 36 + 1);
     strcpy(err, "type '");
@@ -218,10 +256,36 @@ Object q_function_int(int argc, Object * argv)
         strcat(err, "' can not be converted into an integer");
         error(err, line_num);
     }
-    return ((standard_func_def)objectGetAttr(argv[0], "__int__"))(1, argv);
+
+    Object ret = ((standard_func_def)objectGetAttr(argv[0], "__int__"))(1, argv);
+
+    if (strcmp(ret.name, "int"))
+    {
+        char * err = malloc(24 + strlen(argv[0].name) + 24 + 1);
+        strcpy(err, "__int__ method of type '");
+        strcat(err, argv[0].name);
+        strcat(err, "' must return type 'int'");
+        error(err, line_num);
+    }
+
+    return ret;
 }
 
 Object q_function_type(int argc, Object * argv)
 {
     return makeString(argv[0].name);
+}
+
+Object q_function_len(int argc, Object * argv)
+{
+    if (!objectHasAttr(argv[0], "__len__"))
+    {
+        char * err = malloc(6 + strlen(argv[0].name) + 45 + 1);
+        strcpy(err, "type '");
+        strcat(err, argv[0].name);
+        strcat(err, "' doesn't have a method for length retrieving");
+        error(err, line_num);
+    }
+
+    return ((standard_func_def)objectGetAttr(argv[0], "__len__"))(1, argv);
 }

@@ -74,6 +74,13 @@ Object __copy___string(int argc, Object * argv)
     return makeString((char *)objectGetAttr(argv[0], "value"));
 }
 
+Object __len___string(int argc, Object * argv)
+{
+    int len = strlen((char *)objectGetAttr(argv[0], "value"));
+
+    return makeInteger(makeIntPtr(len));
+}
+
 Object __disp___string(int argc, Object * argv)
 {
     char * selftext = (char *)objectGetAttr(argv[0], "value");
@@ -90,7 +97,7 @@ Object __bool___string(int argc, Object * argv)
     return makeInteger(&falsePtr);
 }
 
-Object __str___string(int argc, Object * argv)
+Object __string___string(int argc, Object * argv)
 {
     return argv[0];
 }
@@ -115,11 +122,15 @@ Object makeString(char * value)
     self = addObjectValue(self, "__index__", &__index___string);
     self = addObjectValue(self, "__index__argc", &twoArgc);
 
+    // One argument methods
+
     // __copy__
     self = addObjectValue(self, "__copy__", &__copy___string);
-    self = addObjectValue(self, "__copy__argc", &twoArgc);
+    self = addObjectValue(self, "__copy__argc", &oneArgc);
 
-    // One argument methods
+    // __len__
+    self = addObjectValue(self, "__len__", &__len___string);
+    self = addObjectValue(self, "__len__argc", &oneArgc);
 
     // __disp__
     self = addObjectValue(self, "__disp__", &__disp___string);
@@ -129,9 +140,9 @@ Object makeString(char * value)
     self = addObjectValue(self, "__bool__", &__bool___string);
     self = addObjectValue(self, "__bool__argc", &oneArgc);
 
-    // __str__
-    self = addObjectValue(self, "__str__", &__str___string);
-    self = addObjectValue(self, "__str__argc", &oneArgc);
+    // __string__
+    self = addObjectValue(self, "__string__", &__string___string);
+    self = addObjectValue(self, "__string__argc", &oneArgc);
 
     return self;
 }

@@ -130,6 +130,12 @@ void interp_init()
     dispFunction = addObjectValue(dispFunction, "__call__argmin", &oneArgc);
     dispFunction = addObjectValue(dispFunction, "__call__argmax", &oneArgc);
     addGVar("disp", dispFunction);
+
+    Object lenFunction = emptyObject("bfunction");
+    lenFunction = addObjectValue(lenFunction, "__call__", &q_function_len);
+    lenFunction = addObjectValue(lenFunction, "__call__argmin", &oneArgc);
+    lenFunction = addObjectValue(lenFunction, "__call__argmax", &oneArgc);
+    addGVar("len", lenFunction);
 }
 
 Object emptyObject(char * name)

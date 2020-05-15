@@ -65,6 +65,11 @@ Object __copy___list(int argc, Object * argv)
         0); // 0 so it doesn't flip
 }
 
+Object __len___list(int argc, Object * argv)
+{
+    return makeInteger(objectGetAttr(argv[0], "length"));
+}
+
 Object __bool___list(int argc, Object * argv)
 {
     int length = ((int *)objectGetAttr(argv[0], "length"))[0];
@@ -74,7 +79,7 @@ Object __bool___list(int argc, Object * argv)
     return makeInteger(&falsePtr);
 }
 
-Object __str___list(int argc, Object * argv)
+Object __string___list(int argc, Object * argv)
 {
     char * out = malloc(2);
     strcpy(out, "[");
@@ -134,19 +139,23 @@ Object makeList(int length, Object * value, int flipped)
     self = addObjectValue(self, "__index__", &__index___list);
     self = addObjectValue(self, "__index__argc", &twoArgc);
 
+    // One argument methods
+
     // __copy__
     self = addObjectValue(self, "__copy__", &__copy___list);
-    self = addObjectValue(self, "__copy__argc", &twoArgc);
+    self = addObjectValue(self, "__copy__argc", &oneArgc);
 
-    // One argument methods
+    // __len__
+    self = addObjectValue(self, "__len__", &__len___list);
+    self = addObjectValue(self, "__len__argc", &oneArgc);
 
     // __bool__
     self = addObjectValue(self, "__bool__", &__bool___list);
     self = addObjectValue(self, "__bool__argc", &oneArgc);
 
-    // __str__
-    self = addObjectValue(self, "__str__", &__str___list);
-    self = addObjectValue(self, "__str__argc", &oneArgc);
+    // __string__
+    self = addObjectValue(self, "__string__", &__string___list);
+    self = addObjectValue(self, "__string__argc", &oneArgc);
 
     return self;
 }

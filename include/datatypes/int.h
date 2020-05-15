@@ -288,9 +288,9 @@ Object makeInteger(int * value)
     self = addObjectValue(self, "__bool__", &__bool___integer);
     self = addObjectValue(self, "__bool__argc", &oneArgc);
 
-    // // __str__
-    // self = addObjectValue(self, "__str__", &__str___integer);
-    // self = addObjectValue(self, "__str__argc", &oneArgc);
+    // // __string__
+    // self = addObjectValue(self, "__string__", &__string___integer);
+    // self = addObjectValue(self, "__string__argc", &oneArgc);
 
     return self;
 }

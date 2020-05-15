@@ -1,5 +1,5 @@
 // VERSION STUFF
-#define VERSION "0.0.3"
+#define VERSION "0.0.4"
 
 // Global file stuff
 char * current_file;

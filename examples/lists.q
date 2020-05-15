@@ -1,17 +1,16 @@
-nulls = []
+lst = []
 a = 0
 
 until a > 9
-    nulls += [null]
-    println(nulls)
+    lst += [len(lst)]
+    println(lst)
     a += 1
 end
 
 println(a)
 
-println(nulls[-1])
-println(disp(string(100) + ' another word'))
-println(null)
+println(lst[-1])
+println(disp(string(100) + ' chickens in a pond, ' + string(260) + ' metres wide.'))
 
 // Method 1:
 // lst += [5]
