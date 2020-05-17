@@ -1,3 +1,6 @@
+fun doabsolutelynothing
+end
+
 fun donothing 0
 end
 

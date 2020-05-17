@@ -372,9 +372,11 @@ Object * makeArglist(Object obj)
 //
 
 #include "datatypes/int.h"
+#include "datatypes/long.h"
 #include "datatypes/string.h"
 #include "datatypes/list.h"
 #include "datatypes/null.h"
+#include "datatypes/function.h"
 
 // Object makeMethod(Object (*func)(Object * argv), int * argc)
 // {
@@ -409,7 +411,13 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "LOAD_INT"))
     {
-        Object item = makeInteger(makeIntPtrFromStr(line[1]));
+        Object item = makeInt(makeIntPtrFromStr(line[1]));
+
+        pushTop(item);
+    }
+    else if (!strcmp(line[0], "LOAD_LONG"))
+    {
+        Object item = makeLong(makeLLPtrFromStr(line[1]));
 
         pushTop(item);
     }
@@ -431,6 +439,14 @@ void quokka_interpret_line_tokens(char ** line)
             value[i] = popTop();
 
         pushTop(makeList(lstsize, value, 1));
+    }
+    else if (!strcmp(line[0], "DEFINE_FUNCTION"))
+    {
+        char * f_code = strSlice(
+            strReplace(line[2], "\t", "\n"),
+            1, 1);
+
+        addVar(line[1], makeFunction(&f_code));
     }
     else if (!strcmp(line[0], "DEL_VAR"))
     {
@@ -984,7 +1000,9 @@ void quokka_interpret_line_tokens(char ** line)
 
         Object func = popTop();
 
-        if (!objectHasAttr(func, "__call__"))
+        if (!objectHasAttr(func, "__call__") &&
+            strcmp(func.name, "bfunction") &&
+            strcmp(func.name, "function"))
             error("not a callable type", line_num);
 
         int funcmin = 0;
@@ -1025,7 +1043,19 @@ void quokka_interpret_line_tokens(char ** line)
             error(err, line_num);
         }
 
-        pushTop(((standard_func_def)objectGetAttr(func, "__call__"))(argcount, arglist));
+        if (!strcmp(func.name, "bfunction"))
+        {
+            pushTop(((standard_func_def)objectGetAttr(func, "__call__"))(argcount, arglist));
+        }
+        else
+        {
+            arglist = realloc(arglist, (argcount + 1) * sizeof(Object));
+            for (int i = 0; i < argcount; i++)
+                arglist[i + 1] = arglist[i];
+            arglist[0] = func;
+
+            pushTop(((standard_func_def)objectGetAttr(func, "__call__"))(argcount, arglist));
+        }
 
         free(arglist);
     }

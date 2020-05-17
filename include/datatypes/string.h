@@ -1,23 +1,47 @@
 Object __add___string(int argc, Object * argv)
 {
-    if (strcmp(argv[1].name, "string"))
+    if (!strcmp(argv[1].name, "string"))
     {
-        char * err = malloc(66 + strlen(argv[1].name) + 1 + 1);
-        strcpy(err, "only 'string' and 'string' can be concatenated, not 'string' and '");
-        strcat(err, argv[1].name);
-        strcat(err, "'");
-        error(err, line_num);
-        exit(1);
+        char * first = (char *)objectGetAttr(argv[0], "value");
+        char * secnd = (char *)objectGetAttr(argv[1], "value");
+
+        char * third = malloc(strlen(first) + strlen(secnd) + 1);
+        strcpy(third, first);
+        strcat(third, secnd);
+
+        return makeString(third);
     }
 
-    char * first = (char *)objectGetAttr(argv[0], "value");
-    char * secnd = (char *)objectGetAttr(argv[1], "value");
+    char * err = malloc(66 + strlen(argv[1].name) + 1 + 1);
+    strcpy(err, "only 'string' and 'string' can be concatenated, not 'string' and '");
+    strcat(err, argv[1].name);
+    strcat(err, "'");
+    error(err, line_num);
+}
 
-    char * third = malloc(strlen(first) + strlen(secnd) + 1);
-    strcpy(third, first);
-    strcat(third, secnd);
+Object __mul___string(int argc, Object * argv)
+{
+    if (!strcmp(argv[1].name, "int"))
+    {
+        char * first = objectGetAttr(argv[0], "value");
+        int * secnd = objectGetAttr(argv[1], "value");
 
-    return makeString(third);
+        char * third = malloc(strlen(first) + 1);
+        strcpy(third, first);
+
+        for (int i = 0; i < secnd[0]; i++)
+        {
+            mstrcat(&third, first);
+        }
+
+        return makeString(third);
+    }
+
+    char * err = malloc(20 + strlen(argv[1].name) + 30 + 1);
+    strcpy(err, "types 'string' and '");
+    strcat(err, argv[1].name);
+    strcat(err, "' are invalid operands for '*'");
+    error(err, line_num);
 }
 
 Object __eq___string(int argc, Object * argv)
@@ -29,15 +53,14 @@ Object __eq___string(int argc, Object * argv)
         strcat(err, argv[1].name);
         strcat(err, "' can not be compared with '=='");
         error(err, line_num);
-        exit(1);
     }
 
     char * first = (char *)objectGetAttr(argv[0], "value");
     char * secnd = (char *)objectGetAttr(argv[1], "value");
 
     if (!strcmp(first, secnd))
-        return makeInteger(&truePtr);
-    return makeInteger(&falsePtr);
+        return makeInt(&truePtr);
+    return makeInt(&falsePtr);
 }
 
 Object __index___string(int argc, Object * argv)
@@ -49,7 +72,6 @@ Object __index___string(int argc, Object * argv)
         strcat(err, argv[1].name);
         strcat(err, "'");
         error(err, line_num);
-        exit(1);
     }
 
     int ind = ((int *)objectGetAttr(argv[1], "value"))[0];
@@ -76,9 +98,9 @@ Object __copy___string(int argc, Object * argv)
 
 Object __len___string(int argc, Object * argv)
 {
-    int len = strlen((char *)objectGetAttr(argv[0], "value"));
+    long long len = strlen((char *)objectGetAttr(argv[0], "value"));
 
-    return makeInteger(makeIntPtr(len));
+    return makeLong(makeLLPtr(len));
 }
 
 Object __disp___string(int argc, Object * argv)
@@ -93,8 +115,8 @@ Object __bool___string(int argc, Object * argv)
     char * thisvalue = ((char *)objectGetAttr(argv[0], "value"));
 
     if (strlen(thisvalue))
-        return makeInteger(&truePtr);
-    return makeInteger(&falsePtr);
+        return makeInt(&truePtr);
+    return makeInt(&falsePtr);
 }
 
 Object __string___string(int argc, Object * argv)
@@ -113,6 +135,10 @@ Object makeString(char * value)
     // __add__
     self = addObjectValue(self, "__add__", &__add___string);
     self = addObjectValue(self, "__add__argc", &twoArgc);
+
+    // __mul__
+    self = addObjectValue(self, "__mul__", &__mul___string);
+    self = addObjectValue(self, "__mul__argc", &twoArgc);
 
     // __eq__
     self = addObjectValue(self, "__eq__", &__eq___string);

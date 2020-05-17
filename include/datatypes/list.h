@@ -67,7 +67,7 @@ Object __copy___list(int argc, Object * argv)
 
 Object __len___list(int argc, Object * argv)
 {
-    return makeInteger(objectGetAttr(argv[0], "length"));
+    return makeInt(objectGetAttr(argv[0], "length"));
 }
 
 Object __bool___list(int argc, Object * argv)
@@ -75,8 +75,8 @@ Object __bool___list(int argc, Object * argv)
     int length = ((int *)objectGetAttr(argv[0], "length"))[0];
 
     if (length)
-        return makeInteger(&truePtr);
-    return makeInteger(&falsePtr);
+        return makeInt(&truePtr);
+    return makeInt(&falsePtr);
 }
 
 Object __string___list(int argc, Object * argv)

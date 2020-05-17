@@ -22,6 +22,20 @@ int * makeIntPtr(int i)
     return n;
 }
 
+long long * makeLLPtrFromStr(char * st)
+{
+    long long * n = malloc(sizeof(long long));
+    n[0] = strtoll(st, (char **)NULL, 10);
+    return n;
+}
+
+long long * makeLLPtr(long long i)
+{
+    long long * n = malloc(sizeof(long long));
+    n[0] = i;
+    return n;
+}
+
 //
 /// Object & Varlist
 //
@@ -76,8 +90,7 @@ Object * makeArglist(Object obj);
 typedef struct __Function_Struct__ Function;
 struct __Function_Struct__
 {
-    Object (*func)(Object * argv);
-    int * is_function;
+    char ** f_code;
     int * argc;
 };
 
@@ -89,7 +102,10 @@ void addFunction(Function funcobj);
 //
 
 // int
-Object makeInteger(int * value);
+Object makeInt(int * value);
+
+// long
+Object makeLong(long long * value);
 
 // string
 Object makeString(char * value);
@@ -101,7 +117,7 @@ Object makeList(int length, Object * value, int flipped);
 Object makeNull();
 
 // function
-Object makeFunction(Object (*func)(Object * argv), int argc);
+Object makeFunction(char ** bytecode);
 Object makeMethod(Object (*func)(Object * argv), int * argc);
 
 #endif

@@ -1,6 +1,6 @@
 // Settings
 str = 'string'
-recursion_count = 6
+recursion_count = 5
 
 strbeg = ''
 strmid = disp(str)

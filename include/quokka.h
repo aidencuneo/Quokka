@@ -1,5 +1,5 @@
 // VERSION STUFF
-#define VERSION "0.0.4"
+#define VERSION "0.1.0"
 
 // Global file stuff
 char * current_file;
@@ -347,9 +347,36 @@ char * intToStr(int value)
     return out;
 }
 
+char * LLToStr(long long value)
+{
+    char * newval = malloc(20);
+    sprintf(newval, "%lld", value);
+
+    char * out = strndup(newval, strlen(newval));
+    free(newval);
+
+    return out;
+}
+
 int ipowMath(int base, int exp)
 {
     int result = 1;
+    for (;;)
+    {
+        if (exp & 1)
+            result *= base;
+        exp >>= 1;
+        if (!exp)
+            break;
+        base *= base;
+    }
+
+    return result;
+}
+
+long long lpowMath(long long base, int exp)
+{
+    long long result = 1;
     for (;;)
     {
         if (exp & 1)

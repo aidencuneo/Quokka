@@ -82,7 +82,7 @@ Object q_function_print(int argc, Object * argv)
         }
     }
 
-    return makeInteger(makeIntPtr(ret));
+    return makeLong(makeLLPtr(ret));
 }
 
 Object q_function_println(int argc, Object * argv)
@@ -137,7 +137,7 @@ Object q_function_println(int argc, Object * argv)
         }
     }
 
-    return makeInteger(makeIntPtr(ret));
+    return makeLong(makeLLPtr(ret));
 }
 
 Object q_function_input(int argc, Object * argv)
