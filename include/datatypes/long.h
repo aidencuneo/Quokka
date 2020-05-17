@@ -260,8 +260,8 @@ Object __pos___long(int argc, Object * argv)
 {
     long long * thisvalue = objectGetAttr(argv[0], "value");
 
-    if (thisvalue[0] > UINT_MAX)
-        return makeInt(makeIntPtr(UINT_MAX));
+    if (thisvalue[0] > INT_MAX)
+        return makeInt(makeIntPtr(INT_MAX));
 
     return makeInt(makeIntPtr(thisvalue[0]));
 }

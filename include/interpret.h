@@ -411,9 +411,13 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "LOAD_INT"))
     {
-        Object item = makeInt(makeIntPtrFromStr(line[1]));
-
-        pushTop(item);
+        long long temp = strtoll(line[1], NULL, 10);
+        if (temp > INT_MAX)
+            pushTop(makeLong(makeLLPtr(temp)));
+        else
+        {
+            pushTop(makeInt(makeIntPtrFromStr(line[1])));
+        }
     }
     else if (!strcmp(line[0], "LOAD_LONG"))
     {

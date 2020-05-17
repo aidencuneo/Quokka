@@ -1682,7 +1682,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         while (startswith(line[0], "0") && strlen(line[0]) > 1)
             line[0]++;
 
-        mstrcat(&bytecode, "LOAD_INT");
+        if (strlen(line[0]) > 10)
+            mstrcat(&bytecode, "LOAD_LONG");
+        else
+            mstrcat(&bytecode, "LOAD_INT");
+
         mstrcat(&bytecode, SEPARATOR);
         mstrcat(&bytecode, line[0]);
         mstrcat(&bytecode, INSTRUCTION_END);

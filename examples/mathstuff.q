@@ -1,6 +1,8 @@
-x = 10
-a = 5
+integer = 2147483647
+longnum = 2147483648
 
-println(a + 2 * x)
-println(2 * 3 + 1)
-println(2 * 3 + 1 == 7)
+println(integer)
+println(longnum)
+
+println(type(integer))
+println(type(longnum))
