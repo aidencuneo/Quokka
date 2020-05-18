@@ -8,6 +8,10 @@ int method_count;
 Object * stack;
 int stack_size;
 
+Object * ret_stack;
+int ret_stack_size;
+int can_return;
+
 // Bytecode file stuff
 char ** bc_tokens;
 
@@ -18,6 +22,7 @@ int twoArgc;
 int truePtr;
 int falsePtr;
 
+// Stack
 void resetStack()
 {
     for (int i = 0; i < stack_size; i++)
@@ -41,6 +46,31 @@ void freeStack()
     free(stack);
 }
 
+// Return Stack
+void resetRetStack()
+{
+    for (int i = 0; i < ret_stack_size; i++)
+        freeObject(ret_stack[i]);
+
+    ret_stack = malloc(sizeof(Object));
+    ret_stack_size = 0;
+}
+
+void cleanRetStack()
+{
+    for (int i = 0; i < ret_stack_size; i++)
+        freeObject(ret_stack[i]);
+
+    ret_stack_size = 0;
+}
+
+void freeRetStack()
+{
+    cleanRetStack();
+    free(ret_stack);
+}
+
+// Var cleaning
 void freeGlobals()
 {
     for (int i = 0; i < globals.count; i++)
@@ -65,9 +95,11 @@ void freeVars()
     freeLocals();
 }
 
+// Init
 void interp_init()
 {
     resetStack();
+    resetRetStack();
 
     oneArgc = 1;
     twoArgc = 2;
@@ -199,6 +231,7 @@ void freeObject(Object obj)
     free(obj.values);
 }
 
+// Stack
 void pushTop(Object obj)
 {
     stack = realloc(stack, (stack_size + 1) * sizeof(Object));
@@ -212,6 +245,22 @@ Object popTop()
     stack_size--;
 
     return stack[stack_size];
+}
+
+// Return Stack
+void pushRetTop(Object obj)
+{
+    ret_stack = realloc(ret_stack, (ret_stack_size + 1) * sizeof(Object));
+    ret_stack[ret_stack_size] = obj;
+    ret_stack_size++;
+}
+
+Object popRetTop()
+{
+    ret_stack = realloc(ret_stack, (ret_stack_size + 1) * sizeof(Object));
+    ret_stack_size--;
+
+    return ret_stack[ret_stack_size];
 }
 
 void addGVar(char * name, Object obj)
@@ -466,6 +515,13 @@ void quokka_interpret_line_tokens(char ** line)
         }
 
         delLVarIndex(ind);
+    }
+    else if (!strcmp(line[0], "RETURN"))
+    {
+        if (!can_return)
+            error("can not return values from this scope", line_num);
+
+        pushRetTop(popTop());
     }
     // else if (!strcmp(line[0], "GET_ATTR"))
     // {
@@ -997,6 +1053,7 @@ void quokka_interpret_line_tokens(char ** line)
     else if (!strcmp(line[0], "CALL_FUNCTION"))
     {
         int argcount = strtol(line[1], NULL, 10);
+
         Object * arglist = malloc(argcount * sizeof(Object));
 
         for (int i = 0; i < argcount; i++)
@@ -1133,7 +1190,10 @@ void quokka_interpret_tokens(char ** tokens)
         if (isinteger(t))
         {
             line_num = strtol(t, NULL, 10) - 1;
-            cleanStack();
+
+            // Comment the next two lines out if there's a segfault
+            if (!can_return)
+                cleanStack();
 
             bc_line++;
             continue;

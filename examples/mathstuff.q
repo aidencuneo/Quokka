@@ -1,8 +1,8 @@
 integer = 2147483647
 longnum = 2147483648
 
-println(integer)
-println(longnum)
+println(integer, ':', type(integer))
+println(longnum, ':', type(longnum))
 
-println(type(integer))
-println(type(longnum))
+bignum = integer * longnum
+println(bignum, ':', type(bignum))

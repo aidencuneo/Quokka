@@ -233,9 +233,9 @@ void scpstkPop()
 
 int findNextIfChain(char * kwtype, int cur_line, int scp)
 {
-    // This will become -1 if 'end' is not found
-    int ind = -2;
+    int ind = -1;
     int tempscope = scp;
+    int blanks = 0; // Num of consecutive blank lines
 
     // 0 = 'if'
     // 1 = 'elif'
@@ -256,6 +256,21 @@ int findNextIfChain(char * kwtype, int cur_line, int scp)
         if (!arrsize(templine))
         {
             free(templine);
+
+            blanks++;
+
+            if (blanks >= 2) // If two consecutive blank lines, then end
+            {
+                if (tempscope == scp)
+                {
+                    ind = i;
+                    break;
+                }
+                else tempscope--;
+
+                blanks = 0;
+            }
+
             continue;
         }
 
@@ -312,14 +327,14 @@ int findNextIfChain(char * kwtype, int cur_line, int scp)
         free(templine);
     }
 
-    return ind + 1;
+    return ind;
 }
 
 int findNextEnd(char * kwtype, int cur_line, int scp)
 {
-    // This will become -1 if 'end' is not found
-    int ind = -2;
+    int ind = -1;
     int tempscope = scp;
+    int blanks = 0; // Num of consecutive blank lines
 
     for (int i = cur_line + 1; i < file_line_count; i++)
     {
@@ -328,6 +343,21 @@ int findNextEnd(char * kwtype, int cur_line, int scp)
         if (!arrsize(templine))
         {
             free(templine);
+
+            blanks++;
+
+            if (blanks >= 2) // If two consecutive blank lines, then end
+            {
+                if (tempscope == scp)
+                {
+                    ind = i;
+                    break;
+                }
+                else tempscope--;
+
+                blanks = 0;
+            }
+
             continue;
         }
 
@@ -352,7 +382,7 @@ int findNextEnd(char * kwtype, int cur_line, int scp)
         free(templine);
     }
 
-    return ind + 1;
+    return ind;
 }
 
 int compile_comma_list(char *** outptr, char ** comma_list)
@@ -882,6 +912,25 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             mstrcat(&bytecode, line[i]);
             mstrcat(&bytecode, INSTRUCTION_END);
         }
+    }
+    else if (!strcmp(line[0], "ret"))
+    {
+        if (isInline)
+            error("ret statement must be at the start of a line", num);
+
+        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+
+        arrlstrip(line);
+        len--;
+
+        char * temp = quokka_compile_line_tokens(line, num, len, 1);
+
+        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+
+        free(temp);
+
+        mstrcat(&bytecode, "RETURN");
+        mstrcat(&bytecode, INSTRUCTION_END);
     }
     else if (stringInList(line, ","))
     {
@@ -1664,7 +1713,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
 
         // Clear leading 0's on integers
-        while (startswith(line[0], "0") && strlen(line[0]) > 1)
+        while (startswith(line[0], "0") && strlen(line[0]) > 2)
             line[0]++;
 
         mstrcat(&bytecode, "LOAD_LONG");

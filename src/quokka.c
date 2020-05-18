@@ -187,6 +187,7 @@ int main(int argc, char ** argv)
         quokka_interpret(bytecode);
 
         freeStack();
+        freeRetStack();
         freeVars();
 
         if (verbose) println("--SUCCESS--");
