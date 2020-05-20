@@ -1,20 +1,25 @@
-function_arg1 = null
-function_arg2 = null
+fun sum *
+    str = ''
+    if type(argv[0]) == 'list'
+        a = 0
+        l = argv[0]
+        length = len(l)
+        while a < length
+            str += l[a]
+            a += 1
+        end
+    else
+        a = 0
+        while a < argc
+            str += argv[a]
+            a += 1
+        end
+    end
 
+    ret str
+end
 
-fun function
-    ret function_arg1 + function_arg2
-
-
-function_arg1 = 10
-function_arg2 = 54
-num = function()
-
-println(num, num, num)
-
-
-if num > 10
-    println('stuff')
-
-
-println(':D')
+s = sum('words', ' + ', 'more words')
+println(s)
+l = sum(['words', 'WORDS', 'worddd', 'WORDDD'])
+println(l)

@@ -136,6 +136,9 @@ int islong(char * word)
 {
     int size = strlen(word);
 
+    if (size <= 1)
+        return 0;
+
     if (word[size - 1] != 'l' && word[size - 1] != 'L')
         return 0;
 
@@ -233,7 +236,8 @@ void scpstkPop()
 
 int findNextIfChain(char * kwtype, int cur_line, int scp)
 {
-    int ind = -1;
+    // Index will be -1 if 'end' not found
+    int ind = -2;
     int tempscope = scp;
     int blanks = 0; // Num of consecutive blank lines
 
@@ -256,21 +260,6 @@ int findNextIfChain(char * kwtype, int cur_line, int scp)
         if (!arrsize(templine))
         {
             free(templine);
-
-            blanks++;
-
-            if (blanks >= 2) // If two consecutive blank lines, then end
-            {
-                if (tempscope == scp)
-                {
-                    ind = i;
-                    break;
-                }
-                else tempscope--;
-
-                blanks = 0;
-            }
-
             continue;
         }
 
@@ -327,12 +316,13 @@ int findNextIfChain(char * kwtype, int cur_line, int scp)
         free(templine);
     }
 
-    return ind;
+    return ind + 1;
 }
 
 int findNextEnd(char * kwtype, int cur_line, int scp)
 {
-    int ind = -1;
+    // Index will be -1 if 'end' not found
+    int ind = -2;
     int tempscope = scp;
     int blanks = 0; // Num of consecutive blank lines
 
@@ -343,21 +333,6 @@ int findNextEnd(char * kwtype, int cur_line, int scp)
         if (!arrsize(templine))
         {
             free(templine);
-
-            blanks++;
-
-            if (blanks >= 2) // If two consecutive blank lines, then end
-            {
-                if (tempscope == scp)
-                {
-                    ind = i;
-                    break;
-                }
-                else tempscope--;
-
-                blanks = 0;
-            }
-
             continue;
         }
 
@@ -382,7 +357,7 @@ int findNextEnd(char * kwtype, int cur_line, int scp)
         free(templine);
     }
 
-    return ind;
+    return ind + 1;
 }
 
 int compile_comma_list(char *** outptr, char ** comma_list)
@@ -856,6 +831,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             error("function definition can only be at the start of a line", num);
         if (len <= 1)
             error("function definition requires at least a function name", num);
+        if (len > 4)
+            error("function definition received too many arguments", num);
 
         // Set new line
         mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
@@ -865,7 +842,34 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             error("function definition missing 'end' keyword", num);
 
         char * funcname = line[1];
-        int argcount = 0;
+        int argmin = 0;
+        int argmax = 0;
+
+        if (len > 3)
+        {
+            if (!strcmp(line[2], "*"))
+                argmin = 0;
+            else
+                argmin = strtol(line[2], NULL, 10);
+
+            if (!strcmp(line[3], "*"))
+                argmax = -1;
+            else
+                argmax = strtol(line[3], NULL, 10);
+        }
+        else if (len > 2)
+        {
+            if (!strcmp(line[2], "*"))
+            {
+                argmin = 0;
+                argmax = -1;
+            }
+            else
+            {
+                argmin = strtol(line[2], NULL, 10);
+                argmax = argmin;
+            }
+        }
 
         char * funcbytecode = malloc(1);
         strcpy(funcbytecode, "");
@@ -881,9 +885,29 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         num = next;
 
+        if (argmin < 0 && argmin != -1)
+            error("minimum argument count for function definition can not be below 0", num);
+        if (argmax < argmin && argmax != -1)
+            error("maximum argument count for function definition can not be below minimum argument count",
+                num);
+
         mstrcat(&bytecode, "DEFINE_FUNCTION");
         mstrcat(&bytecode, SEPARATOR);
         mstrcat(&bytecode, funcname);
+        mstrcat(&bytecode, SEPARATOR);
+
+        if (argmin == -1)
+            mstrcat(&bytecode, "*");
+        else
+            mstrcat(&bytecode, intToStr(argmin));
+
+        mstrcat(&bytecode, SEPARATOR);
+
+        if (argmax == -1)
+            mstrcat(&bytecode, "*");
+        else
+            mstrcat(&bytecode, intToStr(argmax));
+
         mstrcat(&bytecode, SEPARATOR);
         mstrcat(&bytecode, "[");
         mstrcat(&bytecode, funcbytecode);

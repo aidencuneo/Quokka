@@ -2,8 +2,8 @@ Object __add___string(int argc, Object * argv)
 {
     if (!strcmp(argv[1].name, "string"))
     {
-        char * first = (char *)objectGetAttr(argv[0], "value");
-        char * secnd = (char *)objectGetAttr(argv[1], "value");
+        char * first = objectGetAttr(argv[0], "value");
+        char * secnd = objectGetAttr(argv[1], "value");
 
         char * third = malloc(strlen(first) + strlen(secnd) + 1);
         strcpy(third, first);
@@ -11,11 +11,26 @@ Object __add___string(int argc, Object * argv)
 
         return makeString(third);
     }
+    else if (!strcmp(argv[1].name, "null"))
+    {
+        Object * arglist = makeArglist(argv[1]);
 
-    char * err = malloc(66 + strlen(argv[1].name) + 1 + 1);
-    strcpy(err, "only 'string' and 'string' can be concatenated, not 'string' and '");
+        char * first = objectGetAttr(argv[0], "value");
+        char * secnd = objectGetAttr(q_function_string(1, arglist), "value");
+
+        char * third = malloc(strlen(first) + strlen(secnd) + 1);
+        strcpy(third, first);
+        strcat(third, secnd);
+
+        free(arglist);
+
+        return makeString(third);
+    }
+
+    char * err = malloc(20 + strlen(argv[1].name) + 30 + 1);
+    strcpy(err, "types 'string' and '");
     strcat(err, argv[1].name);
-    strcat(err, "'");
+    strcat(err, "' are invalid operands for '+'");
     error(err, line_num);
 }
 

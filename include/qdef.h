@@ -117,7 +117,6 @@ Object makeList(int length, Object * value, int flipped);
 Object makeNull();
 
 // function
-Object makeFunction(char ** bytecode);
-Object makeMethod(Object (*func)(Object * argv), int * argc);
+Object makeFunction(char ** bytecode, int argmin, int argmax);
 
 #endif

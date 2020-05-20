@@ -495,11 +495,23 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "DEFINE_FUNCTION"))
     {
+        int argmin, argmax;
+
+        if (!strcmp(line[2], "*"))
+            argmin = 0;
+        else
+            argmin = strtol(line[2], NULL, 10);
+
+        if (!strcmp(line[3], "*"))
+            argmax = -1;
+        else
+            argmax = strtol(line[3], NULL, 10);
+
         char * f_code = strSlice(
-            strReplace(line[2], "\t", "\n"),
+            strReplace(line[4], "\t", "\n"),
             1, 1);
 
-        addVar(line[1], makeFunction(&f_code));
+        addVar(line[1], makeFunction(&f_code, argmin, argmax));
     }
     else if (!strcmp(line[0], "DEL_VAR"))
     {
@@ -1111,7 +1123,7 @@ void quokka_interpret_line_tokens(char ** line)
         else
         {
             arglist = realloc(arglist, (argcount + 1) * sizeof(Object));
-            for (int i = 0; i < argcount; i++)
+            for (int i = argcount - 1; i >= 0; i--)
                 arglist[i + 1] = arglist[i];
             arglist[0] = func;
 
