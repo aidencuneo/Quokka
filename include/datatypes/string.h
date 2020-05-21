@@ -1,9 +1,9 @@
-Object __add___string(int argc, Object * argv)
+Object __add___string(int argc, int * argv)
 {
-    if (!strcmp(argv[1].name, "string"))
+    if (!strcmp(mem[argv[1]].name, "string"))
     {
-        char * first = objectGetAttr(argv[0], "value");
-        char * secnd = objectGetAttr(argv[1], "value");
+        char * first = objectGetAttr(mem[argv[0]], "value");
+        char * secnd = objectGetAttr(mem[argv[1]], "value");
 
         char * third = malloc(strlen(first) + strlen(secnd) + 1);
         strcpy(third, first);
@@ -11,11 +11,11 @@ Object __add___string(int argc, Object * argv)
 
         return makeString(third);
     }
-    else if (!strcmp(argv[1].name, "null"))
+    else if (!strcmp(mem[argv[1]].name, "null"))
     {
-        Object * arglist = makeArglist(argv[1]);
+        int * arglist = makeIntPtr(argv[1]);
 
-        char * first = objectGetAttr(argv[0], "value");
+        char * first = objectGetAttr(mem[argv[0]], "value");
         char * secnd = objectGetAttr(q_function_string(1, arglist), "value");
 
         char * third = malloc(strlen(first) + strlen(secnd) + 1);
@@ -27,19 +27,19 @@ Object __add___string(int argc, Object * argv)
         return makeString(third);
     }
 
-    char * err = malloc(20 + strlen(argv[1].name) + 30 + 1);
+    char * err = malloc(20 + strlen(mem[argv[1]].name) + 30 + 1);
     strcpy(err, "types 'string' and '");
-    strcat(err, argv[1].name);
+    strcat(err, mem[argv[1]].name);
     strcat(err, "' are invalid operands for '+'");
     error(err, line_num);
 }
 
-Object __mul___string(int argc, Object * argv)
+Object __mul___string(int argc, int * argv)
 {
-    if (!strcmp(argv[1].name, "int"))
+    if (!strcmp(mem[argv[1]].name, "int"))
     {
-        char * first = objectGetAttr(argv[0], "value");
-        int * secnd = objectGetAttr(argv[1], "value");
+        char * first = objectGetAttr(mem[argv[0]], "value");
+        int * secnd = objectGetAttr(mem[argv[1]], "value");
 
         char * third = malloc(strlen(first) + 1);
         strcpy(third, first);
@@ -52,45 +52,45 @@ Object __mul___string(int argc, Object * argv)
         return makeString(third);
     }
 
-    char * err = malloc(20 + strlen(argv[1].name) + 30 + 1);
+    char * err = malloc(20 + strlen(mem[argv[1]].name) + 30 + 1);
     strcpy(err, "types 'string' and '");
-    strcat(err, argv[1].name);
+    strcat(err, mem[argv[1]].name);
     strcat(err, "' are invalid operands for '*'");
     error(err, line_num);
 }
 
-Object __eq___string(int argc, Object * argv)
+Object __eq___string(int argc, int * argv)
 {
-    if (strcmp(argv[1].name, "string"))
+    if (strcmp(mem[argv[1]].name, "string"))
     {
-        char * err = malloc(20 + strlen(argv[1].name) + 31 + 1);
+        char * err = malloc(20 + strlen(mem[argv[1]].name) + 31 + 1);
         strcpy(err, "types 'string' and '");
-        strcat(err, argv[1].name);
+        strcat(err, mem[argv[1]].name);
         strcat(err, "' can not be compared with '=='");
         error(err, line_num);
     }
 
-    char * first = (char *)objectGetAttr(argv[0], "value");
-    char * secnd = (char *)objectGetAttr(argv[1], "value");
+    char * first = (char *)objectGetAttr(mem[argv[0]], "value");
+    char * secnd = (char *)objectGetAttr(mem[argv[1]], "value");
 
     if (!strcmp(first, secnd))
         return makeInt(&truePtr);
     return makeInt(&falsePtr);
 }
 
-Object __index___string(int argc, Object * argv)
+Object __index___string(int argc, int * argv)
 {
-    if (strcmp(argv[1].name, "int"))
+    if (strcmp(mem[argv[1]].name, "int"))
     {
-        char * err = malloc(42 + strlen(argv[1].name) + 1 + 1);
+        char * err = malloc(42 + strlen(mem[argv[1]].name) + 1 + 1);
         strcpy(err, "string index argument must be 'int', not '");
-        strcat(err, argv[1].name);
+        strcat(err, mem[argv[1]].name);
         strcat(err, "'");
         error(err, line_num);
     }
 
-    int ind = ((int *)objectGetAttr(argv[1], "value"))[0];
-    int length = strlen((char *)objectGetAttr(argv[0], "value"));
+    int ind = ((int *)objectGetAttr(mem[argv[1]], "value"))[0];
+    int length = strlen((char *)objectGetAttr(mem[argv[0]], "value"));
 
     // If index is -1, retrieve length - 1
     if (ind < 0)
@@ -101,7 +101,7 @@ Object __index___string(int argc, Object * argv)
     if (ind < 0)
         return makeString("");
 
-    char ch = ((char *)objectGetAttr(argv[0], "value"))[ind];
+    char ch = ((char *)objectGetAttr(mem[argv[0]], "value"))[ind];
 
     char * chst = malloc(2);
     chst[0] = ch;
@@ -110,39 +110,39 @@ Object __index___string(int argc, Object * argv)
     return makeString(chst);
 }
 
-Object __copy___string(int argc, Object * argv)
+Object __copy___string(int argc, int * argv)
 {
-    return makeString((char *)objectGetAttr(argv[0], "value"));
+    return makeString((char *)objectGetAttr(mem[argv[0]], "value"));
 }
 
-Object __len___string(int argc, Object * argv)
+Object __len___string(int argc, int * argv)
 {
-    long long len = strlen((char *)objectGetAttr(argv[0], "value"));
+    long long len = strlen((char *)objectGetAttr(mem[argv[0]], "value"));
 
     return makeLong(makeLLPtr(len));
 }
 
-Object __disp___string(int argc, Object * argv)
+Object __disp___string(int argc, int * argv)
 {
-    char * selftext = (char *)objectGetAttr(argv[0], "value");
+    char * selftext = (char *)objectGetAttr(mem[argv[0]], "value");
     char * rawst = makeRawString(selftext);
     pushTrash(rawst);
 
     return makeString(rawst);
 }
 
-Object __bool___string(int argc, Object * argv)
+Object __bool___string(int argc, int * argv)
 {
-    char * thisvalue = ((char *)objectGetAttr(argv[0], "value"));
+    char * thisvalue = ((char *)objectGetAttr(mem[argv[0]], "value"));
 
     if (strlen(thisvalue))
         return makeInt(&truePtr);
     return makeInt(&falsePtr);
 }
 
-Object __string___string(int argc, Object * argv)
+Object __string___string(int argc, int * argv)
 {
-    return argv[0];
+    return mem[argv[0]];
 }
 
 Object makeString(char * value)

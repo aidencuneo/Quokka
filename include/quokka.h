@@ -36,6 +36,13 @@ int in_cli_mode = 0;
 #include "qdef.h"
 
 //
+/// Memory
+//
+
+Object * mem;
+int memsize;
+
+//
 /// Function declarations
 //
 
@@ -81,7 +88,7 @@ char * cpprint(char * value);
     default  : cpprintln)(value)
 
 // Used to typecast Object pointers into Quokka functions
-typedef Object (*standard_func_def)(int argc, Object * argv);
+typedef Object (*standard_func_def)(int argc, int * argv);
 
 //
 /// All the rest

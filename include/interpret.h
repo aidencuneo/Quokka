@@ -12,10 +12,7 @@ int * ret_stack;
 int ret_stack_size;
 int can_return;
 
-// Memory
-Object * mem;
-int memsize;
-
+// Trash
 void ** trash;
 int trashsize;
 
@@ -632,7 +629,8 @@ void quokka_interpret_line_tokens(char ** line)
     // }
     else if (!strcmp(line[0], "UNARY_ADD"))
     {
-        Object first = popTop();
+        int firstind = popTopIndex();
+        Object first = mem[firstind];
 
         if (!objectHasAttr(first, "__pos__"))
         {
@@ -656,7 +654,7 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 1)
             error("__pos__ function requires an invalid amount of arguments, should be 1", line_num);
 
-        Object * arglist = makeArglist(first);
+        int * arglist = makeIntPtr(firstind);
 
         pushTop(((standard_func_def)objectGetAttr(first, "__pos__"))(1, arglist));
 
@@ -664,7 +662,8 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "UNARY_SUB"))
     {
-        Object first = popTop();
+        int firstind = popTopIndex();
+        Object first = mem[firstind];
 
         if (!objectHasAttr(first, "__neg__"))
         {
@@ -688,7 +687,7 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 1)
             error("__neg__ function requires an invalid amount of arguments, should be 1", line_num);
 
-        Object * arglist = makeArglist(first);
+        int * arglist = makeIntPtr(firstind);
 
         pushTop(((standard_func_def)objectGetAttr(first, "__neg__"))(1, arglist));
 
@@ -696,8 +695,10 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "BINARY_ADD"))
     {
-        Object secnd = popTop();
-        Object first = popTop();
+        int secndind = popTopIndex();
+        int firstind = popTopIndex();
+        Object secnd = mem[secndind];
+        Object first = mem[firstind];
 
         if (!objectHasAttr(first, "__add__"))
         {
@@ -721,9 +722,9 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__add__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        int * arglist = malloc(2 * sizeof(int));
+        arglist[0] = firstind;
+        arglist[1] = secndind;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__add__"))(2, arglist));
 
@@ -731,8 +732,10 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "BINARY_SUB"))
     {
-        Object secnd = popTop();
-        Object first = popTop();
+        int secndind = popTopIndex();
+        int firstind = popTopIndex();
+        Object secnd = mem[secndind];
+        Object first = mem[firstind];
 
         if (!objectHasAttr(first, "__sub__"))
         {
@@ -756,9 +759,9 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__sub__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        int * arglist = malloc(2 * sizeof(int));
+        arglist[0] = firstind;
+        arglist[1] = secndind;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__sub__"))(2, arglist));
 
@@ -766,8 +769,10 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "BINARY_MUL"))
     {
-        Object secnd = popTop();
-        Object first = popTop();
+        int secndind = popTopIndex();
+        int firstind = popTopIndex();
+        Object secnd = mem[secndind];
+        Object first = mem[firstind];
 
         if (!objectHasAttr(first, "__mul__"))
         {
@@ -791,9 +796,9 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__mul__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        int * arglist = malloc(2 * sizeof(int));
+        arglist[0] = firstind;
+        arglist[1] = secndind;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__mul__"))(2, arglist));
 
@@ -801,8 +806,10 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "BINARY_DIV"))
     {
-        Object secnd = popTop();
-        Object first = popTop();
+        int secndind = popTopIndex();
+        int firstind = popTopIndex();
+        Object secnd = mem[secndind];
+        Object first = mem[firstind];
 
         if (!objectHasAttr(first, "__div__"))
         {
@@ -826,9 +833,9 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__div__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        int * arglist = malloc(2 * sizeof(int));
+        arglist[0] = firstind;
+        arglist[1] = secndind;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__div__"))(2, arglist));
 
@@ -836,8 +843,10 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "BINARY_POW"))
     {
-        Object secnd = popTop();
-        Object first = popTop();
+        int secndind = popTopIndex();
+        int firstind = popTopIndex();
+        Object secnd = mem[secndind];
+        Object first = mem[firstind];
 
         if (!objectHasAttr(first, "__pow__"))
         {
@@ -861,9 +870,9 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__pow__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        int * arglist = malloc(2 * sizeof(int));
+        arglist[0] = firstind;
+        arglist[1] = secndind;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__pow__"))(2, arglist));
 
@@ -871,8 +880,10 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "CMP_EQ"))
     {
-        Object secnd = popTop();
-        Object first = popTop();
+        int secndind = popTopIndex();
+        int firstind = popTopIndex();
+        Object secnd = mem[secndind];
+        Object first = mem[firstind];
 
         if (!objectHasAttr(first, "__eq__"))
         {
@@ -896,9 +907,9 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__eq__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        int * arglist = malloc(2 * sizeof(int));
+        arglist[0] = firstind;
+        arglist[1] = secndind;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__eq__"))(2, arglist));
 
@@ -906,8 +917,10 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "CMP_LT"))
     {
-        Object secnd = popTop();
-        Object first = popTop();
+        int secndind = popTopIndex();
+        int firstind = popTopIndex();
+        Object secnd = mem[secndind];
+        Object first = mem[firstind];
 
         if (!objectHasAttr(first, "__lt__"))
         {
@@ -931,9 +944,9 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__lt__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        int * arglist = malloc(2 * sizeof(int));
+        arglist[0] = firstind;
+        arglist[1] = secndind;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__lt__"))(2, arglist));
 
@@ -941,8 +954,10 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "CMP_GT"))
     {
-        Object secnd = popTop();
-        Object first = popTop();
+        int secndind = popTopIndex();
+        int firstind = popTopIndex();
+        Object secnd = mem[secndind];
+        Object first = mem[firstind];
 
         if (!objectHasAttr(first, "__gt__"))
         {
@@ -966,9 +981,9 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__gt__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        int * arglist = malloc(2 * sizeof(int));
+        arglist[0] = firstind;
+        arglist[1] = secndind;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__gt__"))(2, arglist));
 
@@ -976,8 +991,10 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "CMP_LE"))
     {
-        Object secnd = popTop();
-        Object first = popTop();
+        int secndind = popTopIndex();
+        int firstind = popTopIndex();
+        Object secnd = mem[secndind];
+        Object first = mem[firstind];
 
         if (!objectHasAttr(first, "__le__"))
         {
@@ -1001,9 +1018,9 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__le__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        int * arglist = malloc(2 * sizeof(int));
+        arglist[0] = firstind;
+        arglist[1] = secndind;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__le__"))(2, arglist));
 
@@ -1011,8 +1028,10 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "CMP_GE"))
     {
-        Object secnd = popTop();
-        Object first = popTop();
+        int secndind = popTopIndex();
+        int firstind = popTopIndex();
+        Object secnd = mem[secndind];
+        Object first = mem[firstind];
 
         if (!objectHasAttr(first, "__ge__"))
         {
@@ -1036,9 +1055,9 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__ge__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        int * arglist = malloc(2 * sizeof(int));
+        arglist[0] = firstind;
+        arglist[1] = secndind;
 
         pushTop(((standard_func_def)objectGetAttr(first, "__ge__"))(2, arglist));
 
@@ -1068,9 +1087,10 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "JUMP_IF_TRUE"))
     {
-        Object obj = popTop();
+        int obj_i = popTopIndex();
+        Object obj = mem[obj_i];
 
-        Object * arglist = makeArglist(obj);
+        int * arglist = makeIntPtr(obj_i);
 
         if (!objectHasAttr(obj, "__bool__"))
         {
@@ -1104,9 +1124,10 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "JUMP_IF_FALSE"))
     {
-        Object obj = popTop();
+        int obj_i = popTopIndex();
+        Object obj = mem[obj_i];
 
-        Object * arglist = makeArglist(obj);
+        int * arglist = makeIntPtr(obj_i);
 
         if (!objectHasAttr(obj, "__bool__"))
         {
@@ -1146,12 +1167,13 @@ void quokka_interpret_line_tokens(char ** line)
     {
         int argcount = strtol(line[1], NULL, 10);
 
-        Object * arglist = malloc(argcount * sizeof(Object));
+        int * arglist = malloc(argcount * sizeof(int));
 
         for (int i = 0; i < argcount; i++)
-            arglist[argcount - i - 1] = popTop();
+            arglist[argcount - i - 1] = popTopIndex();
 
-        Object func = popTop();
+        int funcind = popTopIndex();
+        Object func = mem[funcind];
 
         if (!objectHasAttr(func, "__call__") &&
             strcmp(func.name, "bfunction") &&
@@ -1201,10 +1223,10 @@ void quokka_interpret_line_tokens(char ** line)
         }
         else
         {
-            arglist = realloc(arglist, (argcount + 1) * sizeof(Object));
+            arglist = realloc(arglist, (argcount + 1) * sizeof(int));
             for (int i = argcount - 1; i >= 0; i--)
                 arglist[i + 1] = arglist[i];
-            arglist[0] = func;
+            arglist[0] = funcind;
 
             pushTop(((standard_func_def)objectGetAttr(func, "__call__"))(argcount, arglist));
         }
@@ -1217,7 +1239,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         if (!strcmp(line[1], "*"))
         {
-            Object obj = popTop();
+            int obj_i = popTopIndex();
+            Object obj = mem[obj_i];
 
             if (!objectHasAttr(obj, "__copy__"))
             {
@@ -1228,7 +1251,7 @@ void quokka_interpret_line_tokens(char ** line)
                 error(err, line_num);
             }
 
-            Object * arglist = makeArglist(obj);
+            int * arglist = makeIntPtr(obj_i);
 
             pushTop(((standard_func_def)objectGetAttr(obj, "__copy__"))(1, arglist));
 
@@ -1239,12 +1262,14 @@ void quokka_interpret_line_tokens(char ** line)
 
         // If 'GET_INDEX 1' then get index like normal
 
-        Object ind = popTop();
-        Object obj = popTop();
+        int ind_i = popTopIndex();
+        int obj_i = popTopIndex();
+        Object ind = mem[ind_i];
+        Object obj = mem[obj_i];
 
-        Object * arglist = malloc(2 * sizeof(Object));
-        arglist[0] = obj;
-        arglist[1] = ind;
+        int * arglist = malloc(2 * sizeof(int));
+        arglist[0] = obj_i;
+        arglist[1] = ind_i;
 
         if (!objectHasAttr(obj, "__index__"))
         {

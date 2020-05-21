@@ -77,7 +77,7 @@ int main(int argc, char ** argv)
                     if (stack_size)
                     {
                         // Get top of stack
-                        Object * arglist = makeArglist(mem[stack[stack_size - 1]]);
+                        int * arglist = makeIntPtr(stack[stack_size - 1]);
 
                         // Print it
                         q_function_println(1, arglist);
@@ -111,7 +111,7 @@ int main(int argc, char ** argv)
                 if (stack_size)
                 {
                     // Get top of stack
-                    Object * arglist = makeArglist(mem[stack[stack_size - 1]]);
+                    int * arglist = makeIntPtr(stack[stack_size - 1]);
 
                     // Print it
                     q_function_println(1, arglist);

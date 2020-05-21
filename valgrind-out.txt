@@ -1,16 +1,238 @@
-==3182== Memcheck, a memory error detector
-==3182== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==3182== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
-==3182== Command: bin/quokka examples/mathstuff.q
-==3182== Parent PID: 3176
-==3182== 
-==3182== error calling PR_SET_PTRACER, vgdb might block
-==3182== 
-==3182== HEAP SUMMARY:
-==3182==     in use at exit: 0 bytes in 0 blocks
-==3182==   total heap usage: 4,753 allocs, 4,753 frees, 398,528 bytes allocated
-==3182== 
-==3182== All heap blocks were freed -- no leaks are possible
-==3182== 
-==3182== For lists of detected and suppressed errors, rerun with: -s
-==3182== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==429== Memcheck, a memory error detector
+==429== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==429== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==429== Command: bin/quokka examples/mathstuff.q -c
+==429== Parent PID: 423
+==429== 
+==429== error calling PR_SET_PTRACER, vgdb might block
+==429== Invalid free() / delete / delete[] / realloc()
+==429==    at 0x483CA3F: free (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x114B53: freeObject (interpret.h:247)
+==429==    by 0x113AF7: freeMemory (interpret.h:100)
+==429==    by 0x1226A7: main (quokka.c:194)
+==429==  Address 0x4a910a0 is 0 bytes inside a block of size 248 free'd
+==429==    at 0x483CA3F: free (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x114B53: freeObject (interpret.h:247)
+==429==    by 0x113AF7: freeMemory (interpret.h:100)
+==429==    by 0x1226A7: main (quokka.c:194)
+==429==  Block was alloc'd at
+==429==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x1149F8: addObjectValue (interpret.h:218)
+==429==    by 0x118298: makeInt (int.h:414)
+==429==    by 0x11DAAD: quokka_interpret_line_tokens (interpret.h:545)
+==429==    by 0x11D8C8: quokka_interpret_line (interpret.h:509)
+==429==    by 0x121DF1: quokka_interpret_tokens (interpret.h:1318)
+==429==    by 0x121E70: quokka_interpret (interpret.h:1332)
+==429==    by 0x11D55F: __call___function (function.h:41)
+==429==    by 0x121899: quokka_interpret_line_tokens (interpret.h:1231)
+==429==    by 0x11D8C8: quokka_interpret_line (interpret.h:509)
+==429==    by 0x121DF1: quokka_interpret_tokens (interpret.h:1318)
+==429==    by 0x121E70: quokka_interpret (interpret.h:1332)
+==429== 
+==429== Invalid free() / delete / delete[] / realloc()
+==429==    at 0x483CA3F: free (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x114B5F: freeObject (interpret.h:248)
+==429==    by 0x113AF7: freeMemory (interpret.h:100)
+==429==    by 0x1226A7: main (quokka.c:194)
+==429==  Address 0x4a911e0 is 0 bytes inside a block of size 248 free'd
+==429==    at 0x483CA3F: free (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x114B5F: freeObject (interpret.h:248)
+==429==    by 0x113AF7: freeMemory (interpret.h:100)
+==429==    by 0x1226A7: main (quokka.c:194)
+==429==  Block was alloc'd at
+==429==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x114A1B: addObjectValue (interpret.h:219)
+==429==    by 0x118298: makeInt (int.h:414)
+==429==    by 0x11DAAD: quokka_interpret_line_tokens (interpret.h:545)
+==429==    by 0x11D8C8: quokka_interpret_line (interpret.h:509)
+==429==    by 0x121DF1: quokka_interpret_tokens (interpret.h:1318)
+==429==    by 0x121E70: quokka_interpret (interpret.h:1332)
+==429==    by 0x11D55F: __call___function (function.h:41)
+==429==    by 0x121899: quokka_interpret_line_tokens (interpret.h:1231)
+==429==    by 0x11D8C8: quokka_interpret_line (interpret.h:509)
+==429==    by 0x121DF1: quokka_interpret_tokens (interpret.h:1318)
+==429==    by 0x121E70: quokka_interpret (interpret.h:1332)
+==429== 
+==429== 
+==429== HEAP SUMMARY:
+==429==     in use at exit: 934 bytes in 53 blocks
+==429==   total heap usage: 2,962 allocs, 2,921 frees, 438,447 bytes allocated
+==429== 
+==429== 0 bytes in 3 blocks are definitely lost in loss record 1 of 17
+==429==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x11CAEA: makeList (list.h:123)
+==429==    by 0x11D517: __call___function (function.h:38)
+==429==    by 0x121899: quokka_interpret_line_tokens (interpret.h:1231)
+==429==    by 0x11D8C8: quokka_interpret_line (interpret.h:509)
+==429==    by 0x121DF1: quokka_interpret_tokens (interpret.h:1318)
+==429==    by 0x121E70: quokka_interpret (interpret.h:1332)
+==429==    by 0x122693: main (quokka.c:191)
+==429== 
+==429== 6 bytes in 3 blocks are definitely lost in loss record 2 of 17
+==429==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x10A59F: intToStr (quokka.h:389)
+==429==    by 0x10D889: quokka_compile_line_tokens (compile.h:913)
+==429==    by 0x10BBEF: quokka_compile_line (compile.h:408)
+==429==    by 0x1116C4: quokka_compile_tokens (compile.h:1968)
+==429==    by 0x11179B: quokka_compile_raw (compile.h:1989)
+==429==    by 0x1117E9: quokka_compile_fname (compile.h:2001)
+==429==    by 0x1224F5: main (quokka.c:158)
+==429== 
+==429== 6 bytes in 3 blocks are definitely lost in loss record 3 of 17
+==429==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x10A59F: intToStr (quokka.h:389)
+==429==    by 0x10D8E2: quokka_compile_line_tokens (compile.h:920)
+==429==    by 0x10BBEF: quokka_compile_line (compile.h:408)
+==429==    by 0x1116C4: quokka_compile_tokens (compile.h:1968)
+==429==    by 0x11179B: quokka_compile_raw (compile.h:1989)
+==429==    by 0x1117E9: quokka_compile_fname (compile.h:2001)
+==429==    by 0x1224F5: main (quokka.c:158)
+==429== 
+==429== 10 bytes in 3 blocks are definitely lost in loss record 4 of 17
+==429==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x10AA97: mstrcattrip (quokka.h:545)
+==429==    by 0x10D4B5: quokka_compile_line_tokens (compile.h:835)
+==429==    by 0x10BBEF: quokka_compile_line (compile.h:408)
+==429==    by 0x10D74C: quokka_compile_line_tokens (compile.h:890)
+==429==    by 0x10BBEF: quokka_compile_line (compile.h:408)
+==429==    by 0x1116C4: quokka_compile_tokens (compile.h:1968)
+==429==    by 0x11179B: quokka_compile_raw (compile.h:1989)
+==429==    by 0x1117E9: quokka_compile_fname (compile.h:2001)
+==429==    by 0x1224F5: main (quokka.c:158)
+==429== 
+==429== 12 bytes in 3 blocks are definitely lost in loss record 5 of 17
+==429==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x109603: makeIntPtr (qdef.h:20)
+==429==    by 0x11D7C9: makeFunction (function.h:83)
+==429==    by 0x11DDD1: quokka_interpret_line_tokens (interpret.h:591)
+==429==    by 0x11D8C8: quokka_interpret_line (interpret.h:509)
+==429==    by 0x121DF1: quokka_interpret_tokens (interpret.h:1318)
+==429==    by 0x121E70: quokka_interpret (interpret.h:1332)
+==429==    by 0x122693: main (quokka.c:191)
+==429== 
+==429== 12 bytes in 3 blocks are definitely lost in loss record 6 of 17
+==429==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x109603: makeIntPtr (qdef.h:20)
+==429==    by 0x11D819: makeFunction (function.h:84)
+==429==    by 0x11DDD1: quokka_interpret_line_tokens (interpret.h:591)
+==429==    by 0x11D8C8: quokka_interpret_line (interpret.h:509)
+==429==    by 0x121DF1: quokka_interpret_tokens (interpret.h:1318)
+==429==    by 0x121E70: quokka_interpret (interpret.h:1332)
+==429==    by 0x122693: main (quokka.c:191)
+==429== 
+==429== 12 bytes in 3 blocks are definitely lost in loss record 7 of 17
+==429==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x11D2DB: __call___function (function.h:7)
+==429==    by 0x121899: quokka_interpret_line_tokens (interpret.h:1231)
+==429==    by 0x11D8C8: quokka_interpret_line (interpret.h:509)
+==429==    by 0x121DF1: quokka_interpret_tokens (interpret.h:1318)
+==429==    by 0x121E70: quokka_interpret (interpret.h:1332)
+==429==    by 0x122693: main (quokka.c:191)
+==429== 
+==429== 44 bytes in 3 blocks are definitely lost in loss record 8 of 17
+==429==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x11D36B: __call___function (function.h:13)
+==429==    by 0x121899: quokka_interpret_line_tokens (interpret.h:1231)
+==429==    by 0x11D8C8: quokka_interpret_line (interpret.h:509)
+==429==    by 0x121DF1: quokka_interpret_tokens (interpret.h:1318)
+==429==    by 0x121E70: quokka_interpret (interpret.h:1332)
+==429==    by 0x122693: main (quokka.c:191)
+==429== 
+==429== 52 bytes in 2 blocks are definitely lost in loss record 9 of 17
+==429==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x11AEFE: __add___string (string.h:8)
+==429==    by 0x11EA1B: quokka_interpret_line_tokens (interpret.h:729)
+==429==    by 0x11D8C8: quokka_interpret_line (interpret.h:509)
+==429==    by 0x121DF1: quokka_interpret_tokens (interpret.h:1318)
+==429==    by 0x121E70: quokka_interpret (interpret.h:1332)
+==429==    by 0x122693: main (quokka.c:191)
+==429== 
+==429== 72 bytes in 3 blocks are definitely lost in loss record 10 of 17
+==429==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x111F13: quokka_line_tok (compile.h:2153)
+==429==    by 0x10B977: findNextEnd (compile.h:334)
+==429==    by 0x10D57B: quokka_compile_line_tokens (compile.h:851)
+==429==    by 0x10BBEF: quokka_compile_line (compile.h:408)
+==429==    by 0x1116C4: quokka_compile_tokens (compile.h:1968)
+==429==    by 0x11179B: quokka_compile_raw (compile.h:1989)
+==429==    by 0x1117E9: quokka_compile_fname (compile.h:2001)
+==429==    by 0x1224F5: main (quokka.c:158)
+==429== 
+==429== 88 bytes in 3 blocks are definitely lost in loss record 11 of 17
+==429==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x11D353: __call___function (function.h:12)
+==429==    by 0x121899: quokka_interpret_line_tokens (interpret.h:1231)
+==429==    by 0x11D8C8: quokka_interpret_line (interpret.h:509)
+==429==    by 0x121DF1: quokka_interpret_tokens (interpret.h:1318)
+==429==    by 0x121E70: quokka_interpret (interpret.h:1332)
+==429==    by 0x122693: main (quokka.c:191)
+==429== 
+==429== 96 bytes in 3 blocks are definitely lost in loss record 12 of 17
+==429==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x10A9FC: mstrcat (quokka.h:537)
+==429==    by 0x10DBDB: quokka_compile_line_tokens (compile.h:968)
+==429==    by 0x10BBEF: quokka_compile_line (compile.h:408)
+==429==    by 0x10D74C: quokka_compile_line_tokens (compile.h:890)
+==429==    by 0x10BBEF: quokka_compile_line (compile.h:408)
+==429==    by 0x1116C4: quokka_compile_tokens (compile.h:1968)
+==429==    by 0x11179B: quokka_compile_raw (compile.h:1989)
+==429==    by 0x1117E9: quokka_compile_fname (compile.h:2001)
+==429==    by 0x1224F5: main (quokka.c:158)
+==429== 
+==429== 103 bytes in 3 blocks are definitely lost in loss record 13 of 17
+==429==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x10A9FC: mstrcat (quokka.h:537)
+==429==    by 0x10D782: quokka_compile_line_tokens (compile.h:894)
+==429==    by 0x10BBEF: quokka_compile_line (compile.h:408)
+==429==    by 0x1116C4: quokka_compile_tokens (compile.h:1968)
+==429==    by 0x11179B: quokka_compile_raw (compile.h:1989)
+==429==    by 0x1117E9: quokka_compile_fname (compile.h:2001)
+==429==    by 0x1224F5: main (quokka.c:158)
+==429== 
+==429== 103 bytes in 3 blocks are definitely lost in loss record 14 of 17
+==429==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x10A703: strSlice (quokka.h:444)
+==429==    by 0x11DDAE: quokka_interpret_line_tokens (interpret.h:587)
+==429==    by 0x11D8C8: quokka_interpret_line (interpret.h:509)
+==429==    by 0x121DF1: quokka_interpret_tokens (interpret.h:1318)
+==429==    by 0x121E70: quokka_interpret (interpret.h:1332)
+==429==    by 0x122693: main (quokka.c:191)
+==429== 
+==429== 103 bytes in 3 blocks are definitely lost in loss record 15 of 17
+==429==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x48F454E: strndup (strndup.c:43)
+==429==    by 0x11D557: __call___function (function.h:41)
+==429==    by 0x121899: quokka_interpret_line_tokens (interpret.h:1231)
+==429==    by 0x11D8C8: quokka_interpret_line (interpret.h:509)
+==429==    by 0x121DF1: quokka_interpret_tokens (interpret.h:1318)
+==429==    by 0x121E70: quokka_interpret (interpret.h:1332)
+==429==    by 0x122693: main (quokka.c:191)
+==429== 
+==429== 106 bytes in 6 blocks are definitely lost in loss record 16 of 17
+==429==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x10A848: strReplace (quokka.h:485)
+==429==    by 0x10D762: quokka_compile_line_tokens (compile.h:890)
+==429==    by 0x10BBEF: quokka_compile_line (compile.h:408)
+==429==    by 0x1116C4: quokka_compile_tokens (compile.h:1968)
+==429==    by 0x11179B: quokka_compile_raw (compile.h:1989)
+==429==    by 0x1117E9: quokka_compile_fname (compile.h:2001)
+==429==    by 0x1224F5: main (quokka.c:158)
+==429== 
+==429== 109 bytes in 3 blocks are definitely lost in loss record 17 of 17
+==429==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==429==    by 0x10A848: strReplace (quokka.h:485)
+==429==    by 0x11DD9C: quokka_interpret_line_tokens (interpret.h:587)
+==429==    by 0x11D8C8: quokka_interpret_line (interpret.h:509)
+==429==    by 0x121DF1: quokka_interpret_tokens (interpret.h:1318)
+==429==    by 0x121E70: quokka_interpret (interpret.h:1332)
+==429==    by 0x122693: main (quokka.c:191)
+==429== 
+==429== LEAK SUMMARY:
+==429==    definitely lost: 934 bytes in 53 blocks
+==429==    indirectly lost: 0 bytes in 0 blocks
+==429==      possibly lost: 0 bytes in 0 blocks
+==429==    still reachable: 0 bytes in 0 blocks
+==429==         suppressed: 0 bytes in 0 blocks
+==429== 
+==429== For lists of detected and suppressed errors, rerun with: -s
+==429== ERROR SUMMARY: 29 errors from 19 contexts (suppressed: 0 from 0)

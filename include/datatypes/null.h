@@ -1,9 +1,9 @@
-Object __disp___null(int argc, Object * argv)
+Object __disp___null(int argc, int * argv)
 {
     return makeString("null");
 }
 
-Object __bool___null(int argc, Object * argv)
+Object __bool___null(int argc, int * argv)
 {
     return makeInt(&falsePtr);
 }

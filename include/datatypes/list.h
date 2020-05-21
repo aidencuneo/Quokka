@@ -1,12 +1,12 @@
-Object __add___list(int argc, Object * argv)
+Object __add___list(int argc, int * argv)
 {
-    if (!strcmp(argv[1].name, "list"))
+    if (!strcmp(mem[argv[1]].name, "list"))
     {
-        int * first = objectGetAttr(argv[0], "value");
-        int * secnd = objectGetAttr(argv[1], "value");
+        int * first = objectGetAttr(mem[argv[0]], "value");
+        int * secnd = objectGetAttr(mem[argv[1]], "value");
 
-        int firstlen = ((int *)objectGetAttr(argv[0], "length"))[0];
-        int secndlen = ((int *)objectGetAttr(argv[1], "length"))[0];
+        int firstlen = ((int *)objectGetAttr(mem[argv[0]], "length"))[0];
+        int secndlen = ((int *)objectGetAttr(mem[argv[1]], "length"))[0];
 
         int * third = malloc((firstlen + secndlen) * sizeof(int));
 
@@ -21,26 +21,26 @@ Object __add___list(int argc, Object * argv)
         return makeList(firstlen + secndlen, third, 0);
     }
 
-    char * err = malloc(18 + strlen(argv[1].name) + 30 + 1);
+    char * err = malloc(18 + strlen(mem[argv[1]].name) + 30 + 1);
     strcpy(err, "types 'list' and '");
-    strcat(err, argv[1].name);
+    strcat(err, mem[argv[1]].name);
     strcat(err, "' are invalid operands for '+'");
     error(err, line_num);
 }
 
-Object __index___list(int argc, Object * argv)
+Object __index___list(int argc, int * argv)
 {
-    if (strcmp(argv[1].name, "int"))
+    if (strcmp(mem[argv[1]].name, "int"))
     {
-        char * err = malloc(40 + strlen(argv[1].name) + 1 + 1);
+        char * err = malloc(40 + strlen(mem[argv[1]].name) + 1 + 1);
         strcpy(err, "list index argument must be 'int', not '");
-        strcat(err, argv[1].name);
+        strcat(err, mem[argv[1]].name);
         strcat(err, "'");
         error(err, line_num);
     }
 
-    int ind = ((int *)objectGetAttr(argv[1], "value"))[0];
-    int length = ((int *)objectGetAttr(argv[0], "length"))[0];
+    int ind = ((int *)objectGetAttr(mem[argv[1]], "value"))[0];
+    int length = ((int *)objectGetAttr(mem[argv[0]], "length"))[0];
 
     // If index is -1, retrieve length - 1
     if (ind < 0)
@@ -52,7 +52,7 @@ Object __index___list(int argc, Object * argv)
     if (ind < 0)
         return makeNull();
 
-    int obj = ((int *)objectGetAttr(argv[0], "value"))[ind];
+    int obj = ((int *)objectGetAttr(mem[argv[0]], "value"))[ind];
     int * obj_ptr = makeIntPtr(obj);
 
     Object ret = makeInt(obj_ptr);
@@ -63,39 +63,39 @@ Object __index___list(int argc, Object * argv)
     return ret;
 }
 
-Object __copy___list(int argc, Object * argv)
+Object __copy___list(int argc, int * argv)
 {
     return makeList(
-        ((int *)objectGetAttr(argv[0], "length"))[0],
-        objectGetAttr(argv[0], "value"),
+        ((int *)objectGetAttr(mem[argv[0]], "length"))[0],
+        objectGetAttr(mem[argv[0]], "value"),
         0); // 0 so it doesn't flip
 }
 
-Object __len___list(int argc, Object * argv)
+Object __len___list(int argc, int * argv)
 {
-    return makeInt(objectGetAttr(argv[0], "length"));
+    return makeInt(objectGetAttr(mem[argv[0]], "length"));
 }
 
-Object __bool___list(int argc, Object * argv)
+Object __bool___list(int argc, int * argv)
 {
-    int length = ((int *)objectGetAttr(argv[0], "length"))[0];
+    int length = ((int *)objectGetAttr(mem[argv[0]], "length"))[0];
 
     if (length)
         return makeInt(&truePtr);
     return makeInt(&falsePtr);
 }
 
-Object __string___list(int argc, Object * argv)
+Object __string___list(int argc, int * argv)
 {
     char * out = malloc(2);
     strcpy(out, "[");
 
-    int * lst = objectGetAttr(argv[0], "value");
-    int lstlen = ((int *)objectGetAttr(argv[0], "length"))[0];
+    int * lst = objectGetAttr(mem[argv[0]], "value");
+    int lstlen = ((int *)objectGetAttr(mem[argv[0]], "length"))[0];
 
     for (int p = 0; p < lstlen; p++)
     {
-        Object * arglist = makeArglist(mem[lst[p]]);
+        int * arglist = makeIntPtr(lst[p]);
 
         Object disp = q_function_display(1, arglist);
 

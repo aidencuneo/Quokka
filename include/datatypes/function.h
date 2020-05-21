@@ -1,16 +1,16 @@
-Object __call___function(int argc, Object * argv)
+Object __call___function(int argc, int * argv)
 {
     // Get function code
-    char * code = objectGetAttr(argv[0], "value");
+    char * code = objectGetAttr(mem[argv[0]], "value");
 
     // Set up the environment for the function call
-    /*Object * old_stack = malloc(stack_size * sizeof(Object));
+    int * old_stack = malloc(stack_size * sizeof(int));
     for (int i = 0; i < stack_size; i++)
         old_stack[i] = stack[i];
     int old_stack_size = stack_size;
 
     char ** old_locals_names = malloc(locals.count * sizeof(char *));
-    Object * old_locals_values = malloc(locals.count * sizeof(Object));
+    int * old_locals_values = malloc(locals.count * sizeof(int));
     for (int i = 0; i < locals.count; i++)
     {
         old_locals_names[i] = locals.names[i];
@@ -26,9 +26,12 @@ Object __call___function(int argc, Object * argv)
     can_return = 1;
 
     // Vars
-    addVar("argc", makeInt(makeIntPtr(argc)));
+    int * intptr = makeIntPtr(argc);
+    pushTrash(intptr);
 
-    Object * arglist = malloc(argc * sizeof(Object));
+    addVar("argc", makeInt(intptr));
+
+    int * arglist = malloc(argc * sizeof(int));
     for (int i = 0; i < argc; i++)
         arglist[i] = argv[i + 1];
 
@@ -37,13 +40,11 @@ Object __call___function(int argc, Object * argv)
     // Interpret
     quokka_interpret(strndup(code, strlen(code)));
 
-    stack = realloc(stack, sizeof(Object));
+    stack = realloc(stack, sizeof(int));
     stack_size = 0;
 
     for (int i = 0; i < old_stack_size; i++)
-    {
-        pushTop(old_stack[i]);
-    }
+        pushTopIndex(old_stack[i]);
 
     // Try free(old_stack);
 
@@ -52,7 +53,7 @@ Object __call___function(int argc, Object * argv)
 
     locals.count = old_locals_count;
     locals.names = malloc((locals.count + 1) * sizeof(char *));
-    locals.values = malloc((locals.count + 1) * sizeof(Object));
+    locals.values = malloc((locals.count + 1) * sizeof(int));
 
     for (int i = 0; i < locals.count; i++)
     {
@@ -63,7 +64,7 @@ Object __call___function(int argc, Object * argv)
     bc_line = old_bc_line;
     bc_line_count = old_bc_line_count;
     bc_tokens = old_bc_tokens;
-    can_return = old_can_return;*/
+    can_return = old_can_return;
 
     if (ret_stack_size)
         return popRetTop();

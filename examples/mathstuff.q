@@ -1,11 +1,23 @@
-integer = 2147483647
-longnum = 2147483648
+// oof() - Returns type int
+fun oof
+    ret 2147483647
+end
 
-println(integer, ':', type(integer))
-println(longnum, ':', type(longnum))
+// oop() - Returns type long
+fun oop
+    ret 2147483648
+end
 
-bignum = integer * longnum
-println(bignum, ':', type(bignum))
+// oos() - Returns type string
+fun oos
+    ret '2147483647'
+end
 
-println(4 ** 4)
-println((4 + 4) - ((4 * 4) / (4 ** 4)))
+num = oof()
+println(num)
+
+num = oop()
+println(num)
+
+str = oos()
+println(str + string(num) + str)

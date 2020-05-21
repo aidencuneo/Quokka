@@ -1,14 +1,16 @@
-Object q_function_println(int argc, Object * argv);
+Object q_function_println(int argc, int * argv);
 
-Object q_function_display(int argc, Object * argv)
+Object q_function_display(int argc, int * argv)
 {
     char * out = malloc(1);
     strcpy(out, "");
 
-    if (objectHasAttr(argv[0], "__disp__"))
+    Object obj = mem[argv[0]];
+
+    if (objectHasAttr(obj, "__disp__"))
     {
-        Object * arglist = makeArglist(argv[0]);
-        Object strtext = ((standard_func_def)objectGetAttr(argv[0], "__disp__"))(1, arglist);
+        int * arglist = makeIntPtr(argv[0]);
+        Object strtext = ((standard_func_def)objectGetAttr(obj, "__disp__"))(1, arglist);
 
         if (strcmp(strtext.name, "string"))
         {
@@ -27,27 +29,29 @@ Object q_function_display(int argc, Object * argv)
 
         freeObject(strtext);
 
-        //pushTrash(text);
+        // pushTrash(text);
     }
     else
     {
-        mstrcattrip(&out, "<", argv[0].name);
+        mstrcattrip(&out, "<", obj.name);
         mstrcat(&out, ">");
     }
 
     return makeString(out);
 }
 
-Object q_function_print(int argc, Object * argv)
+Object q_function_print(int argc, int * argv)
 {
     int ret = 0;
 
     for (int i = 0; i < argc; i++)
     {
-        if (objectHasAttr(argv[i], "__string__"))
+        Object obj = mem[argv[i]];
+
+        if (objectHasAttr(obj, "__string__"))
         {
-            Object * arglist = makeArglist(argv[i]);
-            Object strtext = ((standard_func_def)objectGetAttr(argv[i], "__string__"))(1, arglist);
+            int * arglist = makeIntPtr(argv[i]);
+            Object strtext = ((standard_func_def)objectGetAttr(obj, "__string__"))(1, arglist);
 
             if (!strcmp(objectGetAttr(strtext, "value"), "string"))
             {
@@ -67,7 +71,7 @@ Object q_function_print(int argc, Object * argv)
         }
         else
         {
-            Object * arglist = makeArglist(argv[i]);
+            int * arglist = makeIntPtr(argv[i]);
             Object strtext = q_function_display(1, arglist);
 
             free(arglist);
@@ -94,16 +98,18 @@ Object q_function_print(int argc, Object * argv)
     return makeLong(llptr);
 }
 
-Object q_function_println(int argc, Object * argv)
+Object q_function_println(int argc, int * argv)
 {
     int ret = 0;
 
     for (int i = 0; i < argc; i++)
     {
-        if (objectHasAttr(argv[i], "__string__"))
+        Object obj = mem[argv[i]];
+
+        if (objectHasAttr(obj, "__string__"))
         {
-            Object * arglist = makeArglist(argv[i]);
-            Object strtext = ((standard_func_def)objectGetAttr(argv[i], "__string__"))(1, arglist);
+            int * arglist = makeIntPtr(argv[i]);
+            Object strtext = ((standard_func_def)objectGetAttr(obj, "__string__"))(1, arglist);
 
             if (!strcmp(objectGetAttr(strtext, "value"), "string"))
             {
@@ -123,7 +129,7 @@ Object q_function_println(int argc, Object * argv)
         }
         else
         {
-            Object * arglist = makeArglist(argv[i]);
+            int * arglist = makeIntPtr(argv[i]);
             Object strtext = q_function_display(1, arglist);
 
             free(arglist);
@@ -155,7 +161,7 @@ Object q_function_println(int argc, Object * argv)
     return makeLong(llptr);
 }
 
-Object q_function_input(int argc, Object * argv)
+Object q_function_input(int argc, int * argv)
 {
     char * buffer = malloc(1);
     strcpy(buffer, "");
@@ -181,24 +187,24 @@ Object q_function_input(int argc, Object * argv)
 }
 
 
-Object q_function_bool(int argc, Object * argv)
+Object q_function_bool(int argc, int * argv)
 {
-    if (!objectHasAttr(argv[0], "__bool__"))
+    if (!objectHasAttr(mem[argv[0]], "__bool__"))
     {
-        char * err = malloc(6 + strlen(argv[0].name) + 34 + 1);
+        char * err = malloc(6 + strlen(mem[argv[0]].name) + 34 + 1);
         strcpy(err, "type '");
-        strcat(err, argv[0].name);
+        strcat(err, mem[argv[0]].name);
         strcat(err, "' can not be converted into a bool");
         error(err, line_num);
     }
 
-    Object ret = ((standard_func_def)objectGetAttr(argv[0], "__bool__"))(1, argv);
+    Object ret = ((standard_func_def)objectGetAttr(mem[argv[0]], "__bool__"))(1, argv);
 
     if (strcmp(ret.name, "bool"))
     {
-        char * err = malloc(25 + strlen(argv[0].name) + 25 + 1);
+        char * err = malloc(25 + strlen(mem[argv[0]].name) + 25 + 1);
         strcpy(err, "__bool__ method of type '");
-        strcat(err, argv[0].name);
+        strcat(err, mem[argv[0]].name);
         strcat(err, "' must return type 'bool'");
         error(err, line_num);
     }
@@ -207,32 +213,32 @@ Object q_function_bool(int argc, Object * argv)
 }
 
 
-Object q_function_string(int argc, Object * argv)
+Object q_function_string(int argc, int * argv)
 {
-    if (objectHasAttr(argv[0], "__string__"))
+    if (objectHasAttr(mem[argv[0]], "__string__"))
     {
-        Object ret = ((standard_func_def)objectGetAttr(argv[0], "__string__"))(1, argv);
+        Object ret = ((standard_func_def)objectGetAttr(mem[argv[0]], "__string__"))(1, argv);
 
         if (strcmp(ret.name, "string"))
         {
-            char * err = malloc(27 + strlen(argv[0].name) + 27 + 1);
+            char * err = malloc(27 + strlen(mem[argv[0]].name) + 27 + 1);
             strcpy(err, "__string__ method of type '");
-            strcat(err, argv[0].name);
+            strcat(err, mem[argv[0]].name);
             strcat(err, "' must return type 'string'");
             error(err, line_num);
         }
 
         return ret;
     }
-    else if (objectHasAttr(argv[0], "__disp__"))
+    else if (objectHasAttr(mem[argv[0]], "__disp__"))
     {
-        Object ret = ((standard_func_def)objectGetAttr(argv[0], "__disp__"))(1, argv);
+        Object ret = ((standard_func_def)objectGetAttr(mem[argv[0]], "__disp__"))(1, argv);
 
         if (strcmp(ret.name, "string"))
         {
-            char * err = malloc(25 + strlen(argv[0].name) + 27 + 1);
+            char * err = malloc(25 + strlen(mem[argv[0]].name) + 27 + 1);
             strcpy(err, "__disp__ method of type '");
-            strcat(err, argv[0].name);
+            strcat(err, mem[argv[0]].name);
             strcat(err, "' must return type 'string'");
             error(err, line_num);
         }
@@ -240,31 +246,31 @@ Object q_function_string(int argc, Object * argv)
         return ret;
     }
 
-    char * err = malloc(6 + strlen(argv[0].name) + 36 + 1);
+    char * err = malloc(6 + strlen(mem[argv[0]].name) + 36 + 1);
     strcpy(err, "type '");
-    strcat(err, argv[0].name);
+    strcat(err, mem[argv[0]].name);
     strcat(err, "' can not be converted into a string");
     error(err, line_num);
 }
 
-Object q_function_int(int argc, Object * argv)
+Object q_function_int(int argc, int * argv)
 {
-    if (!objectHasAttr(argv[0], "__int__"))
+    if (!objectHasAttr(mem[argv[0]], "__int__"))
     {
-        char * err = malloc(6 + strlen(argv[0].name) + 36 + 1);
+        char * err = malloc(6 + strlen(mem[argv[0]].name) + 36 + 1);
         strcpy(err, "type '");
-        strcat(err, argv[0].name);
+        strcat(err, mem[argv[0]].name);
         strcat(err, "' can not be converted into an integer");
         error(err, line_num);
     }
 
-    Object ret = ((standard_func_def)objectGetAttr(argv[0], "__int__"))(1, argv);
+    Object ret = ((standard_func_def)objectGetAttr(mem[argv[0]], "__int__"))(1, argv);
 
     if (strcmp(ret.name, "int"))
     {
-        char * err = malloc(24 + strlen(argv[0].name) + 24 + 1);
+        char * err = malloc(24 + strlen(mem[argv[0]].name) + 24 + 1);
         strcpy(err, "__int__ method of type '");
-        strcat(err, argv[0].name);
+        strcat(err, mem[argv[0]].name);
         strcat(err, "' must return type 'int'");
         error(err, line_num);
     }
@@ -272,37 +278,37 @@ Object q_function_int(int argc, Object * argv)
     return ret;
 }
 
-Object q_function_type(int argc, Object * argv)
+Object q_function_type(int argc, int * argv)
 {
-    return makeString(argv[0].name);
+    return makeString(mem[argv[0]].name);
 }
 
-Object q_function_len(int argc, Object * argv)
+Object q_function_len(int argc, int * argv)
 {
-    if (!objectHasAttr(argv[0], "__len__"))
+    if (!objectHasAttr(mem[argv[0]], "__len__"))
     {
-        char * err = malloc(6 + strlen(argv[0].name) + 45 + 1);
+        char * err = malloc(6 + strlen(mem[argv[0]].name) + 45 + 1);
         strcpy(err, "type '");
-        strcat(err, argv[0].name);
+        strcat(err, mem[argv[0]].name);
         strcat(err, "' doesn't have a method for length retrieving");
         error(err, line_num);
     }
 
-    return ((standard_func_def)objectGetAttr(argv[0], "__len__"))(1, argv);
+    return ((standard_func_def)objectGetAttr(mem[argv[0]], "__len__"))(1, argv);
 }
 
-Object q_function_exec(int argc, Object * argv)
+Object q_function_exec(int argc, int * argv)
 {
-    if (strcmp(argv[0].name, "string"))
+    if (strcmp(mem[argv[0]].name, "string"))
     {
-        char * err = malloc(45 + strlen(argv[0].name) + 1 + 1);
+        char * err = malloc(45 + strlen(mem[argv[0]].name) + 1 + 1);
         strcpy(err, "exec argument must be of type 'string', not '");
-        strcat(err, argv[0].name);
+        strcat(err, mem[argv[0]].name);
         strcat(err, "'");
         error(err, line_num);
     }
 
-    char * rawcode = (char *)objectGetAttr(argv[0], "value");
+    char * rawcode = (char *)objectGetAttr(mem[argv[0]], "value");
     char * code = malloc(strlen(rawcode) + 1 + 1);
     strcpy(code, rawcode);
     strcat(code, "\n");
