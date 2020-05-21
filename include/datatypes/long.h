@@ -276,7 +276,11 @@ Object __neg___long(int argc, Object * argv)
 Object __disp___long(int argc, Object * argv)
 {
     long long * thisvalue = objectGetAttr(argv[0], "value");
-    return makeString(LLToStr(thisvalue[0]));
+    char * tostr = LLToStr(thisvalue[0]);
+
+    pushTrash(tostr);
+
+    return makeString(tostr);
 }
 
 Object __bool___long(int argc, Object * argv)

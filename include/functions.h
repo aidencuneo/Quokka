@@ -19,12 +19,15 @@ Object q_function_display(int argc, Object * argv)
             error(err, line_num);
         }
 
-        char * text = (char *)objectGetAttr(strtext, "value");
+        char * text = objectGetAttr(strtext, "value");
 
         free(arglist);
-        freeObject(strtext);
 
         mstrcat(&out, text);
+
+        freeObject(strtext);
+
+        //pushTrash(text);
     }
     else
     {
@@ -55,7 +58,7 @@ Object q_function_print(int argc, Object * argv)
                 error(err, line_num);
             }
 
-            char * text = (char *)objectGetAttr(strtext, "value");
+            char * text = objectGetAttr(strtext, "value");
 
             free(arglist);
 
@@ -73,6 +76,9 @@ Object q_function_print(int argc, Object * argv)
             
             ret += strlen(text);
             printf("%s", text);
+
+            free(text);
+            freeObject(strtext);
         }
 
         if (i + 1 < argc)
@@ -82,7 +88,10 @@ Object q_function_print(int argc, Object * argv)
         }
     }
 
-    return makeLong(makeLLPtr(ret));
+    long long * llptr = makeLLPtr(ret);
+    pushTrash(llptr);
+
+    return makeLong(llptr);
 }
 
 Object q_function_println(int argc, Object * argv)
@@ -105,7 +114,7 @@ Object q_function_println(int argc, Object * argv)
                 error(err, line_num);
             }
 
-            char * text = (char *)objectGetAttr(strtext, "value");
+            char * text = objectGetAttr(strtext, "value");
 
             free(arglist);
 
@@ -119,10 +128,13 @@ Object q_function_println(int argc, Object * argv)
 
             free(arglist);
 
-            char * text = (char *)objectGetAttr(strtext, "value");
+            char * text = objectGetAttr(strtext, "value");
             
             ret += strlen(text);
             printf("%s", text);
+
+            free(text);
+            freeObject(strtext);
         }
 
         if (i + 1 < argc)
@@ -137,7 +149,10 @@ Object q_function_println(int argc, Object * argv)
         }
     }
 
-    return makeLong(makeLLPtr(ret));
+    long long * llptr = makeLLPtr(ret);
+    pushTrash(llptr);
+
+    return makeLong(llptr);
 }
 
 Object q_function_input(int argc, Object * argv)
@@ -159,6 +174,8 @@ Object q_function_input(int argc, Object * argv)
     }
 
     buffer[buflen - 1] = '\0';
+
+    pushTrash(buffer);
 
     return makeString(buffer);
 }

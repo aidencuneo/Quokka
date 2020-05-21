@@ -77,8 +77,7 @@ int main(int argc, char ** argv)
                     if (stack_size)
                     {
                         // Get top of stack
-                        Object * arglist = malloc(sizeof(Object));
-                        arglist[0] = stack[stack_size - 1];
+                        Object * arglist = makeArglist(mem[stack[stack_size - 1]]);
 
                         // Print it
                         q_function_println(1, arglist);
@@ -112,8 +111,7 @@ int main(int argc, char ** argv)
                 if (stack_size)
                 {
                     // Get top of stack
-                    Object * arglist = malloc(sizeof(Object));
-                    arglist[0] = stack[stack_size - 1];
+                    Object * arglist = makeArglist(mem[stack[stack_size - 1]]);
 
                     // Print it
                     q_function_println(1, arglist);
@@ -158,6 +156,9 @@ int main(int argc, char ** argv)
     {
         compile_init();
         bytecode = quokka_compile_fname(fname);
+
+        emptyTrash();
+        trash = malloc(sizeof(void *));
     }
 
     if (verbose) println("\n--BYTECODE--\n");
@@ -176,8 +177,11 @@ int main(int argc, char ** argv)
             fprintf(fp, "%s", bytecode);
         fclose(fp);
 
+        free(barefile);
         free(outputfile);
     }
+
+    free(args);
 
     if (execute_code)
     {
@@ -186,13 +190,17 @@ int main(int argc, char ** argv)
         interp_init();
         quokka_interpret(bytecode);
 
-        freeStack();
-        freeRetStack();
         freeVars();
+        freeMemory();
+        free(stack);
+        freeRetStack();
+        emptyTrash();
 
         if (verbose) println("--SUCCESS--");
     }
 
+    free(fullname);
+    free(dirname);
     free(bytecode);
 
     return 0;

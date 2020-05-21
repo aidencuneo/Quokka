@@ -1,31 +1,31 @@
 Object __add___list(int argc, Object * argv)
 {
-    if (strcmp(argv[1].name, "list"))
+    if (!strcmp(argv[1].name, "list"))
     {
-        char * err = malloc(18 + strlen(argv[1].name) + 30 + 1);
-        strcpy(err, "types 'list' and '");
-        strcat(err, argv[1].name);
-        strcat(err, "' are invalid operands for '+'");
-        error(err, line_num);
+        int * first = objectGetAttr(argv[0], "value");
+        int * secnd = objectGetAttr(argv[1], "value");
+
+        int firstlen = ((int *)objectGetAttr(argv[0], "length"))[0];
+        int secndlen = ((int *)objectGetAttr(argv[1], "length"))[0];
+
+        int * third = malloc((firstlen + secndlen) * sizeof(int));
+
+        // Add first list to final list
+        for (int i = 0; i < firstlen; i++)
+            third[i] = first[i];
+
+        // Add second list to final list
+        for (int i = 0; i < secndlen; i++)
+            third[firstlen + i] = secnd[i];
+
+        return makeList(firstlen + secndlen, third, 0);
     }
 
-    Object * first = (Object *)objectGetAttr(argv[0], "value");
-    Object * secnd = (Object *)objectGetAttr(argv[1], "value");
-
-    int firstlen = ((int *)objectGetAttr(argv[0], "length"))[0];
-    int secndlen = ((int *)objectGetAttr(argv[1], "length"))[0];
-
-    Object * third = malloc((firstlen + secndlen) * sizeof(Object));
-
-    // Add first list to final list
-    for (int i = 0; i < firstlen; i++)
-        third[i] = first[i];
-
-    // Add second list to final list
-    for (int i = 0; i < secndlen; i++)
-        third[firstlen + i] = secnd[i];
-
-    return makeList(firstlen + secndlen, third, 0);
+    char * err = malloc(18 + strlen(argv[1].name) + 30 + 1);
+    strcpy(err, "types 'list' and '");
+    strcat(err, argv[1].name);
+    strcat(err, "' are invalid operands for '+'");
+    error(err, line_num);
 }
 
 Object __index___list(int argc, Object * argv)
@@ -49,19 +49,25 @@ Object __index___list(int argc, Object * argv)
     // Check bounds
     if (ind >= length)
         return makeNull();
-    else if (ind < 0)
+    if (ind < 0)
         return makeNull();
 
-    Object obj = ((Object *)objectGetAttr(argv[0], "value"))[ind];
+    int obj = ((int *)objectGetAttr(argv[0], "value"))[ind];
+    int * obj_ptr = makeIntPtr(obj);
 
-    return obj;
+    Object ret = makeInt(obj_ptr);
+
+    pushTrash(obj_ptr);
+    pushMem(ret);
+
+    return ret;
 }
 
 Object __copy___list(int argc, Object * argv)
 {
     return makeList(
         ((int *)objectGetAttr(argv[0], "length"))[0],
-        (Object *)objectGetAttr(argv[0], "value"),
+        objectGetAttr(argv[0], "value"),
         0); // 0 so it doesn't flip
 }
 
@@ -84,18 +90,18 @@ Object __string___list(int argc, Object * argv)
     char * out = malloc(2);
     strcpy(out, "[");
 
-    Object * lst = ((Object *)objectGetAttr(argv[0], "value"));
+    int * lst = objectGetAttr(argv[0], "value");
     int lstlen = ((int *)objectGetAttr(argv[0], "length"))[0];
 
     for (int p = 0; p < lstlen; p++)
     {
-        Object * arglist = makeArglist(lst[p]);
+        Object * arglist = makeArglist(mem[lst[p]]);
 
         Object disp = q_function_display(1, arglist);
 
         free(arglist);
 
-        mstrcat(&out, (char *)objectGetAttr(disp, "value"));
+        mstrcat(&out, objectGetAttr(disp, "value"));
 
         if (p + 1 < lstlen)
             mstrcat(&out, ", ");
@@ -103,17 +109,18 @@ Object __string___list(int argc, Object * argv)
         freeObject(disp);
     }
 
-    out = realloc(out, strlen(out) + 1 + 1);
-    strcat(out, "]");
+    mstrcat(&out, "]");
+
+    pushTrash(out);
 
     return makeString(out);
 }
 
-Object makeList(int length, Object * value, int flipped)
+Object makeList(int length, int * value, int flipped)
 {
     Object self;
 
-    Object * lst = malloc(length * sizeof(Object));
+    int * lst = malloc(length * sizeof(int));
 
     // Reverse items before creating list
     for (int i = 0; i < length; i++)
@@ -126,8 +133,11 @@ Object makeList(int length, Object * value, int flipped)
 
     free(value);
 
+    int * len_ptr = makeIntPtr(length);
+    pushTrash(len_ptr);
+
     self = makeObject("list", lst);
-    self = addObjectValue(self, "length", makeIntPtr(length));
+    self = addObjectValue(self, "length", len_ptr);
 
     // Two argument methods
 

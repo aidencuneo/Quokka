@@ -123,6 +123,9 @@ int isinteger(char * word)
 {
     int size = strlen(word);
 
+    if (!size)
+        return 0;
+
     for (int i = 0; i < size; i++)
     {
         if (!isdigit(word[i]))
@@ -402,8 +405,10 @@ void compile_init()
 char * quokka_compile_line(char * linetext, int num, int lineLen, int isInline)
 {
     char ** line = quokka_line_tok(linetext);
+    char * ret = quokka_compile_line_tokens(line, num, lineLen, isInline);
+    free(line);
 
-    return quokka_compile_line_tokens(line, num, lineLen, isInline);
+    return ret;
 }
 
 char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInline)
@@ -418,19 +423,23 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else len = lineLen;
 
     if (!len)
-    {
         return bytecode;
-    }
+    if (line[0] == NULL)
+        return bytecode;
+    if (!strlen(line[0]))
+        return bytecode;
 
     if (len < 2)
         line[1] = "";
 
     if (verbose) println(line[0]);
 
+    char * str_line_num = intToStr(current_line + 1);
+
     if (stringInList(line, "="))
     {
         // Set new line
-        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         if (isInline)
             error("variables must be defined at the start of a line", num);
@@ -451,7 +460,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         len -= 2;
         char * temp = quokka_compile_line_tokens(line, num, len, 1);
 
-        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, temp);
 
         free(temp);
 
@@ -459,11 +468,13 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcat(&bytecode, SEPARATOR);
         mstrcat(&bytecode, varname);
         mstrcat(&bytecode, INSTRUCTION_END);
+
+        free(varname);
     }
     else if (stringInList(line, "+="))
     {
         // Set new line
-        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         if (isInline)
             error("variables must be defined at the start of a line", num);
@@ -506,7 +517,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (stringInList(line, "-="))
     {
         // Set new line
-        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         if (isInline)
             error("variables must be defined at the start of a line", num);
@@ -549,7 +560,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (stringInList(line, "*="))
     {
         // Set new line
-        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         if (isInline)
             error("variables must be defined at the start of a line", num);
@@ -592,7 +603,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (stringInList(line, "/="))
     {
         // Set new line
-        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         if (isInline)
             error("variables must be defined at the start of a line", num);
@@ -714,7 +725,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             error("if statement requires a condition", num);
 
         // Set new line
-        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         arrlstrip(line);
         len--;
@@ -753,7 +764,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcat(&bytecode, INSTRUCTION_END);
 
         // Set new line
-        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         arrlstrip(line);
         len--;
@@ -790,7 +801,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcat(&bytecode, INSTRUCTION_END);
 
         // Set new line
-        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
     }
     else if (!strcmp(line[0], "end"))
     {
@@ -821,7 +832,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         }
 
         // Set new line
-        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         scope--;
     }
@@ -835,7 +846,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             error("function definition received too many arguments", num);
 
         // Set new line
-        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         int next = findNextEnd("fun", num, scope);
         if (next == -1)
@@ -921,7 +932,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (isInline)
             error("del statement must be at the start of a line", num);
 
-        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         for (int i = 1; i < len; i++)
         {
@@ -942,14 +953,14 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (isInline)
             error("ret statement must be at the start of a line", num);
 
-        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         arrlstrip(line);
         len--;
 
         char * temp = quokka_compile_line_tokens(line, num, len, 1);
 
-        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, temp);
 
         free(temp);
 
@@ -971,7 +982,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             if (!strcmp(line[p], ","))
             {
                 char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-                mstrcat(&bytecode, strndup(temp, strlen(temp)));
+                mstrcat(&bytecode, temp);
                 free(temp);
 
                 latestvalue = realloc(latestvalue, 1);
@@ -992,7 +1003,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (strlen(latestvalue))
         {
             char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-            mstrcat(&bytecode, strndup(temp, strlen(temp)));
+            mstrcat(&bytecode, temp);
             free(temp);
         }
 
@@ -1002,7 +1013,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         char * operslist = malloc(1);
         strcpy(operslist, "");
@@ -1021,7 +1032,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             {
                 char * temp = quokka_compile_line(latestvalue, num, -1, 1);
                 valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, strdup(temp));
+                strcat(valuelist, temp);
                 free(temp);
 
                 if (lastwasop)
@@ -1044,7 +1055,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             {
                 char * temp = quokka_compile_line(latestvalue, num, -1, 1);
                 valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, strdup(temp));
+                strcat(valuelist, temp);
                 free(temp);
 
                 if (lastwasop)
@@ -1067,7 +1078,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             {
                 char * temp = quokka_compile_line(latestvalue, num, -1, 1);
                 valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, strdup(temp));
+                strcat(valuelist, temp);
                 free(temp);
 
                 if (lastwasop)
@@ -1090,7 +1101,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             {
                 char * temp = quokka_compile_line(latestvalue, num, -1, 1);
                 valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, strdup(temp));
+                strcat(valuelist, temp);
                 free(temp);
 
                 if (lastwasop)
@@ -1113,7 +1124,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             {
                 char * temp = quokka_compile_line(latestvalue, num, -1, 1);
                 valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, strdup(temp));
+                strcat(valuelist, temp);
                 free(temp);
 
                 if (lastwasop)
@@ -1154,8 +1165,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line(latestvalue, num, -1, 1);
         valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-        strcat(valuelist, strndup(temp, strlen(temp)));
+        strcat(valuelist, temp);
         free(temp);
+        free(latestvalue);
 
         mstrcat(&bytecode, strdup(valuelist));
         mstrcat(&bytecode, strdup(operslist));
@@ -1167,7 +1179,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         char * operslist = malloc(1);
         strcpy(operslist, "");
@@ -1215,10 +1227,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                     char * temp = quokka_compile_line(line[i], num, -1, 1);
                     valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + strlen(tmp) + 1);
 
-                    strcat(valuelist, strndup(temp, strlen(temp)));
+                    strcat(valuelist, temp);
                     free(temp);
 
-                    strcat(valuelist, strndup(tmp, strlen(tmp)));
+                    strcat(valuelist, tmp);
                     free(tmp);
 
                     latestvalue = realloc(latestvalue, 1);
@@ -1232,7 +1244,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 {
                     char * temp = quokka_compile_line(latestvalue, num, -1, 1);
                     valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                    strcat(valuelist, strdup(temp));
+                    strcat(valuelist, temp);
                     free(temp);
 
                     latestvalue = realloc(latestvalue, 1);
@@ -1285,10 +1297,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                     char * temp = quokka_compile_line(line[i], num, -1, 1);
                     valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + strlen(tmp) + 1);
 
-                    strcat(valuelist, strndup(temp, strlen(temp)));
+                    strcat(valuelist, temp);
                     free(temp);
 
-                    strcat(valuelist, strndup(tmp, strlen(tmp)));
+                    strcat(valuelist, tmp);
                     free(tmp);
 
                     latestvalue = realloc(latestvalue, 1);
@@ -1302,7 +1314,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 {
                     char * temp = quokka_compile_line(latestvalue, num, -1, 1);
                     valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                    strcat(valuelist, strdup(temp));
+                    strcat(valuelist, temp);
                     free(temp);
 
                     latestvalue = realloc(latestvalue, 1);
@@ -1328,7 +1340,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             // {
             //     char * temp = quokka_compile_line(latestvalue, num, -1, 1);
             //     valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-            //     strcat(valuelist, strdup(temp));
+            //     strcat(valuelist, temp);
             //     free(temp);
 
             //     if (lastwasop)
@@ -1358,7 +1370,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             // {
             //     char * temp = quokka_compile_line(latestvalue, num, -1, 1);
             //     valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-            //     strcat(valuelist, strdup(temp));
+            //     strcat(valuelist, temp);
             //     free(temp);
 
             //     if (lastwasop)
@@ -1388,7 +1400,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             // {
             //     char * temp = quokka_compile_line(latestvalue, num, -1, 1);
             //     valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-            //     strcat(valuelist, strdup(temp));
+            //     strcat(valuelist, temp);
             //     free(temp);
 
             //     if (lastwasop)
@@ -1439,11 +1451,12 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line(latestvalue, num, -1, 1);
         valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-        strcat(valuelist, strndup(temp, strlen(temp)));
+        strcat(valuelist, temp);
         free(temp);
+        free(latestvalue);
 
-        mstrcat(&bytecode, strndup(valuelist, strlen(valuelist)));
-        mstrcat(&bytecode, strndup(operslist, strlen(operslist)));
+        mstrcat(&bytecode, valuelist);
+        mstrcat(&bytecode, operslist);
 
         free(valuelist);
         free(operslist);
@@ -1452,7 +1465,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         char * operslist = malloc(1);
         strcpy(operslist, "");
@@ -1472,7 +1485,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             {
                 char * temp = quokka_compile_line(latestvalue, num, -1, 1);
                 valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, strdup(temp));
+                strcat(valuelist, temp);
                 free(temp);
 
                 if (lastwasop)
@@ -1501,7 +1514,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             {
                 char * temp = quokka_compile_line(latestvalue, num, -1, 1);
                 valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, strdup(temp));
+                strcat(valuelist, temp);
                 free(temp);
 
                 if (lastwasop)
@@ -1548,11 +1561,12 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line(latestvalue, num, -1, 1);
         valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-        strcat(valuelist, strndup(temp, strlen(temp)));
+        strcat(valuelist, temp);
         free(temp);
+        free(latestvalue);
 
-        mstrcat(&bytecode, strndup(valuelist, strlen(valuelist)));
-        mstrcat(&bytecode, strndup(operslist, strlen(operslist)));
+        mstrcat(&bytecode, valuelist);
+        mstrcat(&bytecode, operslist);
 
         free(valuelist);
         free(operslist);
@@ -1561,7 +1575,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         char * operslist = malloc(1);
         strcpy(operslist, "");
@@ -1581,7 +1595,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             {
                 char * temp = quokka_compile_line(latestvalue, num, -1, 1);
                 valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, strdup(temp));
+                strcat(valuelist, temp);
                 free(temp);
 
                 if (lastwasop)
@@ -1628,11 +1642,12 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line(latestvalue, num, -1, 1);
         valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-        strcat(valuelist, strndup(temp, strlen(temp)));
+        strcat(valuelist, temp);
         free(temp);
+        free(latestvalue);
 
-        mstrcat(&bytecode, strndup(valuelist, strlen(valuelist)));
-        mstrcat(&bytecode, strndup(operslist, strlen(operslist)));
+        mstrcat(&bytecode, valuelist);
+        mstrcat(&bytecode, operslist);
 
         free(valuelist);
         free(operslist);
@@ -1671,19 +1686,22 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         if (len > 1)
             error("invalid syntax", num);
 
         // Split up the argument list into it's elements
+        char * sliced = strSlice(line[0], 1, 1);
+
         char ** templine;
-        int templen = compile_comma_list_string(&templine, strSlice(line[0], 1, 1));
+        int templen = compile_comma_list_string(&templine, sliced);
 
         char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
 
-        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, temp);
 
+        free(sliced);
         free(temp);
         free(templine);
     }
@@ -1691,35 +1709,41 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         if (len > 2)
             error("invalid syntax", num);
 
         mstrcat(&bytecode, "LOAD_NAME");
         mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, strndup(line[0], strlen(line[0])));
+        mstrcat(&bytecode, line[0]);
         mstrcat(&bytecode, INSTRUCTION_END);
 
         // If arguments were given to the function
         if (strlen(line[1]) > 2)
         {
             // Split up the argument list into it's elements
+            char * sliced = strSlice(line[1], 1, 1);
+
             char ** templine;
-            int templen = compile_comma_list_string(&templine, strSlice(line[1], 1, 1));
+            int templen = compile_comma_list_string(&templine, sliced);
 
             char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
 
-            mstrcat(&bytecode, strndup(temp, strlen(temp)));
+            mstrcat(&bytecode, temp);
 
+            free(sliced);
             free(temp);
+
+            char * argcount = intToStr(stringCountUntil(templine, ",", templen) + 1);
 
             mstrcat(&bytecode, "CALL_FUNCTION");
             mstrcat(&bytecode, SEPARATOR);
-            mstrcat(&bytecode, intToStr(stringCountUntil(templine, ",", templen) + 1));
+            mstrcat(&bytecode, argcount);
             mstrcat(&bytecode, INSTRUCTION_END);
 
             free(templine);
+            free(argcount);
         }
         // If no arguments were given
         else
@@ -1734,7 +1758,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         // Clear leading 0's on integers
         while (startswith(line[0], "0") && strlen(line[0]) > 2)
@@ -1749,7 +1773,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         // Clear leading 0's on integers
         while (startswith(line[0], "0") && strlen(line[0]) > 1)
@@ -1768,7 +1792,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         mstrcattrip(&bytecode, "LOAD_NULL", INSTRUCTION_END);
     }
@@ -1779,7 +1803,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         mstrcat(&bytecode, "LOAD_STRING");
         mstrcat(&bytecode, SEPARATOR);
@@ -1790,7 +1814,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         mstrcat(&bytecode, "LOAD_NAME");
         mstrcat(&bytecode, SEPARATOR);
@@ -1801,7 +1825,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         if (len > 2)
             error("invalid syntax", num);
@@ -1817,10 +1841,12 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // If index received an item, for example: [0]
         if (strlen(indexarg) > 2)
         {
-            char * temp = quokka_compile_line(strSlice(indexarg, 1, 1), num, -1, 1);
+            char * sliced = strSlice(indexarg, 1, 1);
+            char * temp = quokka_compile_line(sliced, num, -1, 1);
 
             mstrcat(&bytecode, strndup(temp, strlen(temp)));
 
+            free(sliced);
             free(temp);
 
             mstrcat(&bytecode, "GET_INDEX");
@@ -1836,32 +1862,44 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             mstrcat(&bytecode, "*");
             mstrcat(&bytecode, INSTRUCTION_END);
         }
+
+        free(indexarg);
     }
     else if (startswith(line[0], "[") && endswith(line[0], "]"))
     {
         // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         if (len > 1)
             error("invalid syntax", num);
 
         // Split up the list into it's elements
+        char * sliced = strSlice(line[0], 1, 1);
+
         char ** templine;
-        int templen = compile_comma_list_string(&templine, strSlice(line[0], 1, 1));
+        int templen = compile_comma_list_string(&templine, sliced);
 
         char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
 
         mstrcat(&bytecode, strndup(temp, strlen(temp)));
 
+        free(sliced);
         free(temp);
 
         mstrcat(&bytecode, "MAKE_LIST");
         mstrcat(&bytecode, SEPARATOR);
+
         if (templen)
-            mstrcat(&bytecode, intToStr(stringCountUntil(templine, ",", templen) + 1));
+        {
+            char * intstr = intToStr(stringCountUntil(templine, ",", templen) + 1);
+            mstrcat(&bytecode, intstr);
+
+            free(intstr);
+        }
         else
             mstrcat(&bytecode, "0");
+
         mstrcat(&bytecode, INSTRUCTION_END);
 
         free(templine);
@@ -1875,7 +1913,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         }
 
         // Set new line
-        mstrcattrip(&bytecode, intToStr(current_line + 1), INSTRUCTION_END);
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         int lastwascomma = 0;
 
@@ -1906,6 +1944,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         }
     }
 
+    free(str_line_num);
+
     return bytecode;
 }
 
@@ -1927,7 +1967,8 @@ char * quokka_compile_tokens(char ** tokens, int isInline)
 
         char * ins = quokka_compile_line(t, current_line, -1, isInline);
 
-        mstrcat(&compiled, strndup(ins, strlen(ins)));
+        mstrcat(&compiled, ins);
+
         free(ins);
 
         current_line++;
@@ -1958,6 +1999,8 @@ char * quokka_compile_fname(char * filename)
         return 0;
 
     char * res = quokka_compile_raw(buffer, -1, 0);
+
+    pushTrash(buffer);
 
     return res;
 }
@@ -2084,21 +2127,33 @@ char ** quokka_line_tok(char * line)
         t = c;
     }
 
+    mstrcat(&tokenstr, "\n");
+
     char ** output = malloc(sizeof(char *));
     output[0] = "";
 
     int i = 0;
-    output[0] = cpstrip(strtok(tokenstr, separator));
+    output[0] = cpstrip(nstrtok(tokenstr, separator));
 
     while (output[i] != NULL)
     {
+        // Protects against empty parts of a line or string
+        if (!strlen(output[i]))
+        {
+            output = realloc(output, (i + 1) * sizeof(char *));
+            output[i] = cpstrip(nstrtok(NULL, separator));
+            continue;
+        }
+
         i++;
         output = realloc(output, (i + 1) * sizeof(char *));
-        output[i] = cpstrip(strtok(NULL, separator));
+        output[i] = cpstrip(nstrtok(NULL, separator));
     }
 
     output = realloc(output, (i + 2) * sizeof(char *));
     output[i + 1] = NULL;
+
+    pushTrash(tokenstr);
 
     return output;
 }

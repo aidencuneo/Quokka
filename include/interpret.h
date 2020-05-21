@@ -5,12 +5,19 @@ Varlist locals;
 Object * methods;
 int method_count;
 
-Object * stack;
+int * stack;
 int stack_size;
 
-Object * ret_stack;
+int * ret_stack;
 int ret_stack_size;
 int can_return;
+
+// Memory
+Object * mem;
+int memsize;
+
+void ** trash;
+int trashsize;
 
 // Bytecode file stuff
 char ** bc_tokens;
@@ -25,17 +32,17 @@ int falsePtr;
 // Stack
 void resetStack()
 {
-    for (int i = 0; i < stack_size; i++)
-        freeObject(stack[i]);
+    // for (int i = 0; i < stack_size; i++)
+    //     freeObject(stack[i]);
 
-    stack = malloc(sizeof(Object));
+    stack = malloc(sizeof(int));
     stack_size = 0;
 }
 
 void cleanStack()
 {
     for (int i = 0; i < stack_size; i++)
-        freeObject(stack[i]);
+        freeObject(mem[stack[i]]);
 
     stack_size = 0;
 }
@@ -49,17 +56,17 @@ void freeStack()
 // Return Stack
 void resetRetStack()
 {
-    for (int i = 0; i < ret_stack_size; i++)
-        freeObject(ret_stack[i]);
+    // for (int i = 0; i < ret_stack_size; i++)
+    //     freeObject(ret_stack[i]);
 
-    ret_stack = malloc(sizeof(Object));
+    ret_stack = malloc(sizeof(int));
     ret_stack_size = 0;
 }
 
 void cleanRetStack()
 {
-    for (int i = 0; i < ret_stack_size; i++)
-        freeObject(ret_stack[i]);
+    // for (int i = 0; i < ret_stack_size; i++)
+    //     freeObject(ret_stack[i]);
 
     ret_stack_size = 0;
 }
@@ -73,18 +80,12 @@ void freeRetStack()
 // Var cleaning
 void freeGlobals()
 {
-    for (int i = 0; i < globals.count; i++)
-        freeObject(globals.values[i]);
-
     free(globals.names);
     free(globals.values);
 }
 
 void freeLocals()
 {
-    for (int i = 0; i < locals.count; i++)
-        freeObject(locals.values[i]);
-
     free(locals.names);
     free(locals.values);
 }
@@ -93,6 +94,25 @@ void freeVars()
 {
     freeGlobals();
     freeLocals();
+}
+
+// Memory
+void freeMemory()
+{
+    for (int i = 0; i < memsize; i++)
+        freeObject(mem[i]);
+
+    free(mem);
+}
+
+// Free
+void emptyTrash()
+{
+    for (int i = 0; i < trashsize; i++)
+        free(trash[i]);
+
+    free(trash);
+    trashsize = 0;
 }
 
 // Init
@@ -234,14 +254,31 @@ void freeObject(Object obj)
 // Stack
 void pushTop(Object obj)
 {
-    stack = realloc(stack, (stack_size + 1) * sizeof(Object));
+    pushMem(obj);
+
+    stack = realloc(stack, (stack_size + 1) * sizeof(int));
+    stack[stack_size] = memsize - 1;
+    stack_size++;
+}
+
+void pushTopIndex(int obj)
+{
+    stack = realloc(stack, (stack_size + 1) * sizeof(int));
     stack[stack_size] = obj;
     stack_size++;
 }
 
 Object popTop()
 {
-    stack = realloc(stack, (stack_size + 1) * sizeof(Object));
+    stack = realloc(stack, stack_size * sizeof(int));
+    stack_size--;
+
+    return mem[stack[stack_size]];
+}
+
+int popTopIndex()
+{
+    stack = realloc(stack, stack_size * sizeof(int));
     stack_size--;
 
     return stack[stack_size];
@@ -250,60 +287,92 @@ Object popTop()
 // Return Stack
 void pushRetTop(Object obj)
 {
-    ret_stack = realloc(ret_stack, (ret_stack_size + 1) * sizeof(Object));
-    ret_stack[ret_stack_size] = obj;
+    pushMem(obj);
+
+    ret_stack = realloc(ret_stack, (ret_stack_size + 1) * sizeof(int));
+    ret_stack[ret_stack_size] = memsize - 1;
     ret_stack_size++;
 }
 
 Object popRetTop()
 {
-    ret_stack = realloc(ret_stack, (ret_stack_size + 1) * sizeof(Object));
+    ret_stack = realloc(ret_stack, (ret_stack_size + 1) * sizeof(int));
     ret_stack_size--;
 
-    return ret_stack[ret_stack_size];
+    return mem[ret_stack[ret_stack_size]];
 }
 
-void addGVar(char * name, Object obj)
+// Memory
+int pushMem(Object obj)
+{
+    mem = realloc(mem, (memsize + 1) * sizeof(Object));
+    mem[memsize] = obj;
+    memsize++;
+}
+
+// DO NOT pass an un-malloc'd pointer to this function
+void pushTrash(void * ptr)
+{
+    trash = realloc(trash, (trashsize + 1) * sizeof(void *));
+    trash[trashsize] = ptr;
+    trashsize++;
+}
+
+// Var stuff
+void assignGVar(char * name, int obj_ptr)
 {
     int check = getGVarIndex(name);
     if (check != -1)
     {
-        freeObject(globals.values[check]);
-        globals.values[check] = obj;
+        // freeObject(globals.values[check]);
+        globals.values[check] = obj_ptr;
         return;
     }
 
     globals.names = realloc(globals.names, (globals.count + 1) * sizeof(char *));
-    globals.values = realloc(globals.values, (globals.count + 1) * sizeof(Object));
+    globals.values = realloc(globals.values, (globals.count + 1) * sizeof(int));
 
     globals.names[globals.count] = name;
-    globals.values[globals.count] = obj;
+    globals.values[globals.count] = obj_ptr;
 
     globals.count++;
 }
 
-// addVar adds local variables by default.
-// use addGVar to add a global variable.
-void addVar(char * name, Object obj)
+// assignVar assigns local variables by default.
+// use assignGVar to assign a global variable.
+void assignVar(char * name, int obj_ptr)
 {
     int check = getLVarIndex(name);
     if (check != -1)
     {
-        freeObject(locals.values[check]);
-        locals.values[check] = obj;
+        // if (!can_return)
+        //     freeObject(locals.values[check]);
+        locals.values[check] = obj_ptr;
         return;
     }
 
     locals.names = realloc(locals.names, (locals.count + 1) * sizeof(char *));
-    locals.values = realloc(locals.values, (locals.count + 1) * sizeof(Object));
+    locals.values = realloc(locals.values, (locals.count + 1) * sizeof(int));
 
     locals.names[locals.count] = name;
-    locals.values[locals.count] = obj;
+    locals.values[locals.count] = obj_ptr;
 
     locals.count++;
 }
 
-Object getGVar(char * name)
+void addGVar(char * name, Object obj)
+{
+    pushMem(obj);
+    assignGVar(name, memsize - 1);
+}
+
+void addVar(char * name, Object obj)
+{
+    pushMem(obj);
+    assignVar(name, memsize - 1);
+}
+
+int getGVar(char * name)
 {
     // Check globals
     for (int i = 0; i < globals.count; i++)
@@ -317,7 +386,7 @@ Object getGVar(char * name)
     error(err, line_num);
 }
 
-Object getLVar(char * name)
+int getLVar(char * name)
 {
     // Check locals
     for (int i = 0; i < locals.count; i++)
@@ -331,7 +400,7 @@ Object getLVar(char * name)
     error(err, line_num);
 }
 
-Object getVar(char * name)
+int getVar(char * name)
 {
     // Check locals
     for (int i = 0; i < locals.count; i++)
@@ -387,7 +456,7 @@ int getVarIndex(char * name)
 
 void delLVarIndex(int index)
 {
-    freeObject(locals.values[index]);
+    // freeObject(locals.values[index]);
 
     for (int i = index; i < locals.count; i++)
     {
@@ -398,7 +467,7 @@ void delLVarIndex(int index)
     locals.count--;
 
     locals.names = realloc(locals.names, (locals.count + 1) * sizeof(char *));
-    locals.values = realloc(locals.values, (locals.count + 1) * sizeof(Object));
+    locals.values = realloc(locals.values, (locals.count + 1) * sizeof(int));
 }
 
 Object * makeArglist(Object obj)
@@ -454,7 +523,10 @@ void quokka_interpret_line_tokens(char ** line)
 
     if (!strcmp(line[0], "LOAD_STRING"))
     {
-        Object item = makeString(makeLiteralString(line[1]));
+        char * literal_str = makeLiteralString(line[1]);
+        pushTrash(literal_str);
+
+        Object item = makeString(literal_str);
 
         pushTop(item);
     }
@@ -462,10 +534,18 @@ void quokka_interpret_line_tokens(char ** line)
     {
         long long temp = strtoll(line[1], NULL, 10);
         if (temp > INT_MAX)
-            pushTop(makeLong(makeLLPtr(temp)));
+        {
+            long long * llptr = makeLLPtrFromStr(line[1]);
+            pushTrash(llptr);
+
+            pushTop(makeLong(llptr));
+        }
         else
         {
-            pushTop(makeInt(makeIntPtrFromStr(line[1])));
+            int * intptr = makeIntPtrFromStr(line[1]);
+            pushTrash(intptr);
+
+            pushTop(makeInt(intptr));
         }
     }
     else if (!strcmp(line[0], "LOAD_LONG"))
@@ -480,16 +560,16 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "LOAD_NAME"))
     {
-        pushTop(getVar(line[1]));
+        pushTopIndex(getVar(line[1]));
     }
     else if (!strcmp(line[0], "MAKE_LIST"))
     {
         int lstsize = strtol(line[1], NULL, 10);
 
-        Object * value = malloc(lstsize * sizeof(Object));
+        int * value = malloc(lstsize * sizeof(int));
 
         for (int i = 0; i < lstsize; i++)
-            value[i] = popTop();
+            value[i] = popTopIndex();
 
         pushTop(makeList(lstsize, value, 1));
     }
@@ -1060,7 +1140,7 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "STORE_NAME"))
     {
-        addVar(line[1], popTop());
+        assignVar(line[1], popTopIndex());
     }
     else if (!strcmp(line[0], "CALL_FUNCTION"))
     {
@@ -1098,8 +1178,7 @@ void quokka_interpret_line_tokens(char ** line)
         if (argcount < funcmin)
         {
             int diff = funcmin - argcount;
-            char * diffstr = malloc(11);
-            sprintf(diffstr, "%d", diff);
+            char * diffstr = intToStr(diff);
 
             char * err;
             if (diff != 1)
@@ -1154,7 +1233,6 @@ void quokka_interpret_line_tokens(char ** line)
             pushTop(((standard_func_def)objectGetAttr(obj, "__copy__"))(1, arglist));
 
             free(arglist);
-            freeObject(obj);
 
             return;
         }
@@ -1181,7 +1259,8 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__index__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        pushTop(((standard_func_def)objectGetAttr(obj, "__index__"))(2, arglist));
+        Object retindex = ((standard_func_def)objectGetAttr(obj, "__index__"))(2, arglist);
+        pushTopIndex(((int *)objectGetAttr(retindex, "value"))[0]);
 
         free(arglist);
     }
@@ -1204,8 +1283,8 @@ void quokka_interpret_tokens(char ** tokens)
             line_num = strtol(t, NULL, 10) - 1;
 
             // Comment the next two lines out if there's a segfault
-            if (!can_return)
-                cleanStack();
+            // if (!can_return)
+            //     cleanStack();
 
             bc_line++;
             continue;

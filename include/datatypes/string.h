@@ -90,11 +90,15 @@ Object __index___string(int argc, Object * argv)
     }
 
     int ind = ((int *)objectGetAttr(argv[1], "value"))[0];
-    int len = strlen((char *)objectGetAttr(argv[0], "value"));
+    int length = strlen((char *)objectGetAttr(argv[0], "value"));
 
-    if (ind >= len)
+    // If index is -1, retrieve length - 1
+    if (ind < 0)
+        ind = length + ind;
+
+    if (ind >= length)
         return makeString("");
-    else if (ind < 0)
+    if (ind < 0)
         return makeString("");
 
     char ch = ((char *)objectGetAttr(argv[0], "value"))[ind];
@@ -121,8 +125,10 @@ Object __len___string(int argc, Object * argv)
 Object __disp___string(int argc, Object * argv)
 {
     char * selftext = (char *)objectGetAttr(argv[0], "value");
+    char * rawst = makeRawString(selftext);
+    pushTrash(rawst);
 
-    return makeString(makeRawString(selftext));
+    return makeString(rawst);
 }
 
 Object __bool___string(int argc, Object * argv)

@@ -1,5 +1,8 @@
 // VERSION STUFF
-#define VERSION "0.1.4"
+#define VERSION "0.1.6"
+
+// Defines
+#define LN10 2.3025850929940456840179914546844
 
 // Global file stuff
 char * current_file;
@@ -286,6 +289,8 @@ char * makeLiteralString(char * str)
         }
     }
 
+    free(str);
+
     return newstr;
 }
 
@@ -336,15 +341,50 @@ char * makeRawString(char * str)
     return newstr;
 }
 
+double log10LN(double x)
+{
+    double old_sum = 0.0;
+    double xmlxpl = (x - 1) / (x + 1);
+    double xmlxpl_2 = xmlxpl * xmlxpl;
+    double denom = 1.0;
+    double frac = xmlxpl;
+    double term = frac;
+    double sum = term;
+
+    while (sum != old_sum)
+    {
+        old_sum = sum;
+        denom += 2.0;
+        frac *= xmlxpl_2;
+        sum += frac / denom;
+    }
+
+    return 2.0 * sum;
+}
+
+double log10(double x)
+{
+    return log10LN(x) / LN10;
+}
+
 char * intToStr(int value)
 {
-    char * newval = malloc(11);
+    int length = snprintf(NULL, 0, "%d", value);
+
+    if (!length)
+    {
+        char * empty = malloc(1);
+        empty[0] = '\0';
+
+        return empty;
+    }
+
+    char * newval = malloc(length + 1);
+    strcpy(newval, "");
+
     sprintf(newval, "%d", value);
 
-    char * out = strndup(newval, strlen(newval));
-    free(newval);
-
-    return out;
+    return newval;
 }
 
 char * LLToStr(long long value)
@@ -394,8 +434,8 @@ char * strSlice(char * st, int start, int stop)
 {
     int len = strlen(st);
 
-    char * x = malloc(len + 1);
-    strcpy(x, st);
+    char * x = malloc(len - start - stop + 1);
+    strcpy(x, "");
 
     if (!st || !len)
     {
@@ -403,16 +443,10 @@ char * strSlice(char * st, int start, int stop)
         return st;
     }
 
-    char * end;
+    for (int i = start; i < len - stop; i++)
+        strncat(x, &st[i], 1);
 
-    end = x + len - 1;
-    end -= stop;
-    *(end + 1) = '\0';
-
-    char * out = strndup(x, strlen(x));
-    free(x);
-
-    return out + start;
+    return x;
 }
 
 char * strReplace(char * orig, char * rep, char * with)

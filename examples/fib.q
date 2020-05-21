@@ -1,12 +1,13 @@
-fun fibinc
-    lasttwo = [lasttwo[-1], lasttwo[0] + lasttwo[-1]]
-    ret lasttwo[-1]
+fun fibinc 1
+    lst = argv[0]
+    ret [lst[-1], lst[0] + lst[-1]]
 end
 
-lasttwo = [0L, 1L]
+l = [0L, 1L]
 
 a = 0
 while a < 90
-    println(fibinc())
+    l = fibinc(l)
+    println(l[-1])
     a += 1
 end

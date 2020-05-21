@@ -4,13 +4,21 @@ Object __add___int(int argc, Object * argv)
     {
         int * first = objectGetAttr(argv[0], "value");
         int * secnd = objectGetAttr(argv[1], "value");
-        return makeInt(makeIntPtr(first[0] + secnd[0]));
+
+        int * third = makeIntPtr(first[0] + secnd[0]);
+        pushTrash(third);
+
+        return makeInt(third);
     }
     else if (!strcmp(argv[1].name, "long"))
     {
         int * first = objectGetAttr(argv[0], "value");
         long long * secnd = objectGetAttr(argv[1], "value");
-        return makeLong(makeLLPtr(first[0] + secnd[0]));
+
+        long long * third = makeLLPtr(first[0] + secnd[0]);
+        pushTrash(third);
+
+        return makeLong(third);
     }
 
     char * err = malloc(17 + strlen(argv[1].name) + 30 + 1);
@@ -26,13 +34,21 @@ Object __sub___int(int argc, Object * argv)
     {
         int * first = objectGetAttr(argv[0], "value");
         int * secnd = objectGetAttr(argv[1], "value");
-        return makeInt(makeIntPtr(first[0] - secnd[0]));
+        
+        int * third = makeIntPtr(first[0] - secnd[0]);
+        pushTrash(third);
+
+        return makeInt(third);
     }
     else if (!strcmp(argv[1].name, "long"))
     {
         int * first = objectGetAttr(argv[0], "value");
         long long * secnd = objectGetAttr(argv[1], "value");
-        return makeLong(makeLLPtr(first[0] - secnd[0]));
+
+        long long * third = makeLLPtr(first[0] - secnd[0]);
+        pushTrash(third);
+
+        return makeLong(third);
     }
 
     char * err = malloc(17 + strlen(argv[1].name) + 30 + 1);
@@ -48,13 +64,21 @@ Object __mul___int(int argc, Object * argv)
     {
         int * first = objectGetAttr(argv[0], "value");
         int * secnd = objectGetAttr(argv[1], "value");
-        return makeInt(makeIntPtr(first[0] * secnd[0]));
+
+        int * third = makeIntPtr(first[0] * secnd[0]);
+        pushTrash(third);
+
+        return makeInt(third);
     }
     else if (!strcmp(argv[1].name, "long"))
     {
         int * first = objectGetAttr(argv[0], "value");
         long long * secnd = objectGetAttr(argv[1], "value");
-        return makeLong(makeLLPtr(first[0] * secnd[0]));
+
+        long long * third = makeLLPtr(first[0] * secnd[0]);
+        pushTrash(third);
+
+        return makeLong(third);
     }
 
     char * err = malloc(17 + strlen(argv[1].name) + 30 + 1);
@@ -74,7 +98,10 @@ Object __div___int(int argc, Object * argv)
         if (!secnd[0])
             return makeInt(makeIntPtr(0));
 
-        return makeInt(makeIntPtr(first[0] / secnd[0]));
+        int * third = makeIntPtr(first[0] / secnd[0]);
+        pushTrash(third);
+
+        return makeInt(third);
     }
     else if (!strcmp(argv[1].name, "long"))
     {
@@ -82,9 +109,12 @@ Object __div___int(int argc, Object * argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         if (!secnd[0])
-            return makeInt(makeIntPtr(0));
+            return makeInt(&falsePtr);
 
-        return makeLong(makeLLPtr(first[0] / secnd[0]));
+        long long * third = makeLLPtr(first[0] / secnd[0]);
+        pushTrash(third);
+
+        return makeLong(third);
     }
 
     char * err = malloc(17 + strlen(argv[1].name) + 30 + 1);
@@ -100,13 +130,21 @@ Object __pow___int(int argc, Object * argv)
     {
         int * first = objectGetAttr(argv[0], "value");
         int * secnd = objectGetAttr(argv[1], "value");
-        return makeInt(makeIntPtr(ipowMath(first[0], secnd[0])));
+
+        int * third = makeIntPtr(ipowMath(first[0], secnd[0]));
+        pushTrash(third);
+
+        return makeInt(third);
     }
     else if (!strcmp(argv[1].name, "long"))
     {
         int * first = objectGetAttr(argv[0], "value");
         long long * secnd = objectGetAttr(argv[1], "value");
-        return makeLong(makeLLPtr(lpowMath(first[0], secnd[0])));
+
+        long long * third = makeLLPtr(lpowMath(first[0], secnd[0]));
+        pushTrash(third);
+
+        return makeLong(third);
     }
 
     char * err = malloc(17 + strlen(argv[1].name) + 31 + 1);
@@ -260,20 +298,30 @@ Object __pos___int(int argc, Object * argv)
 {
     int * first = objectGetAttr(argv[0], "value");
 
-    return makeInt(makeIntPtr(first[0]));
+    int * ret = makeIntPtr(first[0]);
+    pushTrash(ret);
+
+    return makeInt(ret);
 }
 
 Object __neg___int(int argc, Object * argv)
 {
     int * first = objectGetAttr(argv[0], "value");
 
-    return makeInt(makeIntPtr(-first[0]));
+    int * ret = makeIntPtr(-first[0]);
+    pushTrash(ret);
+
+    return makeInt(ret);
 }
 
 Object __disp___int(int argc, Object * argv)
 {
     int * thisvalue = objectGetAttr(argv[0], "value");
-    return makeString(intToStr(thisvalue[0]));
+
+    char * tostr = intToStr(thisvalue[0]);
+    pushTrash(tostr);
+
+    return makeString(tostr);
 }
 
 Object __bool___int(int argc, Object * argv)
@@ -289,7 +337,10 @@ Object __int___int(int argc, Object * argv)
 {
     int * first = objectGetAttr(argv[0], "value");
 
-    return makeInt(makeIntPtr(first[0]));
+    int * ret = makeIntPtr(first[0]);
+    pushTrash(ret);
+
+    return makeInt(ret);
 }
 
 Object makeInt(int * value)

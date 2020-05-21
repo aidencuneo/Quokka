@@ -4,7 +4,7 @@ Object __call___function(int argc, Object * argv)
     char * code = objectGetAttr(argv[0], "value");
 
     // Set up the environment for the function call
-    Object * old_stack = malloc(stack_size * sizeof(Object));
+    /*Object * old_stack = malloc(stack_size * sizeof(Object));
     for (int i = 0; i < stack_size; i++)
         old_stack[i] = stack[i];
     int old_stack_size = stack_size;
@@ -41,7 +41,9 @@ Object __call___function(int argc, Object * argv)
     stack_size = 0;
 
     for (int i = 0; i < old_stack_size; i++)
+    {
         pushTop(old_stack[i]);
+    }
 
     // Try free(old_stack);
 
@@ -61,7 +63,7 @@ Object __call___function(int argc, Object * argv)
     bc_line = old_bc_line;
     bc_line_count = old_bc_line_count;
     bc_tokens = old_bc_tokens;
-    can_return = old_can_return;
+    can_return = old_can_return;*/
 
     if (ret_stack_size)
         return popRetTop();

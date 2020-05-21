@@ -56,7 +56,7 @@ struct __Varlist_Struct__
     int count;
 
     char ** names;
-    Object * values;
+    int * values;
 };
 
 // Function declarations
@@ -73,14 +73,22 @@ Object addObjectValue(Object obj, char * name, void * value);
 int objectHasAttr(Object obj, char * name);
 void * objectGetAttr(Object obj, char * name);
 void freeObject(Object obj);
+
 void pushTop(Object obj);
 Object popTop();
-void addVar(char * name, Object obj);
+int pushMem(Object obj);
+void pushTrash(void * ptr);
+
+void assignGVar(char * name, int obj_ptr);
+void assignVar(char * name, int obj_ptr);
 void addGVar(char * name, Object obj);
-Object getVar(char * name);
+void addVar(char * name, Object obj);
+
+int getVar(char * name);
 int getGVarIndex(char * name);
 int getLVarIndex(char * name);
 int getVarIndex(char * name);
+
 Object * makeArglist(Object obj);
 
 //
@@ -111,7 +119,7 @@ Object makeLong(long long * value);
 Object makeString(char * value);
 
 // list
-Object makeList(int length, Object * value, int flipped);
+Object makeList(int length, int * value, int flipped);
 
 // null
 Object makeNull();
