@@ -2093,7 +2093,7 @@ char ** quokka_line_tok(char * line)
             sq || dq || bt || rb > 0 || sb > 0 || cb > 0
         ) && !(
             // Join together operators: -= += *= /= == >= <=
-            (t == '-' || t == '+' || t == '*' || t == '/' || t == '=' || t == '>' || t == '>') && c == '='
+            (t == '-' || t == '+' || t == '*' || t == '/' || t == '=' || t == '>' || t == '<') && c == '='
         // ) && !(
         //     q == 'A' && c == '.' // Join together names like `word.upper` (second part is below)
         ) && !(

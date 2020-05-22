@@ -103,9 +103,41 @@ Object __index___string(int argc, int * argv)
         ind = length + ind;
 
     if (ind >= length)
-        return makeString("");
+    {
+        char * chst = malloc(1);
+        chst[0] = '\0';
+
+        pushTrash(chst);
+
+        pushMem(makeString(chst));
+
+        int * obj_ptr = makeIntPtr(memsize - 1);
+
+        Object ret = makeInt(obj_ptr);
+
+        pushTrash(obj_ptr);
+        pushMem(ret);
+
+        return ret;
+    }
     if (ind < 0)
-        return makeString("");
+    {
+        char * chst = malloc(1);
+        chst[0] = '\0';
+
+        pushTrash(chst);
+
+        pushMem(makeString(chst));
+
+        int * obj_ptr = makeIntPtr(memsize - 1);
+
+        Object ret = makeInt(obj_ptr);
+
+        pushTrash(obj_ptr);
+        pushMem(ret);
+
+        return ret;
+    }
 
     char ch = ((char *)objectGetAttr(mem[argv[0]], "value"))[ind];
 
@@ -115,7 +147,16 @@ Object __index___string(int argc, int * argv)
 
     pushTrash(chst);
 
-    return makeString(chst);
+    pushMem(makeString(chst));
+
+    int * obj_ptr = makeIntPtr(memsize - 1);
+
+    Object ret = makeInt(obj_ptr);
+
+    pushTrash(obj_ptr);
+    pushMem(ret);
+
+    return ret;
 }
 
 Object __copy___string(int argc, int * argv)

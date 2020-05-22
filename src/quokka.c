@@ -29,7 +29,7 @@ int main(int argc, char ** argv)
     signal(3, sigquitHandler);
     signal(4, sigillHandler);
     signal(5, sigtrapHandler);
-    signal(6, sigabrtHandler);
+    // signal(6, sigabrtHandler);
     signal(7, sigbusHandler);
     signal(8, sigfpeHandler);
     signal(11, sigsegvHandler);
