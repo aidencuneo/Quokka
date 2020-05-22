@@ -26,6 +26,8 @@ Object __add___list(int argc, int * argv)
     strcat(err, mem[argv[1]].name);
     strcat(err, "' are invalid operands for '+'");
     error(err, line_num);
+
+    return makeNull();
 }
 
 Object __index___list(int argc, int * argv)

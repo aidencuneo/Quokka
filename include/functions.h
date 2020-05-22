@@ -256,6 +256,8 @@ Object q_function_string(int argc, int * argv)
     strcat(err, mem[argv[0]].name);
     strcat(err, "' can not be converted into a string");
     error(err, line_num);
+
+    return makeNull();
 }
 
 Object q_function_int(int argc, int * argv)

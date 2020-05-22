@@ -76,7 +76,7 @@ void freeObject(Object obj);
 
 void pushTop(Object obj);
 Object popTop();
-int pushMem(Object obj);
+void pushMem(Object obj);
 void pushTrash(void * ptr);
 
 void assignGVar(char * name, int obj_ptr);

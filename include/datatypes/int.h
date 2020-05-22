@@ -26,6 +26,8 @@ Object __add___int(int argc, int * argv)
     strcat(err, mem[argv[1]].name);
     strcat(err, "' are invalid operands for '+'");
     error(err, line_num);
+
+    return makeNull();
 }
 
 Object __sub___int(int argc, int * argv)
@@ -56,6 +58,8 @@ Object __sub___int(int argc, int * argv)
     strcat(err, mem[argv[1]].name);
     strcat(err, "' are invalid operands for '-'");
     error(err, line_num);
+
+    return makeNull();
 }
 
 Object __mul___int(int argc, int * argv)
@@ -86,6 +90,8 @@ Object __mul___int(int argc, int * argv)
     strcat(err, mem[argv[1]].name);
     strcat(err, "' are invalid operands for '*'");
     error(err, line_num);
+
+    return makeNull();
 }
 
 Object __div___int(int argc, int * argv)
@@ -122,6 +128,8 @@ Object __div___int(int argc, int * argv)
     strcat(err, mem[argv[1]].name);
     strcat(err, "' are invalid operands for '/'");
     error(err, line_num);
+
+    return makeNull();
 }
 
 Object __pow___int(int argc, int * argv)
@@ -152,6 +160,8 @@ Object __pow___int(int argc, int * argv)
     strcat(err, mem[argv[1]].name);
     strcat(err, "' are invalid operands for '**'");
     error(err, line_num);
+
+    return makeNull();
 }
 
 Object __eq___int(int argc, int * argv)
@@ -180,6 +190,8 @@ Object __eq___int(int argc, int * argv)
     strcat(err, mem[argv[1]].name);
     strcat(err, "' can not be compared with '=='");
     error(err, line_num);
+
+    return makeNull();
 }
 
 Object __lt___int(int argc, int * argv)
@@ -208,6 +220,8 @@ Object __lt___int(int argc, int * argv)
     strcat(err, mem[argv[1]].name);
     strcat(err, "' can not be compared with '<'");
     error(err, line_num);
+
+    return makeNull();
 }
 
 Object __le___int(int argc, int * argv)
@@ -236,6 +250,8 @@ Object __le___int(int argc, int * argv)
     strcat(err, mem[argv[1]].name);
     strcat(err, "' can not be compared with '<='");
     error(err, line_num);
+
+    return makeNull();
 }
 
 Object __gt___int(int argc, int * argv)
@@ -264,6 +280,8 @@ Object __gt___int(int argc, int * argv)
     strcat(err, mem[argv[1]].name);
     strcat(err, "' can not be compared with '>'");
     error(err, line_num);
+
+    return makeNull();
 }
 
 Object __ge___int(int argc, int * argv)
@@ -292,6 +310,8 @@ Object __ge___int(int argc, int * argv)
     strcat(err, mem[argv[1]].name);
     strcat(err, "' can not be compared with '>='");
     error(err, line_num);
+
+    return makeNull();
 }
 
 Object __pos___int(int argc, int * argv)

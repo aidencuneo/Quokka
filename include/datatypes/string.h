@@ -36,6 +36,8 @@ Object __add___string(int argc, int * argv)
     strcat(err, mem[argv[1]].name);
     strcat(err, "' are invalid operands for '+'");
     error(err, line_num);
+
+    return makeNull();
 }
 
 Object __mul___string(int argc, int * argv)
@@ -63,6 +65,8 @@ Object __mul___string(int argc, int * argv)
     strcat(err, mem[argv[1]].name);
     strcat(err, "' are invalid operands for '*'");
     error(err, line_num);
+
+    return makeNull();
 }
 
 Object __eq___string(int argc, int * argv)

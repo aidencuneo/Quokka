@@ -237,6 +237,8 @@ void * objectGetAttr(Object obj, char * name)
     for (int i = 0; i < obj.value_count; i++)
         if (!strcmp(obj.names[i], name))
             return obj.values[i];
+
+    return NULL;
 }
 
 void freeObject(Object obj)
@@ -295,7 +297,7 @@ int popRetTop()
 }
 
 // Memory
-int pushMem(Object obj)
+void pushMem(Object obj)
 {
     mem = realloc(mem, (memsize + 1) * sizeof(Object));
     mem[memsize] = obj;
@@ -376,6 +378,8 @@ int getGVar(char * name)
     strcat(err, name);
     strcat(err, "' is not defined as a global variable");
     error(err, line_num);
+
+    return -1;
 }
 
 int getLVar(char * name)
@@ -390,6 +394,8 @@ int getLVar(char * name)
     strcat(err, name);
     strcat(err, "' is not defined as a local variable");
     error(err, line_num);
+
+    return -1;
 }
 
 int getVar(char * name)
@@ -409,6 +415,8 @@ int getVar(char * name)
     strcat(err, name);
     strcat(err, "' is not defined");
     error(err, line_num);
+
+    return -1;
 }
 
 int getGVarIndex(char * name)
@@ -611,6 +619,8 @@ void quokka_interpret_line_tokens(char ** line)
             error("can not return values from this scope", line_num);
 
         pushRetTop(popTopIndex());
+        // Immediately return result and exit the function
+        bc_line = bc_line_count;
     }
     // else if (!strcmp(line[0], "GET_ATTR"))
     // {
