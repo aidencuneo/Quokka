@@ -192,7 +192,7 @@ int main(int argc, char ** argv)
 
         freeVars();
         freeMemory();
-        free(stack);
+        freeStack();
         freeRetStack();
         emptyTrash();
 

@@ -122,6 +122,9 @@ Object makeList(int length, int * value, int flipped)
 
     int * lst = malloc(length * sizeof(int));
 
+    // Contents of this list will be freed after program execution
+    pushTrash(lst);
+
     // Reverse items before creating list
     for (int i = 0; i < length; i++)
     {

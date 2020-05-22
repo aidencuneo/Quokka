@@ -36,17 +36,8 @@ void resetStack()
     stack_size = 0;
 }
 
-void cleanStack()
-{
-    for (int i = 0; i < stack_size; i++)
-        freeObject(mem[stack[i]]);
-
-    stack_size = 0;
-}
-
 void freeStack()
 {
-    cleanStack();
     free(stack);
 }
 
@@ -60,17 +51,8 @@ void resetRetStack()
     ret_stack_size = 0;
 }
 
-void cleanRetStack()
-{
-    // for (int i = 0; i < ret_stack_size; i++)
-    //     freeObject(ret_stack[i]);
-
-    ret_stack_size = 0;
-}
-
 void freeRetStack()
 {
-    cleanRetStack();
     free(ret_stack);
 }
 
@@ -282,21 +264,19 @@ int popTopIndex()
 }
 
 // Return Stack
-void pushRetTop(Object obj)
+void pushRetTop(int obj)
 {
-    pushMem(obj);
-
     ret_stack = realloc(ret_stack, (ret_stack_size + 1) * sizeof(int));
-    ret_stack[ret_stack_size] = memsize - 1;
+    ret_stack[ret_stack_size] = obj;
     ret_stack_size++;
 }
 
-Object popRetTop()
+int popRetTop()
 {
     ret_stack = realloc(ret_stack, (ret_stack_size + 1) * sizeof(int));
     ret_stack_size--;
 
-    return mem[ret_stack[ret_stack_size]];
+    return ret_stack[ret_stack_size];
 }
 
 // Memory
@@ -584,9 +564,14 @@ void quokka_interpret_line_tokens(char ** line)
         else
             argmax = strtol(line[3], NULL, 10);
 
-        char * f_code = strSlice(
-            strReplace(line[4], "\t", "\n"),
-            1, 1);
+        char * replaced = strReplace(line[4], "\t", "\n");
+        char * f_code = strSlice(replaced, 1, 1);
+
+        free(replaced);
+
+        // f_code points to the exact memory location of the new function's
+        // bytecode, so f_code must be freed when the program exits.
+        pushTrash(f_code);
 
         addVar(line[1], makeFunction(&f_code, argmin, argmax));
     }
@@ -610,7 +595,7 @@ void quokka_interpret_line_tokens(char ** line)
         if (!can_return)
             error("can not return values from this scope", line_num);
 
-        pushRetTop(popTop());
+        pushRetTop(popTopIndex());
     }
     // else if (!strcmp(line[0], "GET_ATTR"))
     // {
@@ -1228,7 +1213,19 @@ void quokka_interpret_line_tokens(char ** line)
                 arglist[i + 1] = arglist[i];
             arglist[0] = funcind;
 
-            pushTop(((standard_func_def)objectGetAttr(func, "__call__"))(argcount, arglist));
+            Object ret = ((standard_func_def)objectGetAttr(func, "__call__"))(argcount, arglist);
+
+            if (!strcmp(ret.name, "int"))
+            {
+                pushTopIndex(((int *)objectGetAttr(ret, "value"))[0]);
+
+                // The returned object from a successful function call will
+                // always be of type int, and it will always be a temporary
+                // object, so it's safe to free here.
+                freeObject(ret);
+            }
+            else
+                pushTop(makeNull());
         }
 
         free(arglist);

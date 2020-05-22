@@ -9,6 +9,8 @@ Object __add___string(int argc, int * argv)
         strcpy(third, first);
         strcat(third, secnd);
 
+        pushTrash(third);
+
         return makeString(third);
     }
     else if (!strcmp(mem[argv[1]].name, "null"))
@@ -23,6 +25,8 @@ Object __add___string(int argc, int * argv)
         strcat(third, secnd);
 
         free(arglist);
+
+        pushTrash(third);
 
         return makeString(third);
     }
@@ -48,6 +52,8 @@ Object __mul___string(int argc, int * argv)
         {
             mstrcat(&third, first);
         }
+
+        pushTrash(third);
 
         return makeString(third);
     }
@@ -106,6 +112,8 @@ Object __index___string(int argc, int * argv)
     char * chst = malloc(2);
     chst[0] = ch;
     chst[1] = '\0';
+
+    pushTrash(chst);
 
     return makeString(chst);
 }

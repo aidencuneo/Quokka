@@ -38,7 +38,7 @@ Object __call___function(int argc, int * argv)
     addVar("argv", makeList(argc, arglist, 0));
 
     // Interpret
-    quokka_interpret(strndup(code, strlen(code)));
+    quokka_interpret(code);
 
     stack = realloc(stack, sizeof(int));
     stack_size = 0;
@@ -46,7 +46,7 @@ Object __call___function(int argc, int * argv)
     for (int i = 0; i < old_stack_size; i++)
         pushTopIndex(old_stack[i]);
 
-    // Try free(old_stack);
+    free(old_stack);
 
     free(locals.names);
     free(locals.values);
@@ -61,27 +61,46 @@ Object __call___function(int argc, int * argv)
         locals.values[i] = old_locals_values[i];
     }
 
+    free(old_locals_names);
+    free(old_locals_values);
+
     bc_line = old_bc_line;
     bc_line_count = old_bc_line_count;
     bc_tokens = old_bc_tokens;
     can_return = old_can_return;
 
     if (ret_stack_size)
-        return popRetTop();
+    {
+        int * ret = makeIntPtr(popRetTop());
+        pushTrash(ret);
 
-    return makeNull();
+        return makeInt(ret);
+    }
+
+    // Return null
+    pushMem(makeNull());
+
+    int * ret = makeIntPtr(memsize - 1);
+    pushTrash(ret);
+
+    return makeInt(ret);
 }
 
 Object makeFunction(char ** bytecode, int argmin, int argmax)
 {
+    int * argminptr = makeIntPtr(argmin);
+    int * argmaxptr = makeIntPtr(argmax);
+    pushTrash(argminptr);
+    pushTrash(argmaxptr);
+
     Object self;
 
     self = makeObject("function", *bytecode);
 
     // __call__
     self = addObjectValue(self, "__call__", &__call___function);
-    self = addObjectValue(self, "__call__argmin", makeIntPtr(argmin));
-    self = addObjectValue(self, "__call__argmax", makeIntPtr(argmax));
+    self = addObjectValue(self, "__call__argmin", argminptr);
+    self = addObjectValue(self, "__call__argmax", argmaxptr);
 
     return self;
 }

@@ -53,7 +53,7 @@ Object q_function_print(int argc, int * argv)
             int * arglist = makeIntPtr(argv[i]);
             Object strtext = ((standard_func_def)objectGetAttr(obj, "__string__"))(1, arglist);
 
-            if (!strcmp(objectGetAttr(strtext, "value"), "string"))
+            if (strcmp(strtext.name, "string"))
             {
                 char * err = malloc(27 + strlen(strtext.name) + 27 + 1);
                 strcpy(err, "__string__ method of type '");
@@ -92,10 +92,12 @@ Object q_function_print(int argc, int * argv)
         }
     }
 
-    long long * llptr = makeLLPtr(ret);
-    pushTrash(llptr);
+    // long long * llptr = makeLLPtr(ret);
+    // pushTrash(llptr);
 
-    return makeLong(llptr);
+    // return makeLong(llptr);
+
+    return makeNull();
 }
 
 Object q_function_println(int argc, int * argv)
@@ -111,7 +113,7 @@ Object q_function_println(int argc, int * argv)
             int * arglist = makeIntPtr(argv[i]);
             Object strtext = ((standard_func_def)objectGetAttr(obj, "__string__"))(1, arglist);
 
-            if (!strcmp(objectGetAttr(strtext, "value"), "string"))
+            if (strcmp(strtext.name, "string"))
             {
                 char * err = malloc(24 + strlen(strtext.name) + 27 + 1);
                 strcpy(err, "__string__ method of type '");
@@ -155,10 +157,12 @@ Object q_function_println(int argc, int * argv)
         }
     }
 
-    long long * llptr = makeLLPtr(ret);
-    pushTrash(llptr);
+    // long long * llptr = makeLLPtr(ret);
+    // pushTrash(llptr);
 
-    return makeLong(llptr);
+    // return makeLong(llptr);
+
+    return makeNull();
 }
 
 Object q_function_input(int argc, int * argv)
@@ -218,6 +222,7 @@ Object q_function_string(int argc, int * argv)
     if (objectHasAttr(mem[argv[0]], "__string__"))
     {
         Object ret = ((standard_func_def)objectGetAttr(mem[argv[0]], "__string__"))(1, argv);
+        println(ret.name);
 
         if (strcmp(ret.name, "string"))
         {

@@ -51,6 +51,13 @@ char * strReplace(char * orig, char * rep, char * with);
 void mstrcat(char ** charptr, char * newstr);
 void mstrcattrip(char ** charptr, char * newstr, char * endstr);
 
+// Interpreter stuff
+void freeVars();
+void freeMemory();
+void freeStack();
+void freeRetStack();
+void emptyTrash();
+
 // arrsize
 int carrsize(char * arr[]);
 int iarrsize(int * arr);

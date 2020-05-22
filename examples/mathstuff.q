@@ -10,14 +10,16 @@ end
 
 // oos() - Returns type string
 fun oos
-    ret '2147483647'
+    ret 'stringggg'
 end
 
-num = oof()
-println(num)
+inum = oof()
+println(inum)
 
-num = oop()
-println(num)
+lnum = oop()
+println(lnum)
 
 str = oos()
-println(str + string(num) + str)
+println(str + string(lnum))
+
+println(type(inum), type(lnum), type(str))

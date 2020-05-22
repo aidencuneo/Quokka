@@ -96,7 +96,12 @@ void error(char * text, int line)
     // Exit and free the stack (if not in CLI mode)
     if (!in_cli_mode)
     {
-        resetStack();
+        freeVars();
+        freeMemory();
+        freeStack();
+        freeRetStack();
+        emptyTrash();
+
         exit(1);
     }
 }
@@ -309,6 +314,8 @@ int findNextIfChain(char * kwtype, int cur_line, int scp)
                 if (tempscope == scp)
                 {
                     ind = i;
+
+                    free(templine);
                     break;
                 }
             }
@@ -352,6 +359,8 @@ int findNextEnd(char * kwtype, int cur_line, int scp)
             if (tempscope == scp)
             {
                 ind = i;
+
+                free(templine);
                 break;
             }
             else tempscope--;
@@ -887,11 +896,13 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         for (current_line = num + 1; current_line < next; current_line++)
         {
-            char * bc = strReplace(
-                quokka_compile_line(file_tokens[current_line], current_line, -1, 0),
-                "\n", "\t");
+            char * comp_bc = quokka_compile_line(file_tokens[current_line], current_line, -1, 0);
+            char * bc = strReplace(comp_bc, "\n", "\t");
 
             mstrcat(&funcbytecode, bc);
+
+            free(comp_bc);
+            free(bc);
         }
 
         num = next;
@@ -910,20 +921,30 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (argmin == -1)
             mstrcat(&bytecode, "*");
         else
-            mstrcat(&bytecode, intToStr(argmin));
+        {
+            char * intstr = intToStr(argmin);
+            mstrcat(&bytecode, intstr);
+            free(intstr);
+        }
 
         mstrcat(&bytecode, SEPARATOR);
 
         if (argmax == -1)
             mstrcat(&bytecode, "*");
         else
-            mstrcat(&bytecode, intToStr(argmax));
+        {
+            char * intstr = intToStr(argmax);
+            mstrcat(&bytecode, intstr);
+            free(intstr);
+        }
 
         mstrcat(&bytecode, SEPARATOR);
         mstrcat(&bytecode, "[");
         mstrcat(&bytecode, funcbytecode);
         mstrcat(&bytecode, "]");
         mstrcat(&bytecode, INSTRUCTION_END);
+
+        free(funcbytecode);
 
         scope++;
     }
