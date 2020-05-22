@@ -24,23 +24,23 @@ int line_num;
 int main(int argc, char ** argv)
 {
     // Assign signal handlers
-    signal(SIGHUP, sighupHandler);
-    signal(SIGINT, sigintHandler);
-    signal(SIGQUIT, sigquitHandler);
-    signal(SIGILL, sigillHandler);
-    signal(SIGTRAP, sigtrapHandler);
-    signal(SIGABRT, sigabrtHandler);
-    signal(SIGBUS, sigbusHandler);
-    signal(SIGFPE, sigfpeHandler);
-    signal(SIGSEGV, sigsegvHandler);
-    signal(SIGPIPE, sigpipeHandler);
-    signal(SIGTERM, sigtermHandler);
-    signal(SIGSTKFLT, sigstkfltHandler);
-    signal(SIGTSTP, sigtstpHandler);
-    signal(SIGXCPU, sigxcpuHandler);
-    signal(SIGXFSZ, sigxfszHandler);
-    signal(SIGPWR, sigpwrHandler);
-    signal(SIGSYS, sigsysHandler);
+    signal(1, sighupHandler);
+    signal(2, sigintHandler);
+    signal(3, sigquitHandler);
+    signal(4, sigillHandler);
+    signal(5, sigtrapHandler);
+    signal(6, sigabrtHandler);
+    signal(7, sigbusHandler);
+    signal(8, sigfpeHandler);
+    signal(11, sigsegvHandler);
+    signal(13, sigpipeHandler);
+    signal(15, sigtermHandler);
+    signal(16, sigstkfltHandler);
+    signal(20, sigtstpHandler);
+    signal(24, sigxcpuHandler);
+    signal(25, sigxfszHandler);
+    signal(30, sigpwrHandler);
+    signal(31, sigsysHandler);
 
     char ** args = malloc(argc * sizeof(char *));
     int newargc = 0;
