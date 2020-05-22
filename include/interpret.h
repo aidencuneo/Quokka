@@ -1311,15 +1311,18 @@ void quokka_interpret_tokens(char ** tokens)
         char * t = tokens[bc_line];
 
         if (t == NULL)
+        {
+            bc_line++;
             continue;
+        }
 
         if (isinteger(t))
         {
             line_num = strtol(t, NULL, 10) - 1;
 
             // Comment the next two lines out if there's a segfault
-            // if (!can_return)
-            //     cleanStack();
+            if (!can_return)
+                resetStack();
 
             bc_line++;
             continue;
@@ -1335,9 +1338,33 @@ void quokka_interpret_tokens(char ** tokens)
 
 void quokka_interpret(char * bytecode)
 {
-    // 8192 is the line limit for a bytecode file
-    bc_tokens = malloc(8192 * sizeof(char *));
-    ntokenise(bc_tokens, bytecode, "\n");
+    bc_tokens = malloc(sizeof(char **));
+    bc_tokens[0] = "";
+
+    char * dupe = strndup(bytecode, strlen(bytecode));
+
+    int i = 0;
+    bc_tokens[0] = cpstrip(nstrtok(dupe, "\n"));
+
+    while (bc_tokens[i] != NULL)
+    {
+        // Protects against empty parts of a line or string
+        if (!strlen(bc_tokens[i]))
+        {
+            bc_tokens = realloc(bc_tokens, (i + 1) * sizeof(char *));
+            bc_tokens[i] = cpstrip(nstrtok(NULL, "\n"));
+            continue;
+        }
+
+        i++;
+        bc_tokens = realloc(bc_tokens, (i + 1) * sizeof(char *));
+        bc_tokens[i] = cpstrip(nstrtok(NULL, "\n"));
+    }
+
+    bc_tokens = realloc(bc_tokens, (i + 2) * sizeof(char *));
+    bc_tokens[i + 1] = NULL;
+
+    pushTrash(dupe);
 
     quokka_interpret_tokens(bc_tokens);
 }
