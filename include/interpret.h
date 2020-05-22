@@ -94,6 +94,21 @@ void emptyTrash()
     trashsize = 0;
 }
 
+// Cleanup (ONLY called on a sudden exit)
+void cleanupAll()
+{
+    free(full_file_name);
+    free(full_dir_name);
+    free(main_bytecode);
+    free(bc_tokens);
+
+    freeVars();
+    freeMemory();
+    freeStack();
+    freeRetStack();
+    emptyTrash();
+}
+
 // Init
 void interp_init()
 {
@@ -1086,18 +1101,17 @@ void quokka_interpret_line_tokens(char ** line)
             error(err, line_num);
         }
 
-        Object conditionobj = ((standard_func_def)objectGetAttr(obj, "__bool__"))(1, arglist);
+        pushMem(q_function_bool(1, arglist));
 
         free(arglist);
-        freeObject(obj);
 
-        int condition = ((int *)objectGetAttr(conditionobj, "value"))[0];
+        int condition = ((int *)objectGetAttr(mem[memsize - 1], "value"))[0];
 
+        // If false, don't jump
         if (!condition)
             return;
 
         // If true, jump
-
         for (int i = bc_line; i < bc_line_count; i++)
         {
             if (!strcmp(bc_tokens[i], line[1]))
@@ -1123,18 +1137,17 @@ void quokka_interpret_line_tokens(char ** line)
             error(err, line_num);
         }
 
-        Object conditionobj = ((standard_func_def)objectGetAttr(obj, "__bool__"))(1, arglist);
+        pushMem(q_function_bool(1, arglist));
 
         free(arglist);
-        freeObject(obj);
 
-        int condition = ((int *)objectGetAttr(conditionobj, "value"))[0];
+        int condition = ((int *)objectGetAttr(mem[memsize - 1], "value"))[0];
 
+        // If true, don't jump
         if (condition)
             return;
 
         // If false, jump
-
         for (int i = bc_line; i < bc_line_count; i++)
         {
             if (!strcmp(bc_tokens[i], line[1]))

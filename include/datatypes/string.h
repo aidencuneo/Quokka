@@ -76,8 +76,8 @@ Object __eq___string(int argc, int * argv)
         error(err, line_num);
     }
 
-    char * first = (char *)objectGetAttr(mem[argv[0]], "value");
-    char * secnd = (char *)objectGetAttr(mem[argv[1]], "value");
+    char * first = objectGetAttr(mem[argv[0]], "value");
+    char * secnd = objectGetAttr(mem[argv[1]], "value");
 
     if (!strcmp(first, secnd))
         return makeInt(&truePtr);

@@ -1,5 +1,5 @@
 // VERSION STUFF
-#define VERSION "0.1.6"
+#define VERSION "0.1.7"
 
 // Defines
 #define LN10 2.3025850929940456840179914546844
@@ -51,12 +51,16 @@ char * strReplace(char * orig, char * rep, char * with);
 void mstrcat(char ** charptr, char * newstr);
 void mstrcattrip(char ** charptr, char * newstr, char * endstr);
 
+// Compiler stuff
+void error(char * text, int line);
+
 // Interpreter stuff
 void freeVars();
 void freeMemory();
 void freeStack();
 void freeRetStack();
 void emptyTrash();
+void cleanupAll();
 
 // arrsize
 int carrsize(char * arr[]);

@@ -17,7 +17,6 @@ int * scplines;
 int scpstk_size;
 
 // Function declarations
-void error(char * text, int line);
 int isidentifier(char * word);
 int isinteger(char * word);
 int islong(char * word);
@@ -96,12 +95,7 @@ void error(char * text, int line)
     // Exit and free the stack (if not in CLI mode)
     if (!in_cli_mode)
     {
-        freeVars();
-        freeMemory();
-        freeStack();
-        freeRetStack();
-        emptyTrash();
-
+        cleanupAll();
         exit(1);
     }
 }
@@ -519,7 +513,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line_tokens(templine, num, size, 0);
 
-        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, temp);
 
         free(temp);
     }
@@ -562,7 +556,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line_tokens(templine, num, size, 0);
 
-        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, temp);
 
         free(temp);
     }
@@ -605,7 +599,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line_tokens(templine, num, size, 0);
 
-        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, temp);
 
         free(temp);
     }
@@ -648,7 +642,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line_tokens(templine, num, size, 0);
 
-        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, temp);
 
         free(temp);
     }
@@ -660,19 +654,14 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             error("while loop requires a condition", num);
 
         // Set new line
-        char * numstr = malloc(11);
-        strcpy(numstr, "");
-        snprintf(numstr, 10, "%d", current_line + 1);
-
-        mstrcat(&bytecode, numstr);
-        mstrcat(&bytecode, INSTRUCTION_END);
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         arrlstrip(line);
         len--;
 
         char * temp = quokka_compile_line_tokens(line, num, len, 1);
 
-        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, temp);
 
         free(temp);
 
@@ -682,7 +671,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         mstrcat(&bytecode, "JUMP_IF_FALSE");
         mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, intToStr(next));
+
+        char * intstr = intToStr(next);
+        mstrcat(&bytecode, intstr);
+        free(intstr);
+
         mstrcat(&bytecode, INSTRUCTION_END);
 
         scpstkPush("while", scope, current_line + 1);
@@ -697,19 +690,14 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             error("until loop requires a condition", num);
 
         // Set new line
-        char * numstr = malloc(11);
-        strcpy(numstr, "");
-        snprintf(numstr, 10, "%d", current_line + 1);
-
-        mstrcat(&bytecode, numstr);
-        mstrcat(&bytecode, INSTRUCTION_END);
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         arrlstrip(line);
         len--;
 
         char * temp = quokka_compile_line_tokens(line, num, len, 1);
 
-        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, temp);
 
         free(temp);
 
@@ -719,7 +707,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         mstrcat(&bytecode, "JUMP_IF_TRUE");
         mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, intToStr(next));
+
+        char * intstr = intToStr(next);
+        mstrcat(&bytecode, intstr);
+        free(intstr);
+
         mstrcat(&bytecode, INSTRUCTION_END);
 
         scpstkPush("until", scope, current_line + 1);
@@ -741,7 +733,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line_tokens(line, num, len, 1);
 
-        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, temp);
 
         free(temp);
 
@@ -751,7 +743,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         mstrcat(&bytecode, "JUMP_IF_FALSE");
         mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, intToStr(next));
+
+        char * intstr = intToStr(next);
+        mstrcat(&bytecode, intstr);
+        free(intstr);
+
         mstrcat(&bytecode, INSTRUCTION_END);
 
         scope++;
@@ -769,7 +765,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         mstrcat(&bytecode, "JUMP_TO");
         mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, intToStr(nextend));
+
+        char * intstr = intToStr(nextend);
+        mstrcat(&bytecode, intstr);
+        free(intstr);
+
         mstrcat(&bytecode, INSTRUCTION_END);
 
         // Set new line
@@ -780,7 +780,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line_tokens(line, num, len, 1);
 
-        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, temp);
 
         free(temp);
 
@@ -790,7 +790,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         mstrcat(&bytecode, "JUMP_IF_FALSE");
         mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, intToStr(next));
+
+        intstr = intToStr(next);
+        mstrcat(&bytecode, intstr);
+        free(intstr);
+
         mstrcat(&bytecode, INSTRUCTION_END);
     }
     else if (!strcmp(line[0], "else"))
@@ -806,7 +810,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         mstrcat(&bytecode, "JUMP_TO");
         mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, intToStr(nextend));
+
+        char * intstr = intToStr(nextend);
+        mstrcat(&bytecode, intstr);
+        free(intstr);
+
         mstrcat(&bytecode, INSTRUCTION_END);
 
         // Set new line
@@ -832,7 +840,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 {
                     mstrcat(&bytecode, "JUMP_BACK");
                     mstrcat(&bytecode, SEPARATOR);
-                    mstrcat(&bytecode, intToStr(scpline));
+
+                    char * intstr = intToStr(scpline);
+                    mstrcat(&bytecode, intstr);
+                    free(intstr);
+
                     mstrcat(&bytecode, INSTRUCTION_END);
 
                     scpstkPop();
@@ -1168,14 +1180,14 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             {
                 if (lastwasop)
                 {
-                    latestvalue = realloc(latestvalue, strlen(line[i]) + 1 + 1);
                     memset(latestvalue, 0, strlen(latestvalue) + 1);
+                    latestvalue = realloc(latestvalue, strlen(line[i]) + 1 + 1);
                     strcpy(latestvalue, line[i]);
                     strcat(latestvalue, " ");
                 }
                 else
                 {
-                    latestvalue = realloc(latestvalue, strlen(line[i]) + 1 + 1);
+                    latestvalue = realloc(latestvalue, strlen(latestvalue) + strlen(line[i]) + 1 + 1);
                     strcat(latestvalue, line[i]);
                     strcat(latestvalue, " ");
                 }
@@ -1190,8 +1202,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         free(temp);
         free(latestvalue);
 
-        mstrcat(&bytecode, strdup(valuelist));
-        mstrcat(&bytecode, strdup(operslist));
+        mstrcat(&bytecode, valuelist);
+        mstrcat(&bytecode, operslist);
 
         free(valuelist);
         free(operslist);
@@ -1451,8 +1463,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             {
                 if (lastwasop)
                 {
-                    latestvalue = realloc(latestvalue, strlen(line[i]) + 1 + 1);
                     memset(latestvalue, 0, strlen(latestvalue) + 1);
+                    latestvalue = realloc(latestvalue, strlen(line[i]) + 1 + 1);
                     strcpy(latestvalue, line[i]);
                     strcat(latestvalue, " ");
                 }
@@ -1693,7 +1705,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         exit(1);
 
         char * temp = quokka_compile_line(templine, num, -1, 1);
-        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, temp);
 
         free(temp);
         free(templine);
@@ -1855,7 +1867,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line_tokens(line, num, len - 1, 1);
 
-        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, temp);
 
         free(temp);
 
@@ -1865,7 +1877,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             char * sliced = strSlice(indexarg, 1, 1);
             char * temp = quokka_compile_line(sliced, num, -1, 1);
 
-            mstrcat(&bytecode, strndup(temp, strlen(temp)));
+            mstrcat(&bytecode, temp);
 
             free(sliced);
             free(temp);
@@ -1903,7 +1915,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
 
-        mstrcat(&bytecode, strndup(temp, strlen(temp)));
+        mstrcat(&bytecode, temp);
 
         free(sliced);
         free(temp);
@@ -1957,7 +1969,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
             char * temp = quokka_compile_line(line[p], num, 1, 1);
 
-            mstrcat(&bytecode, strndup(temp, strlen(temp)));
+            mstrcat(&bytecode, temp);
 
             free(temp);
 

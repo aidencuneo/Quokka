@@ -3,21 +3,45 @@
 #include <string.h>
 #include <ctype.h>
 #include <limits.h>
+#include <signal.h>
 
 // CLI options (bools):
 int verbose = 0;
 int export_bytecode = 0;
 int execute_code = 1;
 
+char * full_file_name;
+char * full_dir_name;
+char * main_bytecode;
 int line_num;
 
 #include "../include/quokka.h"
+#include "../include/signalhandlers.h"
 #include "../include/compile.h"
 #include "../include/functions.h"
 #include "../include/interpret.h"
 
 int main(int argc, char ** argv)
 {
+    // Assign signal handlers
+    signal(SIGHUP, sighupHandler);
+    signal(SIGINT, sigintHandler);
+    signal(SIGQUIT, sigquitHandler);
+    signal(SIGILL, sigillHandler);
+    signal(SIGTRAP, sigtrapHandler);
+    signal(SIGABRT, sigabrtHandler);
+    signal(SIGBUS, sigbusHandler);
+    signal(SIGFPE, sigfpeHandler);
+    signal(SIGSEGV, sigsegvHandler);
+    signal(SIGPIPE, sigpipeHandler);
+    signal(SIGTERM, sigtermHandler);
+    signal(SIGSTKFLT, sigstkfltHandler);
+    signal(SIGTSTP, sigtstpHandler);
+    signal(SIGXCPU, sigxcpuHandler);
+    signal(SIGXFSZ, sigxfszHandler);
+    signal(SIGPWR, sigpwrHandler);
+    signal(SIGSYS, sigsysHandler);
+
     char ** args = malloc(argc * sizeof(char *));
     int newargc = 0;
 
@@ -127,8 +151,8 @@ int main(int argc, char ** argv)
     }
 
     // Full path directing to first file to compile
-    char * fullname = getrealpath(args[0]);
-    if (!fullname)
+    full_file_name = getrealpath(args[0]);
+    if (!full_file_name)
     {
         println("Input file path not found or not accessible.");
 
@@ -137,36 +161,39 @@ int main(int argc, char ** argv)
     }
 
     // Dirname of first file to compile
-    char * dirname = strndup(fullname, strlen(fullname) - strlen(strrchr(fullname, '/')));
+    full_dir_name = strndup(full_file_name, strlen(full_file_name) - strlen(strrchr(full_file_name, '/')));
 
-    // File name of first file to compile (no dirname)
-    char * fname = strrchr(fullname, '/') + 1;
+    // File name of first file to compile (no full_dir_name)
+    char * fname = strrchr(full_file_name, '/') + 1;
 
     current_file = fname;
 
-    chdir(dirname);
-
-    char * bytecode;
+    chdir(full_dir_name);
 
     // If an already compiled .qc file is entered as the first argument,
     // then just retrieve the bytecode and interpret it
     if (endswith(fname, ".qc"))
-        bytecode = readfile(fname);
+        main_bytecode = readfile(fname);
     else
     {
         compile_init();
-        bytecode = quokka_compile_fname(fname);
+        main_bytecode = quokka_compile_fname(fname);
+
+        // Free scope stack after compilation
+        free(scpstk);
+        free(scps);
+        free(scplines);
 
         emptyTrash();
         trash = malloc(sizeof(void *));
     }
 
     if (verbose) println("\n--BYTECODE--\n");
-    if (verbose) println(bytecode);
+    if (verbose) println(main_bytecode);
 
     if (export_bytecode)
     {
-        char * barefile = strndup(fullname, strlen(fullname) - strlen(strrchr(fullname, '.')));
+        char * barefile = strndup(full_file_name, strlen(full_file_name) - strlen(strrchr(full_file_name, '.')));
         char * outputfile = malloc(strlen(barefile) + 3 + 1);
 
         strcpy(outputfile, barefile);
@@ -174,7 +201,7 @@ int main(int argc, char ** argv)
 
         FILE * fp = fopen(outputfile, "wb");
         if (export_bytecode)
-            fprintf(fp, "%s", bytecode);
+            fprintf(fp, "%s", main_bytecode);
         fclose(fp);
 
         free(barefile);
@@ -188,7 +215,7 @@ int main(int argc, char ** argv)
         if (verbose) println("\n--OUTPUT--");
 
         interp_init();
-        quokka_interpret(bytecode);
+        quokka_interpret(main_bytecode);
 
         freeVars();
         freeMemory();
@@ -199,9 +226,9 @@ int main(int argc, char ** argv)
         if (verbose) println("--SUCCESS--");
     }
 
-    free(fullname);
-    free(dirname);
-    free(bytecode);
+    free(full_file_name);
+    free(full_dir_name);
+    free(main_bytecode);
 
     return 0;
 }

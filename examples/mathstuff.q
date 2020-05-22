@@ -23,3 +23,7 @@ str = oos()
 println(str + string(lnum))
 
 println(type(inum), type(lnum), type(str))
+
+if type(inum) == 'int'
+    println('yay!')
+end

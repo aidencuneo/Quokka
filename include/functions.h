@@ -204,12 +204,12 @@ Object q_function_bool(int argc, int * argv)
 
     Object ret = ((standard_func_def)objectGetAttr(mem[argv[0]], "__bool__"))(1, argv);
 
-    if (strcmp(ret.name, "bool"))
+    if (strcmp(ret.name, "int"))
     {
-        char * err = malloc(25 + strlen(mem[argv[0]].name) + 25 + 1);
+        char * err = malloc(25 + strlen(mem[argv[0]].name) + 24 + 1);
         strcpy(err, "__bool__ method of type '");
         strcat(err, mem[argv[0]].name);
-        strcat(err, "' must return type 'bool'");
+        strcat(err, "' must return type 'int'");
         error(err, line_num);
     }
 
