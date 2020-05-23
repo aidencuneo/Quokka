@@ -4,6 +4,8 @@ Object __call___function(int argc, int * argv)
     char * code = objectGetAttr(mem[argv[0]], "value");
 
     // Set up the environment for the function call
+    int old_memsize = memsize;
+
     int * old_stack = malloc(stack_size * sizeof(int));
     for (int i = 0; i < stack_size; i++)
         old_stack[i] = stack[i];
@@ -71,8 +73,114 @@ Object __call___function(int argc, int * argv)
 
     if (ret_stack_size)
     {
-        int * ret = makeIntPtr(popRetTop());
+        int isiterable = 0;
+
+        int * ind = malloc(sizeof(int));
+        ind[0] = popRetTop();
+        int indlen = 1;
+
+        Object retobj = mem[ind[0]];
+
+        print("BEFORE : ");
+        q_function_println(indlen, ind);
+
+        // If return object is an iterable that DOES contain memory indexes,
+        // add every memory index to ind so that they aren't cleaned
+        if (!strcmp(retobj.name, "list"))
+        {
+            isiterable = 1;
+
+            int * iterobj = objectGetAttr(retobj, "value");
+            int iterlen = ((int *)objectGetAttr(retobj, "length"))[0];
+
+            for (int i = 0; i < iterlen; i++)
+            {
+                pushMem(mem[iterobj[i]]);
+
+                // mem = realloc(mem, memsize * sizeof(Object));
+
+                // for (int i = iterobj[i]; i < memsize; i++)
+                //     mem[i] = mem[i + 1];
+
+                // memsize--;
+
+                ind = realloc(ind, (indlen + 1) * sizeof(int));
+                ind[indlen] = iterobj[i];
+                indlen++;
+
+                iterobj[i] = memsize - 1;
+            }
+        }
+
+        print("BEFORE : ");
+        q_function_println(indlen, ind);
+
+        // Clean up memory after function call
+        int j = -1;
+        for (int i = memsize - indlen; i >= old_memsize; i--)
+        {
+            print(i);
+            print(":");
+            print(memsize);
+            print(", ");
+            print(intArrHas(ind, i, indlen));
+            print(" : ");
+            print(j);
+            print(" ; <");
+            print(mem[i].name);
+            print("> ");
+            if (strcmp(mem[i].name, "list")) // If not list
+                q_function_print(1, makeIntPtr(i));
+            print("\n");
+
+            if (intArrHas(ind, i, indlen))
+            {
+                if (j == -1)
+                    j = 0;
+                else
+                {
+                    popKeepMem(i);
+                    j++;
+                }
+            }
+            else
+            {
+                popMem(i);
+                if (j != -1)
+                    j++;
+            }
+        }
+
+        println("yeah");
+
+        if (isiterable)
+        {
+            println("IT IS ITERABLE");
+
+            int * iterobj = objectGetAttr(mem[ind[0] - j], "value");
+            int iterlen = ((int *)objectGetAttr(mem[ind[0] - j], "length"))[0];
+
+            // Realign all the memory indexes of the iterable
+            for (int i = 0; i < iterlen; i++)
+            {
+                iterobj[i] -= j;
+            }
+        }
+
+        println("GOT HERE");
+
+        int * ret = makeIntPtr(ind[0] - j);
         pushTrash(ret);
+
+        print("RET : ");
+        print(ind[0]);
+        print(" : ");
+        print(j);
+        print(" ,,, ");
+        println(ret[0]);
+
+        print("AFTER : ");
+        q_function_println(1, ret);
 
         return makeInt(ret);
     }

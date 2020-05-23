@@ -29,8 +29,8 @@ int falsePtr;
 // Stack
 void resetStack()
 {
-    // for (int i = 0; i < stack_size; i++)
-    //     freeObject(stack[i]);
+    for (int i = 0; i < stack_size; i++)
+        popMem(stack[i]);
 
     stack = malloc(sizeof(int));
     stack_size = 0;
@@ -78,8 +78,20 @@ void freeVars()
 // Memory
 void freeMemory()
 {
+    println("HERE");
+
     for (int i = 0; i < memsize; i++)
+    {
+        if (i > 1500)
+        {
+            print(i);
+            print(", ");
+            println(mem[i].name);
+        }
         freeObject(mem[i]);
+    }
+
+    println("HMM");
 
     free(mem);
 }
@@ -314,6 +326,28 @@ void pushMem(Object obj)
     mem = realloc(mem, (memsize + 1) * sizeof(Object));
     mem[memsize] = obj;
     memsize++;
+}
+
+void popMem(int obj_ptr)
+{
+    mem = realloc(mem, memsize * sizeof(Object));
+
+    freeObject(mem[obj_ptr]);
+
+    for (int i = obj_ptr; i < memsize; i++)
+        mem[i] = mem[i + 1];
+
+    memsize--;
+}
+
+void popKeepMem(int obj_ptr)
+{
+    mem = realloc(mem, memsize * sizeof(Object));
+
+    for (int i = obj_ptr; i < memsize; i++)
+        mem[i] = mem[i + 1];
+
+    memsize--;
 }
 
 // DO NOT pass an un-malloc'd pointer to this function

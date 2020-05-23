@@ -2,6 +2,31 @@ fun modulo 2
     ret argv[0] - argv[1] * (argv[0] / argv[1])
 end
 
+fun lpadwith 3
+    pad = argv[0]
+    pad = pad[0] // Limit pad to one char
+
+    first = argv[1]
+    secnd = argv[2]
+
+    // Pad until both strings are the same length
+    if len(secnd) > len(first)
+        i = 0
+        while i < (len(secnd) - len(first)) + 1
+            first = pad + first
+            i += 1
+        end
+    elif len(first) > len(secnd)
+        i = 0
+        while i < (len(first) - len(secnd)) + 1
+            secnd = pad + secnd
+            i += 1
+        end
+    end
+
+    ret [first, secnd]
+end
+
 fun joinany 2
     joinstr = argv[0]
     strlst = argv[1]
@@ -16,6 +41,19 @@ fun joinany 2
     ret outstr
 end
 
+fun flip 1
+    str = argv[0]
+    out = ''
+
+    i = len(str)
+    while i >= 0
+        out += str[+i]
+        i -= 1
+    end
+
+    ret out
+end
+
 fun binary 1
     n = argv[0]
     b = []
@@ -25,7 +63,7 @@ fun binary 1
         n /= 2
         i += 1
     end
-    ret long(joinany('', b))
+    ret flip(joinany('', b))
 end
 
 fun bintoint 1
@@ -50,20 +88,12 @@ fun xor 2
     first = string(argv[0])
     secnd = string(argv[1])
 
-    // Pad the numbers
-    if len(secnd) > len(first)
-        i = 0
-        while i <= (len(secnd) - len(first)) + 1
-            first = '0' + first
-            i += 1
-        end
-    elif len(first) > len(secnd)
-        i = 0
-        while i <= (len(first) - len(secnd)) + 1
-            secnd = '0' + secnd
-            i += 1
-        end
-    end
+    both = lpadwith('0', first, secnd)
+    first = both[0]
+    secnd = both[1]
+
+    println(both)
+    println(len(first), len(secnd))
 
     // Perform XOR
     new = ''
@@ -80,31 +110,14 @@ fun xor 2
     ret long(new)
 end
 
-// print('Enter first number  : ')
-// one = long(input())
+print('Enter first number  : ')
+one = long(input())
 
-// print('Enter second number : ')
-// two = long(input())
+print('Enter second number : ')
+two = long(input())
 
-// if one > 1048574
-//     one = 1048574
-// end
+println('\nBINARY:')
+println(binary(one), '^', binary(two), '\n')
 
-// if two > 1048574
-//     two = 1048574
-// end
-
-// println('\nBINARY:')
-// println(binary(one), '^', binary(two), '\n')
-
-println(sizeof(''), sizeof('aiden'))
-println(sizeof(0), sizeof(2398434))
-println(sizeof(0L), sizeof(999999999999999L))
-
-lst = ['aiden', 'bob', 'ckjsndjkd', 13, 6734, 239384L, 2398L, 98343729847394, null, 3489]
-println(sizeof(lst))
-println((sizeof(lst) - 32) / 4)
-println(len(lst))
-
-// num = xor(binary(one), binary(two))
-// println(one, '^', two, '=', bintoint(num))
+num = xor(binary(one), binary(two))
+println(one, '^', two, '=', bintoint(num))
