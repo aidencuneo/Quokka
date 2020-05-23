@@ -285,6 +285,50 @@ Object q_function_int(int argc, int * argv)
     return ret;
 }
 
+Object q_function_long(int argc, int * argv)
+{
+    // Try __long__
+    if (objectHasAttr(mem[argv[0]], "__long__"))
+    {
+        Object ret = ((standard_func_def)objectGetAttr(mem[argv[0]], "__long__"))(1, argv);
+
+        if (strcmp(ret.name, "long"))
+        {
+            char * err = malloc(25 + strlen(mem[argv[0]].name) + 25 + 1);
+            strcpy(err, "__long__ method of type '");
+            strcat(err, mem[argv[0]].name);
+            strcat(err, "' must return type 'long'");
+            error(err, line_num);
+        }
+
+        return ret;
+    }
+    // Try __int__ if __long__ can't be found
+    else if (objectHasAttr(mem[argv[0]], "__int__"))
+    {
+        Object ret = ((standard_func_def)objectGetAttr(mem[argv[0]], "__int__"))(1, argv);
+
+        if (strcmp(ret.name, "int"))
+        {
+            char * err = malloc(24 + strlen(mem[argv[0]].name) + 24 + 1);
+            strcpy(err, "__int__ method of type '");
+            strcat(err, mem[argv[0]].name);
+            strcat(err, "' must return type 'int'");
+            error(err, line_num);
+        }
+
+        return ret;
+    }
+
+    char * err = malloc(6 + strlen(mem[argv[0]].name) + 34 + 1);
+    strcpy(err, "type '");
+    strcat(err, mem[argv[0]].name);
+    strcat(err, "' can not be converted into a long");
+    error(err, line_num);
+
+    return makeNull();
+}
+
 Object q_function_type(int argc, int * argv)
 {
     return makeString(mem[argv[0]].name);
@@ -331,4 +375,17 @@ Object q_function_exec(int argc, int * argv)
     bc_line_count = old_bc_line_count;
 
     return makeNull();
+}
+
+Object q_function_sizeof(int argc, int * argv)
+{
+    if (objectHasAttr(mem[argv[0]], "__sizeof__"))
+    {
+        return ((standard_func_def)objectGetAttr(mem[argv[0]], "__sizeof__"))(1, argv);
+    }
+
+    int * size = makeIntPtr(sizeof(mem[argv[0]]));
+    pushTrash(size);
+
+    return makeInt(size);
 }

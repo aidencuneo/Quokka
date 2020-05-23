@@ -151,6 +151,12 @@ void interp_init()
     intFunction = addObjectValue(intFunction, "__call__argcmax", &oneArgc);
     addGVar("int", intFunction);
 
+    Object longFunction = emptyObject("bfunction");
+    longFunction = addObjectValue(longFunction, "__call__", &q_function_long);
+    longFunction = addObjectValue(longFunction, "__call__argcmin", &oneArgc);
+    longFunction = addObjectValue(longFunction, "__call__argcmax", &oneArgc);
+    addGVar("long", longFunction);
+
     Object boolFunction = emptyObject("bfunction");
     boolFunction = addObjectValue(boolFunction, "__call__", &q_function_bool);
     boolFunction = addObjectValue(boolFunction, "__call__argmin", &oneArgc);
@@ -180,6 +186,12 @@ void interp_init()
     execFunction = addObjectValue(execFunction, "__call__argmin", &oneArgc);
     execFunction = addObjectValue(execFunction, "__call__argmax", &oneArgc);
     addGVar("exec", execFunction);
+
+    Object sizeofFunction = emptyObject("bfunction");
+    sizeofFunction = addObjectValue(sizeofFunction, "__call__", &q_function_sizeof);
+    sizeofFunction = addObjectValue(sizeofFunction, "__call__argmin", &oneArgc);
+    sizeofFunction = addObjectValue(sizeofFunction, "__call__argmax", &oneArgc);
+    addGVar("sizeof", sizeofFunction);
 }
 
 Object emptyObject(char * name)

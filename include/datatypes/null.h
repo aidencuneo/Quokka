@@ -1,3 +1,11 @@
+Object __sizeof___null(int argc, int * argv)
+{
+    int * size = makeIntPtr(sizeof(0));
+    pushTrash(size);
+
+    return makeInt(size);
+}
+
 Object __disp___null(int argc, int * argv)
 {
     return makeString("null");
@@ -15,6 +23,10 @@ Object makeNull()
     self = makeObject("null", &falsePtr);
 
     // One argument methods
+
+    // __sizeof__
+    self = addObjectValue(self, "__sizeof__", &__sizeof___null);
+    self = addObjectValue(self, "__sizeof__argc", &oneArgc);
 
     // __disp__
     self = addObjectValue(self, "__disp__", &__disp___null);

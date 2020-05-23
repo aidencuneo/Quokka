@@ -163,6 +163,16 @@ Object __index___string(int argc, int * argv)
     return ret;
 }
 
+Object __sizeof___string(int argc, int * argv)
+{
+    char * thisvalue = ((char *)objectGetAttr(mem[argv[0]], "value"));
+
+    int * size = makeIntPtr(sizeof(mem[argv[0]]) + strlen(thisvalue));
+    pushTrash(size);
+
+    return makeInt(size);
+}
+
 Object __copy___string(int argc, int * argv)
 {
     return makeString((char *)objectGetAttr(mem[argv[0]], "value"));
@@ -191,6 +201,26 @@ Object __bool___string(int argc, int * argv)
     if (strlen(thisvalue))
         return makeInt(&truePtr);
     return makeInt(&falsePtr);
+}
+
+Object __int___string(int argc, int * argv)
+{
+    char * thisvalue = ((char *)objectGetAttr(mem[argv[0]], "value"));
+
+    int * toint = makeIntPtr(strtol(thisvalue, NULL, 10));
+    pushTrash(toint);
+
+    return makeInt(toint);
+}
+
+Object __long___string(int argc, int * argv)
+{
+    char * thisvalue = ((char *)objectGetAttr(mem[argv[0]], "value"));
+
+    long long * tolong = makeLLPtr(strtoll(thisvalue, NULL, 10));
+    pushTrash(tolong);
+
+    return makeLong(tolong);
 }
 
 Object __string___string(int argc, int * argv)
@@ -224,6 +254,10 @@ Object makeString(char * value)
 
     // One argument methods
 
+    // __sizeof__
+    self = addObjectValue(self, "__sizeof__", &__sizeof___string);
+    self = addObjectValue(self, "__sizeof__argc", &oneArgc);
+
     // __copy__
     self = addObjectValue(self, "__copy__", &__copy___string);
     self = addObjectValue(self, "__copy__argc", &oneArgc);
@@ -239,6 +273,14 @@ Object makeString(char * value)
     // __bool__
     self = addObjectValue(self, "__bool__", &__bool___string);
     self = addObjectValue(self, "__bool__argc", &oneArgc);
+
+    // __int__
+    self = addObjectValue(self, "__int__", &__int___string);
+    self = addObjectValue(self, "__int__argc", &oneArgc);
+
+    // __long__
+    self = addObjectValue(self, "__long__", &__long___string);
+    self = addObjectValue(self, "__long__argc", &oneArgc);
 
     // __string__
     self = addObjectValue(self, "__string__", &__string___string);

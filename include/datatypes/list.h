@@ -65,6 +65,17 @@ Object __index___list(int argc, int * argv)
     return ret;
 }
 
+Object __sizeof___list(int argc, int * argv)
+{
+    int * thisvalue = objectGetAttr(mem[argv[0]], "value");
+    int * length = objectGetAttr(mem[argv[0]], "length");
+
+    int * size = makeIntPtr(sizeof(mem[argv[0]]) + (sizeof(thisvalue[0]) * length[0]));
+    pushTrash(size);
+
+    return makeInt(size);
+}
+
 Object __copy___list(int argc, int * argv)
 {
     return makeList(
@@ -155,6 +166,10 @@ Object makeList(int length, int * value, int flipped)
     self = addObjectValue(self, "__index__argc", &twoArgc);
 
     // One argument methods
+
+    // __sizeof__
+    self = addObjectValue(self, "__sizeof__", &__sizeof___list);
+    self = addObjectValue(self, "__sizeof__argc", &oneArgc);
 
     // __copy__
     self = addObjectValue(self, "__copy__", &__copy___list);

@@ -314,6 +314,16 @@ Object __ge___int(int argc, int * argv)
     return makeNull();
 }
 
+Object __sizeof___int(int argc, int * argv)
+{
+    int * thisvalue = objectGetAttr(mem[argv[0]], "value");
+
+    int * size = makeIntPtr(sizeof(mem[argv[0]]) + sizeof(thisvalue[0]));
+    pushTrash(size);
+
+    return makeInt(size);
+}
+
 Object __pos___int(int argc, int * argv)
 {
     int * first = objectGetAttr(mem[argv[0]], "value");
@@ -412,6 +422,10 @@ Object makeInt(int * value)
     self = addObjectValue(self, "__ge__argc", &twoArgc);
 
     // One argument methods
+
+    // __sizeof__
+    self = addObjectValue(self, "__sizeof__", &__sizeof___int);
+    self = addObjectValue(self, "__sizeof__argc", &oneArgc);
 
     // __pos__
     self = addObjectValue(self, "__pos__", &__pos___int);
