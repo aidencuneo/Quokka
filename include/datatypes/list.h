@@ -2,13 +2,13 @@ Object __add___list(int argc, int * argv)
 {
     if (!strcmp(mem[argv[1]].name, "list"))
     {
-        int * first = objectGetAttr(mem[argv[0]], "value");
-        int * secnd = objectGetAttr(mem[argv[1]], "value");
+        Object * first = objectGetAttr(mem[argv[0]], "value");
+        Object * secnd = objectGetAttr(mem[argv[1]], "value");
 
         int firstlen = ((int *)objectGetAttr(mem[argv[0]], "length"))[0];
         int secndlen = ((int *)objectGetAttr(mem[argv[1]], "length"))[0];
 
-        int * third = malloc((firstlen + secndlen) * sizeof(int));
+        Object * third = malloc((firstlen + secndlen) * sizeof(Object));
 
         // Add first list to final list
         for (int i = 0; i < firstlen; i++)
@@ -54,8 +54,10 @@ Object __index___list(int argc, int * argv)
     if (ind < 0)
         return makeNull();
 
-    int obj = ((int *)objectGetAttr(mem[argv[0]], "value"))[ind];
-    int * obj_ptr = makeIntPtr(obj);
+    Object obj = ((Object *)objectGetAttr(mem[argv[0]], "value"))[ind];
+    pushMem(obj);
+
+    int * obj_ptr = makeIntPtr(memsize - 1);
 
     Object ret = makeInt(obj_ptr);
 
@@ -98,24 +100,27 @@ Object __bool___list(int argc, int * argv)
     return makeInt(&falsePtr);
 }
 
-Object __string___list(int argc, int * argv)
+Object __disp___list(int argc, int * argv)
 {
     char * out = malloc(2);
     strcpy(out, "[");
 
-    int * lst = objectGetAttr(mem[argv[0]], "value");
+    Object * lst = objectGetAttr(mem[argv[0]], "value");
     int lstlen = ((int *)objectGetAttr(mem[argv[0]], "length"))[0];
 
     for (int p = 0; p < lstlen; p++)
     {
-        int * arglist = makeIntPtr(lst[p]);
+        pushMem(lst[p]);
+
+        int * arglist = makeIntPtr(memsize - 1);
 
         Object disp = q_function_display(1, arglist);
+
+        popKeepMem(memsize - 1);
 
         free(arglist);
 
         mstrcat(&out, objectGetAttr(disp, "value"));
-
         if (p + 1 < lstlen)
             mstrcat(&out, ", ");
 
@@ -129,11 +134,11 @@ Object __string___list(int argc, int * argv)
     return makeString(out);
 }
 
-Object makeList(int length, int * value, int flipped)
+Object makeList(int length, Object * value, int flipped)
 {
     Object self;
 
-    int * lst = malloc(length * sizeof(int));
+    Object * lst = malloc(length * sizeof(Object));
 
     // Contents of this list will be freed after program execution
     pushTrash(lst);
@@ -183,9 +188,66 @@ Object makeList(int length, int * value, int flipped)
     self = addObjectValue(self, "__bool__", &__bool___list);
     self = addObjectValue(self, "__bool__argc", &oneArgc);
 
+    // __disp__
+    self = addObjectValue(self, "__disp__", &__disp___list);
+    self = addObjectValue(self, "__disp__argc", &oneArgc);
+
     // __string__
-    self = addObjectValue(self, "__string__", &__string___list);
+    self = addObjectValue(self, "__string__", &__disp___list);
     self = addObjectValue(self, "__string__argc", &oneArgc);
 
     return self;
+}
+
+int shuffleMemIndexesToTop(Object lst, int * ind)
+{
+    int indlen;
+
+    int * iterobj = objectGetAttr(lst, "value");
+    int iterlen = ((int *)objectGetAttr(lst, "length"))[0];
+
+    for (int i = 0; i < iterlen; i++)
+    {
+        pushMem(mem[iterobj[i]]);
+
+        ind = realloc(ind, (indlen + 1) * sizeof(int));
+        ind[indlen] = iterobj[i];
+        indlen++;
+
+        iterobj[i] = memsize - 1;
+
+        // If list item is an iterable
+        if (!strcmp(mem[iterobj[i]].name, "list"))
+        {
+            shuffleMemIndexesToTop(mem[iterobj[i]], ind);
+        }
+    }
+
+    return indlen;
+}
+
+void realignMemIndexes(Object lst, int step)
+{
+    int * iterobj = objectGetAttr(lst, "value");
+    int iterlen = ((int *)objectGetAttr(lst, "length"))[0];
+
+    // Realign all the memory indexes of the iterable
+    for (int i = 0; i < iterlen; i++)
+    {
+        println(iterobj[i]);
+        iterobj[i] += step;
+        println(iterobj[i]);
+
+        println(memsize);
+        println(69);
+
+        // if (iterobj[i] > memsize - 1)
+        //     iterobj[i] = memsize - 1;
+
+        if (!strcmp(mem[iterobj[i]].name, "list"))
+        {
+            realignMemIndexes(mem[iterobj[i]], step);
+        }
+        println(68);
+    }
 }

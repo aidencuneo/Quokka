@@ -330,7 +330,7 @@ void pushMem(Object obj)
 
 void popMem(int obj_ptr)
 {
-    mem = realloc(mem, memsize * sizeof(Object));
+    mem = realloc(mem, (memsize + 1) * sizeof(Object));
 
     freeObject(mem[obj_ptr]);
 
@@ -342,7 +342,7 @@ void popMem(int obj_ptr)
 
 void popKeepMem(int obj_ptr)
 {
-    mem = realloc(mem, memsize * sizeof(Object));
+    mem = realloc(mem, (memsize + 1) * sizeof(Object));
 
     for (int i = obj_ptr; i < memsize; i++)
         mem[i] = mem[i + 1];
@@ -612,10 +612,18 @@ void quokka_interpret_line_tokens(char ** line)
     {
         int lstsize = strtol(line[1], NULL, 10);
 
-        int * value = malloc(lstsize * sizeof(int));
+        Object * value = malloc(lstsize * sizeof(Object));
 
         for (int i = 0; i < lstsize; i++)
-            value[i] = popTopIndex();
+        {
+            // Transfer the memory item Object into the list
+            int ind = popTopIndex();
+            value[i] = mem[ind];
+            popKeepMem(ind);
+        }
+
+        if (lstsize > 1)
+            exit(1);
 
         pushTop(makeList(lstsize, value, 1));
     }

@@ -2154,7 +2154,7 @@ char ** quokka_line_tok(char * line)
         {
             if (comment && c != '/')
                 comment = 0;
-            tokenstr = realloc(tokenstr, strlen(tokenstr) + 2);
+            tokenstr = realloc(tokenstr, strlen(tokenstr) + 1 + 1);
             strncat(tokenstr, &c, 1);
         }
         t = c;

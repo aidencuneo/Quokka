@@ -115,7 +115,7 @@ Object q_function_println(int argc, int * argv)
 
             if (strcmp(strtext.name, "string"))
             {
-                char * err = malloc(24 + strlen(strtext.name) + 27 + 1);
+                char * err = malloc(27 + strlen(strtext.name) + 27 + 1);
                 strcpy(err, "__string__ method of type '");
                 strcat(err, strtext.name);
                 strcat(err, "' must return type 'string'");
@@ -177,7 +177,7 @@ Object q_function_input(int argc, int * argv)
     {
         last = getchar();
 
-        buffer = realloc(buffer, strlen(buffer) + 1);
+        buffer = realloc(buffer, buflen + 1);
         buffer[buflen] = last;
 
         buflen++;

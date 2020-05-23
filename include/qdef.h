@@ -120,7 +120,7 @@ Object makeLong(long long * value);
 Object makeString(char * value);
 
 // list
-Object makeList(int length, int * value, int flipped);
+Object makeList(int length, Object * value, int flipped);
 
 // null
 Object makeNull();

@@ -116,8 +116,8 @@ one = long(input())
 print('Enter second number : ')
 two = long(input())
 
-println('\nBINARY:')
+println('BINARY:')
 println(binary(one), '^', binary(two), '\n')
 
-num = xor(binary(one), binary(two))
-println(one, '^', two, '=', bintoint(num))
+// num = xor(binary(one), binary(two))
+// println(one, '^', two, '=', bintoint(num))
