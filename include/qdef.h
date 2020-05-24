@@ -69,6 +69,7 @@ void quokka_interpret(char * bytecode);
 void resetStack();
 Object emptyObject(char * name);
 Object makeObject(char * name, void * value);
+void objectSummary(Object obj);
 Object addObjectValue(Object obj, char * name, void * value);
 int objectHasAttr(Object obj, char * name);
 void * objectGetAttr(Object obj, char * name);

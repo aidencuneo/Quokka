@@ -234,6 +234,48 @@ Object makeObject(char * name, void * value)
     return self;
 }
 
+// Duplicate an Object
+Object objectCopy(Object orig)
+{
+    Object self = emptyObject(orig.name);
+
+    for (int i = 0; i < orig.value_count; i++)
+    {
+        char * name = malloc(strlen(orig.names[i]) + 1);
+        strcpy(name, orig.names[i]);
+        name[strlen(name)] = '\0';
+        pushTrash(name);
+
+        void ** newptr = malloc(sizeof(void *));
+        *newptr = orig.values[i];
+        pushTrash(newptr);
+
+        self = addObjectValue(self, name, *newptr);
+    }
+
+    // objectSummary(orig);
+    // objectSummary(self);
+    // exit(1);
+
+    return self;
+}
+
+// Summarise an Object
+void objectSummary(Object obj)
+{
+    print("Object of type <");
+    print(obj.name);
+    print(">, value_count = ");
+    println(obj.value_count);
+    println("-- ATTRIBUTES --");
+
+    for (int i = 0; i < obj.value_count; i++)
+    {
+        print(": ");
+        println(obj.names[i]);
+    }
+}
+
 Object addObjectValue(Object obj, char * name, void * value)
 {
     obj.names = realloc(obj.names, (obj.value_count + 1) * sizeof(char *));
@@ -616,14 +658,9 @@ void quokka_interpret_line_tokens(char ** line)
 
         for (int i = 0; i < lstsize; i++)
         {
-            // Transfer the memory item Object into the list
-            int ind = popTopIndex();
-            value[i] = mem[ind];
-            popKeepMem(ind);
+            // Transfer a duplicated Object into the list
+            value[i] = objectCopy(popTop());
         }
-
-        if (lstsize > 1)
-            exit(1);
 
         pushTop(makeList(lstsize, value, 1));
     }

@@ -447,9 +447,9 @@ Object makeInt(int * value)
     self = addObjectValue(self, "__int__", &__int___int);
     self = addObjectValue(self, "__int__argc", &oneArgc);
 
-    // // __string__
-    // self = addObjectValue(self, "__string__", &__string___int);
-    // self = addObjectValue(self, "__string__argc", &oneArgc);
+    // __string__
+    self = addObjectValue(self, "__string__", &__disp___int);
+    self = addObjectValue(self, "__string__argc", &oneArgc);
 
     return self;
 }

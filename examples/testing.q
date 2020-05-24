@@ -13,16 +13,18 @@ fun joinany 2
 end
 
 fun flip 1
-    str = argv[0]
-    out = ''
+    // str = argv[0]
+    // out = ''
 
-    i = len(str)
-    while i >= 0
-        out += str[+i]
-        i -= 1
-    end
+    // i = len(str)
+    // while i >= 0
+    //     out += str[+i]
+    //     i -= 1
+    // end
 
-    ret out
+    // ret out
+
+    ret argv[0]
 end
 
 fun binary 1
@@ -37,5 +39,5 @@ fun binary 1
     ret flip(joinany('', b))
 end
 
-println(23)
-println(binary(23))
+println(12988)
+println(binary(12988))

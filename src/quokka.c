@@ -23,6 +23,23 @@ int line_num;
 
 int main(int argc, char ** argv)
 {
+    // Object integer = makeInt(makeIntPtr(10));
+    // pushMem(integer);
+
+    // freeObject(q_function_println(1, makeIntPtr(memsize - 1)));
+
+    // Object integer2 = objectCopy(integer);
+    // pushMem(integer2);
+
+    // popMem(memsize - 2);
+
+    // freeObject(q_function_println(1, makeIntPtr(memsize - 1)));
+
+    // freeMemory();
+    // emptyTrash();
+
+    // return 1;
+
     // Assign signal handlers
     signal(1, sighupHandler);
     signal(2, sigintHandler);
@@ -47,6 +64,11 @@ int main(int argc, char ** argv)
 
     for (int i = 1; i < argc; i++)
     {
+        if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--version"))
+        {
+            printf("Quokka %s\n", VERSION);
+            return 0;
+        }
         if (!strcmp(argv[i], "-V") || !strcmp(argv[i], "--verbose"))
             verbose = 1;
         else if (!strcmp(argv[i], "-c") || !strcmp(argv[i], "--compile"))

@@ -128,6 +128,8 @@ Object q_function_println(int argc, int * argv)
 
             ret += strlen(text);
             printf("%s", text);
+
+            freeObject(strtext);
         }
         else
         {
