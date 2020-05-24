@@ -182,7 +182,10 @@ Object __len___string(int argc, int * argv)
 {
     long long len = strlen((char *)objectGetAttr(mem[argv[0]], "value"));
 
-    return makeLong(makeLLPtr(len));
+    int * size = makeIntPtr(len);
+    pushTrash(size);
+
+    return makeInt(size);
 }
 
 Object __disp___string(int argc, int * argv)
@@ -225,7 +228,16 @@ Object __long___string(int argc, int * argv)
 
 Object __string___string(int argc, int * argv)
 {
-    return mem[argv[0]];
+    // Return a new string with the same contents as this one
+
+    // (the rest of the stuff doesn't matter, since the string()
+    // function call is expected to return a new string anyway,
+    // so we won't need to go through the trouble of deep
+    // copying this string)
+
+    char * thisvalue = ((char *)objectGetAttr(mem[argv[0]], "value"));
+
+    return makeString(thisvalue);
 }
 
 Object makeString(char * value)

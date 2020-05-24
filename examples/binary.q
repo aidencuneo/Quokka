@@ -111,10 +111,10 @@ fun xor 2
 end
 
 print('Enter first number  : ')
-one = long(input())
+one = 237L//long(input())
 
 print('Enter second number : ')
-two = long(input())
+two = 300L//long(input())
 
 println('BINARY:')
 println(binary(one), '^', binary(two), '\n')

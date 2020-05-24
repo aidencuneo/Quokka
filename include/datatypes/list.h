@@ -18,7 +18,11 @@ Object __add___list(int argc, int * argv)
         for (int i = 0; i < secndlen; i++)
             third[firstlen + i] = objectCopy(secnd[i]);
 
-        return makeList(firstlen + secndlen, third, 0);
+        Object ret = makeList(firstlen + secndlen, third, 0);
+
+        free(third);
+
+        return ret;
     }
 
     char * err = malloc(18 + strlen(mem[argv[1]].name) + 30 + 1);
@@ -152,8 +156,6 @@ Object makeList(int length, Object * value, int flipped)
         else
             lst[i] = value[i];
     }
-
-    free(value);
 
     int * len_ptr = makeIntPtr(length);
     pushTrash(len_ptr);

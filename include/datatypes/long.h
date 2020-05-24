@@ -4,13 +4,21 @@ Object __add___long(int argc, int * argv)
     {
         long long * first = objectGetAttr(mem[argv[0]], "value");
         int * secnd = objectGetAttr(mem[argv[1]], "value");
-        return makeLong(makeLLPtr(first[0] + secnd[0]));
+
+        long long * third = makeLLPtr(first[0] + secnd[0]);
+        pushTrash(third);
+
+        return makeLong(third);
     }
     else if (!strcmp(mem[argv[1]].name, "long"))
     {
         long long * first = objectGetAttr(mem[argv[0]], "value");
         long long * secnd = objectGetAttr(mem[argv[1]], "value");
-        return makeLong(makeLLPtr(first[0] + secnd[0]));
+
+        long long * third = makeLLPtr(first[0] + secnd[0]);
+        pushTrash(third);
+
+        return makeLong(third);
     }
 
     char * err = malloc(18 + strlen(mem[argv[1]].name) + 30 + 1);
@@ -28,13 +36,21 @@ Object __sub___long(int argc, int * argv)
     {
         long long * first = objectGetAttr(mem[argv[0]], "value");
         int * secnd = objectGetAttr(mem[argv[1]], "value");
-        return makeLong(makeLLPtr(first[0] - secnd[0]));
+
+        long long * third = makeLLPtr(first[0] - secnd[0]);
+        pushTrash(third);
+
+        return makeLong(third);
     }
     else if (!strcmp(mem[argv[1]].name, "long"))
     {
         long long * first = objectGetAttr(mem[argv[0]], "value");
         long long * secnd = objectGetAttr(mem[argv[1]], "value");
-        return makeLong(makeLLPtr(first[0] - secnd[0]));
+
+        long long * third = makeLLPtr(first[0] - secnd[0]);
+        pushTrash(third);
+
+        return makeLong(third);
     }
 
     char * err = malloc(18 + strlen(mem[argv[1]].name) + 30 + 1);
@@ -52,13 +68,21 @@ Object __mul___long(int argc, int * argv)
     {
         long long * first = objectGetAttr(mem[argv[0]], "value");
         int * secnd = objectGetAttr(mem[argv[1]], "value");
-        return makeLong(makeLLPtr(first[0] * secnd[0]));
+
+        long long * third = makeLLPtr(first[0] * secnd[0]);
+        pushTrash(third);
+
+        return makeLong(third);
     }
     else if (!strcmp(mem[argv[1]].name, "long"))
     {
         long long * first = objectGetAttr(mem[argv[0]], "value");
         long long * secnd = objectGetAttr(mem[argv[1]], "value");
-        return makeLong(makeLLPtr(first[0] * secnd[0]));
+
+        long long * third = makeLLPtr(first[0] * secnd[0]);
+        pushTrash(third);
+
+        return makeLong(third);
     }
 
     char * err = malloc(18 + strlen(mem[argv[1]].name) + 30 + 1);
@@ -78,9 +102,12 @@ Object __div___long(int argc, int * argv)
         int * secnd = objectGetAttr(mem[argv[1]], "value");
 
         if (!secnd[0])
-            return makeInt(makeIntPtr(0));
+            return makeInt(&falsePtr);
 
-        return makeLong(makeLLPtr(first[0] / secnd[0]));
+        long long * third = makeLLPtr(first[0] / secnd[0]);
+        pushTrash(third);
+
+        return makeLong(third);
     }
     else if (!strcmp(mem[argv[1]].name, "long"))
     {
@@ -88,9 +115,12 @@ Object __div___long(int argc, int * argv)
         long long * secnd = objectGetAttr(mem[argv[1]], "value");
 
         if (!secnd[0])
-            return makeInt(makeIntPtr(0));
+            return makeInt(&falsePtr);
 
-        return makeLong(makeLLPtr(first[0] / secnd[0]));
+        long long * third = makeLLPtr(first[0] / secnd[0]);
+        pushTrash(third);
+
+        return makeLong(third);
     }
 
     char * err = malloc(18 + strlen(mem[argv[1]].name) + 30 + 1);
@@ -108,13 +138,21 @@ Object __pow___long(int argc, int * argv)
     {
         long long * first = objectGetAttr(mem[argv[0]], "value");
         int * secnd = objectGetAttr(mem[argv[1]], "value");
-        return makeLong(makeLLPtr(lpowMath(first[0], secnd[0])));
+
+        long long * third = makeLLPtr(lpowMath(first[0], secnd[0]));
+        pushTrash(third);
+
+        return makeLong(third);
     }
     else if (!strcmp(mem[argv[1]].name, "long"))
     {
         long long * first = objectGetAttr(mem[argv[0]], "value");
         long long * secnd = objectGetAttr(mem[argv[1]], "value");
-        return makeLong(makeLLPtr(lpowMath(first[0], secnd[0])));
+
+        long long * third = makeLLPtr(lpowMath(first[0], secnd[0]));
+        pushTrash(third);
+
+        return makeLong(third);
     }
 
     char * err = malloc(18 + strlen(mem[argv[1]].name) + 31 + 1);
@@ -291,16 +329,27 @@ Object __pos___long(int argc, int * argv)
     long long * thisvalue = objectGetAttr(mem[argv[0]], "value");
 
     if (thisvalue[0] > INT_MAX)
-        return makeInt(makeIntPtr(INT_MAX));
+    {
+        int * intptr = makeIntPtr(INT_MAX);
+        pushTrash(intptr);
 
-    return makeInt(makeIntPtr(thisvalue[0]));
+        return makeInt(intptr);
+    }
+
+    int * intptr = makeIntPtr(thisvalue[0]);
+    pushTrash(intptr);
+
+    return makeInt(intptr);
 }
 
 Object __neg___long(int argc, int * argv)
 {
     long long * thisvalue = objectGetAttr(mem[argv[0]], "value");
 
-    return makeLong(makeLLPtr(-thisvalue[0]));
+    long long * negptr = makeLLPtr(-thisvalue[0]);
+    pushTrash(negptr);
+
+    return makeLong(negptr);
 }
 
 Object __disp___long(int argc, int * argv)

@@ -515,6 +515,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         mstrcat(&bytecode, temp);
 
+        free(templine);
+        free(varname);
         free(temp);
     }
     else if (stringInList(line, "-="))
@@ -558,6 +560,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         mstrcat(&bytecode, temp);
 
+        free(templine);
+        free(varname);
         free(temp);
     }
     else if (stringInList(line, "*="))
@@ -601,6 +605,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         mstrcat(&bytecode, temp);
 
+        free(templine);
+        free(varname);
         free(temp);
     }
     else if (stringInList(line, "/="))
@@ -644,6 +650,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         mstrcat(&bytecode, temp);
 
+        free(templine);
+        free(varname);
         free(temp);
     }
     else if (!strcmp(line[0], "while"))

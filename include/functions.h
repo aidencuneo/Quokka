@@ -1,4 +1,5 @@
 Object q_function_println(int argc, int * argv);
+Object q_function_string(int argc, int * argv);
 
 Object q_function_display(int argc, int * argv)
 {
@@ -37,6 +38,8 @@ Object q_function_display(int argc, int * argv)
         mstrcat(&out, ">");
     }
 
+    pushTrash(out);
+
     return makeString(out);
 }
 
@@ -51,16 +54,7 @@ Object q_function_print(int argc, int * argv)
         if (objectHasAttr(obj, "__string__"))
         {
             int * arglist = makeIntPtr(argv[i]);
-            Object strtext = ((standard_func_def)objectGetAttr(obj, "__string__"))(1, arglist);
-
-            if (strcmp(strtext.name, "string"))
-            {
-                char * err = malloc(27 + strlen(strtext.name) + 27 + 1);
-                strcpy(err, "__string__ method of type '");
-                strcat(err, strtext.name);
-                strcat(err, "' must return type 'string'");
-                error(err, line_num);
-            }
+            Object strtext = q_function_string(1, arglist);
 
             char * text = objectGetAttr(strtext, "value");
 
@@ -68,6 +62,8 @@ Object q_function_print(int argc, int * argv)
 
             ret += strlen(text);
             printf("%s", text);
+
+            freeObject(strtext);
         }
         else
         {
@@ -81,7 +77,6 @@ Object q_function_print(int argc, int * argv)
             ret += strlen(text);
             printf("%s", text);
 
-            free(text);
             freeObject(strtext);
         }
 
@@ -111,20 +106,11 @@ Object q_function_println(int argc, int * argv)
         if (objectHasAttr(obj, "__string__"))
         {
             int * arglist = makeIntPtr(argv[i]);
-            Object strtext = ((standard_func_def)objectGetAttr(obj, "__string__"))(1, arglist);
-
-            if (strcmp(strtext.name, "string"))
-            {
-                char * err = malloc(27 + strlen(strtext.name) + 27 + 1);
-                strcpy(err, "__string__ method of type '");
-                strcat(err, strtext.name);
-                strcat(err, "' must return type 'string'");
-                error(err, line_num);
-            }
-
-            char * text = objectGetAttr(strtext, "value");
+            Object strtext = q_function_string(1, arglist);
 
             free(arglist);
+
+            char * text = objectGetAttr(strtext, "value");
 
             ret += strlen(text);
             printf("%s", text);
@@ -143,7 +129,6 @@ Object q_function_println(int argc, int * argv)
             ret += strlen(text);
             printf("%s", text);
 
-            free(text);
             freeObject(strtext);
         }
 
@@ -224,7 +209,6 @@ Object q_function_string(int argc, int * argv)
     if (objectHasAttr(mem[argv[0]], "__string__"))
     {
         Object ret = ((standard_func_def)objectGetAttr(mem[argv[0]], "__string__"))(1, argv);
-        println(ret.name);
 
         if (strcmp(ret.name, "string"))
         {

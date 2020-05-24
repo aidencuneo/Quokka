@@ -1,43 +1,33 @@
-fun joinany 2
-    joinstr = argv[0]
-    strlst = argv[1]
-    outstr = ''
+fun flip 1
+    str = argv[0]
+    out = ''
 
-    i = 0
-    while i < len(strlst)
-        outstr += string(strlst[i]) + joinstr
-        i += 1
+    i = len(str)
+    while i >= 0
+        out += str[+i]
+        i -= 1
     end
 
-    ret outstr
-end
-
-fun flip 1
-    // str = argv[0]
-    // out = ''
-
-    // i = len(str)
-    // while i >= 0
-    //     out += str[+i]
-    //     i -= 1
-    // end
-
-    // ret out
-
-    ret argv[0]
+    ret out
 end
 
 fun binary 1
     n = argv[0]
-    b = []
+    b = ''
     i = 0
     while n > 0
-        b += [n - 2 * (n / 2)]
+        b += string(n - 2 * (n / 2))
         n /= 2
         i += 1
     end
-    ret flip(joinany('', b))
+    ret flip(b)
 end
 
-println(12988)
-println(binary(12988))
+println(1180)
+println(binary(1180))
+
+i = 0
+while i < 32
+    println(binary(i))
+    i += 1
+end

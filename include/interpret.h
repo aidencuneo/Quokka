@@ -32,6 +32,7 @@ void resetStack()
     for (int i = 0; i < stack_size; i++)
         popMem(stack[i]);
 
+    free(stack);
     stack = malloc(sizeof(int));
     stack_size = 0;
 }
@@ -78,22 +79,21 @@ void freeVars()
 // Memory
 void freeMemory()
 {
-    println("HERE");
-
-    for (int i = 0; i < memsize; i++)
-    {
-        if (i > 1500)
-        {
-            print(i);
-            print(", ");
-            println(mem[i].name);
-        }
-        freeObject(mem[i]);
-    }
-
-    println("HMM");
-
+    freeRecursive(mem, memsize);
     free(mem);
+}
+
+void freeRecursive(Object * ptr, int size)
+{
+    for (int i = 0; i < size; i++)
+    {
+        if (!strcmp(ptr[i].name, "list"))
+            freeRecursive(
+                objectGetAttr(ptr[i], "value"),
+                ((int *)objectGetAttr(ptr[i], "length"))[0]);
+
+        freeObject(ptr[i]);
+    }
 }
 
 // Free
@@ -206,6 +206,19 @@ void interp_init()
     addGVar("sizeof", sizeofFunction);
 }
 
+Object NULLObjectPointer()
+{
+    Object self;
+
+    self.name = "";
+
+    self.names = NULL;
+    self.values = NULL;
+    self.value_count = 0;
+
+    return self;
+}
+
 Object emptyObject(char * name)
 {
     Object self;
@@ -243,7 +256,6 @@ Object objectCopy(Object orig)
     {
         char * name = malloc(strlen(orig.names[i]) + 1);
         strcpy(name, orig.names[i]);
-        name[strlen(name)] = '\0';
         pushTrash(name);
 
         void ** newptr = malloc(sizeof(void *));
@@ -406,7 +418,10 @@ void assignGVar(char * name, int obj_ptr)
     int check = getGVarIndex(name);
     if (check != -1)
     {
-        // freeObject(globals.values[check]);
+        int oldvar = globals.values[check];
+        freeObject(mem[oldvar]);
+        mem[oldvar] = NULLObjectPointer();
+
         globals.values[check] = obj_ptr;
         return;
     }
@@ -427,9 +442,18 @@ void assignVar(char * name, int obj_ptr)
     int check = getLVarIndex(name);
     if (check != -1)
     {
-        // if (!can_return)
-        //     freeObject(locals.values[check]);
-        locals.values[check] = obj_ptr;
+        int oldvar = locals.values[check];
+        freeObject(mem[oldvar]);
+
+        if (obj_ptr == memsize - 1)
+        {
+            mem[oldvar] = mem[obj_ptr];
+            popKeepMem(memsize - 1);
+        }
+        else
+            mem[oldvar] = NULLObjectPointer();
+
+        locals.values[check] = oldvar;
         return;
     }
 
@@ -638,7 +662,10 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "LOAD_LONG"))
     {
-        Object item = makeLong(makeLLPtrFromStr(line[1]));
+        long long * llptr = makeLLPtrFromStr(line[1]);
+        pushTrash(llptr);
+
+        Object item = makeLong(llptr);
 
         pushTop(item);
     }
@@ -663,6 +690,8 @@ void quokka_interpret_line_tokens(char ** line)
         }
 
         pushTop(makeList(lstsize, value, 1));
+
+        free(value);
     }
     else if (!strcmp(line[0], "DEFINE_FUNCTION"))
     {
