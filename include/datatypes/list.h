@@ -59,7 +59,7 @@ Object __index___list(int argc, int * argv)
         return makeNull();
 
     Object obj = ((Object *)objectGetAttr(mem[argv[0]], "value"))[ind];
-    pushMem(obj);
+    pushMem(obj); ///////////////// THIS IS WHAT HAS BEEN CAUSING ALL OF THE BUGS BASICALLY /////////////////////////////////////////////////////////////////////////////
 
     int * obj_ptr = makeIntPtr(memsize - 1);
 
