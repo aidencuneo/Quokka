@@ -35,7 +35,7 @@ Object __call___function(int argc, int * argv)
 
     Object * arglist = malloc(argc * sizeof(Object));
     for (int i = 0; i < argc; i++)
-        arglist[i] = objectCopy(mem[argv[i + 1]]);
+        arglist[i] = mem[argv[i + 1]];
 
     addVar("argv", makeList(argc, arglist, 0));
 

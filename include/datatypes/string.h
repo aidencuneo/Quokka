@@ -237,7 +237,10 @@ Object __string___string(int argc, int * argv)
 
     char * thisvalue = ((char *)objectGetAttr(mem[argv[0]], "value"));
 
-    return makeString(thisvalue);
+    char * valcopy = strdup(thisvalue);
+    pushTrash(valcopy);
+
+    return makeString(valcopy);
 }
 
 Object makeString(char * value)

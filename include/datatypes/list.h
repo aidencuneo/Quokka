@@ -12,11 +12,11 @@ Object __add___list(int argc, int * argv)
 
         // Add first list to final list
         for (int i = 0; i < firstlen; i++)
-            third[i] = objectCopy(first[i]);
+            third[i] = first[i];
 
         // Add second list to final list
         for (int i = 0; i < secndlen; i++)
-            third[firstlen + i] = objectCopy(secnd[i]);
+            third[firstlen + i] = secnd[i];
 
         Object ret = makeList(firstlen + secndlen, third, 0);
 
@@ -59,7 +59,9 @@ Object __index___list(int argc, int * argv)
         return makeNull();
 
     Object obj = ((Object *)objectGetAttr(mem[argv[0]], "value"))[ind];
-    pushMem(obj);
+
+    // Push a COPY of this Object to memory
+    pushMem(objectCopy(obj));
 
     int * obj_ptr = makeIntPtr(memsize - 1);
 

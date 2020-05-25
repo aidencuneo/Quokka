@@ -87,10 +87,10 @@ void freeRecursive(Object * ptr, int size)
 {
     for (int i = 0; i < size; i++)
     {
-        if (!strcmp(ptr[i].name, "list"))
-            freeRecursive(
-                objectGetAttr(ptr[i], "value"),
-                ((int *)objectGetAttr(ptr[i], "length"))[0]);
+        // if (!strcmp(ptr[i].name, "list"))
+        //     freeRecursive(
+        //         objectGetAttr(ptr[i], "value"),
+        //         ((int *)objectGetAttr(ptr[i], "length"))[0]);
 
         freeObject(ptr[i]);
     }
@@ -685,8 +685,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         for (int i = 0; i < lstsize; i++)
         {
-            // Transfer a duplicated Object into the list
-            value[i] = objectCopy(popTop());
+            // This line previously used objectCopy(popTop())
+            value[i] = popTop();
         }
 
         pushTop(makeList(lstsize, value, 1));

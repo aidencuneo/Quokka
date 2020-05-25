@@ -192,12 +192,16 @@ int main(int argc, char ** argv)
 
     chdir(full_dir_name);
 
+    // Free CLI args
+    free(args);
+
     // If an already compiled .qc file is entered as the first argument,
     // then just retrieve the bytecode and interpret it
     if (endswith(fname, ".qc"))
         main_bytecode = readfile(fname);
     else
     {
+        // Compile Quokka script into Quokka bytecode
         compile_init();
         main_bytecode = quokka_compile_fname(fname);
 
@@ -229,8 +233,6 @@ int main(int argc, char ** argv)
         free(barefile);
         free(outputfile);
     }
-
-    free(args);
 
     if (execute_code)
     {

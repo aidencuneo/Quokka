@@ -2015,8 +2015,6 @@ char * quokka_compile_tokens(char ** tokens, int isInline)
         current_line++;
     }
 
-    free(tokens);
-
     return compiled;
 }
 
@@ -2024,12 +2022,13 @@ char * quokka_compile_raw(char * rawtext, int maxtokensize, int isInline)
 {
     if (maxtokensize == -1)
         maxtokensize = 2048;
+
     file_tokens = malloc(maxtokensize + 1);
+    pushTrash(file_tokens);
+
     ntokenise(file_tokens, rawtext, "\n");
 
-    char * res = quokka_compile_tokens(file_tokens, isInline);
-
-    return res;
+    return quokka_compile_tokens(file_tokens, isInline);
 }
 
 char * quokka_compile_fname(char * filename)
@@ -2039,11 +2038,9 @@ char * quokka_compile_fname(char * filename)
     if (!buffer)
         return 0;
 
-    char * res = quokka_compile_raw(buffer, -1, 0);
-
     pushTrash(buffer);
 
-    return res;
+    return quokka_compile_raw(buffer, -1, 0);
 }
 
 char ** quokka_line_tok(char * line)
