@@ -133,23 +133,38 @@ void interp_init()
     truePtr = 1;
     falsePtr = 0;
 
-    // No argument restraints
+    /*
+    Global Variables
+    */
+
+    addGVar("true", makeInt(&truePtr));
+    addGVar("false", makeInt(&falsePtr));
+
+    /*
+    No argument restraints
+    */
+
     Object printFunction = emptyObject("bfunction");
     printFunction = addObjectValue(printFunction, "__call__", &q_function_print);
-    // printFunction = addObjectValue(printFunction, "__call__argc", &oneArgc);
     addGVar("print", printFunction);
 
-    // No argument restraints
     Object printlnFunction = emptyObject("bfunction");
     printlnFunction = addObjectValue(printlnFunction, "__call__", &q_function_println);
-    // printlnFunction = addObjectValue(printlnFunction, "__call__argc", &oneArgc);
     addGVar("println", printlnFunction);
 
-    Object inputFunction = emptyObject("bfunction");
-    inputFunction = addObjectValue(inputFunction, "__call__", &q_function_input);
-    inputFunction = addObjectValue(inputFunction, "__call__argmin", &falsePtr);
-    inputFunction = addObjectValue(inputFunction, "__call__argmax", &oneArgc);
-    addGVar("input", inputFunction);
+    /*
+    Argc : 0
+    */
+
+    Object exitFunction = emptyObject("bfunction");
+    exitFunction = addObjectValue(exitFunction, "__call__", &q_function_exit);
+    exitFunction = addObjectValue(exitFunction, "__call__argmin", &falsePtr);
+    exitFunction = addObjectValue(exitFunction, "__call__argmax", &falsePtr);
+    addGVar("exit", exitFunction);
+
+    /*
+    Argc : 1
+    */
 
     Object stringFunction = emptyObject("bfunction");
     stringFunction = addObjectValue(stringFunction, "__call__", &q_function_string);
@@ -199,17 +214,21 @@ void interp_init()
     execFunction = addObjectValue(execFunction, "__call__argmax", &oneArgc);
     addGVar("exec", execFunction);
 
-    Object exitFunction = emptyObject("bfunction");
-    exitFunction = addObjectValue(exitFunction, "__call__", &q_function_exit);
-    exitFunction = addObjectValue(exitFunction, "__call__argmin", &falsePtr);
-    exitFunction = addObjectValue(exitFunction, "__call__argmax", &falsePtr);
-    addGVar("exit", exitFunction);
-
     Object sizeofFunction = emptyObject("bfunction");
     sizeofFunction = addObjectValue(sizeofFunction, "__call__", &q_function_sizeof);
     sizeofFunction = addObjectValue(sizeofFunction, "__call__argmin", &oneArgc);
     sizeofFunction = addObjectValue(sizeofFunction, "__call__argmax", &oneArgc);
     addGVar("sizeof", sizeofFunction);
+
+    /*
+    The rest
+    */
+
+    Object inputFunction = emptyObject("bfunction");
+    inputFunction = addObjectValue(inputFunction, "__call__", &q_function_input);
+    inputFunction = addObjectValue(inputFunction, "__call__argmin", &falsePtr);
+    inputFunction = addObjectValue(inputFunction, "__call__argmax", &oneArgc);
+    addGVar("input", inputFunction);
 }
 
 Object NULLObjectPointer()
@@ -1471,6 +1490,9 @@ void quokka_interpret_tokens(char ** tokens)
 
         bc_line++;
     }
+
+    if (!can_return)
+        resetStack();
 
     free(tokens);
 }
