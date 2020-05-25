@@ -355,8 +355,9 @@ Object __neg___long(int argc, int * argv)
 Object __disp___long(int argc, int * argv)
 {
     long long * thisvalue = objectGetAttr(mem[argv[0]], "value");
-    char * tostr = LLToStr(thisvalue[0]);
 
+    char * tostr = LLToStr(thisvalue[0]);
+    mstrcat(&tostr, "L");
     pushTrash(tostr);
 
     return makeString(tostr);

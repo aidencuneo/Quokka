@@ -199,6 +199,12 @@ void interp_init()
     execFunction = addObjectValue(execFunction, "__call__argmax", &oneArgc);
     addGVar("exec", execFunction);
 
+    Object exitFunction = emptyObject("bfunction");
+    exitFunction = addObjectValue(exitFunction, "__call__", &q_function_exit);
+    exitFunction = addObjectValue(exitFunction, "__call__argmin", &falsePtr);
+    exitFunction = addObjectValue(exitFunction, "__call__argmax", &falsePtr);
+    addGVar("exit", exitFunction);
+
     Object sizeofFunction = emptyObject("bfunction");
     sizeofFunction = addObjectValue(sizeofFunction, "__call__", &q_function_sizeof);
     sizeofFunction = addObjectValue(sizeofFunction, "__call__argmin", &oneArgc);
@@ -451,7 +457,10 @@ void assignVar(char * name, int obj_ptr)
             popKeepMem(memsize - 1);
         }
         else
+        {
             mem[oldvar] = NULLObjectPointer();
+            oldvar = obj_ptr;
+        }
 
         locals.values[check] = oldvar;
         return;

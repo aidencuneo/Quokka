@@ -27,43 +27,29 @@ fun lpadwith 3
     ret [first, secnd]
 end
 
-fun joinany 2
-    joinstr = argv[0]
-    strlst = argv[1]
-    outstr = ''
+// fun flip 1
+//     str = argv[0]
+//     out = ''
 
-    i = 0
-    while i < len(strlst)
-        outstr += string(strlst[i]) + joinstr
-        i += 1
-    end
+//     i = len(str)
+//     while i >= 0
+//         out += str[+i]
+//         i -= 1
+//     end
 
-    ret outstr
-end
-
-fun flip 1
-    str = argv[0]
-    out = ''
-
-    i = len(str)
-    while i >= 0
-        out += str[+i]
-        i -= 1
-    end
-
-    ret out
-end
+//     ret out
+// end
 
 fun binary 1
     n = argv[0]
-    b = []
+    b = ''
     i = 0
     while n > 0
-        b += [modulo(n, 2)]
+        b = string(modulo(n, 2)) + b
         n /= 2
         i += 1
     end
-    ret flip(joinany('', b))
+    ret b
 end
 
 fun bintoint 1
@@ -92,9 +78,6 @@ fun xor 2
     first = both[0]
     secnd = both[1]
 
-    println(both)
-    println(len(first), len(secnd))
-
     // Perform XOR
     new = ''
     i = 0
@@ -111,13 +94,13 @@ fun xor 2
 end
 
 print('Enter first number  : ')
-one = 237L//long(input())
+one = 9999//long(input())
 
 print('Enter second number : ')
-two = 300L//long(input())
+two = 7777//long(input())
 
 println('BINARY:')
 println(binary(one), '^', binary(two), '\n')
 
-// num = xor(binary(one), binary(two))
-// println(one, '^', two, '=', bintoint(num))
+num = xor(binary(one), binary(two))
+println(one, '^', two, '=', bintoint(num))

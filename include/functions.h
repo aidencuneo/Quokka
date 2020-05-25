@@ -363,6 +363,25 @@ Object q_function_exec(int argc, int * argv)
     return makeNull();
 }
 
+Object q_function_exit(int argc, int * argv)
+{
+    freeVars();
+    freeMemory();
+    freeStack();
+    freeRetStack();
+    emptyTrash();
+
+    free(full_file_name);
+    free(full_dir_name);
+    free(main_bytecode);
+
+    exit(1);
+
+    // The following line is simply to prevent a warning that may
+    // appear when compiling Quokka with some GCC or Clang versions
+    return makeNull();
+}
+
 Object q_function_sizeof(int argc, int * argv)
 {
     if (objectHasAttr(mem[argv[0]], "__sizeof__"))
