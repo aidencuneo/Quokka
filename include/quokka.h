@@ -1,5 +1,5 @@
 // VERSION STUFF
-#define VERSION "0.2.1"
+#define VERSION "0.2.2"
 
 // Defines
 #define LN10 2.3025850929940456840179914546844
@@ -99,7 +99,7 @@ char * cpprint(char * value);
     default  : cpprintln)(value)
 
 // Used to typecast Object pointers into Quokka functions
-typedef Object (*standard_func_def)(int argc, int * argv);
+typedef Object (*standard_func_def)(int argc, Object * argv);
 
 //
 /// All the rest

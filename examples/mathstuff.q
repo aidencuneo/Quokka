@@ -25,5 +25,5 @@ println(str + string(lnum))
 println(type(inum), type(lnum), type(str))
 
 if type(inum) == 'int'
-    println('yay!')
+    println("Yup, inum is an int")
 end

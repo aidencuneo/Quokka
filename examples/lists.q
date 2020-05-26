@@ -2,6 +2,11 @@ lst = []
 a = 0
 
 until a > 9
+    // lst
+    // [len(lst)]
+    // +
+    // = lst
+
     lst += [len(lst)]
     println(lst)
     a += 1

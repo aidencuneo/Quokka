@@ -56,7 +56,7 @@ struct __Varlist_Struct__
     int count;
 
     char ** names;
-    int * values;
+    Object * values;
 };
 
 // Function declarations
@@ -80,14 +80,14 @@ void pushTop(Object obj);
 Object popTop();
 void pushMem(Object obj);
 void popMem(int obj_ptr);
+void pushConst(Object obj);
+void clearConsts();
 void pushTrash(void * ptr);
 
-void assignGVar(char * name, int obj_ptr);
-void assignVar(char * name, int obj_ptr);
 void addGVar(char * name, Object obj);
 void addVar(char * name, Object obj);
 
-int getVar(char * name);
+Object getVar(char * name);
 int getGVarIndex(char * name);
 int getLVarIndex(char * name);
 int getVarIndex(char * name);

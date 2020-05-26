@@ -1,4 +1,4 @@
-Object __sizeof___null(int argc, int * argv)
+Object __sizeof___null(int argc, Object * argv)
 {
     int * size = makeIntPtr(sizeof(0));
     pushTrash(size);
@@ -6,12 +6,12 @@ Object __sizeof___null(int argc, int * argv)
     return makeInt(size);
 }
 
-Object __disp___null(int argc, int * argv)
+Object __disp___null(int argc, Object * argv)
 {
     return makeString("null");
 }
 
-Object __bool___null(int argc, int * argv)
+Object __bool___null(int argc, Object * argv)
 {
     return makeInt(&falsePtr);
 }

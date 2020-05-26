@@ -123,7 +123,7 @@ int main(int argc, char ** argv)
                     if (stack_size)
                     {
                         // Get top of stack
-                        int * arglist = makeIntPtr(stack[stack_size - 1]);
+                        Object * arglist = makeArglist(stack[stack_size - 1]);
 
                         // Print it
                         q_function_println(1, arglist);
@@ -157,7 +157,7 @@ int main(int argc, char ** argv)
                 if (stack_size)
                 {
                     // Get top of stack
-                    int * arglist = makeIntPtr(stack[stack_size - 1]);
+                    Object * arglist = makeArglist(stack[stack_size - 1]);
 
                     // Print it
                     q_function_println(1, arglist);
@@ -242,7 +242,8 @@ int main(int argc, char ** argv)
         quokka_interpret(main_bytecode);
 
         freeVars();
-        freeMemory();
+        freeConsts();
+        // freeMemory();
         freeStack();
         freeRetStack();
         emptyTrash();
