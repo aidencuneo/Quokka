@@ -90,8 +90,6 @@ Object __eq___string(int argc, Object * argv)
 
 Object __index___string(int argc, Object * argv)
 {
-    exit(1);
-
     if (strcmp(argv[1].name, "int"))
     {
         char * err = malloc(42 + strlen(argv[1].name) + 1 + 1);
@@ -115,17 +113,9 @@ Object __index___string(int argc, Object * argv)
 
         pushTrash(chst);
 
-        pushMem(makeString(chst));
-
-        int * obj_ptr = makeIntPtr(memsize - 1);
-
-        Object ret = makeInt(obj_ptr);
-
-        pushTrash(obj_ptr);
-        pushMem(ret);
-
-        return ret;
+        return makeString(chst);
     }
+
     if (ind < 0)
     {
         char * chst = malloc(1);
@@ -133,16 +123,7 @@ Object __index___string(int argc, Object * argv)
 
         pushTrash(chst);
 
-        pushMem(makeString(chst));
-
-        int * obj_ptr = makeIntPtr(memsize - 1);
-
-        Object ret = makeInt(obj_ptr);
-
-        pushTrash(obj_ptr);
-        pushMem(ret);
-
-        return ret;
+        return makeString(chst);
     }
 
     char ch = ((char *)objectGetAttr(argv[0], "value"))[ind];
@@ -153,16 +134,7 @@ Object __index___string(int argc, Object * argv)
 
     pushTrash(chst);
 
-    pushMem(makeString(chst));
-
-    int * obj_ptr = makeIntPtr(memsize - 1);
-
-    Object ret = makeInt(obj_ptr);
-
-    pushTrash(obj_ptr);
-    pushMem(ret);
-
-    return ret;
+    return makeString(chst);
 }
 
 Object __sizeof___string(int argc, Object * argv)

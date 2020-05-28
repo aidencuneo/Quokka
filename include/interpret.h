@@ -87,26 +87,6 @@ void freeVars()
     freeLocals();
 }
 
-// Memory
-void freeMemory()
-{
-    freeRecursive(mem, memsize);
-    free(mem);
-}
-
-void freeRecursive(Object * ptr, int size)
-{
-    for (int i = 0; i < size; i++)
-    {
-        // if (!strcmp(ptr[i].name, "list"))
-        //     freeRecursive(
-        //         objectGetAttr(ptr[i], "value"),
-        //         ((int *)objectGetAttr(ptr[i], "length"))[0]);
-
-        freeObject(ptr[i]);
-    }
-}
-
 // Constants
 void freeConsts()
 {
@@ -133,7 +113,6 @@ void cleanupAll()
     free(bc_tokens);
 
     freeVars();
-    freeMemory();
     freeStack();
     freeRetStack();
     emptyTrash();
@@ -295,6 +274,17 @@ Object objectCopy(Object orig)
         self = addObjectValue(self, name, *newptr);
     }
 
+    // If object is iterable, duplicate all objects inside it
+    // if (!strcmp(self.name, "list"))
+    // {
+    //     int length = ((int *)objectGetAttr(self, "length"))[0];
+    //     Object * lst = objectGetAttr(self, "value");
+    //     for (int i = 0; i < length; i++)
+    //     {
+    //         // lst[i] = makeNull();//objectCopy(lst[i]);
+    //     }
+    // }
+
     return self;
 }
 
@@ -345,7 +335,8 @@ void * objectGetAttr(Object obj, char * name)
     return NULL;
 }
 
-void freeObject(Object obj)
+// Free an object and all objects within (if object is iterable)
+void freeObjectR(Object obj)
 {
     // If obj is iterable, free all items within it
     if (!strcmp(obj.name, "list"))
@@ -354,10 +345,17 @@ void freeObject(Object obj)
         Object * lst = objectGetAttr(obj, "value");
         for (int i = 0; i < length; i++)
         {
-            // freeObject(lst[i]);
+            freeObjectR(lst[i]);
         }
     }
 
+    free(obj.names);
+    free(obj.values);
+}
+
+// Free an object, no recursion for lists
+void freeObject(Object obj)
+{
     free(obj.names);
     free(obj.values);
 }
@@ -368,8 +366,8 @@ Stack
 
 */
 
-// Push to top of stack manually (using your own Object)
-void pushTopM(Object obj)
+// Push to top of stack normally
+void pushTop(Object obj)
 {
     stack = realloc(stack, (stack_size + 1) * sizeof(Object));
     stack[stack_size] = obj;
@@ -378,13 +376,13 @@ void pushTopM(Object obj)
 
 // Push to top of stack using const.
 // If you don't need this Object to be in consts, just use
-// pushTopM, it's faster in the long run unless you need
+// pushTop, it's faster in the long run unless you need
 // `obj` to be in consts and a duplicate to be pushed into
 // the stack.
-void pushTop(Object obj)
+void pushTopC(Object obj)
 {
     pushConst(obj);
-    pushTopM(objectCopy(consts[constcount - 1]));
+    pushTop(objectCopy(consts[constcount - 1]));
 }
 
 // Push to bottom of stack manually (using your own Object)
@@ -438,53 +436,6 @@ Object popRetTop()
     return ret_stack[ret_stack_size];
 }
 
-/*
-
-Memory
-
-*/
-
-/*
-
-The below will become redundant
-
-*/
-
-void pushMem(Object obj)
-{
-    mem = realloc(mem, (memsize + 1) * sizeof(Object));
-    mem[memsize] = obj;
-    memsize++;
-}
-
-void popMem(int obj_ptr)
-{
-    mem = realloc(mem, (memsize + 1) * sizeof(Object));
-
-    freeObject(mem[obj_ptr]);
-
-    for (int i = obj_ptr; i < memsize; i++)
-        mem[i] = mem[i + 1];
-
-    memsize--;
-}
-
-void popKeepMem(int obj_ptr)
-{
-    mem = realloc(mem, (memsize + 1) * sizeof(Object));
-
-    for (int i = obj_ptr; i < memsize; i++)
-        mem[i] = mem[i + 1];
-
-    memsize--;
-}
-
-/*
-
-The above will become redundant
-
-*/
-
 // Constants
 void pushConst(Object obj)
 {
@@ -499,7 +450,7 @@ void clearConsts()
 {
     for (int i = 0; i < constcount; i++)
     {
-        freeObject(consts[i]);
+        freeObjectR(consts[i]);
     }
 
     consts = realloc(consts, sizeof(Object));
@@ -520,6 +471,7 @@ void addGVar(char * name, Object obj)
     int check = getGVarIndex(name);
     if (check != -1)
     {
+        // Free the old object non-recursively to prevent lists from losing their objects
         freeObject(globals.values[check]);
 
         globals.values[check] = obj;
@@ -542,6 +494,7 @@ void addVar(char * name, Object obj)
     int check = getLVarIndex(name);
     if (check != -1)
     {
+        // Free the old object non-recursively to prevent lists from losing their objects
         freeObject(locals.values[check]);
 
         locals.values[check] = obj;
@@ -734,7 +687,7 @@ void CONSTS()
     {
         Object * arglist = makeArglist(consts[i]);
 
-        freeObject(q_function_print(1, arglist));
+        freeObjectR(q_function_print(1, arglist));
         free(arglist);
 
         print(", ");
@@ -744,12 +697,12 @@ void CONSTS()
 
 void STACK()
 {
-    print("STACKKKKK : ");
+    print("STACK : ");
     for (int i = 0; i < stack_size; i++)
     {
         Object * arglist = makeArglist(stack[i]);
 
-        freeObject(q_function_print(1, arglist));
+        freeObjectR(q_function_print(1, arglist));
         free(arglist);
 
         print(", ");
@@ -759,12 +712,10 @@ void STACK()
 
 void quokka_interpret_line_tokens(char ** line)
 {
-    // CONSTS();
-    // STACK();
-
     if (!strlen(line[0]))
         return;
 
+    if (verbose) STACK();
     if (verbose) println(line[0]);
 
     if (!strcmp(line[0], "LOAD_STRING"))
@@ -805,7 +756,7 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "LOAD_NAME"))
     {
-        pushTopM(objectCopy(getVar(line[1])));
+        pushTop(objectCopy(getVar(line[1])));
     }
     else if (!strcmp(line[0], "STORE_NAME"))
     {
@@ -850,7 +801,7 @@ void quokka_interpret_line_tokens(char ** line)
         // bytecode, so f_code must be freed when the program exits.
         pushTrash(f_code);
 
-        addVar(line[1], makeFunction(&f_code, argmin, argmax));
+        addGVar(line[1], makeFunction(&f_code, argmin, argmax));
     }
     else if (!strcmp(line[0], "DEL_VAR"))
     {
@@ -872,7 +823,11 @@ void quokka_interpret_line_tokens(char ** line)
         if (!can_return)
             error("can not return values from this scope", line_num);
 
-        pushRetTop(popTop());
+        if (!stack_size)
+            pushRetTop(makeNull());
+        else
+            pushRetTop(popTop());
+
         // Immediately return result and exit the function
         bc_line = bc_line_count;
     }
@@ -889,7 +844,7 @@ void quokka_interpret_line_tokens(char ** line)
     //         error(err, line_num);
     //     }
 
-    //     freeObject(obj);
+    //     freeObjectR(obj);
     // }
     else if (!strcmp(line[0], "UNARY_ADD"))
     {
@@ -919,7 +874,7 @@ void quokka_interpret_line_tokens(char ** line)
 
         Object * arglist = makeArglist(first);
 
-        pushTopM(((standard_func_def)objectGetAttr(first, "__pos__"))(1, arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__pos__"))(1, arglist));
 
         free(arglist);
     }
@@ -951,7 +906,7 @@ void quokka_interpret_line_tokens(char ** line)
 
         Object * arglist = makeArglist(first);
 
-        pushTopM(((standard_func_def)objectGetAttr(first, "__neg__"))(1, arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__neg__"))(1, arglist));
 
         free(arglist);
     }
@@ -986,7 +941,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTopM(((standard_func_def)objectGetAttr(first, "__add__"))(2, arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__add__"))(2, arglist));
 
         freeObject(first);
         freeObject(secnd);
@@ -1024,7 +979,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTopM(((standard_func_def)objectGetAttr(first, "__sub__"))(2, arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__sub__"))(2, arglist));
 
         freeObject(first);
         freeObject(secnd);
@@ -1062,7 +1017,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTopM(((standard_func_def)objectGetAttr(first, "__mul__"))(2, arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__mul__"))(2, arglist));
 
         freeObject(first);
         freeObject(secnd);
@@ -1100,7 +1055,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTopM(((standard_func_def)objectGetAttr(first, "__div__"))(2, arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__div__"))(2, arglist));
 
         freeObject(first);
         freeObject(secnd);
@@ -1138,7 +1093,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTopM(((standard_func_def)objectGetAttr(first, "__pow__"))(2, arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__pow__"))(2, arglist));
 
         freeObject(first);
         freeObject(secnd);
@@ -1176,7 +1131,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTopM(((standard_func_def)objectGetAttr(first, "__eq__"))(2, arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__eq__"))(2, arglist));
 
         freeObject(first);
         freeObject(secnd);
@@ -1214,7 +1169,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTopM(((standard_func_def)objectGetAttr(first, "__lt__"))(2, arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__lt__"))(2, arglist));
 
         freeObject(first);
         freeObject(secnd);
@@ -1252,7 +1207,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTopM(((standard_func_def)objectGetAttr(first, "__gt__"))(2, arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__gt__"))(2, arglist));
 
         freeObject(first);
         freeObject(secnd);
@@ -1290,7 +1245,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTopM(((standard_func_def)objectGetAttr(first, "__le__"))(2, arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__le__"))(2, arglist));
 
         freeObject(first);
         freeObject(secnd);
@@ -1328,7 +1283,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = first;
         arglist[1] = secnd;
 
-        pushTopM(((standard_func_def)objectGetAttr(first, "__ge__"))(2, arglist));
+        pushTop(((standard_func_def)objectGetAttr(first, "__ge__"))(2, arglist));
 
         freeObject(first);
         freeObject(secnd);
@@ -1376,7 +1331,7 @@ void quokka_interpret_line_tokens(char ** line)
 
         int condition = ((int *)objectGetAttr(conditionobj, "value"))[0]; //////////////////////////////////////////////////////////////
 
-        freeObject(conditionobj);
+        freeObjectR(conditionobj);
 
         // If false, don't jump
         if (!condition)
@@ -1411,7 +1366,7 @@ void quokka_interpret_line_tokens(char ** line)
 
         int condition = ((int *)objectGetAttr(conditionobj, "value"))[0]; ////////////////////////////////////////////////////////////////////////
 
-        freeObject(conditionobj);
+        freeObjectR(conditionobj);
 
         // If true, don't jump
         if (condition)
@@ -1436,8 +1391,9 @@ void quokka_interpret_line_tokens(char ** line)
         int i;
         for (i = 0; i < argcount; i++)
         {
-            pushConst(popTop());
-            arglist[argcount - i - 1] = consts[constcount - 1]; // arglist[argcount - i - 1] = stack[stack_size - i - 1];
+            // pushConst(popTop());
+            // arglist[argcount - i - 1] = consts[constcount - 1]; // arglist[argcount - i - 1] = stack[stack_size - i - 1];
+            arglist[argcount - i - 1] = popTop();
         }
 
         Object func = popTop(); // stack[stack_size - i - 1];
@@ -1475,7 +1431,7 @@ void quokka_interpret_line_tokens(char ** line)
             else err = malloc(27 + strlen(diffstr) + 14 + 1);
 
             strcpy(err, "function requires at least ");
-            strcat(err, strndup(diffstr, strlen(diffstr)));
+            strcat(err, diffstr);
             strcat(err, " more argument");
             if (diff != 1)
                 strcat(err, "s");
@@ -1486,10 +1442,14 @@ void quokka_interpret_line_tokens(char ** line)
 
         if (!strcmp(func.name, "bfunction"))
         {
-            pushTopM(((standard_func_def)objectGetAttr(func, "__call__"))(argcount, arglist));
+            pushTop(((standard_func_def)objectGetAttr(func, "__call__"))(argcount, arglist));
 
-            // for (int i = 0; i < argcount; i++)
-                // pushBottomM(popTop()); // freeObject(arglist[i]);
+            // Free all arguments passed into this function
+            for (int i = 0; i < argcount; i++)
+                freeObject(arglist[i]);
+
+            // Free the function itself
+            freeObject(func);
         }
         else
         {
@@ -1498,13 +1458,13 @@ void quokka_interpret_line_tokens(char ** line)
                 arglist[i + 1] = arglist[i];
             arglist[0] = func;
 
-            pushTopM(((standard_func_def)objectGetAttr(func, "__call__"))(argcount, arglist));
+            pushTop(((standard_func_def)objectGetAttr(func, "__call__"))(argcount, arglist));
 
-            // for (int i = 0; i < argcount + 1; i++)
-            //     freeObject(arglist[i]);
+            // Free all arguments passed into this function (function itself included)
+            for (int i = 0; i < argcount + 1; i++)
+                freeObject(arglist[i]);
         }
 
-        freeObject(func);
         free(arglist);
     }
     else if (!strcmp(line[0], "GET_INDEX"))
@@ -1526,7 +1486,7 @@ void quokka_interpret_line_tokens(char ** line)
 
             Object * arglist = makeArglist(obj);
 
-            pushTopM(((standard_func_def)objectGetAttr(obj, "__copy__"))(1, arglist));
+            pushTop(((standard_func_def)objectGetAttr(obj, "__copy__"))(1, arglist));
 
             free(arglist);
 
@@ -1555,7 +1515,10 @@ void quokka_interpret_line_tokens(char ** line)
         if (funcargc != 2)
             error("__index__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        pushTopM(((standard_func_def)objectGetAttr(obj, "__index__"))(2, arglist));
+        pushTop(((standard_func_def)objectGetAttr(obj, "__index__"))(2, arglist));
+
+        freeObject(ind);
+        freeObject(obj);
 
         free(arglist);
     }

@@ -362,7 +362,6 @@ Object q_function_exec(int argc, Object * argv)
 Object q_function_exit(int argc, Object * argv)
 {
     freeVars();
-    freeMemory();
     freeStack();
     freeRetStack();
     emptyTrash();

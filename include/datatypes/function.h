@@ -9,6 +9,9 @@ Object __call___function(int argc, Object * argv)
         old_stack[i] = stack[i];
     int old_stack_size = stack_size;
 
+    stack = realloc(stack, sizeof(Object));
+    stack_size = 0;
+
     char ** old_locals_names = malloc(locals.count * sizeof(char *));
     Object * old_locals_values = malloc(locals.count * sizeof(Object));
     for (int i = 0; i < locals.count; i++)
@@ -17,6 +20,9 @@ Object __call___function(int argc, Object * argv)
         old_locals_values[i] = locals.values[i];
     }
     int old_locals_count = locals.count;
+
+    // Function call will not affect currently defined locals
+    locals.count = 0;
 
     int old_bc_line = bc_line;
     int old_bc_line_count = bc_line_count;
@@ -40,6 +46,7 @@ Object __call___function(int argc, Object * argv)
     free(arglist);
 
     // Interpret
+
     quokka_interpret(code);
 
     int argcind = getGVarIndex("argc");

@@ -74,12 +74,11 @@ void objectSummary(Object obj);
 Object addObjectValue(Object obj, char * name, void * value);
 int objectHasAttr(Object obj, char * name);
 void * objectGetAttr(Object obj, char * name);
+void freeObjectR(Object obj);
 void freeObject(Object obj);
 
 void pushTop(Object obj);
 Object popTop();
-void pushMem(Object obj);
-void popMem(int obj_ptr);
 void pushConst(Object obj);
 void clearConsts();
 void pushTrash(void * ptr);

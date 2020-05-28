@@ -27,27 +27,12 @@ fun lpadwith 3
     ret [first, secnd]
 end
 
-// fun flip 1
-//     str = argv[0]
-//     out = ''
-
-//     i = len(str)
-//     while i >= 0
-//         out += str[+i]
-//         i -= 1
-//     end
-
-//     ret out
-// end
-
 fun binary 1
     n = argv[0]
     b = ''
-    i = 0
     while n > 0
         b = string(modulo(n, 2)) + b
         n /= 2
-        i += 1
     end
     ret b
 end
@@ -71,10 +56,7 @@ fun bintoint 1
 end
 
 fun xor 2
-    first = string(argv[0])
-    secnd = string(argv[1])
-
-    both = lpadwith('0', first, secnd)
+    both = lpadwith('0', argv[0], argv[1])
     first = both[0]
     secnd = both[1]
 
@@ -94,13 +76,16 @@ fun xor 2
 end
 
 print('Enter first number  : ')
-one = 9999//long(input())
+one = 8//long(input())
 
 print('Enter second number : ')
-two = 7777//long(input())
+two = 5//long(input())
+
+b_one = binary(one)
+b_two = binary(two)
 
 println('BINARY:')
-println(binary(one), '^', binary(two), '\n')
+println(b_one, '^', b_two, '\n')
 
-num = xor(binary(one), binary(two))
+num = xor(b_one, b_two)
 println(one, '^', two, '=', bintoint(num))
