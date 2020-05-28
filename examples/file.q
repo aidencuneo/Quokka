@@ -1,35 +1,44 @@
-// Operators:
-// +------------------------+
-// | +  | -  | *  | /  | ** |
-// +------------------------+
-// | <  | >  | <= | >= | == |
-// +------------------------+
-// | += | -= | *= | /= | =  |
-// +------------------------+
+fun lpadwith 3
+    pad = argv[0]
+    pad = pad[0] // Limit pad to one char
 
-// Functions (in order of most to least complete):
-// print
-// println
-// input
-// string
-// bool
-// int (not complete)
+    first = argv[1]
+    secnd = argv[2]
 
-i = 0
-str = ''
+    // Pad until both strings are the same length
+    if len(secnd) > len(first)
+        i = len(first)
+        while i < len(secnd)
+            first = pad + first
+            i +
+        end
+    elif len(first) > len(secnd)
+        i = len(secnd)
+        while i < len(first)
+            secnd = pad + secnd
+            i +
+        end
+    end
 
-until i == 8
-    str += 'Potatoes. '
-    i += 1
+    ret [first, secnd]
 end
 
-i = 0
-last_ch = ' '
 
-while last_ch
-    last_ch = str[i]
-    print(last_ch)
-    i += 1
+fun map 2
+    func = argv[0]
+    lst = argv[1]
+    new = []
+
+    i = 0
+    lstlen = len(lst)
+    while i < lstlen
+        new += [func(lst[i])]
+        i +
+    end
+
+    ret new
 end
 
-print('\n')
+
+padded = lpadwith(' ', "I've almost written them all down.", "There's a heap of joints")
+map(println, padded)

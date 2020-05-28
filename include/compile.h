@@ -476,9 +476,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else if (stringInList(line, "+="))
     {
-        // Set new line
-        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
-
         if (isInline)
             error("variables must be defined at the start of a line", num);
 
@@ -521,9 +518,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else if (stringInList(line, "-="))
     {
-        // Set new line
-        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
-
         if (isInline)
             error("variables must be defined at the start of a line", num);
 
@@ -566,9 +560,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else if (stringInList(line, "*="))
     {
-        // Set new line
-        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
-
         if (isInline)
             error("variables must be defined at the start of a line", num);
 
@@ -611,9 +602,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else if (stringInList(line, "/="))
     {
-        // Set new line
-        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
-
         if (isInline)
             error("variables must be defined at the start of a line", num);
 
@@ -1215,6 +1203,65 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         free(valuelist);
         free(operslist);
+    }
+    else if (isidentifier(line[0]) && !strcmp(line[1], "+") && len == 2)
+    {
+        if (isInline)
+            error("incremental operator can only be placed at the start of a line", num);
+
+        // Set new line
+        if (!isInline)
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        // Load var
+        mstrcat(&bytecode, "LOAD_NAME");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, line[0]);
+        mstrcat(&bytecode, INSTRUCTION_END);
+
+        // Load 1
+        mstrcat(&bytecode, "LOAD_INT");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, "1");
+        mstrcat(&bytecode, INSTRUCTION_END);
+
+        // Add them
+        mstrcattrip(&bytecode, "BINARY_ADD", INSTRUCTION_END);
+
+        // Store result
+        mstrcat(&bytecode, "STORE_NAME");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, line[0]);
+        mstrcat(&bytecode, INSTRUCTION_END);
+    }
+    else if (isidentifier(line[0]) && !strcmp(line[1], "-") && len == 2)
+    {
+        if (isInline)
+            error("decremental operator can only be placed at the start of a line", num);
+
+        // Set new line
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        // Load var
+        mstrcat(&bytecode, "LOAD_NAME");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, line[0]);
+        mstrcat(&bytecode, INSTRUCTION_END);
+
+        // Load 1
+        mstrcat(&bytecode, "LOAD_INT");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, "1");
+        mstrcat(&bytecode, INSTRUCTION_END);
+
+        // Add them
+        mstrcattrip(&bytecode, "BINARY_SUB", INSTRUCTION_END);
+
+        // Store result
+        mstrcat(&bytecode, "STORE_NAME");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, line[0]);
+        mstrcat(&bytecode, INSTRUCTION_END);
     }
     else if (stringInList(line, "+") || stringInList(line, "-"))
     {
