@@ -48,7 +48,7 @@ Object __mul___string(int argc, Object * argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         char * third = malloc(strlen(first) + 1);
-        strcpy(third, first);
+        strcpy(third, "");
 
         for (int i = 0; i < secnd[0]; i++)
         {

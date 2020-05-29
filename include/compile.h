@@ -432,7 +432,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     if (!strlen(line[0]))
         return bytecode;
 
-    if (len < 2)
+    if (len < 2 && line[1] == NULL)
         line[1] = "";
 
     if (verbose) println(line[0]);
@@ -1038,7 +1038,12 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         free(latestvalue);
     }
-    else if (stringInList(line, "<") || stringInList(line, ">") || stringInList(line, "<=") || stringInList(line, ">=") || stringInList(line, "=="))
+    else if (stringInList(line, "<") ||
+             stringInList(line, ">") ||
+             stringInList(line, "<=") ||
+             stringInList(line, ">=") ||
+             stringInList(line, "==") ||
+             stringInList(line, "!="))
     {
         // Set new line
         if (!isInline)
@@ -1165,6 +1170,29 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
                 memset(operslist, 0, strlen(operslist));
                 strcpy(operslist, "CMP_EQ");
+                strcat(operslist, INSTRUCTION_END);
+                strcat(operslist, tmp);
+
+                free(tmp);
+
+                lastwasop = 1;
+            }
+            else if (!strcmp(line[i], "!="))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
+                strcat(valuelist, temp);
+                free(temp);
+
+                if (lastwasop)
+                    error("invalid syntax at '!='", num);
+
+                operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
+
+                char * tmp = strdup(operslist);
+
+                memset(operslist, 0, strlen(operslist));
+                strcpy(operslist, "CMP_NEQ");
                 strcat(operslist, INSTRUCTION_END);
                 strcat(operslist, tmp);
 
@@ -1793,25 +1821,23 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         free(temp);
         free(templine);
     }
-    else if (isidentifier(line[0]) && startswith(line[1], "(") && endswith(line[1], ")"))
+    else if (startswith(line[len - 1], "(") && endswith(line[len - 1], ")") && len > 1)
     {
         // Set new line
         if (!isInline)
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
-        if (len > 2)
-            error("invalid syntax", num);
+        char * temp = quokka_compile_line_tokens(line, num, len - 1, 1);
 
-        mstrcat(&bytecode, "LOAD_NAME");
-        mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, line[0]);
-        mstrcat(&bytecode, INSTRUCTION_END);
+        mstrcat(&bytecode, temp);
+
+        free(temp);
 
         // If arguments were given to the function
-        if (strlen(line[1]) > 2)
+        if (strlen(line[len - 1]) > 2)
         {
             // Split up the argument list into it's elements
-            char * sliced = strSlice(line[1], 1, 1);
+            char * sliced = strSlice(line[len - 1], 1, 1);
 
             char ** templine;
             int templen = compile_comma_list_string(&templine, sliced);
@@ -1825,7 +1851,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
             char * argcount = intToStr(stringCountUntil(templine, ",", templen) + 1);
 
-            mstrcat(&bytecode, "CALL_FUNCTION");
+            mstrcat(&bytecode, "CALL");
             mstrcat(&bytecode, SEPARATOR);
             mstrcat(&bytecode, argcount);
             mstrcat(&bytecode, INSTRUCTION_END);
@@ -1836,7 +1862,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // If no arguments were given
         else
         {
-            mstrcat(&bytecode, "CALL_FUNCTION");
+            mstrcat(&bytecode, "CALL");
             mstrcat(&bytecode, SEPARATOR);
             mstrcat(&bytecode, "0");
             mstrcat(&bytecode, INSTRUCTION_END);
@@ -1914,9 +1940,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // Set new line
         if (!isInline)
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
-
-        if (len > 2)
-            error("invalid syntax", num);
 
         char * indexarg = strndup(line[len - 1], strlen(line[len - 1]));
 
@@ -2145,7 +2168,7 @@ char ** quokka_line_tok(char * line)
             sq || dq || bt || rb > 0 || sb > 0 || cb > 0
         ) && !(
             // Join together operators: -= += *= /= == >= <=
-            (t == '-' || t == '+' || t == '*' || t == '/' || t == '=' || t == '>' || t == '<') && c == '='
+            (t == '-' || t == '+' || t == '*' || t == '/' || t == '=' || t == '>' || t == '<' || t == '!') && c == '='
         // ) && !(
         //     q == 'A' && c == '.' // Join together names like `word.upper` (second part is below)
         ) && !(

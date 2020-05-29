@@ -1138,6 +1138,61 @@ void quokka_interpret_line_tokens(char ** line)
 
         free(arglist);
     }
+    else if (!strcmp(line[0], "CMP_NEQ"))
+    {
+        Object secnd = popTop();
+        Object first = popTop();
+
+        if (!objectHasAttr(first, "__eq__"))
+        {
+            char * err = malloc(6 + strlen(first.name) + 53 + 1);
+            strcpy(err, "type '");
+            strcat(err, first.name);
+            strcat(err, "' does not have a method for equality (==) comparison");
+            error(err, line_num);
+        }
+
+        if (!objectHasAttr(first, "__eq__argc"))
+        {
+            char * err = malloc(27 + strlen(first.name) + 56 + 1);
+            strcpy(err, "the __eq__ method of type '");
+            strcat(err, first.name);
+            strcat(err, "' is missing an argument limit, this should never happen");
+            error(err, line_num);
+        }
+
+        int funcargc = ((int *)objectGetAttr(first, "__eq__argc"))[0];
+        if (funcargc != 2)
+            error("__eq__ function requires an invalid amount of arguments, should be 2", line_num);
+
+        // Get result from __eq__
+        Object * arglist = malloc(2 * sizeof(Object));
+        arglist[0] = first;
+        arglist[1] = secnd;
+
+        Object condition = ((standard_func_def)objectGetAttr(first, "__eq__"))(2, arglist);
+
+        // Convert to bool
+        arglist = realloc(arglist, sizeof(Object));
+        arglist[0] = condition;
+
+        Object conditionbool = q_function_bool(1, arglist);
+
+        // Flip it, then push it to stack
+        int * intptr;
+
+        if (!((int *)objectGetAttr(conditionbool, "value"))[0])
+            intptr = &truePtr;
+        else
+            intptr = &falsePtr;
+
+        pushTop(makeInt(intptr));
+
+        freeObject(first);
+        freeObject(secnd);
+
+        free(arglist);
+    }
     else if (!strcmp(line[0], "CMP_LT"))
     {
         Object secnd = popTop();
@@ -1382,7 +1437,7 @@ void quokka_interpret_line_tokens(char ** line)
             }
         }
     }
-    else if (!strcmp(line[0], "CALL_FUNCTION"))
+    else if (!strcmp(line[0], "CALL"))
     {
         int argcount = strtol(line[1], NULL, 10);
 
