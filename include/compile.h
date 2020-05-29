@@ -996,6 +996,27 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcat(&bytecode, "RETURN");
         mstrcat(&bytecode, INSTRUCTION_END);
     }
+    else if (!strcmp(line[0], "import"))
+    {
+        if (isInline)
+            error("import keyword must be at the start of a line", num);
+
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        for (int i = 1; i < len; i++)
+        {
+            if (!strcmp(line[i], ","))
+                continue;
+
+            char * temp = quokka_compile_line(line[i], num, 1, 1);
+
+            mstrcat(&bytecode, temp);
+
+            free(temp);
+
+            mstrcattrip(&bytecode, "IMPORT", INSTRUCTION_END);
+        }
+    }
     else if (stringInList(line, ","))
     {
         char * latestvalue = malloc(1);
