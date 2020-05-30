@@ -1,7 +1,24 @@
+fun min 1
+    lst = argv[0]
+    lstlen = len(lst)
+    smallest = lst[0] + 1
+
+    i = 0
+    while i < lstlen
+        if lst[i] < smallest
+            smallest = lst[i]
+        end
+        i +
+    end
+
+    ret smallest
+end
+
+
 fun max 1
     lst = argv[0]
     lstlen = len(lst)
-    largest = 0
+    largest = lst[0] - 1
 
     i = 0
     while i < lstlen

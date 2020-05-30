@@ -5,6 +5,7 @@
 // Ints:
 int current_line;
 int scope;
+int file_token_index;
 int file_line_count;
 
 // String arrays:
@@ -31,7 +32,8 @@ char * quokka_compile_tokens(char ** tokens, int isInline);
 char * quokka_compile_raw(char * rawtext, int maxtokensize, int isInline);
 char * quokka_compile_fname(char * filename);
 
-char ** quokka_line_tok(char * line);
+char ** quokka_file_tok(char * text);
+char ** quokka_tok(char * line);
 
 void error(char * text, int line)
 {
@@ -236,11 +238,11 @@ void scpstkPop()
     scpstk_size--;
 }
 
-int findNextIfChain(char * kwtype, int cur_line, int scp)
+int findNextIfChain(char * kwtype, int cur_line, int cur_tok_index, int scp)
 {
     // Index will be -1 if 'end' not found
-    int ind = -2;
-    int tempscope = scp;
+    int ind = 0;
+    int tempscope = scp - 1; // -1 because this keyword itself will increase the scope
     int blanks = 0; // Num of consecutive blank lines
 
     // 0 = 'if'
@@ -255,11 +257,16 @@ int findNextIfChain(char * kwtype, int cur_line, int scp)
     else if (!strcmp(kwtype, "else"))
         kw = 2;
 
-    for (int i = cur_line + 1; i < file_line_count; i++)
-    {
-        char ** templine = quokka_line_tok(file_tokens[i]);
+    int real_line = cur_line;
 
-        if (!arrsize(templine))
+    for (int i = cur_tok_index; i < file_line_count; i++)
+    {
+        char ** templine = quokka_tok(file_tokens[i]);
+
+        if (file_tokens[i][0] == '\n')
+            real_line++;
+
+        if (templine[0] == NULL)
         {
             free(templine);
             continue;
@@ -307,7 +314,7 @@ int findNextIfChain(char * kwtype, int cur_line, int scp)
             {
                 if (tempscope == scp)
                 {
-                    ind = i;
+                    ind = real_line;
 
                     free(templine);
                     break;
@@ -318,23 +325,33 @@ int findNextIfChain(char * kwtype, int cur_line, int scp)
         }
 
         free(templine);
+
+        // Update line number
+        real_line += charCount(file_tokens[i], '\n');
+        if (file_tokens[i][0] == '\n')
+            real_line--;
     }
 
-    return ind + 1;
+    return ind - 1;
 }
 
-int findNextEnd(char * kwtype, int cur_line, int scp)
+int findNextEnd(char * kwtype, int cur_line, int cur_tok_index, int scp)
 {
     // Index will be -1 if 'end' not found
-    int ind = -2;
-    int tempscope = scp;
+    int ind = -1;
+    int tempscope = scp - 1; // -1 because this keyword itself will increase the scope
     int blanks = 0; // Num of consecutive blank lines
 
-    for (int i = cur_line + 1; i < file_line_count; i++)
-    {
-        char ** templine = quokka_line_tok(file_tokens[i]);
+    int real_line = cur_line;
 
-        if (!arrsize(templine))
+    for (int i = cur_tok_index; file_tokens[i] != NULL; i++)
+    {
+        char ** templine = quokka_tok(file_tokens[i]);
+
+        if (file_tokens[i][0] == '\n')
+            real_line++;
+
+        if (templine[0] == NULL)
         {
             free(templine);
             continue;
@@ -352,7 +369,7 @@ int findNextEnd(char * kwtype, int cur_line, int scp)
         {
             if (tempscope == scp)
             {
-                ind = i;
+                ind = real_line;
 
                 free(templine);
                 break;
@@ -361,9 +378,14 @@ int findNextEnd(char * kwtype, int cur_line, int scp)
         }
 
         free(templine);
+
+        // Update line number
+        real_line += charCount(file_tokens[i], '\n');
+        if (file_tokens[i][0] == '\n')
+            real_line--;
     }
 
-    return ind + 1;
+    return ind;
 }
 
 int compile_comma_list(char *** outptr, char ** comma_list)
@@ -394,7 +416,7 @@ int compile_comma_list(char *** outptr, char ** comma_list)
 
 int compile_comma_list_string(char *** outptr, char * comma_string)
 {
-    char ** comma_list = quokka_line_tok(comma_string);
+    char ** comma_list = quokka_tok(comma_string);
     int templen = compile_comma_list(outptr, comma_list);
 
     return templen;
@@ -407,7 +429,7 @@ void compile_init()
 
 char * quokka_compile_line(char * linetext, int num, int lineLen, int isInline)
 {
-    char ** line = quokka_line_tok(linetext);
+    char ** line = quokka_tok(linetext);
     char * ret = quokka_compile_line_tokens(line, num, lineLen, isInline);
     free(line);
 
@@ -437,7 +459,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
     if (verbose) println(line[0]);
 
-    char * str_line_num = intToStr(current_line + 1);
+    // The current line number as a char pointer
+    char * str_line_num = intToStr(current_line);
 
     if (stringInList(line, "="))
     {
@@ -445,16 +468,16 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         if (isInline)
-            error("variables must be defined at the start of a line", num);
+            error("variables must be defined at the start of a line", num - 1);
 
         if (!isidentifier(line[0]))
-            error("variable name to assign must be a valid identifier", num);
+            error("variable name to assign must be a valid identifier", num - 1);
 
         if (strcmp(line[1], "="))
-            error("invalid syntax", num);
+            error("invalid syntax", num - 1);
 
         if (len < 3)
-            error("variable definition missing variable value", num);
+            error("variable definition missing variable value", num - 1);
 
         char * varname = strndup(line[0], strlen(line[0]));
 
@@ -477,16 +500,16 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (stringInList(line, "+="))
     {
         if (isInline)
-            error("variables must be defined at the start of a line", num);
+            error("variables must be defined at the start of a line", num - 1);
 
         if (!isidentifier(line[0]))
-            error("variable name to assign must be a valid identifier", num);
+            error("variable name to assign must be a valid identifier", num - 1);
 
         if (strcmp(line[1], "+="))
-            error("invalid syntax", num);
+            error("invalid syntax", num - 1);
 
         if (len < 3)
-            error("variable definition missing variable value", num);
+            error("variable definition missing variable value", num - 1);
 
         char * varname = strndup(line[0], strlen(line[0]));
 
@@ -519,16 +542,16 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (stringInList(line, "-="))
     {
         if (isInline)
-            error("variables must be defined at the start of a line", num);
+            error("variables must be defined at the start of a line", num - 1);
 
         if (!isidentifier(line[0]))
-            error("variable name to assign must be a valid identifier", num);
+            error("variable name to assign must be a valid identifier", num - 1);
 
         if (strcmp(line[1], "-="))
-            error("invalid syntax", num);
+            error("invalid syntax", num - 1);
 
         if (len < 3)
-            error("variable definition missing variable value", num);
+            error("variable definition missing variable value", num - 1);
 
         char * varname = strndup(line[0], strlen(line[0]));
 
@@ -561,16 +584,16 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (stringInList(line, "*="))
     {
         if (isInline)
-            error("variables must be defined at the start of a line", num);
+            error("variables must be defined at the start of a line", num - 1);
 
         if (!isidentifier(line[0]))
-            error("variable name to assign must be a valid identifier", num);
+            error("variable name to assign must be a valid identifier", num - 1);
 
         if (strcmp(line[1], "*="))
-            error("invalid syntax", num);
+            error("invalid syntax", num - 1);
 
         if (len < 3)
-            error("variable definition missing variable value", num);
+            error("variable definition missing variable value", num - 1);
 
         char * varname = strndup(line[0], strlen(line[0]));
 
@@ -603,16 +626,16 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (stringInList(line, "/="))
     {
         if (isInline)
-            error("variables must be defined at the start of a line", num);
+            error("variables must be defined at the start of a line", num - 1);
 
         if (!isidentifier(line[0]))
-            error("variable name to assign must be a valid identifier", num);
+            error("variable name to assign must be a valid identifier", num - 1);
 
         if (strcmp(line[1], "/="))
-            error("invalid syntax", num);
+            error("invalid syntax", num - 1);
 
         if (len < 3)
-            error("variable definition missing variable value", num);
+            error("variable definition missing variable value", num - 1);
 
         char * varname = strndup(line[0], strlen(line[0]));
 
@@ -645,9 +668,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (!strcmp(line[0], "while"))
     {
         if (isInline)
-            error("while loop can only be at the start of a line", num);
+            error("while loop can only be at the start of a line", num - 1);
         if (len <= 1)
-            error("while loop requires a condition", num);
+            error("while loop requires a condition", num - 1);
 
         // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
@@ -661,9 +684,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         free(temp);
 
-        int next = findNextEnd("while", num, scope);
-        if (next == -1)
-            error("while loop missing 'end' keyword", num);
+        int next = findNextEnd("while", num, file_token_index, scope);
+        if (next < 0)
+            error("while loop missing 'end' keyword", num - 1);
 
         mstrcat(&bytecode, "JUMP_IF_FALSE");
         mstrcat(&bytecode, SEPARATOR);
@@ -674,16 +697,16 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         mstrcat(&bytecode, INSTRUCTION_END);
 
-        scpstkPush("while", scope, current_line + 1);
+        scpstkPush("while", scope, current_line);
 
         scope++;
     }
     else if (!strcmp(line[0], "until"))
     {
         if (isInline)
-            error("until loop can only be at the start of a line", num);
+            error("until loop can only be at the start of a line", num - 1);
         if (len <= 1)
-            error("until loop requires a condition", num);
+            error("until loop requires a condition", num - 1);
 
         // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
@@ -697,9 +720,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         free(temp);
 
-        int next = findNextEnd("until", num, scope);
-        if (next == -1)
-            error("until loop missing 'end' keyword", num);
+        int next = findNextEnd("until", num, file_token_index, scope);
+        if (next < 0)
+            error("until loop missing 'end' keyword", num - 1);
 
         mstrcat(&bytecode, "JUMP_IF_TRUE");
         mstrcat(&bytecode, SEPARATOR);
@@ -710,16 +733,16 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         mstrcat(&bytecode, INSTRUCTION_END);
 
-        scpstkPush("until", scope, current_line + 1);
+        scpstkPush("until", scope, current_line);
 
         scope++;
     }
     else if (!strcmp(line[0], "if"))
     {
         if (isInline)
-            error("if statement can only be at the start of a line", num);
+            error("if statement can only be at the start of a line", num - 1);
         if (len <= 1)
-            error("if statement requires a condition", num);
+            error("if statement requires a condition", num - 1);
 
         // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
@@ -733,9 +756,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         free(temp);
 
-        int next = findNextIfChain("if", num, scope);
-        if (next == -1)
-            error("if statement missing 'end' keyword", num);
+        int next = findNextIfChain("if", num, file_token_index, scope);
+        if (next < 0)
+            error("if statement missing 'end' keyword", num - 1);
 
         mstrcat(&bytecode, "JUMP_IF_FALSE");
         mstrcat(&bytecode, SEPARATOR);
@@ -751,13 +774,13 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (!strcmp(line[0], "elif"))
     {
         if (isInline)
-            error("elif statement can only be at the start of a line", num);
+            error("elif statement can only be at the start of a line", num - 1);
         if (len <= 1)
-            error("elif statement requires a condition", num);
+            error("elif statement requires a condition", num - 1);
 
-        int nextend = findNextEnd("elif", num, scope);
+        int nextend = findNextEnd("elif", num, file_token_index, scope);
         if (nextend == -1)
-            error("elif statement missing 'end' keyword", num);
+            error("elif statement missing 'end' keyword", num - 1);
 
         mstrcat(&bytecode, "JUMP_TO");
         mstrcat(&bytecode, SEPARATOR);
@@ -780,9 +803,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         free(temp);
 
-        int next = findNextIfChain("elif", num, scope);
-        if (next == -1)
-            error("elif statement missing 'end' keyword", num);
+        int next = findNextIfChain("elif", num, file_token_index, scope);
+        if (next < 0)
+            error("elif statement missing 'end' keyword", num - 1);
 
         mstrcat(&bytecode, "JUMP_IF_FALSE");
         mstrcat(&bytecode, SEPARATOR);
@@ -796,13 +819,13 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (!strcmp(line[0], "else"))
     {
         if (isInline)
-            error("else statement can only be at the start of a line", num);
+            error("else statement can only be at the start of a line", num - 1);
         if (len > 1)
-            error("else statement does not take arguments", num);
+            error("else statement does not take arguments", num - 1);
 
-        int nextend = findNextEnd("else", num, scope);
+        int nextend = findNextEnd("else", num, file_token_index, scope);
         if (nextend == -1)
-            error("else statement missing 'end' keyword", num);
+            error("else statement missing 'end' keyword", num - 1);
 
         mstrcat(&bytecode, "JUMP_TO");
         mstrcat(&bytecode, SEPARATOR);
@@ -819,10 +842,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (!strcmp(line[0], "end"))
     {
         if (isInline)
-            error("'end' can only be at the start of a line", num);
+            error("'end' can only be at the start of a line", num - 1);
 
         if (len > 1)
-            error("'end' does not take arguments", num);
+            error("'end' does not take arguments", num - 1);
 
         if (scpstk_size)
         {
@@ -856,18 +879,20 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (!strcmp(line[0], "fun"))
     {
         if (isInline)
-            error("function definition can only be at the start of a line", num);
+            error("function definition can only be at the start of a line", num - 1);
         if (len <= 1)
-            error("function definition requires at least a function name", num);
+            error("function definition requires at least a function name", num - 1);
         if (len > 4)
-            error("function definition received too many arguments", num);
+            error("function definition received too many arguments", num - 1);
 
         // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
-        int next = findNextEnd("fun", num, scope);
-        if (next == -1)
-            error("function definition missing 'end' keyword", num);
+        int next = findNextEnd("fun", num, file_token_index, scope);
+        print(": ");
+        println(next);
+        if (next < 0)
+            error("function definition missing 'end' keyword", num - 1);
 
         char * funcname = line[1];
         int argmin = 0;
@@ -916,7 +941,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         num = next;
 
         if (argmin < 0 && argmin != -1)
-            error("minimum argument count for function definition can not be below 0", num);
+            error("minimum argument count for function definition can not be below 0", num - 1);
         if (argmax < argmin && argmax != -1)
             error("maximum argument count for function definition can not be below minimum argument count",
                 num);
@@ -959,7 +984,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (!strcmp(line[0], "del"))
     {
         if (isInline)
-            error("del statement must be at the start of a line", num);
+            error("del statement must be at the start of a line", num - 1);
 
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
@@ -969,7 +994,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 continue;
 
             if (!isidentifier(line[i]))
-                error("invalid syntax", num);
+                error("invalid syntax", num - 1);
 
             mstrcat(&bytecode, "DEL_VAR");
             mstrcat(&bytecode, SEPARATOR);
@@ -980,7 +1005,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (!strcmp(line[0], "ret"))
     {
         if (isInline)
-            error("ret statement must be at the start of a line", num);
+            error("ret statement must be at the start of a line", num - 1);
 
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
@@ -999,7 +1024,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (!strcmp(line[0], "import"))
     {
         if (isInline)
-            error("import keyword must be at the start of a line", num);
+            error("import keyword must be at the start of a line", num - 1);
 
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
@@ -1091,7 +1116,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                    error("invalid syntax at '<'", num);
+                    error("invalid syntax at '<'", num - 1);
 
                 operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
 
@@ -1114,7 +1139,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                    error("invalid syntax at '>'", num);
+                    error("invalid syntax at '>'", num - 1);
 
                 operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
 
@@ -1137,7 +1162,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                    error("invalid syntax at '<='", num);
+                    error("invalid syntax at '<='", num - 1);
 
                 operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
 
@@ -1160,7 +1185,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                    error("invalid syntax at '>='", num);
+                    error("invalid syntax at '>='", num - 1);
 
                 operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
 
@@ -1183,7 +1208,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                    error("invalid syntax at '=='", num);
+                    error("invalid syntax at '=='", num - 1);
 
                 operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
 
@@ -1206,7 +1231,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                    error("invalid syntax at '!='", num);
+                    error("invalid syntax at '!='", num - 1);
 
                 operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
 
@@ -1256,7 +1281,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (isidentifier(line[0]) && !strcmp(line[1], "+") && len == 2)
     {
         if (isInline)
-            error("incremental operator can only be placed at the start of a line", num);
+            error("incremental operator can only be placed at the start of a line", num - 1);
 
         // Set new line
         if (!isInline)
@@ -1286,7 +1311,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (isidentifier(line[0]) && !strcmp(line[1], "-") && len == 2)
     {
         if (isInline)
-            error("decremental operator can only be placed at the start of a line", num);
+            error("decremental operator can only be placed at the start of a line", num - 1);
 
         // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
@@ -1336,7 +1361,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             if (!strcmp(line[i], "+"))
             {
                 if (i + 1 >= len)
-                    error("'+' missing second argument", num);
+                    error("'+' missing second argument", num - 1);
 
                 if (lastwasop)
                 {
@@ -1406,7 +1431,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             else if (!strcmp(line[i], "-"))
             {
                 if (i + 1 >= len)
-                    error("'-' missing second argument", num);
+                    error("'-' missing second argument", num - 1);
 
                 if (lastwasop)
                 {
@@ -1481,10 +1506,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             //     free(temp);
 
             //     if (lastwasop)
-            //         error("'*' missing first argument", num);
+            //         error("'*' missing first argument", num - 1);
 
             //     if (i + 1 >= len)
-            //         error("'*' missing second argument", num);
+            //         error("'*' missing second argument", num - 1);
 
             //     latestvalue = realloc(latestvalue, 1);
             //     memset(latestvalue, 0, 1);
@@ -1511,10 +1536,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             //     free(temp);
 
             //     if (lastwasop)
-            //         error("'/' missing first argument", num);
+            //         error("'/' missing first argument", num - 1);
 
             //     if (i + 1 >= len)
-            //         error("'/' missing second argument", num);
+            //         error("'/' missing second argument", num - 1);
 
             //     latestvalue = realloc(latestvalue, 1);
             //     memset(latestvalue, 0, 1);
@@ -1541,10 +1566,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             //     free(temp);
 
             //     if (lastwasop)
-            //         error("'**' missing first argument", num);
+            //         error("'**' missing first argument", num - 1);
 
             //     if (i + 1 >= len)
-            //         error("'**' missing second argument", num);
+            //         error("'**' missing second argument", num - 1);
 
             //     latestvalue = realloc(latestvalue, 1);
             //     memset(latestvalue, 0, 1);
@@ -1584,7 +1609,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         }
 
         if (!lastwasop && strlen(latestvalue) && lastwasunary)
-            error("invalid syntax", num);
+            error("invalid syntax", num - 1);
 
         char * temp = quokka_compile_line(latestvalue, num, -1, 1);
         valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
@@ -1626,10 +1651,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                    error("'*' missing first argument", num);
+                    error("'*' missing first argument", num - 1);
 
                 if (i + 1 >= len)
-                    error("'*' missing second argument", num);
+                    error("'*' missing second argument", num - 1);
 
                 latestvalue = realloc(latestvalue, 1);
                 memset(latestvalue, 0, 1);
@@ -1655,10 +1680,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                    error("'/' missing first argument", num);
+                    error("'/' missing first argument", num - 1);
 
                 if (i + 1 >= len)
-                    error("'/' missing second argument", num);
+                    error("'/' missing second argument", num - 1);
 
                 latestvalue = realloc(latestvalue, 1);
                 memset(latestvalue, 0, 1);
@@ -1736,10 +1761,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 free(temp);
 
                 if (lastwasop)
-                    error("'**' missing first argument", num);
+                    error("'**' missing first argument", num - 1);
 
                 if (i + 1 >= len)
-                    error("'**' missing second argument", num);
+                    error("'**' missing second argument", num - 1);
 
                 latestvalue = realloc(latestvalue, 1);
                 memset(latestvalue, 0, 1);
@@ -1800,7 +1825,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         {
             if (startswith(line[i], "."))
             {
-                char ** temp = quokka_line_tok(line[i]);
+                char ** temp = quokka_tok(line[i]);
                 println("get attr");
             }
             else println(line[i]);
@@ -1826,7 +1851,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         if (len > 1)
-            error("invalid syntax", num);
+            error("invalid syntax", num - 1);
 
         // Split up the argument list into it's elements
         char * sliced = strSlice(line[0], 1, 1);
@@ -2004,7 +2029,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         if (len > 1)
-            error("invalid syntax", num);
+            error("invalid syntax", num - 1);
 
         // Split up the list into it's elements
         char * sliced = strSlice(line[0], 1, 1);
@@ -2040,7 +2065,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     {
         if (isInline)
         {
-            error("invalid syntax", num);
+            error("invalid syntax", num - 1);
             return bytecode;
         }
 
@@ -2059,7 +2084,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
             if (!lastwascomma && p > 0)
             {
-                error("invalid syntax", num);
+                error("invalid syntax", num - 1);
                 break;
             }
 
@@ -2088,22 +2113,30 @@ char * quokka_compile_tokens(char ** tokens, int isInline)
     strcpy(compiled, "");
 
     file_line_count = arrsize(tokens);
-    current_line = 0;
+    file_token_index = 0;
+    current_line = 1;
 
-    while (current_line < file_line_count)
+    for (file_token_index = 0; tokens[file_token_index] != NULL; file_token_index++)
     {
-        char * t = tokens[current_line];
+        char * t = tokens[file_token_index];
 
-        if (t == NULL)
+        if (t[0] == 0)
             continue;
 
-        char * ins = quokka_compile_line(t, current_line, -1, isInline);
+        if (t[0] == '\n')
+            current_line++;
+
+        char * short_line = strReplace(t, "\n", "");
+        char * ins = quokka_compile_line(short_line, current_line, -1, isInline);
 
         mstrcat(&compiled, ins);
 
         free(ins);
 
-        current_line++;
+        // Update line number
+        current_line += charCount(t, '\n');
+        if (t[0] == '\n')
+            current_line--;
     }
 
     return compiled;
@@ -2114,10 +2147,7 @@ char * quokka_compile_raw(char * rawtext, int maxtokensize, int isInline)
     if (maxtokensize == -1)
         maxtokensize = 2048;
 
-    file_tokens = malloc(maxtokensize + 1);
-    pushTrash(file_tokens);
-
-    ntokenise(file_tokens, rawtext, "\n");
+    file_tokens = quokka_file_tok(rawtext);
 
     return quokka_compile_tokens(file_tokens, isInline);
 }
@@ -2134,10 +2164,8 @@ char * quokka_compile_fname(char * filename)
     return quokka_compile_raw(buffer, -1, 0);
 }
 
-char ** quokka_line_tok(char * line)
+char ** quokka_file_tok(char * text)
 {
-    line = cpstrip(line);
-
     char * tokenstr = malloc(1);
     strcpy(tokenstr, "");
 
@@ -2152,7 +2180,7 @@ char ** quokka_line_tok(char * line)
     int cb = 0; // Curly-bracket = 0
 
     // Used to identify a `//` comment
-    int comment = 0; // 1 if `/` found, else 0    
+    int comment = 0; // 1 if `/` found, else 0
 
     // Chars
     char q;
@@ -2160,56 +2188,39 @@ char ** quokka_line_tok(char * line)
     char t = 0;
 
     // Strings
-    char * separator = "\n";
+    char * separator = "\b";
 
     // Set initial char type
-    if (isalnum(line[0]))
+    if (isalnum(text[0]))
         p = 'A';
-    else if (isdigit(line[0]))
+    else if (isdigit(text[0]))
         p = 'D';
-    else if (ispunct(line[0]))
+    else if (ispunct(text[0]))
         p = 'S';
-    else if (isspace(line[0]))
+    else if (text[0] == '\n')
+        p = 'L'; // Line ending
+    else if (isspace(text[0]))
         p = 'W';
 
-    int len = strlen(line);
+    int len = strlen(text);
     for (int i = 0; i < len; i++)
     {
         q = p;
-        char c = line[i];
-        if (isalpha(c))
+        char c = text[i];
+
+        if      (isalpha(c))
             p = 'A'; // Alphabet
         else if (isdigit(c))
             p = 'D'; // Digit
         else if (ispunct(c))
             p = 'S'; // Symbol
+        else if (c == '\n')
+            p = 'L'; // Line ending
         else if (isspace(c))
             p = 'W'; // Whitespace
-        if (((q != p && p != 'W') || p == 'S') && !(
+
+        if (p == 'L' && !(
             sq || dq || bt || rb > 0 || sb > 0 || cb > 0
-        ) && !(
-            // Join together operators: -= += *= /= == >= <=
-            (t == '-' || t == '+' || t == '*' || t == '/' || t == '=' || t == '>' || t == '<' || t == '!') && c == '='
-        // ) && !(
-        //     q == 'A' && c == '.' // Join together names like `word.upper` (second part is below)
-        ) && !(
-            p == 'A' && t == '.' // Second part to the line above.
-        ) && !(
-            t == '_' && (p == 'A' || c == '.') // Join together names like `string_one` (second part is below)
-        ) && !(
-            (q == 'A' || t == '.') && c == '_' // Second part to the line above.
-        ) && !(
-            t == '_' && c == '_' // Join together double underscores `__`
-        ) && !(
-            q == 'A' && p == 'D' // Join alphabetical and numerical characters.
-        ) && !(
-            p == 'A' && q == 'D' // Second part to the line above.
-        ) && !(
-            q == 'D' && (c == 'l' || c == 'L') // Join integers with `l` and `L` for long numbers
-        ) && !(
-            t == '.' && c == '.' // Join together all `.` tokens.
-        ) && !(
-            t == '*' && c == '*' // Join together all `*` tokens.
         ))
         {
             tokenstr = realloc(tokenstr, strlen(tokenstr) + strlen(separator) + 1);
@@ -2242,10 +2253,173 @@ char ** quokka_line_tok(char * line)
             comment++;
             if (comment >= 2)
             {
+                tokenstr[strlen(tokenstr) - 1] = '\0';
+            }
+        }
+
+        if (c == '\n')
+        {
+            comment = 0;
+        }
+
+        if (comment <= 1 || c == '\n')
+        {
+            if (comment && c != '/')
+                comment = 0;
+            tokenstr = realloc(tokenstr, strlen(tokenstr) + 1 + 1);
+            strncat(tokenstr, &c, 1);
+        }
+
+        t = c;
+    }
+
+    mstrcat(&tokenstr, separator);
+
+    char ** output = malloc(sizeof(char *));
+    output[0] = "";
+
+    int i = 0;
+    output[0] = nstrtok(tokenstr, separator);
+
+    while (output[i] != NULL)
+    {
+        // Protects against empty parts of a line or string
+        if (!strlen(output[i]))
+        {
+            output = realloc(output, (i + 1) * sizeof(char *));
+            output[i] = nstrtok(NULL, separator);
+            continue;
+        }
+
+        i++;
+        output = realloc(output, (i + 1) * sizeof(char *));
+        output[i] = nstrtok(NULL, separator);
+    }
+
+    output = realloc(output, (i + 2) * sizeof(char *));
+    output[i + 1] = NULL;
+
+    pushTrash(tokenstr);
+
+    return output;
+}
+
+char ** quokka_tok(char * line)
+{
+    line = cpstrip(line);
+
+    char * tokenstr = malloc(1);
+    strcpy(tokenstr, "");
+
+    // Bools
+    int sq = 0; // Single-Quote = false
+    int dq = 0; // Double-Quote = false
+    int bt = 0; // Backtick = false
+
+    // Ints
+    int rb = 0; // Regular-bracket = 0
+    int sb = 0; // Square-bracket = 0
+    int cb = 0; // Curly-bracket = 0
+
+    // Used to identify a `//` comment
+    int comment = 0; // 1 if `/` found, else 0
+
+    // Chars
+    char q;
+    char p = '\0';
+    char t = 0;
+
+    // Strings
+    char * separator = "\b";
+
+    // Set initial char type
+    if (isalnum(line[0]))
+        p = 'A';
+    else if (isdigit(line[0]))
+        p = 'D';
+    else if (ispunct(line[0]))
+        p = 'S';
+    else if (isspace(line[0]))
+        p = 'W';
+
+    int len = strlen(line);
+    for (int i = 0; i < len; i++)
+    {
+        q = p;
+        char c = line[i];
+
+        if      (isalpha(c))
+            p = 'A'; // Alphabet
+        else if (isdigit(c))
+            p = 'D'; // Digit
+        else if (ispunct(c))
+            p = 'S'; // Symbol
+        else if (isspace(c))
+            p = 'W'; // Whitespace
+
+        if (((q != p && p != 'W') || p == 'S') && !(
+            sq || dq || bt || rb > 0 || sb > 0 || cb > 0
+        ) && !(
+            // Join together operators: -= += *= /= == >= <=
+            (t == '-' || t == '+' || t == '*' || t == '/' || t == '=' || t == '>' || t == '<' || t == '!') && c == '='
+        // ) && !(
+        //     q == 'A' && c == '.' // Join together names like `word.upper` (second part is below)
+        ) && !(
+            p == 'A' && t == '.' // Second part to the line above.
+        ) && !(
+            t == '_' && (p == 'A' || c == '.') // Join together names like `string_one` (second part is below)
+        ) && !(
+            (q == 'A' || t == '.') && c == '_' // Second part to the line above.
+        ) && !(
+            t == '_' && c == '_' // Join together double underscores `__`
+        ) && !(
+            q == 'A' && p == 'D' // Join alphabetical and numerical characters.
+        ) && !(
+            p == 'A' && q == 'D' // Second part to the line above.
+        ) && !(
+            q == 'D' && (c == 'l' || c == 'L') // Join integers with `l` and `L` for long numbers
+        ) && !(
+            t == '.' && c == '.' // Join together all `.` tokens.
+        ) && !(
+            t == '*' && c == '*' // Join together all `*` tokens.
+        ))
+        {
+            tokenstr = realloc(tokenstr, strlen(tokenstr) + strlen(separator) + 1);
+            strncat(tokenstr, separator, strlen(separator));
+        }
+
+        if (c == '\'' && !(
+            dq || rb > 0 || sb > 0 || cb > 0))
+            sq = !sq;
+        else if (c == '"' && !(
+            sq || bt || rb > 0 || sb > 0 || cb > 0))
+            dq = !dq;
+        else if (c == '`' && !(
+            sq || dq || rb > 0 || sb > 0 || cb > 0))
+            bt = !bt;
+        else if (c == '(' && !(
+            sq || dq || bt || sb > 0 || cb > 0))
+            rb++;
+        else if (c == ')' && !(
+            sq || dq || bt || sb > 0 || cb > 0))
+            rb--;
+        else if (c == '[' && !(
+            sq || dq || bt || rb > 0 || cb > 0))
+            sb++;
+        else if (c == ']' && !(
+            sq || dq || bt || rb > 0 || cb > 0))
+            sb--;
+        else if (c == '/' && !(
+            sq || dq || bt))
+        {
+            comment++;
+            if (comment >= 2)
+            {
                 tokenstr[strlen(tokenstr) - 2] = '\0';
                 break;
             }
         }
+
         if (comment <= 1)
         {
             if (comment && c != '/')
@@ -2253,10 +2427,11 @@ char ** quokka_line_tok(char * line)
             tokenstr = realloc(tokenstr, strlen(tokenstr) + 1 + 1);
             strncat(tokenstr, &c, 1);
         }
+
         t = c;
     }
 
-    mstrcat(&tokenstr, "\n");
+    mstrcat(&tokenstr, separator);
 
     char ** output = malloc(sizeof(char *));
     output[0] = "";

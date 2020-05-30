@@ -73,7 +73,7 @@ Object q_function_print(int argc, Object * argv)
             free(arglist);
 
             char * text = (char *)objectGetAttr(strtext, "value");
-            
+
             ret += strlen(text);
             printf("%s", text);
 
@@ -123,7 +123,7 @@ Object q_function_println(int argc, Object * argv)
             free(arglist);
 
             char * text = objectGetAttr(strtext, "value");
-            
+
             ret += strlen(text);
             printf("%s", text);
 
@@ -150,6 +150,13 @@ Object q_function_println(int argc, Object * argv)
 
 Object q_function_input(int argc, Object * argv)
 {
+    if (argc)
+    {
+        Object * arglist = makeArglist(argv[0]);
+        q_function_print(1, arglist);
+        free(arglist);
+    }
+
     char * buffer = malloc(1);
     strcpy(buffer, "");
     int buflen = 0;

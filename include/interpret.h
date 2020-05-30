@@ -668,7 +668,7 @@ Object * makeArglist(Object obj)
 
 void quokka_interpret_line(char * linetext)
 {
-    char ** line = quokka_line_tok(linetext);
+    char ** line = quokka_tok(linetext);
     quokka_interpret_line_tokens(line);
 
     free(line);
