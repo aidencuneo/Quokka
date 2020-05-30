@@ -1,120 +1,61 @@
-fun lpadwith 3
-    pad = argv[0]
-    pad = pad[0] // Limit pad to one char
-
-    first = argv[1]
-    secnd = argv[2]
-
-    // Pad until both strings are the same length
-    if len(secnd) > len(first)
-        i = len(first)
-        while i < len(secnd)
-            first = pad + first
-            i +
-        end
-    elif len(first) > len(secnd)
-        i = len(secnd)
-        while i < len(first)
-            secnd = pad + secnd
-            i +
-        end
+while (
+    0
+)
+    if 1
+        println('hey')
     end
-
-    ret [first, secnd]
 end
 
-
-fun max 1
-    lst = argv[0]
-    lstlen = len(lst)
-    largest = 0
-
-    i = 0
-    while i < lstlen
-        if lst[i] > largest
-            largest = lst[i]
-        end
-        i +
+fun stuff
+    if true
+        println('yeah')
     end
-
-    ret largest
+    println('yeah')
 end
 
+fun stufff
 
-fun lpad 2
-    pad = argv[0][0] // Limit pad to one char
-    lst = argv[1]
-    new = []
 
-    lstlen  = len(lst)
-    largest = max(map(len, lst))
-
-    i = 0
-    while i < lstlen
-        new += [pad * (largest - len(lst[i])) + lst[i]]
-        i +
-    end
-
-    ret new
 end
 
+// stuff()
 
-fun map 1 *
-    lst = argv[-1]
-    new = []
+// i = [
+//     10, 20
+// ]
+// import 'builtins'
 
-    lstlen = len(lst)
-    i = 0
+// lst = []
 
-    while i < lstlen
-        item = lst[i]
+// lst2 = [
+// ]
 
-        j = argc - 2
-        while j >= 0
-            item = argv[j](item)
-            j -
-        end
+// inc = lam 1 : argv[0] + 1
 
-        new += [item]
-        i +
-    end
+// lst = [
+//     1,
+//     2,
+//     3,
+// ]
 
-    ret new
-end
+// i = (
+//     0
+//     )
 
+// while (
+//     i < len(lst)
+// )
+//     println(lst[i])
+//     i +
+// end
 
-fun same 1
-    lst    = argv[0]
-    item   = lst[0]
-    lstlen = len(lst)
+// numbers = 'Hey'
 
-    i = 0
-    while i < lstlen
-        if lst[i] != item
-            ret false
-        end
-        i +
-    end
+// println(
+//     numbers
+// )
 
-    ret true
-end
+// numbers = map(input, long, ['First Number  : ', 'Second Number : '])
+// numbers = map(inc, numbers)
 
-
-fun stat 2
-    char = argv[0]
-    lst  = argv[1]
-
-    padded = lpad(' ', lst)
-
-    lens = map(int, println, padded)
-    println(lens)
-
-    ret same(lens)
-end
-
-
-if stat(' ', ['words', 'nekooo', 'inu', 'yup', 'yesssssss', 'nooo'])
-    println('Worked.')
-else
-    println('Hmm')
-end
+// println(map(println, int, split(',', 'wordsssssss,yup,more words')))

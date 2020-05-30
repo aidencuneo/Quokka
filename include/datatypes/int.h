@@ -36,7 +36,7 @@ Object __sub___int(int argc, Object * argv)
     {
         int * first = objectGetAttr(argv[0], "value");
         int * secnd = objectGetAttr(argv[1], "value");
-        
+
         int * third = makeIntPtr(first[0] - secnd[0]);
         pushTrash(third);
 

@@ -668,7 +668,7 @@ Object * makeArglist(Object obj)
 
 void quokka_interpret_line(char * linetext)
 {
-    char ** line = quokka_line_tok(linetext);
+    char ** line = quokka_tok(linetext);
     quokka_interpret_line_tokens(line);
 
     free(line);
@@ -817,6 +817,109 @@ void quokka_interpret_line_tokens(char ** line)
         }
 
         delLVarIndex(ind);
+    }
+    else if (!strcmp(line[0], "IMPORT"))
+    {
+        println("HERE");
+        Object pathstrobj = popTop();
+
+        if (strcmp(pathstrobj.name, "string"))
+        {
+            char * err = malloc(51 + strlen(pathstrobj.name) + 1 + 1);
+            strcpy(err, "file path to import must be of type 'string', not '");
+            strcat(err, pathstrobj.name);
+            strcat(err, "'");
+            error(err, line_num);
+        }
+
+        char * import_path_bare = objectGetAttr(pathstrobj, "value");
+
+        char * import_path_rel = malloc(strlen(import_path_bare) + 2 + 1);
+        strcpy(import_path_rel, import_path_bare);
+
+        if (!endswith(import_path_bare, ".q"))
+            strcat(import_path_rel, ".q");
+
+        char * import_path = getrealpath(import_path_rel);
+
+        if (!import_path)
+        {
+            char * err = malloc(49 + strlen(import_path_rel) + 1 + 1);
+            strcpy(err, "(import) file path not found or not accessible: '");
+            strcat(err, import_path_rel);
+            strcat(err, "'");
+            error(err, line_num);
+        }
+
+        // Compile imported file
+        char * imported_bytecode = quokka_compile_fname(import_path);
+
+        // Set up the environment for the interpret call
+        Object * old_stack = malloc(stack_size * sizeof(Object));
+        for (int i = 0; i < stack_size; i++)
+            old_stack[i] = stack[i];
+        int old_stack_size = stack_size;
+
+        stack = realloc(stack, sizeof(Object));
+        stack_size = 0;
+
+        char ** old_locals_names = malloc(locals.count * sizeof(char *));
+        Object * old_locals_values = malloc(locals.count * sizeof(Object));
+        for (int i = 0; i < locals.count; i++)
+        {
+            old_locals_names[i] = locals.names[i];
+            old_locals_values[i] = locals.values[i];
+        }
+        int old_locals_count = locals.count;
+
+        // Function call will not affect currently defined locals
+        locals.count = 0;
+
+        int old_bc_line = bc_line;
+        int old_bc_line_count = bc_line_count;
+        char ** old_bc_tokens = bc_tokens;
+        int old_can_return = can_return;
+
+        can_return = 1;
+
+        // Interpret the imported file
+        quokka_interpret(imported_bytecode);
+
+        bc_line = old_bc_line;
+        bc_line_count = old_bc_line_count;
+        bc_tokens = old_bc_tokens;
+        can_return = old_can_return;
+
+        // Recreate and realign previous stack
+        stack = realloc(stack, sizeof(Object));
+        stack_size = 0;
+
+        for (int i = 0; i < old_stack_size; i++)
+            pushTop(old_stack[i]);
+
+        free(old_stack);
+
+        // Recreate and realign variable lists (only locals for now)
+        free(locals.names);
+        free(locals.values);
+
+        locals.count = old_locals_count;
+        locals.names = malloc((locals.count + 1) * sizeof(char *));
+        locals.values = malloc((locals.count + 1) * sizeof(Object));
+
+        for (int i = 0; i < locals.count; i++)
+        {
+            locals.names[i] = old_locals_names[i];
+            locals.values[i] = old_locals_values[i];
+        }
+
+        free(old_locals_names);
+        free(old_locals_values);
+
+        freeObject(pathstrobj);
+
+        free(import_path_rel);
+        free(import_path);
     }
     else if (!strcmp(line[0], "RETURN"))
     {

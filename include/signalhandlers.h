@@ -86,7 +86,7 @@ void sigquitHandler()
 // 4
 void sigillHandler()
 {
-    error("Received Illigal Instruction Signal", line_num);
+    error("Received Illegal Instruction Signal", line_num);
 }
 
 // 5
