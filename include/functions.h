@@ -353,7 +353,7 @@ Object q_function_exec(int argc, Object * argv)
     strcpy(code, rawcode);
     strcat(code, "\n");
 
-    char * bytecode = quokka_compile_raw(code, -1, 0);
+    char * bytecode = quokka_compile_raw(code, 0);
 
     int old_bc_line = bc_line;
     int old_bc_line_count = bc_line_count;
@@ -372,6 +372,11 @@ Object q_function_exit(int argc, Object * argv)
     freeStack();
     freeRetStack();
     emptyTrash();
+
+    // Free scope stack (from compilation)
+    free(scpstk);
+    free(scps);
+    free(scplines);
 
     free(full_file_name);
     free(full_dir_name);

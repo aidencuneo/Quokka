@@ -79,8 +79,6 @@ void freeObject(Object obj);
 
 void pushTop(Object obj);
 Object popTop();
-void pushConst(Object obj);
-void clearConsts();
 void pushTrash(void * ptr);
 
 void addGVar(char * name, Object obj);

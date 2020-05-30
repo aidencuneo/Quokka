@@ -1,10 +1,18 @@
+import 'builtins'
+
+m = max([1, 2, 3, 7, 3])
+println(m)
+
 while (
     0
 )
     if 1
         println('hey')
+    else
+        print('nah\n')
     end
 end
+
 
 fun stuff
     if true
@@ -13,10 +21,22 @@ fun stuff
     println('yeah')
 end
 
+
 fun stufff
-
-
+    32849
 end
+
+
+i = true
+while i
+    stuff()
+    i = false
+end
+
+map(println, [
+    'yo',
+    'hey'
+])
 
 // stuff()
 

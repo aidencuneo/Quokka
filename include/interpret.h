@@ -8,9 +8,6 @@ int method_count;
 Object * stack;
 int stack_size;
 
-Object * consts;
-int constcount;
-
 Object * ret_stack;
 int ret_stack_size;
 int can_return;
@@ -85,13 +82,6 @@ void freeVars()
 {
     freeGlobals();
     freeLocals();
-}
-
-// Constants
-void freeConsts()
-{
-    clearConsts();
-    free(consts);
 }
 
 // Free
@@ -374,38 +364,6 @@ void pushTop(Object obj)
     stack_size++;
 }
 
-// Push to top of stack using const.
-// If you don't need this Object to be in consts, just use
-// pushTop, it's faster in the long run unless you need
-// `obj` to be in consts and a duplicate to be pushed into
-// the stack.
-void pushTopC(Object obj)
-{
-    pushConst(obj);
-    pushTop(objectCopy(consts[constcount - 1]));
-}
-
-// Push to bottom of stack manually (using your own Object)
-void pushBottomM(Object obj)
-{
-    stack = realloc(stack, (stack_size + 1) * sizeof(Object));
-
-    for (int i = stack_size; i > 0; i--)
-    {
-        stack[i] = stack[i - 1];
-    }
-    stack[0] = obj;
-
-    stack_size++;
-}
-
-// Push to bottom of stack using const
-void pushBottom(Object obj)
-{
-    pushConst(obj);
-    pushBottomM(objectCopy(consts[constcount - 1]));
-}
-
 // Pop top of stack
 Object popTop()
 {
@@ -434,27 +392,6 @@ Object popRetTop()
     ret_stack_size--;
 
     return ret_stack[ret_stack_size];
-}
-
-// Constants
-void pushConst(Object obj)
-{
-    consts = realloc(consts, (constcount + 1) * sizeof(Object));
-    consts[constcount] = obj;
-    constcount++;
-}
-
-// Clear constants after a line ending or after
-// an expression has been evaluated
-void clearConsts()
-{
-    for (int i = 0; i < constcount; i++)
-    {
-        freeObjectR(consts[i]);
-    }
-
-    consts = realloc(consts, sizeof(Object));
-    constcount = 0;
 }
 
 // DO NOT pass an un-malloc'd pointer to this function
@@ -680,21 +617,6 @@ Temporary
 
 */
 
-void CONSTS()
-{
-    print("CONSTANTS : ");
-    for (int i = 0; i < constcount; i++)
-    {
-        Object * arglist = makeArglist(consts[i]);
-
-        freeObjectR(q_function_print(1, arglist));
-        free(arglist);
-
-        print(", ");
-    }
-    println("");
-}
-
 void STACK()
 {
     print("STACK : ");
@@ -850,8 +772,15 @@ void quokka_interpret_line_tokens(char ** line)
             error(err, line_num);
         }
 
+        // Set up the environment for the compile call
+        char * old_file = current_file;
+        current_file = import_path;
+
         // Compile imported file
+        compile_init();
         char * imported_bytecode = quokka_compile_fname(import_path);
+
+        current_file = old_file;
 
         // Set up the environment for the interpret call
         Object * old_stack = malloc(stack_size * sizeof(Object));
@@ -1497,7 +1426,7 @@ void quokka_interpret_line_tokens(char ** line)
         // If true, jump
         for (int i = bc_line; i < bc_line_count; i++)
         {
-            if (!strcmp(bc_tokens[i], line[1]))
+            if (!strcmp(bc_tokens[i], line[1]) || i + 1 == bc_line_count)
             {
                 bc_line = i;
                 break;
@@ -1532,7 +1461,7 @@ void quokka_interpret_line_tokens(char ** line)
         // If false, jump
         for (int i = bc_line; i < bc_line_count; i++)
         {
-            if (!strcmp(bc_tokens[i], line[1]))
+            if (!strcmp(bc_tokens[i], line[1]) || i + 1 == bc_line_count)
             {
                 bc_line = i;
                 break;
@@ -1547,11 +1476,7 @@ void quokka_interpret_line_tokens(char ** line)
 
         int i;
         for (i = 0; i < argcount; i++)
-        {
-            // pushConst(popTop());
-            // arglist[argcount - i - 1] = consts[constcount - 1]; // arglist[argcount - i - 1] = stack[stack_size - i - 1];
             arglist[argcount - i - 1] = popTop();
-        }
 
         Object func = popTop(); // stack[stack_size - i - 1];
 
@@ -1704,9 +1629,6 @@ void quokka_interpret_tokens(char ** tokens)
             // if (!can_return)
             resetStack();
 
-            // Clear constants after line ending
-            clearConsts();
-
             bc_line++;
             continue;
         }
@@ -1718,9 +1640,6 @@ void quokka_interpret_tokens(char ** tokens)
 
     // if (!can_return)
     resetStack();
-
-    // Clear constants at end of file (or bytecode segment)
-    clearConsts();
 
     free(tokens);
 }

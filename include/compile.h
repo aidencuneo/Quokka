@@ -29,7 +29,7 @@ int stringCountUntil(char ** lst, char * st, int len);
 char * quokka_compile_line(char * linetext, int num, int lineLen, int isInline);
 char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInline);
 char * quokka_compile_tokens(char ** tokens, int isInline);
-char * quokka_compile_raw(char * rawtext, int maxtokensize, int isInline);
+char * quokka_compile_raw(char * rawtext, int isInline);
 char * quokka_compile_fname(char * filename);
 
 char ** quokka_file_tok(char * text);
@@ -338,8 +338,8 @@ int findNextIfChain(char * kwtype, int cur_line, int cur_tok_index, int scp)
 int findNextEnd(char * kwtype, int cur_line, int cur_tok_index, int scp)
 {
     // Index will be -1 if 'end' not found
-    int ind = -1;
-    int tempscope = scp - 1; // -1 because this keyword itself will increase the scope
+    int ind = 0;
+    int tempscope = scp - 1;
     int blanks = 0; // Num of consecutive blank lines
 
     int real_line = cur_line;
@@ -361,7 +361,7 @@ int findNextEnd(char * kwtype, int cur_line, int cur_tok_index, int scp)
             !strcmp(templine[0], "while") ||
             !strcmp(templine[0], "until") ||
             !strcmp(templine[0], "fun") ||
-            !strcmp(templine[0], "for"))
+            !strcmp(templine[0], "for") || i == cur_tok_index)
         {
             tempscope++;
         }
@@ -385,7 +385,7 @@ int findNextEnd(char * kwtype, int cur_line, int cur_tok_index, int scp)
             real_line--;
     }
 
-    return ind;
+    return ind - 1;
 }
 
 int compile_comma_list(char *** outptr, char ** comma_list)
@@ -424,6 +424,15 @@ int compile_comma_list_string(char *** outptr, char * comma_string)
 
 void compile_init()
 {
+    free(scpstk);
+    free(scps);
+    free(scplines);
+
+    scpstk = NULL;
+    scps = NULL;
+    scplines = NULL;
+    scpstk_size = 0;
+
     scope = 0;
 }
 
@@ -889,8 +898,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         int next = findNextEnd("fun", num, file_token_index, scope);
-        print(": ");
-        println(next);
         if (next < 0)
             error("function definition missing 'end' keyword", num - 1);
 
@@ -927,18 +934,29 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         char * funcbytecode = malloc(1);
         strcpy(funcbytecode, "");
 
-        for (current_line = num + 1; current_line < next; current_line++)
+        for (file_token_index++; current_line < next; file_token_index++)
         {
-            char * comp_bc = quokka_compile_line(file_tokens[current_line], current_line, -1, 0);
+            char * t = file_tokens[file_token_index];
+
+            if (t[0] == '\n')
+                current_line++;
+
+            char * comp_bc = quokka_compile_line(t, current_line, -1, 0);
             char * bc = strReplace(comp_bc, "\n", "\t");
 
             mstrcat(&funcbytecode, bc);
 
             free(comp_bc);
             free(bc);
+
+            // Update line number
+            current_line += charCount(t, '\n');
+            if (t[0] == '\n')
+                current_line--;
         }
 
-        num = next;
+        current_line = next + 1;
+        num = current_line;
 
         if (argmin < 0 && argmin != -1)
             error("minimum argument count for function definition can not be below 0", num - 1);
@@ -1233,7 +1251,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 if (lastwasop)
                     error("invalid syntax at '!='", num - 1);
 
-                operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
+                operslist = realloc(operslist, strlen(operslist) + 7 + strlen(INSTRUCTION_END) + 1);
 
                 char * tmp = strdup(operslist);
 
@@ -2142,11 +2160,8 @@ char * quokka_compile_tokens(char ** tokens, int isInline)
     return compiled;
 }
 
-char * quokka_compile_raw(char * rawtext, int maxtokensize, int isInline)
+char * quokka_compile_raw(char * rawtext, int isInline)
 {
-    if (maxtokensize == -1)
-        maxtokensize = 2048;
-
     file_tokens = quokka_file_tok(rawtext);
 
     return quokka_compile_tokens(file_tokens, isInline);
@@ -2161,7 +2176,7 @@ char * quokka_compile_fname(char * filename)
 
     pushTrash(buffer);
 
-    return quokka_compile_raw(buffer, -1, 0);
+    return quokka_compile_raw(buffer, 0);
 }
 
 char ** quokka_file_tok(char * text)

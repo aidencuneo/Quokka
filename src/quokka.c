@@ -100,7 +100,7 @@ int main(int argc, char ** argv)
 
                 if (!strcmp(line, "end"))
                 {
-                    char * bytecode = quokka_compile_raw(cli_current_line, -1, 0);
+                    char * bytecode = quokka_compile_raw(cli_current_line, 0);
                     quokka_interpret(bytecode);
 
                     if (stack_size)
@@ -188,11 +188,6 @@ int main(int argc, char ** argv)
         compile_init();
         main_bytecode = quokka_compile_fname(fname);
 
-        // Free scope stack after compilation
-        free(scpstk);
-        free(scps);
-        free(scplines);
-
         emptyTrash();
         trash = malloc(sizeof(void *));
     }
@@ -225,13 +220,17 @@ int main(int argc, char ** argv)
         quokka_interpret(main_bytecode);
 
         freeVars();
-        freeConsts();
         freeStack();
         freeRetStack();
         emptyTrash();
 
         if (verbose) println("--SUCCESS--");
     }
+
+    // Free scope stack (from compilation)
+    free(scpstk);
+    free(scps);
+    free(scplines);
 
     free(full_file_name);
     free(full_dir_name);
