@@ -62,7 +62,7 @@ Object __index___list(int argc, Object * argv)
 
     // Push a COPY of this Object to memory
 
-    return objectCopy(obj);
+    return obj;//objectCopy(obj);
 }
 
 Object __sizeof___list(int argc, Object * argv)

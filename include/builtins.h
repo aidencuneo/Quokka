@@ -401,3 +401,33 @@ Object q_function_sizeof(int argc, Object * argv)
 
     return makeInt(size);
 }
+
+Object q_function_min(int argc, Object * argv)
+{
+    Object * lst = objectGetAttr(argv[0], "value");
+    int lstlen = ((int *)objectGetAttr(argv[0], "length"))[0];
+
+    int smallest;
+
+    for (int i = 0; i < lstlen; i++)
+    {
+        Object item = lst[i];
+
+        if (strcmp(item.name, "int"))
+        {
+            Object * arglist = makeArglist(item);
+            item = q_function_int(1, arglist);
+            free(arglist);
+        }
+
+        int itemint = ((int *)objectGetAttr(item, "value"))[0];
+
+        if (itemint < smallest || !i)
+            smallest = itemint;
+    }
+
+    int * intptr = makeIntPtr(smallest);
+    pushTrash(intptr);
+
+    return makeInt(intptr);
+}

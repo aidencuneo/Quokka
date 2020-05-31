@@ -18,7 +18,7 @@ int line_num;
 #include "../include/quokka.h"
 #include "../include/signalhandlers.h"
 #include "../include/compile.h"
-#include "../include/functions.h"
+#include "../include/builtins.h"
 #include "../include/interpret.h"
 
 int main(int argc, char ** argv)
@@ -191,9 +191,10 @@ int main(int argc, char ** argv)
         // Compile Quokka script into Quokka bytecode
         compile_init();
         main_bytecode = quokka_compile_fname(fname);
+        free(bytecode_constants);
+        free(file_tokens);
 
         emptyTrash();
-        trash = malloc(sizeof(void *));
     }
 
     if (verbose) println("\n--BYTECODE--\n");
@@ -220,11 +221,14 @@ int main(int argc, char ** argv)
     {
         if (verbose) println("\n--OUTPUT--");
 
+        trash = malloc(sizeof(void *));
+
         interp_init();
         quokka_interpret(main_bytecode);
 
-        freeVars();
+        freeConsts();
         freeStack();
+        // freeVars();
         freeRetStack();
         emptyTrash();
 

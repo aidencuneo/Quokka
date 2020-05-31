@@ -18,6 +18,11 @@ Object __bool___null(int argc, Object * argv)
 
 Object makeNull()
 {
+    return constants[2];
+}
+
+Object makeNullRaw()
+{
     Object self;
 
     self = makeObject("null", &falsePtr);

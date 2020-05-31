@@ -54,6 +54,7 @@ typedef struct __Varlist_Struct__ Varlist;
 struct __Varlist_Struct__
 {
     int count;
+    int offset;
 
     char ** names;
     Object * values;
@@ -111,6 +112,7 @@ void addFunction(Function funcobj);
 
 // int
 Object makeInt(int * value);
+Object makeIntRaw(int * value);
 
 // long
 Object makeLong(long long * value);

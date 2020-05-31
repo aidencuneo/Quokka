@@ -375,6 +375,18 @@ Object __int___int(int argc, Object * argv)
 
 Object makeInt(int * value)
 {
+    // If value == 0, return the already made constant for 0
+    if (!value[0])
+        return constants[0];
+    // If value == 1, return the already made constant for 1
+    if (value[0] == 1)
+        return constants[1];
+
+    return makeIntRaw(value);
+}
+
+Object makeIntRaw(int * value)
+{
     Object self;
 
     self = makeObject("int", value);

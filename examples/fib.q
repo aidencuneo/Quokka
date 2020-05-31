@@ -9,5 +9,10 @@ a = 0
 while a < 90
     l = fibinc(l)
     println(l[-1])
-    a += 1
+    a +
 end
+
+// :   0.073s
+// :   0.062s
+// :   0.058s
+// AVG 0.061s

@@ -1,16 +1,11 @@
 #include <stdio.h>
-
-int ptr()
-{
-    return 0;
-}
+#include <stdlib.h>
 
 int main()
 {
-    printf("%ld\n", sizeof(long long));
-    printf("%ld\n", sizeof(long));
-    printf("%ld\n", sizeof(int));
-    printf("%ld\n", sizeof(&ptr));
+    char * ptr = malloc(16);
+    ptr = realloc(ptr, 32);
+    free(ptr);
 
     return 0;
 }

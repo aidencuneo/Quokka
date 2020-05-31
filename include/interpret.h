@@ -1,3 +1,5 @@
+#include <time.h>
+
 // Important stuff
 Varlist globals;
 Varlist locals;
@@ -7,6 +9,9 @@ int method_count;
 
 Object * stack;
 int stack_size;
+
+Object * constants;
+int constant_count;
 
 Object * ret_stack;
 int ret_stack_size;
@@ -41,6 +46,23 @@ void resetStack()
 
     stack = malloc(sizeof(Object));
     stack_size = 0;
+}
+
+// Stack
+void freeConsts()
+{
+    for (int i = 0; i < constant_count; i++)
+        freeObject(constants[i]);
+
+    free(constants);
+}
+
+void resetConsts()
+{
+    freeConsts();
+
+    constants = malloc(sizeof(Object));
+    constant_count = 0;
 }
 
 // Return Stack
@@ -97,6 +119,10 @@ void emptyTrash()
 // Cleanup (ONLY called on a sudden exit)
 void cleanupAll()
 {
+    free(main_bytecode);
+    free(bytecode_constants);
+    free(file_tokens);
+
     free(full_file_name);
     free(full_dir_name);
     free(main_bytecode);
@@ -124,8 +150,8 @@ void interp_init()
     Global Variables
     */
 
-    addGVar("true", makeInt(&truePtr));
-    addGVar("false", makeInt(&falsePtr));
+    addGVar("true", makeIntRaw(&truePtr));
+    addGVar("false", makeIntRaw(&falsePtr));
 
     /*
     No argument restraints
@@ -206,6 +232,12 @@ void interp_init()
     sizeofFunction = addObjectValue(sizeofFunction, "__call__argmin", &oneArgc);
     sizeofFunction = addObjectValue(sizeofFunction, "__call__argmax", &oneArgc);
     addGVar("sizeof", sizeofFunction);
+
+    // Object minFunction = emptyObject("bfunction");
+    // minFunction = addObjectValue(minFunction, "__call__", &q_function_min);
+    // minFunction = addObjectValue(minFunction, "__call__argmin", &oneArgc);
+    // minFunction = addObjectValue(minFunction, "__call__argmax", &oneArgc);
+    // addGVar("min", minFunction);
 
     /*
     The rest
@@ -356,7 +388,7 @@ Stack
 
 */
 
-// Push to top of stack normally
+// Push to top of stack
 void pushTop(Object obj)
 {
     stack = realloc(stack, (stack_size + 1) * sizeof(Object));
@@ -371,6 +403,29 @@ Object popTop()
     stack_size--;
 
     return stack[stack_size];
+}
+
+/*
+
+Constants
+
+*/
+
+// Push to top of constants
+void pushConst(Object obj)
+{
+    constants = realloc(constants, (constant_count + 1) * sizeof(Object));
+    constants[constant_count] = obj;
+    constant_count++;
+}
+
+// Pop top of constants
+Object popConst()
+{
+    constants = realloc(constants, constant_count * sizeof(Object));
+    constant_count--;
+
+    return constants[constant_count];
 }
 
 /*
@@ -409,7 +464,7 @@ void addGVar(char * name, Object obj)
     if (check != -1)
     {
         // Free the old object non-recursively to prevent lists from losing their objects
-        freeObject(globals.values[check]);
+        // freeObject(globals.values[check]);
 
         globals.values[check] = obj;
         return;
@@ -432,7 +487,7 @@ void addVar(char * name, Object obj)
     if (check != -1)
     {
         // Free the old object non-recursively to prevent lists from losing their objects
-        freeObject(locals.values[check]);
+        // freeObject(locals.values[check]);
 
         locals.values[check] = obj;
         return;
@@ -450,7 +505,7 @@ void addVar(char * name, Object obj)
 Object getGVar(char * name)
 {
     // Check globals
-    for (int i = 0; i < globals.count; i++)
+    for (int i = globals.offset; i < globals.count; i++)
         if (!strcmp(globals.names[i], name))
             return globals.values[i];
 
@@ -466,7 +521,7 @@ Object getGVar(char * name)
 Object getLVar(char * name)
 {
     // Check locals
-    for (int i = 0; i < locals.count; i++)
+    for (int i = globals.offset; i < locals.count; i++)
         if (!strcmp(locals.names[i], name))
             return locals.values[i];
 
@@ -482,12 +537,12 @@ Object getLVar(char * name)
 Object getVar(char * name)
 {
     // Check locals
-    for (int i = 0; i < locals.count; i++)
+    for (int i = locals.offset; i < locals.count; i++)
         if (!strcmp(locals.names[i], name))
             return locals.values[i];
 
     // Check globals
-    for (int i = 0; i < globals.count; i++)
+    for (int i = globals.offset; i < globals.count; i++)
         if (!strcmp(globals.names[i], name))
             return globals.values[i];
 
@@ -503,7 +558,7 @@ Object getVar(char * name)
 int getGVarIndex(char * name)
 {
     // Check globals
-    for (int i = 0; i < globals.count; i++)
+    for (int i = globals.offset; i < globals.count; i++)
         if (!strcmp(globals.names[i], name))
             return i;
 
@@ -513,7 +568,7 @@ int getGVarIndex(char * name)
 int getLVarIndex(char * name)
 {
     // Check locals
-    for (int i = 0; i < locals.count; i++)
+    for (int i = locals.offset; i < locals.count; i++)
         if (!strcmp(locals.names[i], name))
             return i;
 
@@ -523,12 +578,12 @@ int getLVarIndex(char * name)
 int getVarIndex(char * name)
 {
     // Check locals
-    for (int i = 0; i < locals.count; i++)
+    for (int i = locals.offset; i < locals.count; i++)
         if (!strcmp(locals.names[i], name))
             return i;
 
     // Check globals
-    for (int i = 0; i < globals.count; i++)
+    for (int i = globals.offset; i < globals.count; i++)
         if (!strcmp(globals.names[i], name))
             return i;
 
@@ -645,7 +700,7 @@ void quokka_interpret_line_tokens(char ** line)
         char * literal_str = makeLiteralString(line[1]);
         pushTrash(literal_str);
 
-        pushTop(makeString(literal_str));
+        pushConst(makeString(literal_str));
     }
     else if (!strcmp(line[0], "LOAD_INT"))
     {
@@ -655,14 +710,14 @@ void quokka_interpret_line_tokens(char ** line)
             long long * llptr = makeLLPtrFromStr(line[1]);
             pushTrash(llptr);
 
-            pushTop(makeLong(llptr));
+            pushConst(makeLong(llptr));
         }
         else
         {
             int * intptr = makeIntPtrFromStr(line[1]);
             pushTrash(intptr);
 
-            pushTop(makeInt(intptr));
+            pushConst(makeIntRaw(intptr));
         }
     }
     else if (!strcmp(line[0], "LOAD_LONG"))
@@ -670,15 +725,23 @@ void quokka_interpret_line_tokens(char ** line)
         long long * llptr = makeLLPtrFromStr(line[1]);
         pushTrash(llptr);
 
-        pushTop(makeLong(llptr));
+        pushConst(makeLong(llptr));
     }
     if (!strcmp(line[0], "LOAD_NULL"))
     {
-        pushTop(makeNull());
+        pushConst(makeNullRaw());
+    }
+    if (!strcmp(line[0], "LOAD_CONST"))
+    {
+        long ind = strtol(line[1], NULL, 10);
+
+        pushTop(constants[ind]);
     }
     else if (!strcmp(line[0], "LOAD_NAME"))
     {
-        pushTop(objectCopy(getVar(line[1])));
+        pushTop(getVar(line[1]));
+        // Most of the slowdown was caused by this line:
+        // pushTop(objectCopy(getVar(line[1])));
     }
     else if (!strcmp(line[0], "STORE_NAME"))
     {
@@ -804,6 +867,9 @@ void quokka_interpret_line_tokens(char ** line)
         // Function call will not affect currently defined locals
         // locals.count = 0;
 
+        int old_locals_offset = locals.offset;
+        locals.offset = locals.count;
+
         int old_bc_line = bc_line;
         int old_bc_line_count = bc_line_count;
         char ** old_bc_tokens = bc_tokens;
@@ -830,6 +896,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         free(old_stack);
 
+        locals.offset = old_locals_offset;
+
         // Recreate and realign variable lists (only locals for now)
         // free(locals.names);
         // free(locals.values);
@@ -847,7 +915,7 @@ void quokka_interpret_line_tokens(char ** line)
         // free(old_locals_names);
         // free(old_locals_values);
 
-        freeObject(pathstrobj);
+        // freeObject(pathstrobj);
 
         free(import_path_rel);
         free(import_path);
@@ -977,8 +1045,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(first, "__add__"))(2, arglist));
 
-        freeObject(first);
-        freeObject(secnd);
+        // freeObject(first);
+        // freeObject(secnd);
 
         free(arglist);
     }
@@ -1015,8 +1083,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(first, "__sub__"))(2, arglist));
 
-        freeObject(first);
-        freeObject(secnd);
+        // freeObject(first);
+        // freeObject(secnd);
 
         free(arglist);
     }
@@ -1053,8 +1121,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(first, "__mul__"))(2, arglist));
 
-        freeObject(first);
-        freeObject(secnd);
+        // freeObject(first);
+        // freeObject(secnd);
 
         free(arglist);
     }
@@ -1091,8 +1159,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(first, "__div__"))(2, arglist));
 
-        freeObject(first);
-        freeObject(secnd);
+        // freeObject(first);
+        // freeObject(secnd);
 
         free(arglist);
     }
@@ -1129,8 +1197,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(first, "__pow__"))(2, arglist));
 
-        freeObject(first);
-        freeObject(secnd);
+        // freeObject(first);
+        // freeObject(secnd);
 
         free(arglist);
     }
@@ -1167,8 +1235,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(first, "__eq__"))(2, arglist));
 
-        freeObject(first);
-        freeObject(secnd);
+        // freeObject(first);
+        // freeObject(secnd);
 
         free(arglist);
     }
@@ -1222,8 +1290,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(makeInt(intptr));
 
-        freeObject(first);
-        freeObject(secnd);
+        // freeObject(first);
+        // freeObject(secnd);
 
         free(arglist);
     }
@@ -1260,8 +1328,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(first, "__lt__"))(2, arglist));
 
-        freeObject(first);
-        freeObject(secnd);
+        // freeObject(first);
+        // freeObject(secnd);
 
         free(arglist);
     }
@@ -1298,8 +1366,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(first, "__gt__"))(2, arglist));
 
-        freeObject(first);
-        freeObject(secnd);
+        // freeObject(first);
+        // freeObject(secnd);
 
         free(arglist);
     }
@@ -1336,8 +1404,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(first, "__le__"))(2, arglist));
 
-        freeObject(first);
-        freeObject(secnd);
+        // freeObject(first);
+        // freeObject(secnd);
 
         free(arglist);
     }
@@ -1374,8 +1442,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(first, "__ge__"))(2, arglist));
 
-        freeObject(first);
-        freeObject(secnd);
+        // freeObject(first);
+        // freeObject(secnd);
 
         free(arglist);
     }
@@ -1437,8 +1505,8 @@ void quokka_interpret_line_tokens(char ** line)
         else
             pushTop(makeInt(&falsePtr));
 
-        freeObject(first);
-        freeObject(secnd);
+        // freeObject(first);
+        // freeObject(secnd);
     }
     else if (!strcmp(line[0], "BOOLEAN_XOR"))
     {
@@ -1474,8 +1542,8 @@ void quokka_interpret_line_tokens(char ** line)
         else
             pushTop(makeInt(&falsePtr));
 
-        freeObject(first);
-        freeObject(secnd);
+        // freeObject(first);
+        // freeObject(secnd);
     }
     else if (!strcmp(line[0], "BOOLEAN_AND"))
     {
@@ -1511,8 +1579,8 @@ void quokka_interpret_line_tokens(char ** line)
         else
             pushTop(makeInt(&falsePtr));
 
-        freeObject(first);
-        freeObject(secnd);
+        // freeObject(first);
+        // freeObject(secnd);
     }
     else if (!strcmp(line[0], "JUMP_TO"))
     {
@@ -1555,7 +1623,7 @@ void quokka_interpret_line_tokens(char ** line)
 
         int condition = ((int *)objectGetAttr(conditionobj, "value"))[0]; //////////////////////////////////////////////////////////////
 
-        freeObjectR(conditionobj);
+        // freeObject(conditionobj);
 
         // If false, don't jump
         if (!condition)
@@ -1590,7 +1658,7 @@ void quokka_interpret_line_tokens(char ** line)
 
         int condition = ((int *)objectGetAttr(conditionobj, "value"))[0]; ////////////////////////////////////////////////////////////////////////
 
-        freeObjectR(conditionobj);
+        // freeObject(conditionobj);
 
         // If true, don't jump
         if (condition)
@@ -1612,8 +1680,7 @@ void quokka_interpret_line_tokens(char ** line)
 
         Object * arglist = malloc(argcount * sizeof(Object));
 
-        int i;
-        for (i = 0; i < argcount; i++)
+        for (int i = 0; i < argcount; i++)
             arglist[argcount - i - 1] = popTop();
 
         Object func = popTop(); // stack[stack_size - i - 1];
@@ -1665,11 +1732,11 @@ void quokka_interpret_line_tokens(char ** line)
             pushTop(((standard_func_def)objectGetAttr(func, "__call__"))(argcount, arglist));
 
             // Free all arguments passed into this function
-            for (int i = 0; i < argcount; i++)
-                freeObject(arglist[i]);
+            // for (int i = 0; i < argcount; i++)
+            //     freeObject(arglist[i]);
 
             // Free the function itself
-            freeObject(func);
+            // freeObject(func);
         }
         else
         {
@@ -1681,8 +1748,8 @@ void quokka_interpret_line_tokens(char ** line)
             pushTop(((standard_func_def)objectGetAttr(func, "__call__"))(argcount, arglist));
 
             // Free all arguments passed into this function (function itself included)
-            for (int i = 0; i < argcount + 1; i++)
-                freeObject(arglist[i]);
+            // for (int i = 0; i < argcount + 1; i++)
+            //     freeObject(arglist[i]);
         }
 
         free(arglist);
@@ -1737,8 +1804,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushTop(((standard_func_def)objectGetAttr(obj, "__index__"))(2, arglist));
 
-        freeObject(ind);
-        freeObject(obj);
+        // freeObject(ind);
+        // freeObject(obj);
 
         free(arglist);
     }
@@ -1765,7 +1832,7 @@ void quokka_interpret_tokens(char ** tokens)
 
             // Comment the next two lines out if there's a segfault
             // if (!can_return)
-            resetStack();
+            // resetStack();
 
             bc_line++;
             continue;
@@ -1777,7 +1844,7 @@ void quokka_interpret_tokens(char ** tokens)
     }
 
     // if (!can_return)
-    resetStack();
+    // resetStack();
 
     free(tokens);
 }

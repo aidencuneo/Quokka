@@ -1,10 +1,6 @@
-fun double
-    num *= 2
-end
-
 fun title
-    print('|' + '-' * 4 + 'INT'  + '-' * 5)
-    print('|' + '-' * 8 + 'LONG' + '-' * 9)
+    print('|' + ('-' * 5) + 'INT'  + ('-' * 5))
+    print('|' + ('-' * 9) + 'LONG' + ('-' * 9))
     print('|\n')
 end
 
@@ -14,8 +10,8 @@ count = 60
 title()
 
 a = 0
-until a == count
-    double()
+until a is count
+    num *= 2
 
     lpadding = ' ' * int(11 - len(string(+num)))
     rpadding = ' ' * int(20 - len(string(num)))

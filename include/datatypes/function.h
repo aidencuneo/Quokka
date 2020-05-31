@@ -16,17 +16,19 @@ Object __call___function(int argc, Object * argv)
     stack = realloc(stack, sizeof(Object));
     stack_size = 0;
 
-    char ** old_locals_names = malloc(locals.count * sizeof(char *));
-    Object * old_locals_values = malloc(locals.count * sizeof(Object));
-    for (int i = 0; i < locals.count; i++)
-    {
-        old_locals_names[i] = locals.names[i];
-        old_locals_values[i] = locals.values[i];
-    }
-    int old_locals_count = locals.count;
+    // char ** old_locals_names = malloc(locals.count * sizeof(char *));
+    // Object * old_locals_values = malloc(locals.count * sizeof(Object));
+    // for (int i = 0; i < locals.count; i++)
+    // {
+    //     old_locals_names[i] = locals.names[i];
+    //     old_locals_values[i] = locals.values[i];
+    // }
+    // int old_locals_count = locals.count;
 
     // Function call will not affect currently defined locals
-    locals.count = 0;
+    int old_locals_offset = locals.offset;
+    locals.offset = locals.count;
+    // locals.count = 0;
 
     int old_bc_line = bc_line;
     int old_bc_line_count = bc_line_count;
@@ -59,10 +61,10 @@ Object __call___function(int argc, Object * argv)
     // int argvind = getVarIndex("argv");
 
     // if (argcind != -1)
-    //     delVarIndex(argcind);
+    //     delLVarIndex(argcind);
 
     // if (argvind != -1)
-    //     delVarIndex(argvind);
+    //     delLVarIndex(argvind);
 
     bc_line = old_bc_line;
     bc_line_count = old_bc_line_count;
@@ -81,21 +83,22 @@ Object __call___function(int argc, Object * argv)
     free(old_stack);
 
     // Recreate and realign variable lists (only locals for now)
-    free(locals.names);
-    free(locals.values);
+    locals.offset = old_locals_offset;
+    // free(locals.names);
+    // free(locals.values);
 
-    locals.count = old_locals_count;
-    locals.names = malloc((locals.count + 1) * sizeof(char *));
-    locals.values = malloc((locals.count + 1) * sizeof(Object));
+    // locals.count = old_locals_count;
+    // locals.names = malloc((locals.count + 1) * sizeof(char *));
+    // locals.values = malloc((locals.count + 1) * sizeof(Object));
 
-    for (int i = 0; i < locals.count; i++)
-    {
-        locals.names[i] = old_locals_names[i];
-        locals.values[i] = old_locals_values[i];
-    }
+    // for (int i = 0; i < locals.count; i++)
+    // {
+    //     locals.names[i] = old_locals_names[i];
+    //     locals.values[i] = old_locals_values[i];
+    // }
 
-    free(old_locals_names);
-    free(old_locals_values);
+    // free(old_locals_names);
+    // free(old_locals_values);
 
     // If there's anything to return, return it
     if (ret_stack_size)

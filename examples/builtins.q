@@ -99,7 +99,6 @@ fun map 1 *
             item = argv[j](item)
             j +
         end
-        del j
 
         new += [item]
         i +
@@ -186,7 +185,7 @@ fun split 1 2
 end
 
 
-fun strcat *
+fun strsum *
     str = ''
 
     if type(argv[0]) == 'list'

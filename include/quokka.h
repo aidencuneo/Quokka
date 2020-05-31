@@ -1,5 +1,5 @@
 // VERSION STUFF
-#define VERSION "0.2.7"
+#define VERSION "0.3.0"
 
 // Defines
 #define LN10 2.3025850929940456840179914546844
@@ -36,13 +36,6 @@ int in_cli_mode = 0;
 //
 
 #include "qdef.h"
-
-//
-/// Memory
-//
-
-Object * mem;
-int memsize;
 
 //
 /// Function declarations
@@ -89,14 +82,12 @@ char * cpprint(char * value);
 
 #define print(value) _Generic((value),\
     int      : iprint,\
-    long     : lprint,\
     char     : cprint,\
     char *   : cpprint,\
     default  : cpprint)(value)
 
 #define println(value) _Generic((value),\
     int      : iprintln,\
-    long     : lprintln,\
     char     : cprintln,\
     char *   : cpprintln,\
     default  : cpprintln)(value)
@@ -576,6 +567,17 @@ void mstrcattrip(char ** charptr, char * newstr, char * endstr)
     (*charptr)[len] = '\0';
 }
 
+void mstrcatline(char ** charptr, char * newstr, char * lmidstr, char * rmidstr, char * endstr)
+{
+    int len = strlen(*charptr) + strlen(newstr) + strlen(lmidstr) + strlen(rmidstr) + strlen(endstr);
+    *charptr = realloc(*charptr, len + 1);
+    strcat(*charptr, newstr);
+    strcat(*charptr, lmidstr);
+    strcat(*charptr, rmidstr);
+    strcat(*charptr, endstr);
+    (*charptr)[len] = '\0';
+}
+
 int intArrHas(int * arr, int ptr, int size)
 {
     for (int i = 0; i < size; i++)
@@ -590,12 +592,6 @@ int intArrHas(int * arr, int ptr, int size)
 int iprint(int value)
 {
     printf("%d", value);
-    return value;
-}
-
-long lprint(long value)
-{
-    printf("%ld", value);
     return value;
 }
 
@@ -616,12 +612,6 @@ char * cpprint(char * value)
 int iprintln(int value)
 {
     printf("%d\n", value);
-    return value;
-}
-
-long lprintln(long value)
-{
-    printf("%ld\n", value);
     return value;
 }
 

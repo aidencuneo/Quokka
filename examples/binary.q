@@ -1,6 +1,10 @@
+import 'builtins'
+
+
 fun modulo 2
-    ret argv[0] - argv[1] * (argv[0] / argv[1])
+    ret argv[0] - (argv[1] * (argv[0] / argv[1]))
 end
+
 
 fun lpadwith 3
     pad = argv[0]
@@ -27,6 +31,7 @@ fun lpadwith 3
     ret [first, secnd]
 end
 
+
 fun binary 1
     n = argv[0]
     b = ''
@@ -36,6 +41,7 @@ fun binary 1
     end
     ret b
 end
+
 
 fun bintoint 1
     // Init
@@ -47,7 +53,7 @@ fun bintoint 1
 
     while num > 0
         rem = modulo(num, 10)
-        decimal_val += rem * base
+        decimal_val += (rem * base)
         num /= 10
         base *= 2
     end
@@ -55,8 +61,9 @@ fun bintoint 1
     ret decimal_val
 end
 
-fun xor 2
-    both = lpadwith('0', argv[0], argv[1])
+
+fun binxor 2
+    both = lpad('0', [argv[0], argv[1]])
     first = both[0]
     secnd = both[1]
 
@@ -64,7 +71,7 @@ fun xor 2
     new = ''
     i = 0
     while i < len(first)
-        if first[i] == secnd[i]
+        if first[i] is secnd[i]
             new += '0'
         else
             new += '1'
@@ -75,11 +82,12 @@ fun xor 2
     ret long(new)
 end
 
+
 print('Enter first number  : ')
-one = 8//long(input())
+one = 8 // long(input())
 
 print('Enter second number : ')
-two = 5//long(input())
+two = 5 // long(input())
 
 b_one = binary(one)
 b_two = binary(two)
@@ -87,5 +95,5 @@ b_two = binary(two)
 println('BINARY:')
 println(b_one, '^', b_two, '\n')
 
-num = xor(b_one, b_two)
+num = binxor(b_one, b_two)
 println(one, '^', two, '=', bintoint(num))

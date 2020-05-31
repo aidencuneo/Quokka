@@ -1,14 +1,21 @@
-// Definitions:
+// Definitions
 #define SEPARATOR " "
 #define INSTRUCTION_END "\n"
 
-// Ints:
+#define SEPARATOR_LEN 1
+#define INSTRUCTION_END_LEN 1
+
+// Bytecode Constants
+char * bytecode_constants;
+int bytecode_constant_count;
+
+// Ints
 int current_line;
 int scope;
 int file_token_index;
 int file_line_count;
 
-// String arrays:
+// String arrays
 char ** file_tokens;
 
 // Scope stack stuff
@@ -422,8 +429,57 @@ int compile_comma_list_string(char *** outptr, char * comma_string)
     return templen;
 }
 
+// Returns the index of the newly added bytecode constant
+int addBytecodeConstant(char * const_type, char * literal_value)
+{
+    int len_const_type = strlen(const_type);
+    int len_literal_value = strlen(literal_value);
+
+    bytecode_constants = realloc(bytecode_constants,
+        strlen(bytecode_constants) + len_const_type + SEPARATOR_LEN
+        + len_literal_value + INSTRUCTION_END_LEN + 1);
+
+    strcat(bytecode_constants, const_type);
+    strcat(bytecode_constants, SEPARATOR);
+    strcat(bytecode_constants, literal_value);
+    strcat(bytecode_constants, INSTRUCTION_END);
+
+    return bytecode_constant_count++;
+}
+
 void compile_init()
 {
+    /*
+    
+    NEVER REORDER THIS SECTION, CONSTANTS MUST
+    STAY IN THE SAME ORDER.
+
+    Only append to the end of this list.
+
+    */
+    bytecode_constants = malloc(
+        8 + SEPARATOR_LEN + 1 + INSTRUCTION_END_LEN +
+        8 + SEPARATOR_LEN + 1 + INSTRUCTION_END_LEN +
+        9 + INSTRUCTION_END_LEN + 1);
+    bytecode_constants[0] = 0;
+
+    strcat(bytecode_constants, "LOAD_INT");
+    strcat(bytecode_constants, SEPARATOR);
+    strcat(bytecode_constants, "0");
+    strcat(bytecode_constants, INSTRUCTION_END);
+
+    strcat(bytecode_constants, "LOAD_INT");
+    strcat(bytecode_constants, SEPARATOR);
+    strcat(bytecode_constants, "1");
+    strcat(bytecode_constants, INSTRUCTION_END);
+
+    strcat(bytecode_constants, "LOAD_NULL");
+    strcat(bytecode_constants, INSTRUCTION_END);
+
+    // Remember to update this number to match the
+    // constant count that the program begins with
+    bytecode_constant_count = 3;
+
     free(scpstk);
     free(scps);
     free(scplines);
@@ -897,7 +953,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
-        int next = findNextEnd("fun", num, file_token_index, scope) - 1;
+        int next = findNextEnd("fun", num, file_token_index, scope);
         if (next < 0)
             error("function definition missing 'end' keyword", num - 1);
 
@@ -1395,7 +1451,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         // Load 1
-        mstrcat(&bytecode, "LOAD_INT");
+        mstrcat(&bytecode, "LOAD_CONST");
         mstrcat(&bytecode, SEPARATOR);
         mstrcat(&bytecode, "1");
         mstrcat(&bytecode, INSTRUCTION_END);
@@ -1424,7 +1480,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         // Load 1
-        mstrcat(&bytecode, "LOAD_INT");
+        mstrcat(&bytecode, "LOAD_CONST");
         mstrcat(&bytecode, SEPARATOR);
         mstrcat(&bytecode, "1");
         mstrcat(&bytecode, INSTRUCTION_END);
@@ -1794,10 +1850,15 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         while (startswith(line[0], "0") && strlen(line[0]) > 2)
             line[0]++;
 
-        mstrcat(&bytecode, "LOAD_LONG");
-        mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, line[0]);
-        mstrcat(&bytecode, INSTRUCTION_END);
+        int ind = addBytecodeConstant("LOAD_LONG", line[0]);
+
+        char * intstr = intToStr(ind);
+        mstrcatline(&bytecode,
+            "LOAD_CONST",
+            SEPARATOR,
+            intstr,
+            INSTRUCTION_END);
+        free(intstr);
     }
     else if (isinteger(line[0]) && len == 1)
     {
@@ -1809,14 +1870,49 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         while (startswith(line[0], "0") && strlen(line[0]) > 1)
             line[0]++;
 
+        // If number is more than 10 digits, make a long
         if (strlen(line[0]) > 10)
-            mstrcat(&bytecode, "LOAD_LONG");
-        else
-            mstrcat(&bytecode, "LOAD_INT");
+        {
+            int ind = addBytecodeConstant("LOAD_LONG", line[0]);
 
-        mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, line[0]);
-        mstrcat(&bytecode, INSTRUCTION_END);
+            char * intstr = intToStr(ind);
+            mstrcatline(&bytecode,
+                "LOAD_CONST",
+                SEPARATOR,
+                intstr,
+                INSTRUCTION_END);
+            free(intstr);
+        }
+        // Otherwise, make an int
+        else
+        {
+            if (!strcmp(line[0], "0"))
+                mstrcatline(&bytecode,
+                    "LOAD_CONST",
+                    SEPARATOR,
+                    "0",
+                    INSTRUCTION_END);
+            else if (!strcmp(line[0], "1"))
+                mstrcatline(&bytecode,
+                    "LOAD_CONST",
+                    SEPARATOR,
+                    "1",
+                    INSTRUCTION_END);
+            else
+            {
+                int ind = addBytecodeConstant("LOAD_INT", line[0]);
+
+                char * intstr = intToStr(ind);
+
+                mstrcatline(&bytecode,
+                    "LOAD_CONST",
+                    SEPARATOR,
+                    intstr,
+                    INSTRUCTION_END);
+
+                free(intstr);
+            }
+        }
     }
     else if (!strcmp(line[0], "null") && len == 1)
     {
@@ -1824,7 +1920,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (!isInline)
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
-        mstrcattrip(&bytecode, "LOAD_NULL", INSTRUCTION_END);
+        // Load constant number 2
+        mstrcatline(&bytecode, "LOAD_CONST", SEPARATOR, "2", INSTRUCTION_END);
     }
     else if ((
         (startswith(line[0], "'") && endswith(line[0], "'")) ||
@@ -1835,10 +1932,15 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (!isInline)
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
-        mstrcat(&bytecode, "LOAD_STRING");
-        mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, line[0]);
-        mstrcat(&bytecode, INSTRUCTION_END);
+        int ind = addBytecodeConstant("LOAD_STRING", line[0]);
+
+        char * intstr = intToStr(ind);
+        mstrcatline(&bytecode,
+            "LOAD_CONST",
+            SEPARATOR,
+            intstr,
+            INSTRUCTION_END);
+        free(intstr);
     }
     else if (isidentifier(line[0]) && len == 1)
     {
@@ -1978,9 +2080,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
 char * quokka_compile_tokens(char ** tokens, int isInline)
 {
-    // This will eventually need to be fixed and made dynamic
     char * compiled = malloc(1);
-    strcpy(compiled, "");
+    compiled[0] = 0;
 
     file_line_count = arrsize(tokens);
     file_token_index = 0;
@@ -1990,17 +2091,20 @@ char * quokka_compile_tokens(char ** tokens, int isInline)
     {
         char * t = tokens[file_token_index];
 
-        if (t[0] == 0)
-            continue;
-
         if (t[0] == '\n')
             current_line++;
+        else if (!t[0])
+        {
+            current_line++;
+            continue;
+        }
 
         char * short_line = strReplace(t, "\n", "");
         char * ins = quokka_compile_line(short_line, current_line, -1, isInline);
 
         mstrcat(&compiled, ins);
 
+        free(short_line);
         free(ins);
 
         // Update line number
@@ -2009,7 +2113,13 @@ char * quokka_compile_tokens(char ** tokens, int isInline)
             current_line--;
     }
 
-    return compiled;
+    char * result = malloc(strlen(bytecode_constants) + strlen(compiled) + 1);
+    strcpy(result, bytecode_constants);
+    strcat(result, compiled);
+
+    free(compiled);
+
+    return result;
 }
 
 char * quokka_compile_raw(char * rawtext, int isInline)
