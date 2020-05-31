@@ -74,6 +74,16 @@ void sighupHandler()
 // 2
 void sigintHandler()
 {
+    // The following can be uncommented if the "conio.h" header file is in use: //
+
+    // If Keyboard Interrupt is caught during an input() call
+    // on a linux-based machine, call tcsetattr using OLDATTR
+    /*
+    #ifndef _WIN32
+        tcsetattr(STDIN_FILENO, TCSANOW, &OLDATTR);
+    #endif
+    */
+
     error("Keyboard Interrupt", line_num);
 }
 

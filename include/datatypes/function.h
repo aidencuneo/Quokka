@@ -1,9 +1,13 @@
 Object __call___function(int argc, Object * argv)
 {
     // Get function code
+    char * filepath = objectGetAttr(argv[0], "filepath");
     char * code = objectGetAttr(argv[0], "value");
 
     // Set up the environment for the function call
+    char * old_file = current_file;
+    current_file = filepath;
+
     Object * old_stack = malloc(stack_size * sizeof(Object));
     for (int i = 0; i < stack_size; i++)
         old_stack[i] = stack[i];
@@ -35,28 +39,30 @@ Object __call___function(int argc, Object * argv)
     int * intptr = makeIntPtr(argc);
     pushTrash(intptr);
 
-    addGVar("argc", makeInt(intptr));
+    addVar("argc", makeInt(intptr));
 
     Object * arglist = malloc(argc * sizeof(Object));
     for (int i = 0; i < argc; i++)
         arglist[i] = argv[i + 1];
 
-    addGVar("argv", makeList(argc, arglist, 0));
+    addVar("argv", makeList(argc, arglist, 0));
 
     free(arglist);
 
     // Interpret
-
     quokka_interpret(code);
 
-    int argcind = getGVarIndex("argc");
-    int argvind = getGVarIndex("argv");
+    // Reset filepath
+    current_file = old_file;
 
-    if (argcind != -1)
-        delGVarIndex(argcind);
+    // int argcind = getVarIndex("argc");
+    // int argvind = getVarIndex("argv");
 
-    if (argvind != -1)
-        delGVarIndex(argvind);
+    // if (argcind != -1)
+    //     delVarIndex(argcind);
+
+    // if (argvind != -1)
+    //     delVarIndex(argvind);
 
     bc_line = old_bc_line;
     bc_line_count = old_bc_line_count;
@@ -101,7 +107,7 @@ Object __call___function(int argc, Object * argv)
     return makeNull();
 }
 
-Object makeFunction(char ** bytecode, int argmin, int argmax)
+Object makeFunction(char * filepath, char ** bytecode, int argmin, int argmax)
 {
     int * argminptr = makeIntPtr(argmin);
     int * argmaxptr = makeIntPtr(argmax);
@@ -111,6 +117,9 @@ Object makeFunction(char ** bytecode, int argmin, int argmax)
     Object self;
 
     self = makeObject("function", *bytecode);
+
+    // filepath
+    self = addObjectValue(self, "filepath", filepath);
 
     // __call__
     self = addObjectValue(self, "__call__", &__call___function);

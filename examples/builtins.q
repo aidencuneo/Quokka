@@ -32,6 +32,7 @@ fun max 1
 end
 
 
+// Left Pad (Align list items to left)
 fun lpad 1 2
     if argc == 1
         pad = ' '
@@ -49,6 +50,32 @@ fun lpad 1 2
     i = 0
     while i < lstlen
         new += [pad * (largest - len(lst[i])) + lst[i]]
+        i +
+    end
+
+    ret new
+end
+
+
+// Centre Pad (Align list items to centre)
+fun cpad 1 2
+    if argc == 1
+        pad = ' '
+        lst = argv[0]
+    else
+        pad = argv[0][0] // Limit pad to one char
+        lst = argv[1]
+    end
+
+    new = []
+
+    lstlen  = len(lst)
+    largest = max(map(len, lst))
+
+    i = 0
+    while i < lstlen
+        most = pad * ((largest - len(lst[i])) / 2) + lst[i]
+        new += [most + (pad * (largest - len(most)))]
         i +
     end
 
@@ -99,6 +126,38 @@ fun same 1
 end
 
 
+fun any 1
+    lst    = argv[0]
+    lstlen = len(lst)
+
+    i = 0
+    while i < lstlen
+        if lst[i]
+            ret true
+        end
+        i +
+    end
+
+    ret false
+end
+
+
+fun all 1
+    lst    = argv[0]
+    lstlen = len(lst)
+
+    i = 0
+    while i < lstlen
+        if not lst[i]
+            ret false
+        end
+        i +
+    end
+
+    ret true
+end
+
+
 fun split 1 2
     if argc == 1
         at  = ' '
@@ -124,4 +183,27 @@ fun split 1 2
     end
 
     ret lst + [current]
+end
+
+
+fun strcat *
+    str = ''
+
+    if type(argv[0]) == 'list'
+        a = 0
+        l = argv[0]
+        length = len(l)
+        while a < length
+            str += l[a]
+            a += 1
+        end
+    else
+        a = 0
+        while a < argc
+            str += argv[a]
+            a += 1
+        end
+    end
+
+    ret str
 end

@@ -23,6 +23,10 @@ int line_num;
 
 int main(int argc, char ** argv)
 {
+    // NOTES
+    // continue keyword will be rep
+    // break keyword will be cut
+
     // Assign signal handlers
     signal(1, sighupHandler);
     signal(2, sigintHandler);

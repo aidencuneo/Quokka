@@ -723,7 +723,10 @@ void quokka_interpret_line_tokens(char ** line)
         // bytecode, so f_code must be freed when the program exits.
         pushTrash(f_code);
 
-        addGVar(line[1], makeFunction(&f_code, argmin, argmax));
+        char * filepath_dupe = strndup(current_file, strlen(current_file));
+        pushTrash(filepath_dupe);
+
+        addGVar(line[1], makeFunction(filepath_dupe, &f_code, argmin, argmax));
     }
     else if (!strcmp(line[0], "DEL_VAR"))
     {
@@ -772,15 +775,13 @@ void quokka_interpret_line_tokens(char ** line)
             error(err, line_num);
         }
 
-        // Set up the environment for the compile call
+        // Set up the environment for the calls
         char * old_file = current_file;
         current_file = import_path;
 
         // Compile imported file
         compile_init();
         char * imported_bytecode = quokka_compile_fname(import_path);
-
-        current_file = old_file;
 
         // Set up the environment for the interpret call
         Object * old_stack = malloc(stack_size * sizeof(Object));
@@ -791,17 +792,17 @@ void quokka_interpret_line_tokens(char ** line)
         stack = realloc(stack, sizeof(Object));
         stack_size = 0;
 
-        char ** old_locals_names = malloc(locals.count * sizeof(char *));
-        Object * old_locals_values = malloc(locals.count * sizeof(Object));
-        for (int i = 0; i < locals.count; i++)
-        {
-            old_locals_names[i] = locals.names[i];
-            old_locals_values[i] = locals.values[i];
-        }
-        int old_locals_count = locals.count;
+        // char ** old_locals_names = malloc(locals.count * sizeof(char *));
+        // Object * old_locals_values = malloc(locals.count * sizeof(Object));
+        // for (int i = 0; i < locals.count; i++)
+        // {
+        //     old_locals_names[i] = locals.names[i];
+        //     old_locals_values[i] = locals.values[i];
+        // }
+        // int old_locals_count = locals.count;
 
         // Function call will not affect currently defined locals
-        locals.count = 0;
+        // locals.count = 0;
 
         int old_bc_line = bc_line;
         int old_bc_line_count = bc_line_count;
@@ -812,6 +813,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Interpret the imported file
         quokka_interpret(imported_bytecode);
+
+        current_file = old_file;
 
         bc_line = old_bc_line;
         bc_line_count = old_bc_line_count;
@@ -828,21 +831,21 @@ void quokka_interpret_line_tokens(char ** line)
         free(old_stack);
 
         // Recreate and realign variable lists (only locals for now)
-        free(locals.names);
-        free(locals.values);
+        // free(locals.names);
+        // free(locals.values);
 
-        locals.count = old_locals_count;
-        locals.names = malloc((locals.count + 1) * sizeof(char *));
-        locals.values = malloc((locals.count + 1) * sizeof(Object));
+        // locals.count = old_locals_count;
+        // locals.names = malloc((locals.count + 1) * sizeof(char *));
+        // locals.values = malloc((locals.count + 1) * sizeof(Object));
 
-        for (int i = 0; i < locals.count; i++)
-        {
-            locals.names[i] = old_locals_names[i];
-            locals.values[i] = old_locals_values[i];
-        }
+        // for (int i = 0; i < locals.count; i++)
+        // {
+        //     locals.names[i] = old_locals_names[i];
+        //     locals.values[i] = old_locals_values[i];
+        // }
 
-        free(old_locals_names);
-        free(old_locals_values);
+        // free(old_locals_names);
+        // free(old_locals_values);
 
         freeObject(pathstrobj);
 
@@ -943,8 +946,8 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "BINARY_ADD"))
     {
-        Object secnd = popTop();
         Object first = popTop();
+        Object secnd = popTop();
 
         if (!objectHasAttr(first, "__add__"))
         {
@@ -981,8 +984,8 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "BINARY_SUB"))
     {
-        Object secnd = popTop();
         Object first = popTop();
+        Object secnd = popTop();
 
         if (!objectHasAttr(first, "__sub__"))
         {
@@ -1019,8 +1022,8 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "BINARY_MUL"))
     {
-        Object secnd = popTop();
         Object first = popTop();
+        Object secnd = popTop();
 
         if (!objectHasAttr(first, "__mul__"))
         {
@@ -1057,8 +1060,8 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "BINARY_DIV"))
     {
-        Object secnd = popTop();
         Object first = popTop();
+        Object secnd = popTop();
 
         if (!objectHasAttr(first, "__div__"))
         {
@@ -1095,8 +1098,8 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "BINARY_POW"))
     {
-        Object secnd = popTop();
         Object first = popTop();
+        Object secnd = popTop();
 
         if (!objectHasAttr(first, "__pow__"))
         {
@@ -1133,8 +1136,8 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "CMP_EQ"))
     {
-        Object secnd = popTop();
         Object first = popTop();
+        Object secnd = popTop();
 
         if (!objectHasAttr(first, "__eq__"))
         {
@@ -1171,8 +1174,8 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "CMP_NEQ"))
     {
-        Object secnd = popTop();
         Object first = popTop();
+        Object secnd = popTop();
 
         if (!objectHasAttr(first, "__eq__"))
         {
@@ -1226,8 +1229,8 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "CMP_LT"))
     {
-        Object secnd = popTop();
         Object first = popTop();
+        Object secnd = popTop();
 
         if (!objectHasAttr(first, "__lt__"))
         {
@@ -1264,8 +1267,8 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "CMP_GT"))
     {
-        Object secnd = popTop();
         Object first = popTop();
+        Object secnd = popTop();
 
         if (!objectHasAttr(first, "__gt__"))
         {
@@ -1302,8 +1305,8 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "CMP_LE"))
     {
-        Object secnd = popTop();
         Object first = popTop();
+        Object secnd = popTop();
 
         if (!objectHasAttr(first, "__le__"))
         {
@@ -1340,8 +1343,8 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "CMP_GE"))
     {
-        Object secnd = popTop();
         Object first = popTop();
+        Object secnd = popTop();
 
         if (!objectHasAttr(first, "__ge__"))
         {
@@ -1375,6 +1378,141 @@ void quokka_interpret_line_tokens(char ** line)
         freeObject(secnd);
 
         free(arglist);
+    }
+    else if (!strcmp(line[0], "BOOLEAN_NOT"))
+    {
+        Object first = popTop();
+
+        int firstbool;
+
+        // Convert first to bool
+        if (objectHasAttr(first, "__bool__"))
+        {
+            Object * arglist = makeArglist(first);
+            firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
+            free(arglist);
+        }
+        else
+            firstbool = 0;
+
+        // Perform Boolean NOT
+        if (!firstbool)
+            pushTop(makeInt(&truePtr));
+        else
+            pushTop(makeInt(&falsePtr));
+
+        freeObject(first);
+    }
+    else if (!strcmp(line[0], "BOOLEAN_OR"))
+    {
+        Object first = popTop();
+        Object secnd = popTop();
+
+        int firstbool;
+        int secndbool;
+
+        // Convert first to bool
+        if (objectHasAttr(first, "__bool__"))
+        {
+            Object * arglist = makeArglist(first);
+            firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
+            free(arglist);
+        }
+        else
+            firstbool = 0;
+
+        // Convert secnd to bool
+        if (objectHasAttr(secnd, "__bool__"))
+        {
+            Object * arglist = makeArglist(secnd);
+            secndbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
+            free(arglist);
+        }
+        else
+            secndbool = 0;
+
+        // Perform Inclusive OR
+        if (firstbool || secndbool)
+            pushTop(makeInt(&truePtr));
+        else
+            pushTop(makeInt(&falsePtr));
+
+        freeObject(first);
+        freeObject(secnd);
+    }
+    else if (!strcmp(line[0], "BOOLEAN_XOR"))
+    {
+        Object first = popTop();
+        Object secnd = popTop();
+
+        int firstbool;
+        int secndbool;
+
+        // Convert first to bool
+        if (objectHasAttr(first, "__bool__"))
+        {
+            Object * arglist = makeArglist(first);
+            firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
+            free(arglist);
+        }
+        else
+            firstbool = 0;
+
+        // Convert secnd to bool
+        if (objectHasAttr(secnd, "__bool__"))
+        {
+            Object * arglist = makeArglist(secnd);
+            secndbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
+            free(arglist);
+        }
+        else
+            secndbool = 0;
+
+        // Perform Exclusive OR
+        if (!!firstbool != !!secndbool)
+            pushTop(makeInt(&truePtr));
+        else
+            pushTop(makeInt(&falsePtr));
+
+        freeObject(first);
+        freeObject(secnd);
+    }
+    else if (!strcmp(line[0], "BOOLEAN_AND"))
+    {
+        Object first = popTop();
+        Object secnd = popTop();
+
+        int firstbool;
+        int secndbool;
+
+        // Convert first to bool
+        if (objectHasAttr(first, "__bool__"))
+        {
+            Object * arglist = makeArglist(first);
+            firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
+            free(arglist);
+        }
+        else
+            firstbool = 0;
+
+        // Convert secnd to bool
+        if (objectHasAttr(secnd, "__bool__"))
+        {
+            Object * arglist = makeArglist(secnd);
+            secndbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
+            free(arglist);
+        }
+        else
+            secndbool = 0;
+
+        // Perform Boolean AND
+        if (firstbool && secndbool)
+            pushTop(makeInt(&truePtr));
+        else
+            pushTop(makeInt(&falsePtr));
+
+        freeObject(first);
+        freeObject(secnd);
     }
     else if (!strcmp(line[0], "JUMP_TO"))
     {

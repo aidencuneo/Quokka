@@ -263,7 +263,7 @@ int findNextIfChain(char * kwtype, int cur_line, int cur_tok_index, int scp)
     {
         char ** templine = quokka_tok(file_tokens[i]);
 
-        if (file_tokens[i][0] == '\n')
+        if (file_tokens[i][0] == '\n' || !file_tokens[i][0])
             real_line++;
 
         if (templine[0] == NULL)
@@ -348,7 +348,7 @@ int findNextEnd(char * kwtype, int cur_line, int cur_tok_index, int scp)
     {
         char ** templine = quokka_tok(file_tokens[i]);
 
-        if (file_tokens[i][0] == '\n')
+        if (file_tokens[i][0] == '\n' || !file_tokens[i][0])
             real_line++;
 
         if (templine[0] == NULL)
@@ -897,7 +897,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
-        int next = findNextEnd("fun", num, file_token_index, scope);
+        int next = findNextEnd("fun", num, file_token_index, scope) - 1;
         if (next < 0)
             error("function definition missing 'end' keyword", num - 1);
 
@@ -938,7 +938,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         {
             char * t = file_tokens[file_token_index];
 
-            if (t[0] == '\n')
+            if (t[0] == '\n' || !t[0])
                 current_line++;
 
             char * comp_bc = quokka_compile_line(t, current_line, -1, 0);
@@ -955,7 +955,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 current_line--;
         }
 
-        current_line = next + 1;
+        current_line++;
         num = current_line;
 
         if (argmin < 0 && argmin != -1)
@@ -1102,12 +1102,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         free(latestvalue);
     }
-    else if (stringInList(line, "<") ||
-             stringInList(line, ">") ||
-             stringInList(line, "<=") ||
-             stringInList(line, ">=") ||
-             stringInList(line, "==") ||
-             stringInList(line, "!="))
+    else if (stringInList(line, "or") ||
+             stringInList(line, "xor") ||
+             stringInList(line, "nor") ||
+             stringInList(line, "and"))
     {
         // Set new line
         if (!isInline)
@@ -1126,141 +1124,56 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         for (int i = 0; i < len; i++)
         {
-            if (!strcmp(line[i], "<"))
+            if (!strcmp(line[i], "or"))
             {
                 char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, temp);
+                strInsertStart(&valuelist, temp);
                 free(temp);
 
                 if (lastwasop)
-                    error("invalid syntax at '<'", num - 1);
+                    error("invalid syntax at 'or'", num - 1);
 
-                operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
-
-                char * tmp = strdup(operslist);
-
-                memset(operslist, 0, strlen(operslist));
-                strcpy(operslist, "CMP_LT");
-                strcat(operslist, INSTRUCTION_END);
-                strcat(operslist, tmp);
-
-                free(tmp);
+                mstrcattrip(&operslist, "BOOLEAN_OR", INSTRUCTION_END);
 
                 lastwasop = 1;
             }
-            else if (!strcmp(line[i], ">"))
+            else if (!strcmp(line[i], "xor"))
             {
                 char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, temp);
+                strInsertStart(&valuelist, temp);
                 free(temp);
 
                 if (lastwasop)
-                    error("invalid syntax at '>'", num - 1);
+                    error("invalid syntax at 'xor'", num - 1);
 
-                operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
-
-                char * tmp = strdup(operslist);
-
-                memset(operslist, 0, strlen(operslist));
-                strcpy(operslist, "CMP_GT");
-                strcat(operslist, INSTRUCTION_END);
-                strcat(operslist, tmp);
-
-                free(tmp);
+                mstrcattrip(&operslist, "BOOLEAN_XOR", INSTRUCTION_END);
 
                 lastwasop = 1;
             }
-            else if (!strcmp(line[i], "<="))
+            else if (!strcmp(line[i], "nor"))
             {
                 char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, temp);
+                strInsertStart(&valuelist, temp);
                 free(temp);
 
                 if (lastwasop)
-                    error("invalid syntax at '<='", num - 1);
+                    error("invalid syntax at 'nor'", num - 1);
 
-                operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
-
-                char * tmp = strdup(operslist);
-
-                memset(operslist, 0, strlen(operslist));
-                strcpy(operslist, "CMP_LE");
-                strcat(operslist, INSTRUCTION_END);
-                strcat(operslist, tmp);
-
-                free(tmp);
+                mstrcattrip(&operslist, "BOOLEAN_OR", INSTRUCTION_END);
+                mstrcattrip(&operslist, "BOOLEAN_NOT", INSTRUCTION_END);
 
                 lastwasop = 1;
             }
-            else if (!strcmp(line[i], ">="))
+            else if (!strcmp(line[i], "and"))
             {
                 char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, temp);
+                strInsertStart(&valuelist, temp);
                 free(temp);
 
                 if (lastwasop)
-                    error("invalid syntax at '>='", num - 1);
+                    error("invalid syntax at 'and'", num - 1);
 
-                operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
-
-                char * tmp = strdup(operslist);
-
-                memset(operslist, 0, strlen(operslist));
-                strcpy(operslist, "CMP_GE");
-                strcat(operslist, INSTRUCTION_END);
-                strcat(operslist, tmp);
-
-                free(tmp);
-
-                lastwasop = 1;
-            }
-            else if (!strcmp(line[i], "=="))
-            {
-                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, temp);
-                free(temp);
-
-                if (lastwasop)
-                    error("invalid syntax at '=='", num - 1);
-
-                operslist = realloc(operslist, strlen(operslist) + 6 + strlen(INSTRUCTION_END) + 1);
-
-                char * tmp = strdup(operslist);
-
-                memset(operslist, 0, strlen(operslist));
-                strcpy(operslist, "CMP_EQ");
-                strcat(operslist, INSTRUCTION_END);
-                strcat(operslist, tmp);
-
-                free(tmp);
-
-                lastwasop = 1;
-            }
-            else if (!strcmp(line[i], "!="))
-            {
-                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, temp);
-                free(temp);
-
-                if (lastwasop)
-                    error("invalid syntax at '!='", num - 1);
-
-                operslist = realloc(operslist, strlen(operslist) + 7 + strlen(INSTRUCTION_END) + 1);
-
-                char * tmp = strdup(operslist);
-
-                memset(operslist, 0, strlen(operslist));
-                strcpy(operslist, "CMP_NEQ");
-                strcat(operslist, INSTRUCTION_END);
-                strcat(operslist, tmp);
-
-                free(tmp);
+                mstrcattrip(&operslist, "BOOLEAN_AND", INSTRUCTION_END);
 
                 lastwasop = 1;
             }
@@ -1285,9 +1198,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         }
 
         char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-        valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-        strcat(valuelist, temp);
+        strInsertStart(&valuelist, temp);
         free(temp);
+
         free(latestvalue);
 
         mstrcat(&bytecode, valuelist);
@@ -1295,6 +1208,182 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         free(valuelist);
         free(operslist);
+    }
+    else if (stringInList(line, "<") ||
+             stringInList(line, ">") ||
+             stringInList(line, "<=") ||
+             stringInList(line, ">=") ||
+             stringInList(line, "==") ||
+             stringInList(line, "is") ||
+             stringInList(line, "!="))
+    {
+        // Set new line
+        if (!isInline)
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        char * operslist = malloc(1);
+        strcpy(operslist, "");
+
+        char * valuelist = malloc(1);
+        strcpy(valuelist, "");
+
+        char * latestvalue = malloc(1);
+        strcpy(latestvalue, "");
+
+        int lastwasop = 1;
+
+        for (int i = 0; i < len; i++)
+        {
+            if (!strcmp(line[i], "<"))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                strInsertStart(&valuelist, temp);
+                free(temp);
+
+                if (lastwasop)
+                    error("invalid syntax at '<'", num - 1);
+
+                mstrcattrip(&operslist, "CMP_LT", INSTRUCTION_END);
+
+                lastwasop = 1;
+            }
+            else if (!strcmp(line[i], ">"))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                strInsertStart(&valuelist, temp);
+                free(temp);
+
+                if (lastwasop)
+                    error("invalid syntax at '>'", num - 1);
+
+                mstrcattrip(&operslist, "CMP_GT", INSTRUCTION_END);
+
+                lastwasop = 1;
+            }
+            else if (!strcmp(line[i], "<="))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                strInsertStart(&valuelist, temp);
+                free(temp);
+
+                if (lastwasop)
+                    error("invalid syntax at '<='", num - 1);
+
+                mstrcattrip(&operslist, "CMP_LE", INSTRUCTION_END);
+
+                lastwasop = 1;
+            }
+            else if (!strcmp(line[i], ">="))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                strInsertStart(&valuelist, temp);
+                free(temp);
+
+                if (lastwasop)
+                    error("invalid syntax at '>='", num - 1);
+
+                mstrcattrip(&operslist, "CMP_GE", INSTRUCTION_END);
+
+                lastwasop = 1;
+            }
+            else if (!strcmp(line[i], "=="))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                strInsertStart(&valuelist, temp);
+                free(temp);
+
+                if (lastwasop)
+                    error("invalid syntax at '=='", num - 1);
+
+                mstrcattrip(&operslist, "CMP_EQ", INSTRUCTION_END);
+
+                lastwasop = 1;
+            }
+            else if (!strcmp(line[i], "is"))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                strInsertStart(&valuelist, temp);
+                free(temp);
+
+                if (lastwasop)
+                    error("invalid syntax at 'is'", num - 1);
+
+                mstrcattrip(&operslist, "CMP_EQ", INSTRUCTION_END);
+
+                lastwasop = 1;
+            }
+            else if (!strcmp(line[i], "!="))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                strInsertStart(&valuelist, temp);
+                free(temp);
+
+                if (lastwasop)
+                    error("invalid syntax at '!='", num - 1);
+
+                mstrcattrip(&operslist, "CMP_NEQ", INSTRUCTION_END);
+
+                lastwasop = 1;
+            }
+            else
+            {
+                if (lastwasop)
+                {
+                    memset(latestvalue, 0, strlen(latestvalue) + 1);
+                    latestvalue = realloc(latestvalue, strlen(line[i]) + 1 + 1);
+                    strcpy(latestvalue, line[i]);
+                    strcat(latestvalue, " ");
+                }
+                else
+                {
+                    latestvalue = realloc(latestvalue, strlen(latestvalue) + strlen(line[i]) + 1 + 1);
+                    strcat(latestvalue, line[i]);
+                    strcat(latestvalue, " ");
+                }
+
+                lastwasop = 0;
+            }
+        }
+
+        char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+        strInsertStart(&valuelist, temp);
+        free(temp);
+
+        free(latestvalue);
+
+        mstrcat(&bytecode, valuelist);
+        mstrcat(&bytecode, operslist);
+
+        free(valuelist);
+        free(operslist);
+    }
+    else if (!strcmp(line[0], "not"))
+    {
+        // Set new line
+        if (!isInline)
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        // If `not`, then act as `0` or `false`
+        if (len <= 1)
+        {
+            mstrcattrip(&bytecode, "LOAD_INT", SEPARATOR);
+            mstrcattrip(&bytecode, "0", INSTRUCTION_END);
+        }
+        // if `not value`, then perform boolean NOT on `value`
+        else
+        {
+            arrlstrip(line);
+            len--;
+
+            char * temp = quokka_compile_line_tokens(line, num, len, 1);
+
+            mstrcat(&bytecode, temp);
+
+            free(temp);
+
+            // Perform boolean NOT
+            mstrcattrip(&bytecode, "BOOLEAN_NOT", INSTRUCTION_END);
+        }
     }
     else if (isidentifier(line[0]) && !strcmp(line[1], "+") && len == 2)
     {
@@ -1305,16 +1394,16 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (!isInline)
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
-        // Load var
-        mstrcat(&bytecode, "LOAD_NAME");
-        mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, line[0]);
-        mstrcat(&bytecode, INSTRUCTION_END);
-
         // Load 1
         mstrcat(&bytecode, "LOAD_INT");
         mstrcat(&bytecode, SEPARATOR);
         mstrcat(&bytecode, "1");
+        mstrcat(&bytecode, INSTRUCTION_END);
+
+        // Load var
+        mstrcat(&bytecode, "LOAD_NAME");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, line[0]);
         mstrcat(&bytecode, INSTRUCTION_END);
 
         // Add them
@@ -1334,19 +1423,19 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
-        // Load var
-        mstrcat(&bytecode, "LOAD_NAME");
-        mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, line[0]);
-        mstrcat(&bytecode, INSTRUCTION_END);
-
         // Load 1
         mstrcat(&bytecode, "LOAD_INT");
         mstrcat(&bytecode, SEPARATOR);
         mstrcat(&bytecode, "1");
         mstrcat(&bytecode, INSTRUCTION_END);
 
-        // Add them
+        // Load var
+        mstrcat(&bytecode, "LOAD_NAME");
+        mstrcat(&bytecode, SEPARATOR);
+        mstrcat(&bytecode, line[0]);
+        mstrcat(&bytecode, INSTRUCTION_END);
+
+        // Subtract them
         mstrcattrip(&bytecode, "BINARY_SUB", INSTRUCTION_END);
 
         // Store result
@@ -1355,7 +1444,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcat(&bytecode, line[0]);
         mstrcat(&bytecode, INSTRUCTION_END);
     }
-    else if (stringInList(line, "+") || stringInList(line, "-"))
+    else if (stringInList(line, "+") ||
+             stringInList(line, "-") ||
+             stringInList(line, "*") ||
+             stringInList(line, "/") ||
+             stringInList(line, "**"))
     {
         // Set new line
         if (!isInline)
@@ -1423,24 +1516,14 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 else
                 {
                     char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-                    valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                    strcat(valuelist, temp);
+                    strInsertStart(&valuelist, temp);
                     free(temp);
 
                     latestvalue = realloc(latestvalue, 1);
                     memset(latestvalue, 0, 1);
                     strcpy(latestvalue, "");
 
-                    operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
-
-                    char * tmp = strdup(operslist);
-
-                    memset(operslist, 0, strlen(operslist));
-                    strcpy(operslist, "BINARY_ADD");
-                    strcat(operslist, INSTRUCTION_END);
-                    strcat(operslist, tmp);
-
-                    free(tmp);
+                    mstrcattrip(&operslist, "BINARY_ADD", INSTRUCTION_END);
 
                     lastwasop = 1;
                     lastwasunary = 0;
@@ -1493,119 +1576,79 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 else
                 {
                     char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-                    valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                    strcat(valuelist, temp);
+                    strInsertStart(&valuelist, temp);
                     free(temp);
 
                     latestvalue = realloc(latestvalue, 1);
                     memset(latestvalue, 0, 1);
                     strcpy(latestvalue, "");
 
-                    operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
-
-                    char * tmp = strdup(operslist);
-
-                    memset(operslist, 0, strlen(operslist));
-                    strcpy(operslist, "BINARY_SUB");
-                    strcat(operslist, INSTRUCTION_END);
-                    strcat(operslist, tmp);
-
-                    free(tmp);
+                    mstrcattrip(&operslist, "BINARY_SUB", INSTRUCTION_END);
 
                     lastwasop = 1;
                     lastwasunary = 0;
                 }
             }
-            // else if (!strcmp(line[i], "*"))
-            // {
-            //     char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-            //     valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-            //     strcat(valuelist, temp);
-            //     free(temp);
+            else if (!strcmp(line[i], "*"))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                strInsertStart(&valuelist, temp);
+                free(temp);
 
-            //     if (lastwasop)
-            //         error("'*' missing first argument", num - 1);
+                if (lastwasop)
+                    error("'*' missing first argument", num - 1);
 
-            //     if (i + 1 >= len)
-            //         error("'*' missing second argument", num - 1);
+                if (i + 1 >= len)
+                    error("'*' missing second argument", num - 1);
 
-            //     latestvalue = realloc(latestvalue, 1);
-            //     memset(latestvalue, 0, 1);
+                latestvalue = realloc(latestvalue, 1);
+                memset(latestvalue, 0, 1);
 
-            //     operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
+                mstrcattrip(&operslist, "BINARY_MUL", INSTRUCTION_END);
 
-            //     char * tmp = strdup(operslist);
+                lastwasop = 1;
+                lastwasunary = 0;
+            }
+            else if (!strcmp(line[i], "/"))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                strInsertStart(&valuelist, temp);
+                free(temp);
 
-            //     memset(operslist, 0, strlen(operslist));
-            //     strcpy(operslist, "BINARY_MUL");
-            //     strcat(operslist, INSTRUCTION_END);
-            //     strcat(operslist, tmp);
+                if (lastwasop)
+                    error("'/' missing first argument", num - 1);
 
-            //     free(tmp);
+                if (i + 1 >= len)
+                    error("'/' missing second argument", num - 1);
 
-            //     lastwasop = 1;
-            //     lastwasunary = 0;
-            // }
-            // else if (!strcmp(line[i], "/"))
-            // {
-            //     char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-            //     valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-            //     strcat(valuelist, temp);
-            //     free(temp);
+                latestvalue = realloc(latestvalue, 1);
+                memset(latestvalue, 0, 1);
 
-            //     if (lastwasop)
-            //         error("'/' missing first argument", num - 1);
+                mstrcattrip(&operslist, "BINARY_DIV", INSTRUCTION_END);
 
-            //     if (i + 1 >= len)
-            //         error("'/' missing second argument", num - 1);
+                lastwasop = 1;
+                lastwasunary = 0;
+            }
+            else if (!strcmp(line[i], "**"))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                strInsertStart(&valuelist, temp);
+                free(temp);
 
-            //     latestvalue = realloc(latestvalue, 1);
-            //     memset(latestvalue, 0, 1);
+                if (lastwasop)
+                    error("'**' missing first argument", num - 1);
 
-            //     operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
+                if (i + 1 >= len)
+                    error("'**' missing second argument", num - 1);
 
-            //     char * tmp = strdup(operslist);
+                latestvalue = realloc(latestvalue, 1);
+                memset(latestvalue, 0, 1);
 
-            //     memset(operslist, 0, strlen(operslist));
-            //     strcpy(operslist, "BINARY_DIV");
-            //     strcat(operslist, INSTRUCTION_END);
-            //     strcat(operslist, tmp);
+                mstrcattrip(&operslist, "BINARY_POW", INSTRUCTION_END);
 
-            //     free(tmp);
-
-            //     lastwasop = 1;
-            //     lastwasunary = 0;
-            // }
-            // else if (!strcmp(line[i], "**"))
-            // {
-            //     char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-            //     valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-            //     strcat(valuelist, temp);
-            //     free(temp);
-
-            //     if (lastwasop)
-            //         error("'**' missing first argument", num - 1);
-
-            //     if (i + 1 >= len)
-            //         error("'**' missing second argument", num - 1);
-
-            //     latestvalue = realloc(latestvalue, 1);
-            //     memset(latestvalue, 0, 1);
-
-            //     operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
-
-            //     char * tmp = strdup(operslist);
-
-            //     memset(operslist, 0, strlen(operslist));
-            //     strcpy(operslist, "BINARY_POW");
-            //     strcat(operslist, INSTRUCTION_END);
-            //     strcat(operslist, tmp);
-
-            //     free(tmp);
-
-            //     lastwasop = 1;
-            //     lastwasunary = 0;
-            // }
+                lastwasop = 1;
+                lastwasunary = 0;
+            }
             else
             {
                 if (lastwasop)
@@ -1630,200 +1673,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             error("invalid syntax", num - 1);
 
         char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-        valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-        strcat(valuelist, temp);
+        strInsertStart(&valuelist, temp);
         free(temp);
-        free(latestvalue);
 
-        mstrcat(&bytecode, valuelist);
-        mstrcat(&bytecode, operslist);
-
-        free(valuelist);
-        free(operslist);
-    }
-    else if (stringInList(line, "*") || stringInList(line, "/"))
-    {
-        // Set new line
-        if (!isInline)
-            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
-
-        char * operslist = malloc(1);
-        strcpy(operslist, "");
-
-        char * valuelist = malloc(1);
-        strcpy(valuelist, "");
-
-        char * latestvalue = malloc(1);
-        strcpy(latestvalue, "");
-
-        int lastwasop = 1;
-
-        int i;
-        for (i = 0; i < len; i++)
-        {
-            if (!strcmp(line[i], "*"))
-            {
-                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, temp);
-                free(temp);
-
-                if (lastwasop)
-                    error("'*' missing first argument", num - 1);
-
-                if (i + 1 >= len)
-                    error("'*' missing second argument", num - 1);
-
-                latestvalue = realloc(latestvalue, 1);
-                memset(latestvalue, 0, 1);
-
-                operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
-
-                char * tmp = strdup(operslist);
-
-                memset(operslist, 0, strlen(operslist));
-                strcpy(operslist, "BINARY_MUL");
-                strcat(operslist, INSTRUCTION_END);
-                strcat(operslist, tmp);
-
-                free(tmp);
-
-                lastwasop = 1;
-            }
-            else if (!strcmp(line[i], "/"))
-            {
-                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, temp);
-                free(temp);
-
-                if (lastwasop)
-                    error("'/' missing first argument", num - 1);
-
-                if (i + 1 >= len)
-                    error("'/' missing second argument", num - 1);
-
-                latestvalue = realloc(latestvalue, 1);
-                memset(latestvalue, 0, 1);
-
-                operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
-
-                char * tmp = strdup(operslist);
-
-                memset(operslist, 0, strlen(operslist));
-                strcpy(operslist, "BINARY_DIV");
-                strcat(operslist, INSTRUCTION_END);
-                strcat(operslist, tmp);
-
-                free(tmp);
-
-                lastwasop = 1;
-            }
-            else
-            {
-                if (lastwasop)
-                {
-                    latestvalue = realloc(latestvalue, strlen(line[i]) + 1 + 1);
-                    memset(latestvalue, 0, strlen(latestvalue) + 1);
-                    strcpy(latestvalue, line[i]);
-                    strcat(latestvalue, " ");
-                }
-                else
-                {
-                    latestvalue = realloc(latestvalue, strlen(latestvalue) + strlen(line[i]) + 1 + 1);
-                    strcat(latestvalue, line[i]);
-                    strcat(latestvalue, " ");
-                }
-
-                lastwasop = 0;
-            }
-        }
-
-        char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-        valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-        strcat(valuelist, temp);
-        free(temp);
-        free(latestvalue);
-
-        mstrcat(&bytecode, valuelist);
-        mstrcat(&bytecode, operslist);
-
-        free(valuelist);
-        free(operslist);
-    }
-    else if (stringInList(line, "**"))
-    {
-        // Set new line
-        if (!isInline)
-            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
-
-        char * operslist = malloc(1);
-        strcpy(operslist, "");
-
-        char * valuelist = malloc(1);
-        strcpy(valuelist, "");
-
-        char * latestvalue = malloc(1);
-        strcpy(latestvalue, "");
-
-        int lastwasop = 1;
-
-        int i;
-        for (i = 0; i < len; i++)
-        {
-            if (!strcmp(line[i], "**"))
-            {
-                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-                valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-                strcat(valuelist, temp);
-                free(temp);
-
-                if (lastwasop)
-                    error("'**' missing first argument", num - 1);
-
-                if (i + 1 >= len)
-                    error("'**' missing second argument", num - 1);
-
-                latestvalue = realloc(latestvalue, 1);
-                memset(latestvalue, 0, 1);
-
-                operslist = realloc(operslist, strlen(operslist) + 10 + strlen(INSTRUCTION_END) + 1);
-
-                char * tmp = strdup(operslist);
-
-                memset(operslist, 0, strlen(operslist));
-                strcpy(operslist, "BINARY_POW");
-                strcat(operslist, INSTRUCTION_END);
-                strcat(operslist, tmp);
-
-                free(tmp);
-
-                lastwasop = 1;
-            }
-            else
-            {
-                if (lastwasop)
-                {
-                    latestvalue = realloc(latestvalue, strlen(line[i]) + 1 + 1);
-                    memset(latestvalue, 0, strlen(latestvalue) + 1);
-                    strcpy(latestvalue, line[i]);
-                    strcat(latestvalue, " ");
-                }
-                else
-                {
-                    latestvalue = realloc(latestvalue, strlen(latestvalue) + strlen(line[i]) + 1 + 1);
-                    strcat(latestvalue, line[i]);
-                    strcat(latestvalue, " ");
-                }
-
-                lastwasop = 0;
-            }
-        }
-
-        char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-        valuelist = realloc(valuelist, strlen(valuelist) + strlen(temp) + 1);
-        strcat(valuelist, temp);
-        free(temp);
         free(latestvalue);
 
         mstrcat(&bytecode, valuelist);

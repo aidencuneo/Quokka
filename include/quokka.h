@@ -1,5 +1,5 @@
 // VERSION STUFF
-#define VERSION "0.2.6"
+#define VERSION "0.2.7"
 
 // Defines
 #define LN10 2.3025850929940456840179914546844
@@ -15,6 +15,7 @@ int in_cli_mode = 0;
 
 #ifdef _WIN32
     #include <direct.h>
+    // #include <conio.h>
     #define chdir(value) _chdir(value)
     #define realpath(first, second) _fullpath(NULL, first, _MAX_PATH)
 
@@ -27,6 +28,7 @@ int in_cli_mode = 0;
     }
 #else
     #include <unistd.h>
+    // #include "conio.h"
 #endif
 
 //
@@ -48,6 +50,7 @@ int memsize;
 
 char * strSlice(char * st, int start, int stop);
 char * strReplace(char * orig, char * rep, char * with);
+void strInsertStart(char ** st, char * newstr);
 void mstrcat(char ** charptr, char * newstr);
 void mstrcattrip(char ** charptr, char * newstr, char * endstr);
 
@@ -517,6 +520,20 @@ char * strReplace(char * orig, char * rep, char * with)
     strcpy(tmp, orig);
 
     return result;
+}
+
+void strInsertStart(char ** st, char * newstr)
+{
+    size_t len = strlen(*st);
+    *st = realloc(*st, len + strlen(newstr) + 1);
+
+    char * temp = strdup(*st);
+
+    memset(*st, 0, len);
+    strcpy(*st, newstr);
+    strcat(*st, temp);
+
+    free(temp);
 }
 
 char * getinput()

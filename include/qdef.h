@@ -125,6 +125,6 @@ Object makeList(int length, Object * value, int flipped);
 Object makeNull();
 
 // function
-Object makeFunction(char ** bytecode, int argmin, int argmax);
+Object makeFunction(char * filepath, char ** bytecode, int argmin, int argmax);
 
 #endif
