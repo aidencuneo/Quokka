@@ -39,7 +39,7 @@ Object __call___function(int argc, Object * argv)
 
     // Vars
     int * intptr = makeIntPtr(argc);
-    pushTrash(intptr);
+    // pushTrash(intptr);
 
     addVar("argc", makeInt(intptr));
 
@@ -114,20 +114,26 @@ Object makeFunction(char * filepath, char ** bytecode, int argmin, int argmax)
 {
     int * argminptr = makeIntPtr(argmin);
     int * argmaxptr = makeIntPtr(argmax);
-    pushTrash(argminptr);
-    pushTrash(argmaxptr);
+    // pushTrash(argminptr);
+    // pushTrash(argmaxptr);
 
     Object self;
 
-    self = makeObject("function", *bytecode);
+    self.name = "function";
 
-    // filepath
-    self = addObjectValue(self, "filepath", filepath);
+    // 5 Attributes
+    self.names = malloc(5 * sizeof(char *));
+    self.values = malloc(5 * sizeof(void *));
+    self.value_count = 0;
+
+    // Values
+    self = objectAddAttr(self, "value", *bytecode);
+    self = objectAddAttr(self, "filepath", filepath);
 
     // __call__
-    self = addObjectValue(self, "__call__", &__call___function);
-    self = addObjectValue(self, "__call__argmin", argminptr);
-    self = addObjectValue(self, "__call__argmax", argmaxptr);
+    self = objectAddAttr(self, "__call__", &__call___function);
+    self = objectAddAttr(self, "__call__argmin", argminptr);
+    self = objectAddAttr(self, "__call__argmax", argmaxptr);
 
     return self;
 }

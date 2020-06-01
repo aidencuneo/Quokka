@@ -2136,7 +2136,7 @@ char * quokka_compile_fname(char * filename)
     if (!buffer)
         return 0;
 
-    pushTrash(buffer);
+    // pushTrash(buffer);
 
     return quokka_compile_raw(buffer, 0);
 }
@@ -2276,7 +2276,7 @@ char ** quokka_file_tok(char * text)
     output = realloc(output, (i + 2) * sizeof(char *));
     output[i + 1] = NULL;
 
-    pushTrash(tokenstr);
+    // pushTrash(tokenstr);
 
     return output;
 }
@@ -2434,7 +2434,7 @@ char ** quokka_tok(char * line)
     output = realloc(output, (i + 2) * sizeof(char *));
     output[i + 1] = NULL;
 
-    pushTrash(tokenstr);
+    // pushTrash(tokenstr);
 
     return output;
 }

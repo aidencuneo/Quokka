@@ -1,7 +1,7 @@
 Object __sizeof___null(int argc, Object * argv)
 {
     int * size = makeIntPtr(sizeof(0));
-    pushTrash(size);
+    // pushTrash(size);
 
     return makeInt(size);
 }
@@ -25,21 +25,28 @@ Object makeNullRaw()
 {
     Object self;
 
-    self = makeObject("null", &falsePtr);
+    self.name = "null";
+
+    // 7 Attributes
+    self.names = malloc(7 * sizeof(char *));
+    self.values = malloc(7 * sizeof(void *));
+    self.value_count = 0;
+
+    self = objectAddAttr(self, "value", &falsePtr);
 
     // One argument methods
 
     // __sizeof__
-    self = addObjectValue(self, "__sizeof__", &__sizeof___null);
-    self = addObjectValue(self, "__sizeof__argc", &oneArgc);
+    self = objectAddAttr(self, "__sizeof__", &__sizeof___null);
+    self = objectAddAttr(self, "__sizeof__argc", &oneArgc);
 
     // __disp__
-    self = addObjectValue(self, "__disp__", &__disp___null);
-    self = addObjectValue(self, "__disp__argc", &oneArgc);
+    self = objectAddAttr(self, "__disp__", &__disp___null);
+    self = objectAddAttr(self, "__disp__argc", &oneArgc);
 
     // __bool__
-    self = addObjectValue(self, "__bool__", &__bool___null);
-    self = addObjectValue(self, "__bool__argc", &oneArgc);
+    self = objectAddAttr(self, "__bool__", &__bool___null);
+    self = objectAddAttr(self, "__bool__argc", &oneArgc);
 
     return self;
 }

@@ -6,7 +6,7 @@ Object __add___long(int argc, Object * argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(first[0] + secnd[0]);
-        pushTrash(third);
+        // pushTrash(third);
 
         return makeLong(third);
     }
@@ -16,7 +16,7 @@ Object __add___long(int argc, Object * argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(first[0] + secnd[0]);
-        pushTrash(third);
+        // pushTrash(third);
 
         return makeLong(third);
     }
@@ -38,7 +38,7 @@ Object __sub___long(int argc, Object * argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(first[0] - secnd[0]);
-        pushTrash(third);
+        // pushTrash(third);
 
         return makeLong(third);
     }
@@ -48,7 +48,7 @@ Object __sub___long(int argc, Object * argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(first[0] - secnd[0]);
-        pushTrash(third);
+        // pushTrash(third);
 
         return makeLong(third);
     }
@@ -70,7 +70,7 @@ Object __mul___long(int argc, Object * argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(first[0] * secnd[0]);
-        pushTrash(third);
+        // pushTrash(third);
 
         return makeLong(third);
     }
@@ -80,7 +80,7 @@ Object __mul___long(int argc, Object * argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(first[0] * secnd[0]);
-        pushTrash(third);
+        // pushTrash(third);
 
         return makeLong(third);
     }
@@ -105,7 +105,7 @@ Object __div___long(int argc, Object * argv)
             return makeInt(&falsePtr);
 
         long long * third = makeLLPtr(first[0] / secnd[0]);
-        pushTrash(third);
+        // pushTrash(third);
 
         return makeLong(third);
     }
@@ -118,7 +118,7 @@ Object __div___long(int argc, Object * argv)
             return makeInt(&falsePtr);
 
         long long * third = makeLLPtr(first[0] / secnd[0]);
-        pushTrash(third);
+        // pushTrash(third);
 
         return makeLong(third);
     }
@@ -140,7 +140,7 @@ Object __pow___long(int argc, Object * argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(lpowMath(first[0], secnd[0]));
-        pushTrash(third);
+        // pushTrash(third);
 
         return makeLong(third);
     }
@@ -150,7 +150,7 @@ Object __pow___long(int argc, Object * argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(lpowMath(first[0], secnd[0]));
-        pushTrash(third);
+        // pushTrash(third);
 
         return makeLong(third);
     }
@@ -319,7 +319,7 @@ Object __sizeof___long(int argc, Object * argv)
     long long * thisvalue = objectGetAttr(argv[0], "value");
 
     int * size = makeIntPtr(sizeof(argv[0]) + sizeof(thisvalue[0]));
-    pushTrash(size);
+    // pushTrash(size);
 
     return makeInt(size);
 }
@@ -331,13 +331,13 @@ Object __pos___long(int argc, Object * argv)
     if (thisvalue[0] > INT_MAX)
     {
         int * intptr = makeIntPtr(INT_MAX);
-        pushTrash(intptr);
+        // pushTrash(intptr);
 
         return makeInt(intptr);
     }
 
     int * intptr = makeIntPtr(thisvalue[0]);
-    pushTrash(intptr);
+    // pushTrash(intptr);
 
     return makeInt(intptr);
 }
@@ -347,7 +347,7 @@ Object __neg___long(int argc, Object * argv)
     long long * thisvalue = objectGetAttr(argv[0], "value");
 
     long long * negptr = makeLLPtr(-thisvalue[0]);
-    pushTrash(negptr);
+    // pushTrash(negptr);
 
     return makeLong(negptr);
 }
@@ -358,7 +358,7 @@ Object __disp___long(int argc, Object * argv)
 
     char * tostr = LLToStr(thisvalue[0]);
     mstrcat(&tostr, "L");
-    pushTrash(tostr);
+    // pushTrash(tostr);
 
     return makeString(tostr);
 }
@@ -386,79 +386,86 @@ Object makeLong(long long * value)
 {
     Object self;
 
-    self = makeObject("long", value);
+    self.name = "long";
+
+    // 33 Attributes
+    self.names = malloc(33 * sizeof(char *));
+    self.values = malloc(33 * sizeof(void *));
+    self.value_count = 0;
+
+    self = objectAddAttr(self, "value", value);
 
     // Two argument methods
 
     // __add__
-    self = addObjectValue(self, "__add__", &__add___long);
-    self = addObjectValue(self, "__add__argc", &twoArgc);
+    self = objectAddAttr(self, "__add__", &__add___long);
+    self = objectAddAttr(self, "__add__argc", &twoArgc);
 
     // __sub__
-    self = addObjectValue(self, "__sub__", &__sub___long);
-    self = addObjectValue(self, "__sub__argc", &twoArgc);
+    self = objectAddAttr(self, "__sub__", &__sub___long);
+    self = objectAddAttr(self, "__sub__argc", &twoArgc);
 
     // __mul__
-    self = addObjectValue(self, "__mul__", &__mul___long);
-    self = addObjectValue(self, "__mul__argc", &twoArgc);
+    self = objectAddAttr(self, "__mul__", &__mul___long);
+    self = objectAddAttr(self, "__mul__argc", &twoArgc);
 
     // __div__
-    self = addObjectValue(self, "__div__", &__div___long);
-    self = addObjectValue(self, "__div__argc", &twoArgc);
+    self = objectAddAttr(self, "__div__", &__div___long);
+    self = objectAddAttr(self, "__div__argc", &twoArgc);
 
     // __pow__
-    self = addObjectValue(self, "__pow__", &__pow___long);
-    self = addObjectValue(self, "__pow__argc", &twoArgc);
+    self = objectAddAttr(self, "__pow__", &__pow___long);
+    self = objectAddAttr(self, "__pow__argc", &twoArgc);
 
     // __eq__
-    self = addObjectValue(self, "__eq__", &__eq___long);
-    self = addObjectValue(self, "__eq__argc", &twoArgc);
+    self = objectAddAttr(self, "__eq__", &__eq___long);
+    self = objectAddAttr(self, "__eq__argc", &twoArgc);
 
     // __lt__
-    self = addObjectValue(self, "__lt__", &__lt___long);
-    self = addObjectValue(self, "__lt__argc", &twoArgc);
+    self = objectAddAttr(self, "__lt__", &__lt___long);
+    self = objectAddAttr(self, "__lt__argc", &twoArgc);
 
     // __le__
-    self = addObjectValue(self, "__le__", &__le___long);
-    self = addObjectValue(self, "__le__argc", &twoArgc);
+    self = objectAddAttr(self, "__le__", &__le___long);
+    self = objectAddAttr(self, "__le__argc", &twoArgc);
 
     // __gt__
-    self = addObjectValue(self, "__gt__", &__gt___long);
-    self = addObjectValue(self, "__gt__argc", &twoArgc);
+    self = objectAddAttr(self, "__gt__", &__gt___long);
+    self = objectAddAttr(self, "__gt__argc", &twoArgc);
 
     // __ge__
-    self = addObjectValue(self, "__ge__", &__ge___long);
-    self = addObjectValue(self, "__ge__argc", &twoArgc);
+    self = objectAddAttr(self, "__ge__", &__ge___long);
+    self = objectAddAttr(self, "__ge__argc", &twoArgc);
 
     // One argument methods
 
     // __sizeof__
-    self = addObjectValue(self, "__sizeof__", &__sizeof___long);
-    self = addObjectValue(self, "__sizeof__argc", &oneArgc);
+    self = objectAddAttr(self, "__sizeof__", &__sizeof___long);
+    self = objectAddAttr(self, "__sizeof__argc", &oneArgc);
 
     // __pos__
-    self = addObjectValue(self, "__pos__", &__pos___long);
-    self = addObjectValue(self, "__pos__argc", &oneArgc);
+    self = objectAddAttr(self, "__pos__", &__pos___long);
+    self = objectAddAttr(self, "__pos__argc", &oneArgc);
 
     // __neg__
-    self = addObjectValue(self, "__neg__", &__neg___long);
-    self = addObjectValue(self, "__neg__argc", &oneArgc);
+    self = objectAddAttr(self, "__neg__", &__neg___long);
+    self = objectAddAttr(self, "__neg__argc", &oneArgc);
 
     // __disp__
-    self = addObjectValue(self, "__disp__", &__disp___long);
-    self = addObjectValue(self, "__disp__argc", &oneArgc);
+    self = objectAddAttr(self, "__disp__", &__disp___long);
+    self = objectAddAttr(self, "__disp__argc", &oneArgc);
 
     // __bool__
-    self = addObjectValue(self, "__bool__", &__bool___long);
-    self = addObjectValue(self, "__bool__argc", &oneArgc);
+    self = objectAddAttr(self, "__bool__", &__bool___long);
+    self = objectAddAttr(self, "__bool__argc", &oneArgc);
 
     // __int__
-    self = addObjectValue(self, "__int__", &__int___long);
-    self = addObjectValue(self, "__int__argc", &oneArgc);
+    self = objectAddAttr(self, "__int__", &__int___long);
+    self = objectAddAttr(self, "__int__argc", &oneArgc);
 
     // // __string__
-    // self = addObjectValue(self, "__string__", &__string___long);
-    // self = addObjectValue(self, "__string__argc", &oneArgc);
+    // self = objectAddAttr(self, "__string__", &__disp___long);
+    // self = objectAddAttr(self, "__string__argc", &oneArgc);
 
     return self;
 }

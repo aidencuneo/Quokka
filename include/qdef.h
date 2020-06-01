@@ -55,6 +55,7 @@ struct __Varlist_Struct__
 {
     int count;
     int offset;
+    int alloc;
 
     char ** names;
     Object * values;

@@ -9,7 +9,7 @@ Object __add___string(int argc, Object * argv)
         strcpy(third, first);
         strcat(third, secnd);
 
-        pushTrash(third);
+        // pushTrash(third);
 
         return makeString(third);
     }
@@ -26,7 +26,7 @@ Object __add___string(int argc, Object * argv)
 
         free(arglist);
 
-        pushTrash(third);
+        // pushTrash(third);
 
         return makeString(third);
     }
@@ -55,7 +55,7 @@ Object __mul___string(int argc, Object * argv)
             mstrcat(&third, first);
         }
 
-        pushTrash(third);
+        // pushTrash(third);
 
         return makeString(third);
     }
@@ -111,7 +111,7 @@ Object __index___string(int argc, Object * argv)
         char * chst = malloc(1);
         chst[0] = '\0';
 
-        pushTrash(chst);
+        // pushTrash(chst);
 
         return makeString(chst);
     }
@@ -121,7 +121,7 @@ Object __index___string(int argc, Object * argv)
         char * chst = malloc(1);
         chst[0] = '\0';
 
-        pushTrash(chst);
+        // pushTrash(chst);
 
         return makeString(chst);
     }
@@ -132,7 +132,7 @@ Object __index___string(int argc, Object * argv)
     chst[0] = ch;
     chst[1] = '\0';
 
-    pushTrash(chst);
+    // pushTrash(chst);
 
     return makeString(chst);
 }
@@ -142,7 +142,7 @@ Object __sizeof___string(int argc, Object * argv)
     char * thisvalue = ((char *)objectGetAttr(argv[0], "value"));
 
     int * size = makeIntPtr(sizeof(argv[0]) + strlen(thisvalue));
-    pushTrash(size);
+    // pushTrash(size);
 
     return makeInt(size);
 }
@@ -157,7 +157,7 @@ Object __len___string(int argc, Object * argv)
     long long len = strlen((char *)objectGetAttr(argv[0], "value"));
 
     int * size = makeIntPtr(len);
-    pushTrash(size);
+    // pushTrash(size);
 
     return makeInt(size);
 }
@@ -166,7 +166,7 @@ Object __disp___string(int argc, Object * argv)
 {
     char * selftext = (char *)objectGetAttr(argv[0], "value");
     char * rawst = makeRawString(selftext);
-    pushTrash(rawst);
+    // pushTrash(rawst);
 
     return makeString(rawst);
 }
@@ -185,7 +185,7 @@ Object __int___string(int argc, Object * argv)
     char * thisvalue = ((char *)objectGetAttr(argv[0], "value"));
 
     int * toint = makeIntPtr(strtol(thisvalue, NULL, 10));
-    pushTrash(toint);
+    // pushTrash(toint);
 
     return makeInt(toint);
 }
@@ -195,7 +195,7 @@ Object __long___string(int argc, Object * argv)
     char * thisvalue = ((char *)objectGetAttr(argv[0], "value"));
 
     long long * tolong = makeLLPtr(strtoll(thisvalue, NULL, 10));
-    pushTrash(tolong);
+    // pushTrash(tolong);
 
     return makeLong(tolong);
 }
@@ -212,7 +212,7 @@ Object __string___string(int argc, Object * argv)
     char * thisvalue = ((char *)objectGetAttr(argv[0], "value"));
 
     char * valcopy = strdup(thisvalue);
-    pushTrash(valcopy);
+    // pushTrash(valcopy);
 
     return makeString(valcopy);
 }
@@ -221,59 +221,66 @@ Object makeString(char * value)
 {
     Object self;
 
-    self = makeObject("string", value);
+    self.name = "string";
+
+    // 25 Attributes
+    self.names = malloc(25 * sizeof(char *));
+    self.values = malloc(25 * sizeof(void *));
+    self.value_count = 0;
+
+    self = objectAddAttr(self, "value", value);
 
     // Two argument methods
 
     // __add__
-    self = addObjectValue(self, "__add__", &__add___string);
-    self = addObjectValue(self, "__add__argc", &twoArgc);
+    self = objectAddAttr(self, "__add__", &__add___string);
+    self = objectAddAttr(self, "__add__argc", &twoArgc);
 
     // __mul__
-    self = addObjectValue(self, "__mul__", &__mul___string);
-    self = addObjectValue(self, "__mul__argc", &twoArgc);
+    self = objectAddAttr(self, "__mul__", &__mul___string);
+    self = objectAddAttr(self, "__mul__argc", &twoArgc);
 
     // __eq__
-    self = addObjectValue(self, "__eq__", &__eq___string);
-    self = addObjectValue(self, "__eq__argc", &twoArgc);
+    self = objectAddAttr(self, "__eq__", &__eq___string);
+    self = objectAddAttr(self, "__eq__argc", &twoArgc);
 
     // __index__
-    self = addObjectValue(self, "__index__", &__index___string);
-    self = addObjectValue(self, "__index__argc", &twoArgc);
+    self = objectAddAttr(self, "__index__", &__index___string);
+    self = objectAddAttr(self, "__index__argc", &twoArgc);
 
     // One argument methods
 
     // __sizeof__
-    self = addObjectValue(self, "__sizeof__", &__sizeof___string);
-    self = addObjectValue(self, "__sizeof__argc", &oneArgc);
+    self = objectAddAttr(self, "__sizeof__", &__sizeof___string);
+    self = objectAddAttr(self, "__sizeof__argc", &oneArgc);
 
     // __copy__
-    self = addObjectValue(self, "__copy__", &__copy___string);
-    self = addObjectValue(self, "__copy__argc", &oneArgc);
+    self = objectAddAttr(self, "__copy__", &__copy___string);
+    self = objectAddAttr(self, "__copy__argc", &oneArgc);
 
     // __len__
-    self = addObjectValue(self, "__len__", &__len___string);
-    self = addObjectValue(self, "__len__argc", &oneArgc);
+    self = objectAddAttr(self, "__len__", &__len___string);
+    self = objectAddAttr(self, "__len__argc", &oneArgc);
 
     // __disp__
-    self = addObjectValue(self, "__disp__", &__disp___string);
-    self = addObjectValue(self, "__disp__argc", &oneArgc);
+    self = objectAddAttr(self, "__disp__", &__disp___string);
+    self = objectAddAttr(self, "__disp__argc", &oneArgc);
 
     // __bool__
-    self = addObjectValue(self, "__bool__", &__bool___string);
-    self = addObjectValue(self, "__bool__argc", &oneArgc);
+    self = objectAddAttr(self, "__bool__", &__bool___string);
+    self = objectAddAttr(self, "__bool__argc", &oneArgc);
 
     // __int__
-    self = addObjectValue(self, "__int__", &__int___string);
-    self = addObjectValue(self, "__int__argc", &oneArgc);
+    self = objectAddAttr(self, "__int__", &__int___string);
+    self = objectAddAttr(self, "__int__argc", &oneArgc);
 
     // __long__
-    self = addObjectValue(self, "__long__", &__long___string);
-    self = addObjectValue(self, "__long__argc", &oneArgc);
+    self = objectAddAttr(self, "__long__", &__long___string);
+    self = objectAddAttr(self, "__long__argc", &oneArgc);
 
     // __string__
-    self = addObjectValue(self, "__string__", &__string___string);
-    self = addObjectValue(self, "__string__argc", &oneArgc);
+    self = objectAddAttr(self, "__string__", &__string___string);
+    self = objectAddAttr(self, "__string__argc", &oneArgc);
 
     return self;
 }

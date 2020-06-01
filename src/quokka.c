@@ -72,6 +72,8 @@ int main(int argc, char ** argv)
         }
     }
 
+    // resetTrash();
+
     if (verbose) println("--START--\n");
 
     if (argc < 2 || !newargc)
@@ -194,7 +196,7 @@ int main(int argc, char ** argv)
         free(bytecode_constants);
         free(file_tokens);
 
-        emptyTrash();
+        // emptyTrash();
     }
 
     if (verbose) println("\n--BYTECODE--\n");
@@ -221,7 +223,7 @@ int main(int argc, char ** argv)
     {
         if (verbose) println("\n--OUTPUT--");
 
-        trash = malloc(sizeof(void *));
+        // resetTrash();
 
         interp_init();
         quokka_interpret(main_bytecode);
@@ -230,7 +232,8 @@ int main(int argc, char ** argv)
         freeStack();
         // freeVars();
         freeRetStack();
-        emptyTrash();
+
+        // emptyTrash();
 
         if (verbose) println("--SUCCESS--");
     }

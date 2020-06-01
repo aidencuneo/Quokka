@@ -38,7 +38,7 @@ Object q_function_display(int argc, Object * argv)
         mstrcat(&out, ">");
     }
 
-    pushTrash(out);
+    // pushTrash(out);
 
     return makeString(out);
 }
@@ -88,7 +88,7 @@ Object q_function_print(int argc, Object * argv)
     }
 
     long long * llptr = makeLLPtr(ret);
-    pushTrash(llptr);
+    // pushTrash(llptr);
 
     return makeLong(llptr);
 }
@@ -143,7 +143,7 @@ Object q_function_println(int argc, Object * argv)
     }
 
     long long * llptr = makeLLPtr(ret);
-    pushTrash(llptr);
+    // pushTrash(llptr);
 
     return makeLong(llptr);
 }
@@ -175,7 +175,7 @@ Object q_function_input(int argc, Object * argv)
 
     buffer[buflen - 1] = '\0';
 
-    pushTrash(buffer);
+    // pushTrash(buffer);
 
     return makeString(buffer);
 }
@@ -371,7 +371,7 @@ Object q_function_exit(int argc, Object * argv)
     freeVars();
     freeStack();
     freeRetStack();
-    emptyTrash();
+    // emptyTrash();
 
     // Free scope stack (from compilation)
     free(scpstk);
@@ -397,7 +397,7 @@ Object q_function_sizeof(int argc, Object * argv)
     }
 
     int * size = makeIntPtr(sizeof(argv[0]));
-    pushTrash(size);
+    // pushTrash(size);
 
     return makeInt(size);
 }
@@ -427,7 +427,7 @@ Object q_function_min(int argc, Object * argv)
     }
 
     int * intptr = makeIntPtr(smallest);
-    pushTrash(intptr);
+    // pushTrash(intptr);
 
     return makeInt(intptr);
 }
