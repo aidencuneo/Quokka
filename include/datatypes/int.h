@@ -1,6 +1,6 @@
-Object __add___int(int argc, Object * argv)
+Object * __add___int(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1].name, "int"))
+    if (!strcmp(argv[1]->name, "int"))
     {
         int * first = objectGetAttr(argv[0], "value");
         int * secnd = objectGetAttr(argv[1], "value");
@@ -8,9 +8,9 @@ Object __add___int(int argc, Object * argv)
         int * third = makeIntPtr(first[0] + secnd[0]);
         // pushTrash(third);
 
-        return makeInt(third);
+        return makeInt(third, 1);
     }
-    else if (!strcmp(argv[1].name, "long"))
+    else if (!strcmp(argv[1]->name, "long"))
     {
         int * first = objectGetAttr(argv[0], "value");
         long long * secnd = objectGetAttr(argv[1], "value");
@@ -21,18 +21,18 @@ Object __add___int(int argc, Object * argv)
         return makeLong(third);
     }
 
-    char * err = malloc(17 + strlen(argv[1].name) + 30 + 1);
+    char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
     strcpy(err, "types 'int' and '");
-    strcat(err, argv[1].name);
+    strcat(err, argv[1]->name);
     strcat(err, "' are invalid operands for '+'");
     error(err, line_num);
 
     return makeNull();
 }
 
-Object __sub___int(int argc, Object * argv)
+Object * __sub___int(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1].name, "int"))
+    if (!strcmp(argv[1]->name, "int"))
     {
         int * first = objectGetAttr(argv[0], "value");
         int * secnd = objectGetAttr(argv[1], "value");
@@ -40,9 +40,9 @@ Object __sub___int(int argc, Object * argv)
         int * third = makeIntPtr(first[0] - secnd[0]);
         // pushTrash(third);
 
-        return makeInt(third);
+        return makeInt(third, 1);
     }
-    else if (!strcmp(argv[1].name, "long"))
+    else if (!strcmp(argv[1]->name, "long"))
     {
         int * first = objectGetAttr(argv[0], "value");
         long long * secnd = objectGetAttr(argv[1], "value");
@@ -53,18 +53,18 @@ Object __sub___int(int argc, Object * argv)
         return makeLong(third);
     }
 
-    char * err = malloc(17 + strlen(argv[1].name) + 30 + 1);
+    char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
     strcpy(err, "types 'int' and '");
-    strcat(err, argv[1].name);
+    strcat(err, argv[1]->name);
     strcat(err, "' are invalid operands for '-'");
     error(err, line_num);
 
     return makeNull();
 }
 
-Object __mul___int(int argc, Object * argv)
+Object * __mul___int(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1].name, "int"))
+    if (!strcmp(argv[1]->name, "int"))
     {
         int * first = objectGetAttr(argv[0], "value");
         int * secnd = objectGetAttr(argv[1], "value");
@@ -72,9 +72,9 @@ Object __mul___int(int argc, Object * argv)
         int * third = makeIntPtr(first[0] * secnd[0]);
         // pushTrash(third);
 
-        return makeInt(third);
+        return makeInt(third, 1);
     }
-    else if (!strcmp(argv[1].name, "long"))
+    else if (!strcmp(argv[1]->name, "long"))
     {
         int * first = objectGetAttr(argv[0], "value");
         long long * secnd = objectGetAttr(argv[1], "value");
@@ -85,37 +85,37 @@ Object __mul___int(int argc, Object * argv)
         return makeLong(third);
     }
 
-    char * err = malloc(17 + strlen(argv[1].name) + 30 + 1);
+    char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
     strcpy(err, "types 'int' and '");
-    strcat(err, argv[1].name);
+    strcat(err, argv[1]->name);
     strcat(err, "' are invalid operands for '*'");
     error(err, line_num);
 
     return makeNull();
 }
 
-Object __div___int(int argc, Object * argv)
+Object * __div___int(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1].name, "int"))
+    if (!strcmp(argv[1]->name, "int"))
     {
         int * first = objectGetAttr(argv[0], "value");
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (!secnd[0])
-            return makeInt(makeIntPtr(0));
+            return makeInt(&falsePtr, 0);
 
         int * third = makeIntPtr(first[0] / secnd[0]);
         // pushTrash(third);
 
-        return makeInt(third);
+        return makeInt(third, 1);
     }
-    else if (!strcmp(argv[1].name, "long"))
+    else if (!strcmp(argv[1]->name, "long"))
     {
         int * first = objectGetAttr(argv[0], "value");
         long long * secnd = objectGetAttr(argv[1], "value");
 
         if (!secnd[0])
-            return makeInt(&falsePtr);
+            return makeInt(&falsePtr, 0);
 
         long long * third = makeLLPtr(first[0] / secnd[0]);
         // pushTrash(third);
@@ -123,18 +123,18 @@ Object __div___int(int argc, Object * argv)
         return makeLong(third);
     }
 
-    char * err = malloc(17 + strlen(argv[1].name) + 30 + 1);
+    char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
     strcpy(err, "types 'int' and '");
-    strcat(err, argv[1].name);
+    strcat(err, argv[1]->name);
     strcat(err, "' are invalid operands for '/'");
     error(err, line_num);
 
     return makeNull();
 }
 
-Object __pow___int(int argc, Object * argv)
+Object * __pow___int(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1].name, "int"))
+    if (!strcmp(argv[1]->name, "int"))
     {
         int * first = objectGetAttr(argv[0], "value");
         int * secnd = objectGetAttr(argv[1], "value");
@@ -142,9 +142,9 @@ Object __pow___int(int argc, Object * argv)
         int * third = makeIntPtr(ipowMath(first[0], secnd[0]));
         // pushTrash(third);
 
-        return makeInt(third);
+        return makeInt(third, 1);
     }
-    else if (!strcmp(argv[1].name, "long"))
+    else if (!strcmp(argv[1]->name, "long"))
     {
         int * first = objectGetAttr(argv[0], "value");
         long long * secnd = objectGetAttr(argv[1], "value");
@@ -155,196 +155,193 @@ Object __pow___int(int argc, Object * argv)
         return makeLong(third);
     }
 
-    char * err = malloc(17 + strlen(argv[1].name) + 31 + 1);
+    char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
     strcpy(err, "types 'int' and '");
-    strcat(err, argv[1].name);
+    strcat(err, argv[1]->name);
     strcat(err, "' are invalid operands for '**'");
     error(err, line_num);
 
     return makeNull();
 }
 
-Object __eq___int(int argc, Object * argv)
+Object * __eq___int(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1].name, "int"))
+    if (!strcmp(argv[1]->name, "int"))
     {
         int * first = objectGetAttr(argv[0], "value");
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] == secnd[0])
-            return makeInt(&truePtr);
-        return makeInt(&falsePtr);
+            return makeInt(&truePtr, 0);
+        return makeInt(&falsePtr, 0);
     }
-    else if (!strcmp(argv[1].name, "long"))
+    else if (!strcmp(argv[1]->name, "long"))
     {
         int * first = objectGetAttr(argv[0], "value");
         long long * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] == secnd[0])
-            return makeInt(&truePtr);
-        return makeInt(&falsePtr);
+            return makeInt(&truePtr, 0);
+        return makeInt(&falsePtr, 0);
     }
 
-    char * err = malloc(17 + strlen(argv[1].name) + 31 + 1);
+    char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
     strcpy(err, "types 'int' and '");
-    strcat(err, argv[1].name);
+    strcat(err, argv[1]->name);
     strcat(err, "' can not be compared with '=='");
     error(err, line_num);
 
     return makeNull();
 }
 
-Object __lt___int(int argc, Object * argv)
+Object * __lt___int(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1].name, "int"))
+    if (!strcmp(argv[1]->name, "int"))
     {
         int * first = objectGetAttr(argv[0], "value");
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] < secnd[0])
-            return makeInt(&truePtr);
-        return makeInt(&falsePtr);
+            return makeInt(&truePtr, 0);
+        return makeInt(&falsePtr, 0);
     }
-    else if (!strcmp(argv[1].name, "long"))
+    else if (!strcmp(argv[1]->name, "long"))
     {
         int * first = objectGetAttr(argv[0], "value");
         long long * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] < secnd[0])
-            return makeInt(&truePtr);
-        return makeInt(&falsePtr);
+            return makeInt(&truePtr, 0);
+        return makeInt(&falsePtr, 0);
     }
 
-    char * err = malloc(17 + strlen(argv[1].name) + 30 + 1);
+    char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
     strcpy(err, "types 'int' and '");
-    strcat(err, argv[1].name);
+    strcat(err, argv[1]->name);
     strcat(err, "' can not be compared with '<'");
     error(err, line_num);
 
     return makeNull();
 }
 
-Object __le___int(int argc, Object * argv)
+Object * __le___int(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1].name, "int"))
+    if (!strcmp(argv[1]->name, "int"))
     {
         int * first = objectGetAttr(argv[0], "value");
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] <= secnd[0])
-            return makeInt(&truePtr);
-        return makeInt(&falsePtr);
+            return makeInt(&truePtr, 0);
+        return makeInt(&falsePtr, 0);
     }
-    else if (!strcmp(argv[1].name, "long"))
+    else if (!strcmp(argv[1]->name, "long"))
     {
         int * first = objectGetAttr(argv[0], "value");
         long long * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] <= secnd[0])
-            return makeInt(&truePtr);
-        return makeInt(&falsePtr);
+            return makeInt(&truePtr, 0);
+        return makeInt(&falsePtr, 0);
     }
 
-    char * err = malloc(17 + strlen(argv[1].name) + 31 + 1);
+    char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
     strcpy(err, "types 'int' and '");
-    strcat(err, argv[1].name);
+    strcat(err, argv[1]->name);
     strcat(err, "' can not be compared with '<='");
     error(err, line_num);
 
     return makeNull();
 }
 
-Object __gt___int(int argc, Object * argv)
+Object * __gt___int(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1].name, "int"))
+    if (!strcmp(argv[1]->name, "int"))
     {
         int * first = objectGetAttr(argv[0], "value");
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] > secnd[0])
-            return makeInt(&truePtr);
-        return makeInt(&falsePtr);
+            return makeInt(&truePtr, 0);
+        return makeInt(&falsePtr, 0);
     }
-    else if (!strcmp(argv[1].name, "long"))
+    else if (!strcmp(argv[1]->name, "long"))
     {
         int * first = objectGetAttr(argv[0], "value");
         long long * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] > secnd[0])
-            return makeInt(&truePtr);
-        return makeInt(&falsePtr);
+            return makeInt(&truePtr, 0);
+        return makeInt(&falsePtr, 0);
     }
 
-    char * err = malloc(17 + strlen(argv[1].name) + 30 + 1);
+    char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
     strcpy(err, "types 'int' and '");
-    strcat(err, argv[1].name);
+    strcat(err, argv[1]->name);
     strcat(err, "' can not be compared with '>'");
     error(err, line_num);
 
     return makeNull();
 }
 
-Object __ge___int(int argc, Object * argv)
+Object * __ge___int(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1].name, "int"))
+    if (!strcmp(argv[1]->name, "int"))
     {
         int * first = objectGetAttr(argv[0], "value");
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] >= secnd[0])
-            return makeInt(&truePtr);
-        return makeInt(&falsePtr);
+            return makeInt(&truePtr, 0);
+        return makeInt(&falsePtr, 0);
     }
-    else if (!strcmp(argv[1].name, "long"))
+    else if (!strcmp(argv[1]->name, "long"))
     {
         int * first = objectGetAttr(argv[0], "value");
         long long * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] >= secnd[0])
-            return makeInt(&truePtr);
-        return makeInt(&falsePtr);
+            return makeInt(&truePtr, 0);
+        return makeInt(&falsePtr, 0);
     }
 
-    char * err = malloc(17 + strlen(argv[1].name) + 31 + 1);
+    char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
     strcpy(err, "types 'int' and '");
-    strcat(err, argv[1].name);
+    strcat(err, argv[1]->name);
     strcat(err, "' can not be compared with '>='");
     error(err, line_num);
 
     return makeNull();
 }
 
-Object __sizeof___int(int argc, Object * argv)
+Object * __sizeof___int(int argc, Object ** argv)
 {
     int * thisvalue = objectGetAttr(argv[0], "value");
 
     int * size = makeIntPtr(sizeof(argv[0]) + sizeof(thisvalue[0]));
-    // pushTrash(size);
 
-    return makeInt(size);
+    return makeInt(size, 1);
 }
 
-Object __pos___int(int argc, Object * argv)
+Object * __pos___int(int argc, Object ** argv)
 {
     int * first = objectGetAttr(argv[0], "value");
 
     int * ret = makeIntPtr(first[0]);
-    // pushTrash(ret);
 
-    return makeInt(ret);
+    return makeInt(ret, 1);
 }
 
-Object __neg___int(int argc, Object * argv)
+Object * __neg___int(int argc, Object ** argv)
 {
     int * first = objectGetAttr(argv[0], "value");
 
     int * ret = makeIntPtr(-first[0]);
-    // pushTrash(ret);
 
-    return makeInt(ret);
+    return makeInt(ret, 1);
 }
 
-Object __disp___int(int argc, Object * argv)
+Object * __disp___int(int argc, Object ** argv)
 {
     int * thisvalue = objectGetAttr(argv[0], "value");
 
@@ -354,26 +351,31 @@ Object __disp___int(int argc, Object * argv)
     return makeString(tostr);
 }
 
-Object __bool___int(int argc, Object * argv)
+Object * __bool___int(int argc, Object ** argv)
 {
     int * thisvalue = objectGetAttr(argv[0], "value");
 
     if (thisvalue[0])
-        return makeInt(&truePtr);
-    return makeInt(&falsePtr);
+        return makeInt(&truePtr, 0);
+    return makeInt(&falsePtr, 0);
 }
 
-Object __int___int(int argc, Object * argv)
+Object * __int___int(int argc, Object ** argv)
 {
     int * first = objectGetAttr(argv[0], "value");
 
-    int * ret = makeIntPtr(first[0]);
-    // pushTrash(ret);
-
-    return makeInt(ret);
+    return makeInt(makeIntPtr(first[0]), 1);
 }
 
-Object makeInt(int * value)
+Object * __free___int(int argc, Object ** argv)
+{
+    int * thisvalue = objectGetAttr(argv[0], "value");
+    free(thisvalue);
+
+    return makeNull();
+}
+
+Object * makeInt(int * value, int is_malloc_ptr)
 {
     // If value == 0, return the already made constant for 0
     if (!value[0])
@@ -382,19 +384,27 @@ Object makeInt(int * value)
     if (value[0] == 1)
         return constants[1];
 
-    return makeIntRaw(value);
+    return makeIntRaw(value, is_malloc_ptr);
 }
 
-Object makeIntRaw(int * value)
+Object * makeIntRaw(int * value, int is_malloc_ptr)
 {
-    Object self;
+    Object * self = objectPointer();
 
-    self.name = "int";
+    self->name = "int";
 
-    // 33 Attributes
-    self.names = malloc(33 * sizeof(char *));
-    self.values = malloc(33 * sizeof(void *));
-    self.value_count = 0;
+    // 33 to 34 Attributes
+    if (is_malloc_ptr)
+    {
+        self->names = malloc(34 * sizeof(char *));
+        self->values = malloc(34 * sizeof(void *));
+    }
+    else
+    {
+        self->names = malloc(33 * sizeof(char *));
+        self->values = malloc(33 * sizeof(void *));
+    }
+    self->value_count = 0;
 
     self = objectAddAttr(self, "value", value);
 
@@ -469,6 +479,12 @@ Object makeIntRaw(int * value)
     // // __string__
     // self = objectAddAttr(self, "__string__", &__disp___int);
     // self = objectAddAttr(self, "__string__argc", &oneArgc);
+
+    if (is_malloc_ptr)
+    {
+        // __free__
+        self = objectAddAttr(self, "__free__", &__free___int);
+    }
 
     return self;
 }

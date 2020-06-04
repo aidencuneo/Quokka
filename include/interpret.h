@@ -1,31 +1,23 @@
-#include <time.h>
-
 // Important stuff
 Varlist globals;
 Varlist locals;
 
-Object * methods;
+Object ** methods;
 int method_count;
 
-Object * stack;
+Object ** stack;
 int stack_size;
 int stack_alloc;
 int stack_alloc_size = 10;
 
-Object * constants;
+Object ** constants;
 int constant_count;
 int const_alloc;
 int const_alloc_size = 10;
 
-Object * ret_stack;
+Object ** ret_stack;
 int ret_stack_size;
 int can_return;
-
-// Trash
-// void ** trash;
-// int trashsize;
-// int trash_alloc;
-// int trash_alloc_size = 500;
 
 // Bytecode file stuff
 char ** bc_tokens;
@@ -33,15 +25,29 @@ char ** bc_tokens;
 // Multi-use pointers
 int oneArgc;
 int twoArgc;
+int threeArgc;
 
 int truePtr;
 int falsePtr;
+
+// Memory
+// void freeMemory()
+// {
+//     for (int i = 0; i < memsize; i++)
+//     {
+//         print("Freeing : ");
+//         println(i);
+//         objDeref(mem[i]);
+//     }
+
+//     free(mem);
+// }
 
 // Stack
 void freeStack()
 {
     for (int i = 0; i < stack_size; i++)
-        freeObject(stack[i]);
+        objUnref(stack[i]);
 
     free(stack);
 }
@@ -51,7 +57,7 @@ void resetStack()
     freeStack();
 
     stack_alloc = stack_alloc_size;
-    stack = malloc(stack_alloc * sizeof(Object));
+    stack = malloc(stack_alloc * sizeof(Object *));
     stack_size = 0;
 }
 
@@ -59,7 +65,7 @@ void resetStack()
 void freeConsts()
 {
     for (int i = 0; i < constant_count; i++)
-        freeObject(constants[i]);
+        objDeref(constants[i]);
 
     free(constants);
 }
@@ -69,18 +75,18 @@ void resetConsts()
     freeConsts();
 
     const_alloc = const_alloc_size;
-    constants = malloc(const_alloc * sizeof(Object));
+    constants = malloc(const_alloc * sizeof(Object *));
     constant_count = 0;
 }
 
 // Return Stack
 void resetRetStack()
 {
-    // for (int i = 0; i < ret_stack_size; i++)
-    //     freeObject(ret_stack[i]);
+    for (int i = 0; i < ret_stack_size; i++)
+        objUnref(ret_stack[i]);
 
     free(ret_stack);
-    ret_stack = malloc(sizeof(Object));
+    ret_stack = malloc(sizeof(Object *));
     ret_stack_size = 0;
 }
 
@@ -93,7 +99,7 @@ void freeRetStack()
 void freeGlobals()
 {
     for (int i = 0; i < globals.count; i++)
-        freeObject(globals.values[i]);
+        objUnref(globals.values[i]);
 
     free(globals.names);
     free(globals.values);
@@ -102,7 +108,7 @@ void freeGlobals()
 void freeLocals()
 {
     for (int i = 0; i < locals.count; i++)
-        freeObject(locals.values[i]);
+        objUnref(locals.values[i]);
 
     free(locals.names);
     free(locals.values);
@@ -114,27 +120,9 @@ void freeVars()
     freeLocals();
 }
 
-// Trash
-// void emptyTrash()
-// {
-//     for (int i = 0; i < trashsize; i++)
-//         free(trash[i]);
-
-//     free(trash);
-//     trashsize = 0;
-// }
-
-// void resetTrash()
-// {
-//     trash_alloc = trash_alloc_size;
-//     trash = malloc(trash_alloc * sizeof(void *));
-//     trashsize = 0;
-// }
-
 // Cleanup (ONLY called on a sudden exit)
 void cleanupAll()
 {
-    free(main_bytecode);
     free(bytecode_constants);
     free(file_tokens);
 
@@ -146,7 +134,6 @@ void cleanupAll()
     freeVars();
     freeStack();
     freeRetStack();
-    // emptyTrash();
 }
 
 // Init
@@ -157,6 +144,7 @@ void interp_init()
 
     oneArgc = 1;
     twoArgc = 2;
+    threeArgc = 3;
 
     truePtr = 1;
     falsePtr = 0;
@@ -165,18 +153,18 @@ void interp_init()
     Global Variables
     */
 
-    addGVar("true", makeIntRaw(&truePtr));
-    addGVar("false", makeIntRaw(&falsePtr));
+    addGVar("true", makeIntRaw(&truePtr, 0));
+    addGVar("false", makeIntRaw(&falsePtr, 0));
 
     /*
     No argument restraints
     */
 
-    Object printFunction = emptyObject("bfunction");
+    Object * printFunction = emptyObject("bfunction");
     printFunction = addObjectValue(printFunction, "__call__", &q_function_print);
     addGVar("print", printFunction);
 
-    Object printlnFunction = emptyObject("bfunction");
+    Object * printlnFunction = emptyObject("bfunction");
     printlnFunction = addObjectValue(printlnFunction, "__call__", &q_function_println);
     addGVar("println", printlnFunction);
 
@@ -184,109 +172,128 @@ void interp_init()
     Argc : 0
     */
 
-    Object exitFunction = emptyObject("bfunction");
+    Object * exitFunction = emptyObject("bfunction");
     exitFunction = addObjectValue(exitFunction, "__call__", &q_function_exit);
-    exitFunction = addObjectValue(exitFunction, "__call__argmin", &falsePtr);
-    exitFunction = addObjectValue(exitFunction, "__call__argmax", &falsePtr);
+    exitFunction = addObjectValue(exitFunction, "__call__argc", &falsePtr);
     addGVar("exit", exitFunction);
 
     /*
     Argc : 1
     */
 
-    Object stringFunction = emptyObject("bfunction");
+    Object * stringFunction = emptyObject("bfunction");
     stringFunction = addObjectValue(stringFunction, "__call__", &q_function_string);
-    stringFunction = addObjectValue(stringFunction, "__call__argmin", &oneArgc);
-    stringFunction = addObjectValue(stringFunction, "__call__argmax", &oneArgc);
+    stringFunction = addObjectValue(stringFunction, "__call__argc", &oneArgc);
     addGVar("string", stringFunction);
 
-    Object intFunction = emptyObject("bfunction");
+    Object * intFunction = emptyObject("bfunction");
     intFunction = addObjectValue(intFunction, "__call__", &q_function_int);
-    intFunction = addObjectValue(intFunction, "__call__argcmin", &oneArgc);
-    intFunction = addObjectValue(intFunction, "__call__argcmax", &oneArgc);
+    intFunction = addObjectValue(intFunction, "__call__argc", &oneArgc);
     addGVar("int", intFunction);
 
-    Object longFunction = emptyObject("bfunction");
+    Object * longFunction = emptyObject("bfunction");
     longFunction = addObjectValue(longFunction, "__call__", &q_function_long);
-    longFunction = addObjectValue(longFunction, "__call__argcmin", &oneArgc);
-    longFunction = addObjectValue(longFunction, "__call__argcmax", &oneArgc);
+    longFunction = addObjectValue(longFunction, "__call__argc", &oneArgc);
     addGVar("long", longFunction);
 
-    Object boolFunction = emptyObject("bfunction");
+    Object * boolFunction = emptyObject("bfunction");
     boolFunction = addObjectValue(boolFunction, "__call__", &q_function_bool);
-    boolFunction = addObjectValue(boolFunction, "__call__argmin", &oneArgc);
-    boolFunction = addObjectValue(boolFunction, "__call__argmax", &oneArgc);
+    boolFunction = addObjectValue(boolFunction, "__call__argc", &oneArgc);
     addGVar("bool", boolFunction);
 
-    Object typeFunction = emptyObject("bfunction");
+    Object * typeFunction = emptyObject("bfunction");
     typeFunction = addObjectValue(typeFunction, "__call__", &q_function_type);
-    typeFunction = addObjectValue(typeFunction, "__call__argmin", &oneArgc);
-    typeFunction = addObjectValue(typeFunction, "__call__argmax", &oneArgc);
+    typeFunction = addObjectValue(typeFunction, "__call__argc", &oneArgc);
     addGVar("type", typeFunction);
 
-    Object dispFunction = emptyObject("bfunction");
+    Object * dispFunction = emptyObject("bfunction");
     dispFunction = addObjectValue(dispFunction, "__call__", &q_function_display);
-    dispFunction = addObjectValue(dispFunction, "__call__argmin", &oneArgc);
-    dispFunction = addObjectValue(dispFunction, "__call__argmax", &oneArgc);
+    dispFunction = addObjectValue(dispFunction, "__call__argc", &oneArgc);
     addGVar("disp", dispFunction);
 
-    Object lenFunction = emptyObject("bfunction");
+    Object * lenFunction = emptyObject("bfunction");
     lenFunction = addObjectValue(lenFunction, "__call__", &q_function_len);
-    lenFunction = addObjectValue(lenFunction, "__call__argmin", &oneArgc);
-    lenFunction = addObjectValue(lenFunction, "__call__argmax", &oneArgc);
+    lenFunction = addObjectValue(lenFunction, "__call__argc", &oneArgc);
     addGVar("len", lenFunction);
 
-    Object execFunction = emptyObject("bfunction");
+    Object * execFunction = emptyObject("bfunction");
     execFunction = addObjectValue(execFunction, "__call__", &q_function_exec);
-    execFunction = addObjectValue(execFunction, "__call__argmin", &oneArgc);
-    execFunction = addObjectValue(execFunction, "__call__argmax", &oneArgc);
+    execFunction = addObjectValue(execFunction, "__call__argc", &oneArgc);
     addGVar("exec", execFunction);
 
-    Object sizeofFunction = emptyObject("bfunction");
+    Object * sizeofFunction = emptyObject("bfunction");
     sizeofFunction = addObjectValue(sizeofFunction, "__call__", &q_function_sizeof);
-    sizeofFunction = addObjectValue(sizeofFunction, "__call__argmin", &oneArgc);
-    sizeofFunction = addObjectValue(sizeofFunction, "__call__argmax", &oneArgc);
+    sizeofFunction = addObjectValue(sizeofFunction, "__call__argc", &oneArgc);
     addGVar("sizeof", sizeofFunction);
 
-    // Object minFunction = emptyObject("bfunction");
-    // minFunction = addObjectValue(minFunction, "__call__", &q_function_min);
-    // minFunction = addObjectValue(minFunction, "__call__argmin", &oneArgc);
-    // minFunction = addObjectValue(minFunction, "__call__argmax", &oneArgc);
-    // addGVar("min", minFunction);
+    Object * minFunction = emptyObject("bfunction");
+    minFunction = addObjectValue(minFunction, "__call__", &q_function_min);
+    minFunction = addObjectValue(minFunction, "__call__argc", &oneArgc);
+    addGVar("min", minFunction);
+
+    Object * maxFunction = emptyObject("bfunction");
+    maxFunction = addObjectValue(maxFunction, "__call__", &q_function_max);
+    maxFunction = addObjectValue(maxFunction, "__call__argc", &oneArgc);
+    addGVar("max", maxFunction);
+
+    Object * tocharFunction = emptyObject("bfunction");
+    tocharFunction = addObjectValue(tocharFunction, "__call__", &q_function_tochar);
+    tocharFunction = addObjectValue(tocharFunction, "__call__argc", &oneArgc);
+    addGVar("tochar", tocharFunction);
+
+    Object * charcodeFunction = emptyObject("bfunction");
+    charcodeFunction = addObjectValue(charcodeFunction, "__call__", &q_function_charcode);
+    charcodeFunction = addObjectValue(charcodeFunction, "__call__argc", &oneArgc);
+    addGVar("charcode", charcodeFunction);
 
     /*
     The rest
     */
 
-    Object inputFunction = emptyObject("bfunction");
+    Object * inputFunction = emptyObject("bfunction");
     inputFunction = addObjectValue(inputFunction, "__call__", &q_function_input);
     inputFunction = addObjectValue(inputFunction, "__call__argmin", &falsePtr);
     inputFunction = addObjectValue(inputFunction, "__call__argmax", &oneArgc);
     addGVar("input", inputFunction);
 }
 
-Object emptyObject(char * name)
+/*
+
+Objects
+
+*/
+
+// Create a pointer to a malloc'd Object and return it
+Object * objectPointer()
 {
-    Object self;
+    Object * ptr = malloc(sizeof(Object));
+    ptr->refs = 0;
 
-    self.name = name;
+    return ptr;
+}
 
-    self.names = malloc(sizeof(char *));
-    self.values = malloc(sizeof(void *));
-    self.value_count = 0;
+Object * emptyObject(char * name)
+{
+    Object * self = objectPointer();
+
+    self->name = name;
+
+    self->names = malloc(sizeof(char *));
+    self->values = malloc(sizeof(void *));
+    self->value_count = 0;
 
     return self;
 }
 
-Object makeObject(char * name, void * value)
+Object * makeObject(char * name, void * value)
 {
-    Object self;
+    Object * self = objectPointer();
 
-    self.name = name;
+    self->name = name;
 
-    self.names = malloc(sizeof(char *));
-    self.values = malloc(sizeof(void *));
-    self.value_count = 0;
+    self->names = malloc(sizeof(char *));
+    self->values = malloc(sizeof(void *));
+    self->value_count = 0;
 
     self = addObjectValue(self, "value", value);
 
@@ -294,28 +301,28 @@ Object makeObject(char * name, void * value)
 }
 
 // Duplicate an Object
-Object objectCopy(Object orig)
+Object * objectCopy(Object * orig)
 {
-    Object self = emptyObject(orig.name);
+    Object * self = emptyObject(orig->name);
 
-    for (int i = 0; i < orig.value_count; i++)
+    for (int i = 0; i < orig->value_count; i++)
     {
-        char * name = malloc(strlen(orig.names[i]) + 1);
-        strcpy(name, orig.names[i]);
+        char * name = malloc(strlen(orig->names[i]) + 1);
+        strcpy(name, orig->names[i]);
         // pushTrash(name);
 
         void ** newptr = malloc(sizeof(void *));
-        *newptr = orig.values[i];
+        *newptr = orig->values[i];
         // pushTrash(newptr);
 
         self = addObjectValue(self, name, *newptr);
     }
 
-    // If object is iterable, duplicate all objects inside it
-    // if (!strcmp(self.name, "list"))
+    // If Object * is iterable, duplicate all objects inside it
+    // if (!strcmp(self->name, "list"))
     // {
     //     int length = ((int *)objectGetAttr(self, "length"))[0];
-    //     Object * lst = objectGetAttr(self, "value");
+    //     Object ** lst = objectGetAttr(self, "value");
     //     for (int i = 0; i < length; i++)
     //     {
     //         // lst[i] = makeNull();//objectCopy(lst[i]);
@@ -325,89 +332,142 @@ Object objectCopy(Object orig)
     return self;
 }
 
-// Summarise an Object (for debugging - uncomment to use it)
-void objectSummary(Object obj)
+// Summarise an Object * (for debugging - uncomment to use it)
+void objectSummary(Object * obj)
 {
-    print("Object of type <");
-    print(obj.name);
+    print("Object * of type <");
+    print(obj->name);
     print(">, value_count = ");
-    println(obj.value_count);
+    println(obj->value_count);
     println("-- ATTRIBUTES --");
 
-    for (int i = 0; i < obj.value_count; i++)
+    for (int i = 0; i < obj->value_count; i++)
     {
         print(": ");
-        println(obj.names[i]);
+        println(obj->names[i]);
     }
 }
 
-// Realloc an already made Object to fit a new value into it
-Object addObjectValue(Object obj, char * name, void * value)
+// Realloc an already made Object * to fit a new value into it
+Object * addObjectValue(Object * obj, char * name, void * value)
 {
-    obj.names = realloc(obj.names, (obj.value_count + 1) * sizeof(char *));
-    obj.values = realloc(obj.values, (obj.value_count + 1) * sizeof(void *));
+    obj->names = realloc(obj->names, (obj->value_count + 1) * sizeof(char *));
+    obj->values = realloc(obj->values, (obj->value_count + 1) * sizeof(void *));
 
-    obj.names[obj.value_count] = name;
-    obj.values[obj.value_count] = value;
+    obj->names[obj->value_count] = name;
+    obj->values[obj->value_count] = value;
 
-    obj.value_count++;
+    obj->value_count++;
 
     return obj;
 }
 
 // Add an attribute to an Object, usually during the
-// initialisation of the Object (does not use realloc)
-Object objectAddAttr(Object obj, char * name, void * value)
+// initialisation of the Object * (does not use realloc)
+Object * objectAddAttr(Object * obj, char * name, void * value)
 {
-    obj.names[obj.value_count] = name;
-    obj.values[obj.value_count] = value;
-    obj.value_count++;
+    obj->names[obj->value_count] = name;
+    obj->values[obj->value_count] = value;
+    obj->value_count++;
 
     return obj;
 }
 
-int objectHasAttr(Object obj, char * name)
+int objectHasAttr(Object * obj, char * name)
 {
-    for (int i = 0; i < obj.value_count; i++)
-        if (!strcmp(obj.names[i], name))
+    for (int i = 0; i < obj->value_count; i++)
+        if (!strcmp(obj->names[i], name))
             return 1;
 
     return 0;
 }
 
-void * objectGetAttr(Object obj, char * name)
+void * objectGetAttr(Object * obj, char * name)
 {
-    for (int i = 0; i < obj.value_count; i++)
-        if (!strcmp(obj.names[i], name))
-            return obj.values[i];
+    for (int i = 0; i < obj->value_count; i++)
+        if (!strcmp(obj->names[i], name))
+            return obj->values[i];
 
     return NULL;
 }
 
-// Free an object and all objects within (if object is iterable)
-void freeObjectR(Object obj)
+
+// Free an Object * and all objects within (if Object * is iterable)
+void freeObjectR(Object * obj)
 {
     // If obj is iterable, free all items within it
-    if (!strcmp(obj.name, "list"))
+    if (!strcmp(obj->name, "list"))
     {
         int length = ((int *)objectGetAttr(obj, "length"))[0];
-        Object * lst = objectGetAttr(obj, "value");
+        Object ** lst = objectGetAttr(obj, "value");
         for (int i = 0; i < length; i++)
         {
             freeObjectR(lst[i]);
         }
     }
 
-    free(obj.names);
-    free(obj.values);
+    free(obj->names);
+    free(obj->values);
 }
 
 // Free an object, no recursion for lists
-void freeObject(Object obj)
+void freeObject(Object * obj)
 {
-    free(obj.names);
-    free(obj.values);
+    void * freeFunction = objectGetAttr(obj, "__free__");
+    if (freeFunction != NULL)
+    {
+        Object ** arglist = makeArglist(obj);
+        ((standard_func_def)freeFunction)(1, arglist);
+        free(arglist);
+    }
+
+    free(obj->names);
+    free(obj->values);
+    free(obj);
 }
+
+// Unreference an Object
+void objUnref(Object * obj)
+{
+    obj->refs--;
+
+    if (obj->refs <= 0)
+    {
+        // Call the obj.__free__ function to properly free a particular object
+        println("Unreferencing");
+        freeObject(obj);
+    }
+    else println("Unreferencing??");
+}
+
+// Dereference an Object * (set references to 0)
+void objDeref(Object * obj)
+{
+    // Call the obj.__free__ function to properly free a particular object
+    // If this object is not dereferenced, dereference it
+    if (obj->refs != -1)
+    {
+        println("Dereferencing");
+        freeObject(obj);
+    }
+}
+
+/*
+
+Memory
+
+*/
+
+// void pushMem(Object * obj)
+// {
+//     if (++memsize >= memalloc_size)
+//     {
+//         memalloc += memalloc_size;
+//         mem = realloc(mem, memalloc * sizeof(Object *));
+//     }
+
+//     mem[memsize - 1] = obj;
+// }
 
 /*
 
@@ -416,26 +476,27 @@ Stack
 */
 
 // Push to top of stack
-void pushTop(Object obj)
+void pushTop(Object * obj)
 {
     // Increment and use new stack_size in one expression
     if (++stack_size >= stack_alloc)
     {
         stack_alloc += stack_alloc_size;
-        stack = realloc(stack, stack_alloc * sizeof(Object));
+        stack = realloc(stack, stack_alloc * sizeof(Object *));
     }
 
+    obj->refs++;
     stack[stack_size - 1] = obj;
 }
 
 // Pop top of stack
-Object popTop()
+Object * popTop()
 {
     // Decrement and use new stack_size in one expression
     if (--stack_size < stack_alloc - stack_alloc_size)
     {
         stack_alloc -= stack_alloc_size;
-        stack = realloc(stack, stack_alloc * sizeof(Object));
+        stack = realloc(stack, stack_alloc * sizeof(Object *));
     }
 
     return stack[stack_size];
@@ -448,24 +509,25 @@ Constants
 */
 
 // Push to top of constants
-void pushConst(Object obj)
+void pushConst(Object * obj)
 {
     if (++constant_count >= const_alloc)
     {
         const_alloc += const_alloc_size;
-        constants = realloc(constants, const_alloc * sizeof(Object));
+        constants = realloc(constants, const_alloc * sizeof(Object *));
     }
 
+    obj->refs++;
     constants[constant_count - 1] = obj;
 }
 
-// Pop top of constants
-Object popConst()
+// Pop top of constants (shouldn't really be used, but just in case)
+Object * popConst()
 {
     if (--constant_count < const_alloc - const_alloc_size)
     {
         const_alloc -= const_alloc_size;
-        constants = realloc(constants, const_alloc * sizeof(Object));
+        constants = realloc(constants, const_alloc * sizeof(Object *));
     }
 
     return constants[constant_count];
@@ -477,41 +539,31 @@ Return Stack
 
 */
 
-void pushRetTop(Object obj)
+void pushRetTop(Object * obj)
 {
-    ret_stack = realloc(ret_stack, (ret_stack_size + 1) * sizeof(Object));
+    ret_stack = realloc(ret_stack, (ret_stack_size + 1) * sizeof(Object *));
     ret_stack[ret_stack_size] = obj;
     ret_stack_size++;
 }
 
-Object popRetTop()
+Object * popRetTop()
 {
-    ret_stack = realloc(ret_stack, (ret_stack_size + 1) * sizeof(Object));
+    ret_stack = realloc(ret_stack, (ret_stack_size + 1) * sizeof(Object *));
     ret_stack_size--;
 
     return ret_stack[ret_stack_size];
 }
 
-// DO NOT pass an un-malloc'd pointer to this function
-// void // pushTrash(void * ptr)
-// {
-//     if (++trashsize >= trash_alloc)
-//     {
-//         trash_alloc += trash_alloc_size;
-//         trash = realloc(trash, trash_alloc * sizeof(void *));
-//     }
-
-//     trash[trashsize - 1] = ptr;
-// }
-
 // Var stuff
-void addGVar(char * name, Object obj)
+void addGVar(char * name, Object * obj)
 {
+    obj->refs++;
+
     int check = getGVarIndex(name);
     if (check != -1)
     {
-        // Free the old object non-recursively to prevent lists from losing their objects
-        // freeObject(globals.values[check]);
+        // Free the old Object * non-recursively to prevent lists from losing their objects
+        objUnref(globals.values[check]);
 
         globals.values[check] = obj;
         return;
@@ -521,7 +573,7 @@ void addGVar(char * name, Object obj)
     {
         globals.alloc += 10;
         globals.names = realloc(globals.names, globals.alloc * sizeof(char *));
-        globals.values = realloc(globals.values, globals.alloc * sizeof(Object));
+        globals.values = realloc(globals.values, globals.alloc * sizeof(Object *));
     }
 
     globals.names[globals.count - 1] = name;
@@ -530,13 +582,15 @@ void addGVar(char * name, Object obj)
 
 // addVar assigns local variables by default.
 // use addGVar to assign a global variable.
-void addVar(char * name, Object obj)
+void addVar(char * name, Object * obj)
 {
+    obj->refs++;
+
     int check = getLVarIndex(name);
     if (check != -1)
     {
-        // Free the old object non-recursively to prevent lists from losing their objects
-        // freeObject(locals.values[check]);
+        // Free the old Object * non-recursively to prevent lists from losing their objects
+        objUnref(locals.values[check]);
 
         locals.values[check] = obj;
         return;
@@ -546,14 +600,14 @@ void addVar(char * name, Object obj)
     {
         globals.alloc += 10;
         locals.names = realloc(locals.names, globals.alloc * sizeof(char *));
-        locals.values = realloc(locals.values, globals.alloc * sizeof(Object));
+        locals.values = realloc(locals.values, globals.alloc * sizeof(Object *));
     }
 
     locals.names[locals.count - 1] = name;
     locals.values[locals.count - 1] = obj;
 }
 
-Object getGVar(char * name)
+Object * getGVar(char * name)
 {
     // Check globals
     for (int i = globals.offset; i < globals.count; i++)
@@ -569,7 +623,7 @@ Object getGVar(char * name)
     return makeNull();
 }
 
-Object getLVar(char * name)
+Object * getLVar(char * name)
 {
     // Check locals
     for (int i = globals.offset; i < locals.count; i++)
@@ -585,7 +639,7 @@ Object getLVar(char * name)
     return makeNull();
 }
 
-Object getVar(char * name)
+Object * getVar(char * name)
 {
     // Check locals
     for (int i = locals.offset; i < locals.count; i++)
@@ -654,7 +708,7 @@ void delGVarIndex(int index)
     globals.count--;
 
     globals.names = realloc(globals.names, (globals.count + 1) * sizeof(char *));
-    globals.values = realloc(globals.values, (globals.count + 1) * sizeof(Object));
+    globals.values = realloc(globals.values, (globals.count + 1) * sizeof(Object *));
 }
 
 void delLVarIndex(int index)
@@ -670,20 +724,20 @@ void delLVarIndex(int index)
     locals.count--;
 
     locals.names = realloc(locals.names, (locals.count + 1) * sizeof(char *));
-    locals.values = realloc(locals.values, (locals.count + 1) * sizeof(Object));
+    locals.values = realloc(locals.values, (locals.count + 1) * sizeof(Object *));
 }
 
-Object * makeArglist(Object obj)
+Object ** makeArglist(Object * obj)
 {
-    Object * arglist = malloc(sizeof(Object));
+    Object ** arglist = malloc(sizeof(Object *));
     arglist[0] = obj;
 
     return arglist;
 }
 
-// void addMethod(Object method)
+// void addMethod(Object * method)
 // {
-//     methods = realloc(methods, (method_count + 1) * sizeof(Object));
+//     methods = realloc(methods, (method_count + 1) * sizeof(Object *));
 //     methods[method_count] = method;
 //     method_count++;
 // }
@@ -699,9 +753,9 @@ Object * makeArglist(Object obj)
 #include "datatypes/null.h"
 #include "datatypes/function.h"
 
-// Object makeMethod(Object (*func)(Object * argv), int * argc)
+// Object * makeMethod(Object * (*func)(Object ** argv), int * argc)
 // {
-//     Object self;
+//     Object * self = objectPointer();
 
 //     self = makeObject("method", argc);
 //     self = addObjectValue(self, "__call__", &func);
@@ -728,10 +782,13 @@ void STACK()
     print("STACK : ");
     for (int i = 0; i < stack_size; i++)
     {
-        Object * arglist = makeArglist(stack[i]);
+        Object ** arglist = makeArglist(stack[i]);
 
-        freeObjectR(q_function_print(1, arglist));
+        freeObject(q_function_print(1, arglist));
         free(arglist);
+
+        print(" : ");
+        print(stack[i]->refs);
 
         print(", ");
     }
@@ -743,7 +800,7 @@ void quokka_interpret_line_tokens(char ** line)
     if (!strlen(line[0]))
         return;
 
-    if (verbose) STACK();
+    // if (verbose) STACK();
     if (verbose) println(line[0]);
 
     if (!strcmp(line[0], "LOAD_STRING"))
@@ -759,16 +816,14 @@ void quokka_interpret_line_tokens(char ** line)
         if (temp > INT_MAX)
         {
             long long * llptr = makeLLPtrFromStr(line[1]);
-            // pushTrash(llptr);
 
             pushConst(makeLong(llptr));
         }
         else
         {
             int * intptr = makeIntPtrFromStr(line[1]);
-            // pushTrash(intptr);
 
-            pushConst(makeIntRaw(intptr));
+            pushConst(makeIntRaw(intptr, 1));
         }
     }
     else if (!strcmp(line[0], "LOAD_LONG"))
@@ -802,7 +857,7 @@ void quokka_interpret_line_tokens(char ** line)
     {
         int lstsize = strtol(line[1], NULL, 10);
 
-        Object * value = malloc(lstsize * sizeof(Object));
+        Object ** value = malloc(lstsize * sizeof(Object *));
 
         for (int i = 0; i < lstsize; i++)
         {
@@ -857,15 +912,21 @@ void quokka_interpret_line_tokens(char ** line)
 
         delLVarIndex(ind);
     }
+    else if (!strcmp(line[0], "MAKE_GLOBAL"))
+    {
+        Object * ind = getVar(line[1]);
+
+        addGVar(line[1], ind);
+    }
     else if (!strcmp(line[0], "IMPORT"))
     {
-        Object pathstrobj = popTop();
+        Object * pathstrobj = popTop();
 
-        if (strcmp(pathstrobj.name, "string"))
+        if (strcmp(pathstrobj->name, "string"))
         {
-            char * err = malloc(51 + strlen(pathstrobj.name) + 1 + 1);
+            char * err = malloc(51 + strlen(pathstrobj->name) + 1 + 1);
             strcpy(err, "file path to import must be of type 'string', not '");
-            strcat(err, pathstrobj.name);
+            strcat(err, pathstrobj->name);
             strcat(err, "'");
             error(err, line_num);
         }
@@ -898,17 +959,17 @@ void quokka_interpret_line_tokens(char ** line)
         char * imported_bytecode = quokka_compile_fname(import_path);
 
         // Set up the environment for the interpret call
-        Object * old_stack = malloc(stack_size * sizeof(Object));
+        Object ** old_stack = malloc(stack_size * sizeof(Object *));
         for (int i = 0; i < stack_size; i++)
             old_stack[i] = stack[i];
         int old_stack_size = stack_size;
 
         stack_alloc = stack_alloc_size;
-        stack = realloc(stack, stack_alloc * sizeof(Object));
+        stack = realloc(stack, stack_alloc * sizeof(Object *));
         stack_size = 0;
 
         // char ** old_locals_names = malloc(locals.count * sizeof(char *));
-        // Object * old_locals_values = malloc(locals.count * sizeof(Object));
+        // Object ** old_locals_values = malloc(locals.count * sizeof(Object *));
         // for (int i = 0; i < locals.count; i++)
         // {
         //     old_locals_names[i] = locals.names[i];
@@ -941,7 +1002,7 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Recreate and realign previous stack
         stack_alloc = stack_alloc_size;
-        stack = realloc(stack, stack_alloc * sizeof(Object));
+        stack = realloc(stack, stack_alloc * sizeof(Object *));
         stack_size = 0;
 
         for (int i = 0; i < old_stack_size; i++)
@@ -957,7 +1018,7 @@ void quokka_interpret_line_tokens(char ** line)
 
         // locals.count = old_locals_count;
         // locals.names = malloc((locals.count + 1) * sizeof(char *));
-        // locals.values = malloc((locals.count + 1) * sizeof(Object));
+        // locals.values = malloc((locals.count + 1) * sizeof(Object *));
 
         // for (int i = 0; i < locals.count; i++)
         // {
@@ -968,7 +1029,7 @@ void quokka_interpret_line_tokens(char ** line)
         // free(old_locals_names);
         // free(old_locals_values);
 
-        // freeObject(pathstrobj);
+        objUnref(pathstrobj);
 
         free(import_path_rel);
         free(import_path);
@@ -988,13 +1049,13 @@ void quokka_interpret_line_tokens(char ** line)
     }
     // else if (!strcmp(line[0], "GET_ATTR"))
     // {
-    //     Object obj = popTop();
+    //     Object * obj = popTop();
 
     //     if (!objectHasAttr(obj, "__pos__"))
     //     {
-    //         char * err = malloc(6 + strlen(obj.name) + 38 + 1);
+    //         char * err = malloc(6 + strlen(obj->name) + 38 + 1);
     //         strcpy(err, "type '");
-    //         strcat(err, obj.name);
+    //         strcat(err, obj->name);
     //         strcat(err, "' does not have a method for unary '+'");
     //         error(err, line_num);
     //     }
@@ -1003,24 +1064,24 @@ void quokka_interpret_line_tokens(char ** line)
     // }
     else if (!strcmp(line[0], "UNARY_ADD"))
     {
-        Object first = popTop();
+        Object * first = popTop();
 
         void * func = objectGetAttr(first, "__pos__");
 
         if (func == NULL)
         {
-            char * err = malloc(6 + strlen(first.name) + 38 + 1);
+            char * err = malloc(6 + strlen(first->name) + 38 + 1);
             strcpy(err, "type '");
-            strcat(err, first.name);
+            strcat(err, first->name);
             strcat(err, "' does not have a method for unary '+'");
             error(err, line_num);
         }
 
         // if (!objectHasAttr(first, "__pos__argc"))
         // {
-        //     char * err = malloc(28 + strlen(first.name) + 56 + 1);
+        //     char * err = malloc(28 + strlen(first->name) + 56 + 1);
         //     strcpy(err, "the __pos__ method of type '");
-        //     strcat(err, first.name);
+        //     strcat(err, first->name);
         //     strcat(err, "' is missing an argument limit, this should never happen");
         //     error(err, line_num);
         // }
@@ -1029,7 +1090,7 @@ void quokka_interpret_line_tokens(char ** line)
         // if (funcargc != 1)
         //     error("__pos__ function requires an invalid amount of arguments, should be 1", line_num);
 
-        Object * arglist = makeArglist(first);
+        Object ** arglist = makeArglist(first);
 
         pushTop(((standard_func_def)func)(1, arglist));
 
@@ -1037,24 +1098,24 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "UNARY_SUB"))
     {
-        Object first = popTop();
+        Object * first = popTop();
 
         void * func = objectGetAttr(first, "__neg__");
 
         if (func == NULL)
         {
-            char * err = malloc(6 + strlen(first.name) + 38 + 1);
+            char * err = malloc(6 + strlen(first->name) + 38 + 1);
             strcpy(err, "type '");
-            strcat(err, first.name);
+            strcat(err, first->name);
             strcat(err, "' does not have a method for unary '-'");
             error(err, line_num);
         }
 
         // if (!objectHasAttr(first, "__neg__argc"))
         // {
-        //     char * err = malloc(28 + strlen(first.name) + 56 + 1);
+        //     char * err = malloc(28 + strlen(first->name) + 56 + 1);
         //     strcpy(err, "the __neg__ method of type '");
-        //     strcat(err, first.name);
+        //     strcat(err, first->name);
         //     strcat(err, "' is missing an argument limit, this should never happen");
         //     error(err, line_num);
         // }
@@ -1063,7 +1124,7 @@ void quokka_interpret_line_tokens(char ** line)
         // if (funcargc != 1)
         //     error("__neg__ function requires an invalid amount of arguments, should be 1", line_num);
 
-        Object * arglist = makeArglist(first);
+        Object ** arglist = makeArglist(first);
 
         pushTop(((standard_func_def)func)(1, arglist));
 
@@ -1071,25 +1132,25 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "BINARY_ADD"))
     {
-        Object first = popTop();
-        Object secnd = popTop();
+        Object * first = popTop();
+        Object * secnd = popTop();
 
         void * func = objectGetAttr(first, "__add__");
 
         if (func == NULL)
         {
-            char * err = malloc(6 + strlen(first.name) + 37 + 1);
+            char * err = malloc(6 + strlen(first->name) + 37 + 1);
             strcpy(err, "type '");
-            strcat(err, first.name);
+            strcat(err, first->name);
             strcat(err, "' does not have a method for addition");
             error(err, line_num);
         }
 
         // if (!objectHasAttr(first, "__add__argc"))
         // {
-        //     char * err = malloc(28 + strlen(first.name) + 56 + 1);
+        //     char * err = malloc(28 + strlen(first->name) + 56 + 1);
         //     strcpy(err, "the __add__ method of type '");
-        //     strcat(err, first.name);
+        //     strcat(err, first->name);
         //     strcat(err, "' is missing an argument limit, this should never happen");
         //     error(err, line_num);
         // }
@@ -1098,38 +1159,38 @@ void quokka_interpret_line_tokens(char ** line)
         // if (funcargc != 2)
         //     error("__add__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
+        Object ** arglist = malloc(2 * sizeof(Object *));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)func)(2, arglist));
 
-        // freeObject(first);
-        // freeObject(secnd);
+        objUnref(first);
+        objUnref(secnd);
 
         free(arglist);
     }
     else if (!strcmp(line[0], "BINARY_SUB"))
     {
-        Object first = popTop();
-        Object secnd = popTop();
+        Object * first = popTop();
+        Object * secnd = popTop();
 
         void * func = objectGetAttr(first, "__sub__");
 
         if (func == NULL)
         {
-            char * err = malloc(6 + strlen(first.name) + 37 + 1);
+            char * err = malloc(6 + strlen(first->name) + 37 + 1);
             strcpy(err, "type '");
-            strcat(err, first.name);
+            strcat(err, first->name);
             strcat(err, "' does not have a method for subtraction");
             error(err, line_num);
         }
 
         // if (!objectHasAttr(first, "__sub__argc"))
         // {
-        //     char * err = malloc(28 + strlen(first.name) + 56 + 1);
+        //     char * err = malloc(28 + strlen(first->name) + 56 + 1);
         //     strcpy(err, "the __sub__ method of type '");
-        //     strcat(err, first.name);
+        //     strcat(err, first->name);
         //     strcat(err, "' is missing an argument limit, this should never happen");
         //     error(err, line_num);
         // }
@@ -1138,38 +1199,38 @@ void quokka_interpret_line_tokens(char ** line)
         // if (funcargc != 2)
         //     error("__sub__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
+        Object ** arglist = malloc(2 * sizeof(Object *));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)func)(2, arglist));
 
-        // freeObject(first);
-        // freeObject(secnd);
+        objUnref(first);
+        objUnref(secnd);
 
         free(arglist);
     }
     else if (!strcmp(line[0], "BINARY_MUL"))
     {
-        Object first = popTop();
-        Object secnd = popTop();
+        Object * first = popTop();
+        Object * secnd = popTop();
 
         void * func = objectGetAttr(first, "__mul__");
 
         if (func == NULL)
         {
-            char * err = malloc(6 + strlen(first.name) + 43 + 1);
+            char * err = malloc(6 + strlen(first->name) + 43 + 1);
             strcpy(err, "type '");
-            strcat(err, first.name);
+            strcat(err, first->name);
             strcat(err, "' does not have a method for multiplication");
             error(err, line_num);
         }
 
         // if (!objectHasAttr(first, "__mul__argc"))
         // {
-        //     char * err = malloc(28 + strlen(first.name) + 56 + 1);
+        //     char * err = malloc(28 + strlen(first->name) + 56 + 1);
         //     strcpy(err, "the __mul__ method of type '");
-        //     strcat(err, first.name);
+        //     strcat(err, first->name);
         //     strcat(err, "' is missing an argument limit, this should never happen");
         //     error(err, line_num);
         // }
@@ -1178,38 +1239,38 @@ void quokka_interpret_line_tokens(char ** line)
         // if (funcargc != 2)
         //     error("__mul__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
+        Object ** arglist = malloc(2 * sizeof(Object *));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)func)(2, arglist));
 
-        // freeObject(first);
-        // freeObject(secnd);
+        objUnref(first);
+        objUnref(secnd);
 
         free(arglist);
     }
     else if (!strcmp(line[0], "BINARY_DIV"))
     {
-        Object first = popTop();
-        Object secnd = popTop();
+        Object * first = popTop();
+        Object * secnd = popTop();
 
         void * func = objectGetAttr(first, "__div__");
 
         if (func == NULL)
         {
-            char * err = malloc(6 + strlen(first.name) + 37 + 1);
+            char * err = malloc(6 + strlen(first->name) + 37 + 1);
             strcpy(err, "type '");
-            strcat(err, first.name);
+            strcat(err, first->name);
             strcat(err, "' does not have a method for division");
             error(err, line_num);
         }
 
         // if (!objectHasAttr(first, "__div__argc"))
         // {
-        //     char * err = malloc(28 + strlen(first.name) + 56 + 1);
+        //     char * err = malloc(28 + strlen(first->name) + 56 + 1);
         //     strcpy(err, "the __div__ method of type '");
-        //     strcat(err, first.name);
+        //     strcat(err, first->name);
         //     strcat(err, "' is missing an argument limit, this should never happen");
         //     error(err, line_num);
         // }
@@ -1218,38 +1279,38 @@ void quokka_interpret_line_tokens(char ** line)
         // if (funcargc != 2)
         //     error("__div__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
+        Object ** arglist = malloc(2 * sizeof(Object *));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)func)(2, arglist));
 
-        // freeObject(first);
-        // freeObject(secnd);
+        objUnref(first);
+        objUnref(secnd);
 
         free(arglist);
     }
     else if (!strcmp(line[0], "BINARY_POW"))
     {
-        Object first = popTop();
-        Object secnd = popTop();
+        Object * first = popTop();
+        Object * secnd = popTop();
 
         void * func = objectGetAttr(first, "__pow__");
 
         if (func == NULL)
         {
-            char * err = malloc(6 + strlen(first.name) + 37 + 1);
+            char * err = malloc(6 + strlen(first->name) + 37 + 1);
             strcpy(err, "type '");
-            strcat(err, first.name);
+            strcat(err, first->name);
             strcat(err, "' does not have a method for indices");
             error(err, line_num);
         }
 
         // if (!objectHasAttr(first, "__pow__argc"))
         // {
-        //     char * err = malloc(28 + strlen(first.name) + 56 + 1);
+        //     char * err = malloc(28 + strlen(first->name) + 56 + 1);
         //     strcpy(err, "the __pow__ method of type '");
-        //     strcat(err, first.name);
+        //     strcat(err, first->name);
         //     strcat(err, "' is missing an argument limit, this should never happen");
         //     error(err, line_num);
         // }
@@ -1258,38 +1319,38 @@ void quokka_interpret_line_tokens(char ** line)
         // if (funcargc != 2)
         //     error("__pow__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
+        Object ** arglist = malloc(2 * sizeof(Object *));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)func)(2, arglist));
 
-        // freeObject(first);
-        // freeObject(secnd);
+        objUnref(first);
+        objUnref(secnd);
 
         free(arglist);
     }
     else if (!strcmp(line[0], "CMP_EQ"))
     {
-        Object first = popTop();
-        Object secnd = popTop();
+        Object * first = popTop();
+        Object * secnd = popTop();
 
         void * func = objectGetAttr(first, "__eq__");
 
         if (func == NULL)
         {
-            char * err = malloc(6 + strlen(first.name) + 53 + 1);
+            char * err = malloc(6 + strlen(first->name) + 53 + 1);
             strcpy(err, "type '");
-            strcat(err, first.name);
+            strcat(err, first->name);
             strcat(err, "' does not have a method for equality (==) comparison");
             error(err, line_num);
         }
 
         // if (!objectHasAttr(first, "__eq__argc"))
         // {
-        //     char * err = malloc(27 + strlen(first.name) + 56 + 1);
+        //     char * err = malloc(27 + strlen(first->name) + 56 + 1);
         //     strcpy(err, "the __eq__ method of type '");
-        //     strcat(err, first.name);
+        //     strcat(err, first->name);
         //     strcat(err, "' is missing an argument limit, this should never happen");
         //     error(err, line_num);
         // }
@@ -1298,38 +1359,38 @@ void quokka_interpret_line_tokens(char ** line)
         // if (funcargc != 2)
         //     error("__eq__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
+        Object ** arglist = malloc(2 * sizeof(Object *));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)func)(2, arglist));
 
-        // freeObject(first);
-        // freeObject(secnd);
+        objUnref(first);
+        objUnref(secnd);
 
         free(arglist);
     }
     else if (!strcmp(line[0], "CMP_NEQ"))
     {
-        Object first = popTop();
-        Object secnd = popTop();
+        Object * first = popTop();
+        Object * secnd = popTop();
 
         void * func = objectGetAttr(first, "__eq__");
 
         if (func == NULL)
         {
-            char * err = malloc(6 + strlen(first.name) + 53 + 1);
+            char * err = malloc(6 + strlen(first->name) + 53 + 1);
             strcpy(err, "type '");
-            strcat(err, first.name);
+            strcat(err, first->name);
             strcat(err, "' does not have a method for equality (==) comparison");
             error(err, line_num);
         }
 
         // if (!objectHasAttr(first, "__eq__argc"))
         // {
-        //     char * err = malloc(27 + strlen(first.name) + 56 + 1);
+        //     char * err = malloc(27 + strlen(first->name) + 56 + 1);
         //     strcpy(err, "the __eq__ method of type '");
-        //     strcat(err, first.name);
+        //     strcat(err, first->name);
         //     strcat(err, "' is missing an argument limit, this should never happen");
         //     error(err, line_num);
         // }
@@ -1339,17 +1400,17 @@ void quokka_interpret_line_tokens(char ** line)
         //     error("__eq__ function requires an invalid amount of arguments, should be 2", line_num);
 
         // Get result from __eq__
-        Object * arglist = malloc(2 * sizeof(Object));
+        Object ** arglist = malloc(2 * sizeof(Object *));
         arglist[0] = first;
         arglist[1] = secnd;
 
-        Object condition = ((standard_func_def)func)(2, arglist);
+        Object * condition = ((standard_func_def)func)(2, arglist);
 
         // Convert to bool
-        arglist = realloc(arglist, sizeof(Object));
+        arglist = realloc(arglist, sizeof(Object *));
         arglist[0] = condition;
 
-        Object conditionbool = q_function_bool(1, arglist);
+        Object * conditionbool = q_function_bool(1, arglist);
 
         // Flip it, then push it to stack
         int * intptr;
@@ -1359,34 +1420,34 @@ void quokka_interpret_line_tokens(char ** line)
         else
             intptr = &falsePtr;
 
-        pushTop(makeInt(intptr));
+        pushTop(makeInt(intptr, 0));
 
-        // freeObject(first);
-        // freeObject(secnd);
+        objUnref(first);
+        objUnref(secnd);
 
         free(arglist);
     }
     else if (!strcmp(line[0], "CMP_LT"))
     {
-        Object first = popTop();
-        Object secnd = popTop();
+        Object * first = popTop();
+        Object * secnd = popTop();
 
         void * func = objectGetAttr(first, "__lt__");
 
         if (func == NULL)
         {
-            char * err = malloc(6 + strlen(first.name) + 53 + 1);
+            char * err = malloc(6 + strlen(first->name) + 53 + 1);
             strcpy(err, "type '");
-            strcat(err, first.name);
+            strcat(err, first->name);
             strcat(err, "' does not have a method for less than (<) comparison");
             error(err, line_num);
         }
 
         // if (!objectHasAttr(first, "__lt__argc"))
         // {
-        //     char * err = malloc(27 + strlen(first.name) + 56 + 1);
+        //     char * err = malloc(27 + strlen(first->name) + 56 + 1);
         //     strcpy(err, "the __lt__ method of type '");
-        //     strcat(err, first.name);
+        //     strcat(err, first->name);
         //     strcat(err, "' is missing an argument limit, this should never happen");
         //     error(err, line_num);
         // }
@@ -1395,38 +1456,38 @@ void quokka_interpret_line_tokens(char ** line)
         // if (funcargc != 2)
         //     error("__lt__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
+        Object ** arglist = malloc(2 * sizeof(Object *));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)func)(2, arglist));
 
-        // freeObject(first);
-        // freeObject(secnd);
+        objUnref(first);
+        objUnref(secnd);
 
         free(arglist);
     }
     else if (!strcmp(line[0], "CMP_GT"))
     {
-        Object first = popTop();
-        Object secnd = popTop();
+        Object * first = popTop();
+        Object * secnd = popTop();
 
         void * func = objectGetAttr(first, "__gt__");
 
         if (func == NULL)
         {
-            char * err = malloc(6 + strlen(first.name) + 56 + 1);
+            char * err = malloc(6 + strlen(first->name) + 56 + 1);
             strcpy(err, "type '");
-            strcat(err, first.name);
+            strcat(err, first->name);
             strcat(err, "' does not have a method for greater than (>) comparison");
             error(err, line_num);
         }
 
         // if (!objectHasAttr(first, "__gt__argc"))
         // {
-        //     char * err = malloc(27 + strlen(first.name) + 56 + 1);
+        //     char * err = malloc(27 + strlen(first->name) + 56 + 1);
         //     strcpy(err, "the __gt__ method of type '");
-        //     strcat(err, first.name);
+        //     strcat(err, first->name);
         //     strcat(err, "' is missing an argument limit, this should never happen");
         //     error(err, line_num);
         // }
@@ -1435,38 +1496,38 @@ void quokka_interpret_line_tokens(char ** line)
         // if (funcargc != 2)
         //     error("__gt__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
+        Object ** arglist = malloc(2 * sizeof(Object *));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)func)(2, arglist));
 
-        // freeObject(first);
-        // freeObject(secnd);
+        objUnref(first);
+        objUnref(secnd);
 
         free(arglist);
     }
     else if (!strcmp(line[0], "CMP_LE"))
     {
-        Object first = popTop();
-        Object secnd = popTop();
+        Object * first = popTop();
+        Object * secnd = popTop();
 
         void * func = objectGetAttr(first, "__le__");
 
         if (func == NULL)
         {
-            char * err = malloc(6 + strlen(first.name) + 66 + 1);
+            char * err = malloc(6 + strlen(first->name) + 66 + 1);
             strcpy(err, "type '");
-            strcat(err, first.name);
+            strcat(err, first->name);
             strcat(err, "' does not have a method for less than or equal to (<=) comparison");
             error(err, line_num);
         }
 
         // if (!objectHasAttr(first, "__le__argc"))
         // {
-        //     char * err = malloc(27 + strlen(first.name) + 56 + 1);
+        //     char * err = malloc(27 + strlen(first->name) + 56 + 1);
         //     strcpy(err, "the __le__ method of type '");
-        //     strcat(err, first.name);
+        //     strcat(err, first->name);
         //     strcat(err, "' is missing an argument limit, this should never happen");
         //     error(err, line_num);
         // }
@@ -1475,38 +1536,38 @@ void quokka_interpret_line_tokens(char ** line)
         // if (funcargc != 2)
         //     error("__le__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
+        Object ** arglist = malloc(2 * sizeof(Object *));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)func)(2, arglist));
 
-        // freeObject(first);
-        // freeObject(secnd);
+        objUnref(first);
+        objUnref(secnd);
 
         free(arglist);
     }
     else if (!strcmp(line[0], "CMP_GE"))
     {
-        Object first = popTop();
-        Object secnd = popTop();
+        Object * first = popTop();
+        Object * secnd = popTop();
 
         void * func = objectGetAttr(first, "__ge__");
 
         if (func == NULL)
         {
-            char * err = malloc(6 + strlen(first.name) + 69 + 1);
+            char * err = malloc(6 + strlen(first->name) + 69 + 1);
             strcpy(err, "type '");
-            strcat(err, first.name);
+            strcat(err, first->name);
             strcat(err, "' does not have a method for greater than or equal to (>=) comparison");
             error(err, line_num);
         }
 
         // if (!objectHasAttr(first, "__ge__argc"))
         // {
-        //     char * err = malloc(27 + strlen(first.name) + 56 + 1);
+        //     char * err = malloc(27 + strlen(first->name) + 56 + 1);
         //     strcpy(err, "the __ge__ method of type '");
-        //     strcat(err, first.name);
+        //     strcat(err, first->name);
         //     strcat(err, "' is missing an argument limit, this should never happen");
         //     error(err, line_num);
         // }
@@ -1515,27 +1576,27 @@ void quokka_interpret_line_tokens(char ** line)
         // if (funcargc != 2)
         //     error("__ge__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        Object * arglist = malloc(2 * sizeof(Object));
+        Object ** arglist = malloc(2 * sizeof(Object *));
         arglist[0] = first;
         arglist[1] = secnd;
 
         pushTop(((standard_func_def)func)(2, arglist));
 
-        // freeObject(first);
-        // freeObject(secnd);
+        objUnref(first);
+        objUnref(secnd);
 
         free(arglist);
     }
     else if (!strcmp(line[0], "BOOLEAN_NOT"))
     {
-        Object first = popTop();
+        Object * first = popTop();
 
         int firstbool;
 
         // Convert first to bool
         if (objectHasAttr(first, "__bool__"))
         {
-            Object * arglist = makeArglist(first);
+            Object ** arglist = makeArglist(first);
             firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
             free(arglist);
         }
@@ -1544,16 +1605,16 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Perform Boolean NOT
         if (!firstbool)
-            pushTop(makeInt(&truePtr));
+            pushTop(makeInt(&truePtr, 0));
         else
-            pushTop(makeInt(&falsePtr));
+            pushTop(makeInt(&falsePtr, 0));
 
-        freeObject(first);
+        objUnref(first);
     }
     else if (!strcmp(line[0], "BOOLEAN_OR"))
     {
-        Object first = popTop();
-        Object secnd = popTop();
+        Object * first = popTop();
+        Object * secnd = popTop();
 
         int firstbool;
         int secndbool;
@@ -1561,7 +1622,7 @@ void quokka_interpret_line_tokens(char ** line)
         // Convert first to bool
         if (objectHasAttr(first, "__bool__"))
         {
-            Object * arglist = makeArglist(first);
+            Object ** arglist = makeArglist(first);
             firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
             free(arglist);
         }
@@ -1571,7 +1632,7 @@ void quokka_interpret_line_tokens(char ** line)
         // Convert secnd to bool
         if (objectHasAttr(secnd, "__bool__"))
         {
-            Object * arglist = makeArglist(secnd);
+            Object ** arglist = makeArglist(secnd);
             secndbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
             free(arglist);
         }
@@ -1580,17 +1641,17 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Perform Inclusive OR
         if (firstbool || secndbool)
-            pushTop(makeInt(&truePtr));
+            pushTop(makeInt(&truePtr, 0));
         else
-            pushTop(makeInt(&falsePtr));
+            pushTop(makeInt(&falsePtr, 0));
 
-        // freeObject(first);
-        // freeObject(secnd);
+        objUnref(first);
+        objUnref(secnd);
     }
     else if (!strcmp(line[0], "BOOLEAN_XOR"))
     {
-        Object first = popTop();
-        Object secnd = popTop();
+        Object * first = popTop();
+        Object * secnd = popTop();
 
         int firstbool;
         int secndbool;
@@ -1598,7 +1659,7 @@ void quokka_interpret_line_tokens(char ** line)
         // Convert first to bool
         if (objectHasAttr(first, "__bool__"))
         {
-            Object * arglist = makeArglist(first);
+            Object ** arglist = makeArglist(first);
             firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
             free(arglist);
         }
@@ -1608,7 +1669,7 @@ void quokka_interpret_line_tokens(char ** line)
         // Convert secnd to bool
         if (objectHasAttr(secnd, "__bool__"))
         {
-            Object * arglist = makeArglist(secnd);
+            Object ** arglist = makeArglist(secnd);
             secndbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
             free(arglist);
         }
@@ -1617,17 +1678,17 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Perform Exclusive OR
         if (!!firstbool != !!secndbool)
-            pushTop(makeInt(&truePtr));
+            pushTop(makeInt(&truePtr, 0));
         else
-            pushTop(makeInt(&falsePtr));
+            pushTop(makeInt(&falsePtr, 0));
 
-        // freeObject(first);
-        // freeObject(secnd);
+        objUnref(first);
+        objUnref(secnd);
     }
     else if (!strcmp(line[0], "BOOLEAN_AND"))
     {
-        Object first = popTop();
-        Object secnd = popTop();
+        Object * first = popTop();
+        Object * secnd = popTop();
 
         int firstbool;
         int secndbool;
@@ -1635,7 +1696,7 @@ void quokka_interpret_line_tokens(char ** line)
         // Convert first to bool
         if (objectHasAttr(first, "__bool__"))
         {
-            Object * arglist = makeArglist(first);
+            Object ** arglist = makeArglist(first);
             firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
             free(arglist);
         }
@@ -1645,7 +1706,7 @@ void quokka_interpret_line_tokens(char ** line)
         // Convert secnd to bool
         if (objectHasAttr(secnd, "__bool__"))
         {
-            Object * arglist = makeArglist(secnd);
+            Object ** arglist = makeArglist(secnd);
             secndbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
             free(arglist);
         }
@@ -1654,12 +1715,12 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Perform Boolean AND
         if (firstbool && secndbool)
-            pushTop(makeInt(&truePtr));
+            pushTop(makeInt(&truePtr, 0));
         else
-            pushTop(makeInt(&falsePtr));
+            pushTop(makeInt(&falsePtr, 0));
 
-        // freeObject(first);
-        // freeObject(secnd);
+        objUnref(first);
+        objUnref(secnd);
     }
     else if (!strcmp(line[0], "JUMP_TO"))
     {
@@ -1685,24 +1746,24 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "JUMP_IF_TRUE"))
     {
-        Object obj = popTop();
+        Object * obj = popTop();
 
         if (!objectHasAttr(obj, "__bool__"))
         {
-            char * err = malloc(6 + strlen(obj.name) + 34 + 1);
+            char * err = malloc(6 + strlen(obj->name) + 34 + 1);
             strcpy(err, "type '");
-            strcat(err, obj.name);
+            strcat(err, obj->name);
             strcat(err, "' can not be converted into a bool");
             error(err, line_num);
         }
 
-        Object * arglist = makeArglist(obj);
-        Object conditionobj = q_function_bool(1, arglist);
+        Object ** arglist = makeArglist(obj);
+        Object * conditionobj = q_function_bool(1, arglist);
         free(arglist);
 
         int condition = ((int *)objectGetAttr(conditionobj, "value"))[0];
 
-        // freeObject(conditionobj);
+        objUnref(conditionobj);
 
         // If false, don't jump
         if (!condition)
@@ -1720,24 +1781,24 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "JUMP_IF_FALSE"))
     {
-        Object obj = popTop();
+        Object * obj = popTop();
 
         if (!objectHasAttr(obj, "__bool__"))
         {
-            char * err = malloc(6 + strlen(obj.name) + 34 + 1);
+            char * err = malloc(6 + strlen(obj->name) + 34 + 1);
             strcpy(err, "type '");
-            strcat(err, obj.name);
+            strcat(err, obj->name);
             strcat(err, "' can not be converted into a bool");
             error(err, line_num);
         }
 
-        Object * arglist = makeArglist(obj);
-        Object conditionobj = q_function_bool(1, arglist);
+        Object ** arglist = makeArglist(obj);
+        Object * conditionobj = q_function_bool(1, arglist);
         free(arglist);
 
         int condition = ((int *)objectGetAttr(conditionobj, "value"))[0];
 
-        // freeObject(conditionobj);
+        objUnref(conditionobj);
 
         // If true, don't jump
         if (condition)
@@ -1757,12 +1818,12 @@ void quokka_interpret_line_tokens(char ** line)
     {
         int argcount = strtol(line[1], NULL, 10);
 
-        Object * arglist = malloc(argcount * sizeof(Object));
+        Object ** arglist = malloc(argcount * sizeof(Object *));
 
         for (int i = 0; i < argcount; i++)
             arglist[argcount - i - 1] = popTop();
 
-        Object func = popTop(); // stack[stack_size - i - 1];
+        Object * func = popTop(); // stack[stack_size - i - 1];
 
         void * call_attr = objectGetAttr(func, "__call__");
 
@@ -1814,29 +1875,29 @@ void quokka_interpret_line_tokens(char ** line)
             error(err, line_num);
         }
 
-        if (!strcmp(func.name, "bfunction"))
+        if (!strcmp(func->name, "bfunction"))
         {
             pushTop(((standard_func_def)call_attr)(argcount, arglist));
 
-            // Free all arguments passed into this function
-            // for (int i = 0; i < argcount; i++)
-            //     freeObject(arglist[i]);
+            // Unreference all arguments passed into this function
+            for (int i = 0; i < argcount; i++)
+                objUnref(arglist[i]);
 
-            // Free the function itself
-            // freeObject(func);
+            // Unreference the function itself
+            objUnref(func);
         }
         else
         {
-            arglist = realloc(arglist, (argcount + 1) * sizeof(Object));
+            arglist = realloc(arglist, (argcount + 1) * sizeof(Object *));
             for (int i = argcount - 1; i >= 0; i--)
                 arglist[i + 1] = arglist[i];
             arglist[0] = func;
 
             pushTop(((standard_func_def)call_attr)(argcount, arglist));
 
-            // Free all arguments passed into this function (function itself included)
+            // Unreference all arguments passed into this function (function itself included)
             // for (int i = 0; i < argcount + 1; i++)
-            //     freeObject(arglist[i]);
+            //     objUnref(arglist[i]);
         }
 
         free(arglist);
@@ -1847,20 +1908,21 @@ void quokka_interpret_line_tokens(char ** line)
 
         if (!strcmp(line[1], "*"))
         {
-            Object obj = popTop();
+            Object * obj = popTop();
 
-            if (!objectHasAttr(obj, "__copy__"))
+            void * copy_attr = objectGetAttr(obj, "__copy__");
+            if (copy_attr == NULL)
             {
-                char * err = malloc(6 + strlen(obj.name) + 36 + 1);
+                char * err = malloc(6 + strlen(obj->name) + 36 + 1);
                 strcpy(err, "type '");
-                strcat(err, obj.name);
+                strcat(err, obj->name);
                 strcat(err, "' does not have a method for copying");
                 error(err, line_num);
             }
 
-            Object * arglist = makeArglist(obj);
+            Object ** arglist = makeArglist(obj);
 
-            pushTop(((standard_func_def)objectGetAttr(obj, "__copy__"))(1, arglist));
+            pushTop(((standard_func_def)copy_attr)(1, arglist));
 
             free(arglist);
 
@@ -1869,30 +1931,60 @@ void quokka_interpret_line_tokens(char ** line)
 
         // If 'GET_INDEX 1' then get index like normal
 
-        Object ind = popTop();
-        Object obj = popTop();
+        Object * ind = popTop();
+        Object * obj = popTop();
 
-        Object * arglist = malloc(2 * sizeof(Object));
+        Object ** arglist = malloc(2 * sizeof(Object *));
         arglist[0] = obj;
         arglist[1] = ind;
 
-        if (!objectHasAttr(obj, "__index__"))
+        void * index_attr = objectGetAttr(obj, "__index__");
+        if (index_attr == NULL)
         {
-            char * err = malloc(6 + strlen(obj.name) + 45 + 1);
+            char * err = malloc(6 + strlen(obj->name) + 45 + 1);
             strcpy(err, "type '");
-            strcat(err, obj.name);
+            strcat(err, obj->name);
             strcat(err, "' does not have a method for index retrieving");
             error(err, line_num);
         }
 
-        int funcargc = ((int *)objectGetAttr(obj, "__index__argc"))[0];
-        if (funcargc != 2)
-            error("__index__ function requires an invalid amount of arguments, should be 2", line_num);
+        // int funcargc = ((int *)objectGetAttr(obj, "__index__argc"))[0];
+        // if (funcargc != 2)
+        //     error("__index__ function requires an invalid amount of arguments, should be 2", line_num);
 
-        pushTop(((standard_func_def)objectGetAttr(obj, "__index__"))(2, arglist));
+        pushTop(((standard_func_def)index_attr)(2, arglist));
 
-        // freeObject(ind);
-        // freeObject(obj);
+        objUnref(ind);
+        objUnref(obj);
+
+        free(arglist);
+    }
+    else if (!strcmp(line[0], "SET_INDEX"))
+    {
+        Object * val = popTop();
+        Object * ind = popTop();
+        Object * obj = popTop();
+
+        Object ** arglist = malloc(3 * sizeof(Object *));
+        arglist[0] = obj;
+        arglist[1] = ind;
+        arglist[2] = val;
+
+        void * setindex_attr = objectGetAttr(obj, "__setindex__");
+        if (setindex_attr == NULL)
+        {
+            char * err = malloc(6 + strlen(obj->name) + 44 + 1);
+            strcpy(err, "type '");
+            strcat(err, obj->name);
+            strcat(err, "' does not have a method for index assigning");
+            error(err, line_num);
+        }
+
+        pushTop(((standard_func_def)setindex_attr)(3, arglist));
+
+        objUnref(val);
+        objUnref(ind);
+        objUnref(obj);
 
         free(arglist);
     }
@@ -1919,7 +2011,7 @@ void quokka_interpret_tokens(char ** tokens)
 
             // Comment the next two lines out if there's a segfault
             // if (!can_return)
-            // resetStack();
+            resetStack();
 
             bc_line++;
             continue;
@@ -1964,7 +2056,7 @@ void quokka_interpret(char * bytecode)
     bc_tokens = realloc(bc_tokens, (i + 2) * sizeof(char *));
     bc_tokens[i + 1] = NULL;
 
-    // pushTrash(dupe);
+    pushTrash(dupe);
 
     quokka_interpret_tokens(bc_tokens);
 }

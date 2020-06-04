@@ -1,36 +1,36 @@
-Object __sizeof___null(int argc, Object * argv)
+Object * __sizeof___null(int argc, Object ** argv)
 {
     int * size = makeIntPtr(sizeof(0));
     // pushTrash(size);
 
-    return makeInt(size);
+    return makeInt(size, 1);
 }
 
-Object __disp___null(int argc, Object * argv)
+Object * __disp___null(int argc, Object ** argv)
 {
     return makeString("null");
 }
 
-Object __bool___null(int argc, Object * argv)
+Object * __bool___null(int argc, Object ** argv)
 {
-    return makeInt(&falsePtr);
+    return makeInt(&falsePtr, 0);
 }
 
-Object makeNull()
+Object * makeNull()
 {
     return constants[2];
 }
 
-Object makeNullRaw()
+Object * makeNullRaw()
 {
-    Object self;
+    Object * self = objectPointer();
 
-    self.name = "null";
+    self->name = "null";
 
     // 7 Attributes
-    self.names = malloc(7 * sizeof(char *));
-    self.values = malloc(7 * sizeof(void *));
-    self.value_count = 0;
+    self->names = malloc(7 * sizeof(char *));
+    self->values = malloc(7 * sizeof(void *));
+    self->value_count = 0;
 
     self = objectAddAttr(self, "value", &falsePtr);
 

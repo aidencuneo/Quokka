@@ -37,17 +37,21 @@ long long * makeLLPtr(long long i)
 }
 
 //
-/// Object & Varlist
+/// Object * & Varlist
 //
 
 typedef struct __Object_Struct__ Object;
 struct __Object_Struct__
 {
-    char * name;
+    char * name; // Object * type name
 
+    // Attributes
+    // (list of names, list of values, and value count)
     char ** names;
     void ** values;
     int value_count;
+
+    int refs; // References to this Object
 };
 
 typedef struct __Varlist_Struct__ Varlist;
@@ -58,7 +62,7 @@ struct __Varlist_Struct__
     int alloc;
 
     char ** names;
-    Object * values;
+    Object ** values;
 };
 
 // Function declarations
@@ -68,30 +72,33 @@ void quokka_interpret_line_tokens(char ** line);
 void quokka_interpret_tokens(char ** tokens);
 void quokka_interpret(char * bytecode);
 
-void freeRecursive(Object * ptr, int size);
+void freeRecursive(Object ** ptr, int size);
 void resetStack();
-Object emptyObject(char * name);
-Object makeObject(char * name, void * value);
-void objectSummary(Object obj);
-Object addObjectValue(Object obj, char * name, void * value);
-int objectHasAttr(Object obj, char * name);
-void * objectGetAttr(Object obj, char * name);
-void freeObjectR(Object obj);
-void freeObject(Object obj);
+Object * emptyObject(char * name);
+Object * makeObject(char * name, void * value);
+void objectSummary(Object * obj);
+Object * addObjectValue(Object * obj, char * name, void * value);
+int objectHasAttr(Object * obj, char * name);
+void * objectGetAttr(Object * obj, char * name);
+void freeObjectR(Object * obj);
+void freeObject(Object * obj);
 
-void pushTop(Object obj);
-Object popTop();
+void objUnref(Object * obj);
+void objDeref(Object * obj);
+
+void pushTop(Object * obj);
+Object * popTop();
 void pushTrash(void * ptr);
 
-void addGVar(char * name, Object obj);
-void addVar(char * name, Object obj);
+void addGVar(char * name, Object * obj);
+void addVar(char * name, Object * obj);
 
-Object getVar(char * name);
+Object * getVar(char * name);
 int getGVarIndex(char * name);
 int getLVarIndex(char * name);
 int getVarIndex(char * name);
 
-Object * makeArglist(Object obj);
+Object ** makeArglist(Object * obj);
 
 //
 /// Function
@@ -112,22 +119,22 @@ void addFunction(Function funcobj);
 //
 
 // int
-Object makeInt(int * value);
-Object makeIntRaw(int * value);
+Object * makeInt(int * value, int is_malloc_ptr);
+Object * makeIntRaw(int * value, int is_malloc_ptr);
 
 // long
-Object makeLong(long long * value);
+Object * makeLong(long long * value);
 
 // string
-Object makeString(char * value);
+Object * makeString(char * value);
 
 // list
-Object makeList(int length, Object * value, int flipped);
+Object * makeList(int length, Object ** value, int flipped);
 
 // null
-Object makeNull();
+Object * makeNull();
 
 // function
-Object makeFunction(char * filepath, char ** bytecode, int argmin, int argmax);
+Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax);
 
 #endif

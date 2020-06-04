@@ -1,4 +1,4 @@
-Object __call___function(int argc, Object * argv)
+Object * __call___function(int argc, Object ** argv)
 {
     // Get function code
     char * filepath = objectGetAttr(argv[0], "filepath");
@@ -8,16 +8,17 @@ Object __call___function(int argc, Object * argv)
     char * old_file = current_file;
     current_file = filepath;
 
-    Object * old_stack = malloc(stack_size * sizeof(Object));
+    Object ** old_stack = malloc(stack_size * sizeof(Object *));
     for (int i = 0; i < stack_size; i++)
         old_stack[i] = stack[i];
     int old_stack_size = stack_size;
 
-    stack = realloc(stack, sizeof(Object));
+    stack_alloc = stack_alloc_size;
+    stack = realloc(stack, stack_alloc * sizeof(Object *));
     stack_size = 0;
 
     // char ** old_locals_names = malloc(locals.count * sizeof(char *));
-    // Object * old_locals_values = malloc(locals.count * sizeof(Object));
+    // Object * old_locals_values = malloc(locals.count * sizeof(Object *));
     // for (int i = 0; i < locals.count; i++)
     // {
     //     old_locals_names[i] = locals.names[i];
@@ -41,9 +42,9 @@ Object __call___function(int argc, Object * argv)
     int * intptr = makeIntPtr(argc);
     // pushTrash(intptr);
 
-    addVar("argc", makeInt(intptr));
+    addVar("argc", makeInt(intptr, 1));
 
-    Object * arglist = malloc(argc * sizeof(Object));
+    Object ** arglist = malloc(argc * sizeof(Object *));
     for (int i = 0; i < argc; i++)
         arglist[i] = argv[i + 1];
 
@@ -72,7 +73,8 @@ Object __call___function(int argc, Object * argv)
     can_return = old_can_return;
 
     // Recreate and realign previous stack
-    stack = realloc(stack, sizeof(Object));
+    stack_alloc = stack_alloc_size;
+    stack = realloc(stack, stack_alloc * sizeof(Object *));
     stack_size = 0;
 
     for (int i = 0; i < old_stack_size; i++)
@@ -89,7 +91,7 @@ Object __call___function(int argc, Object * argv)
 
     // locals.count = old_locals_count;
     // locals.names = malloc((locals.count + 1) * sizeof(char *));
-    // locals.values = malloc((locals.count + 1) * sizeof(Object));
+    // locals.values = malloc((locals.count + 1) * sizeof(Object *));
 
     // for (int i = 0; i < locals.count; i++)
     // {
@@ -110,21 +112,21 @@ Object __call___function(int argc, Object * argv)
     return makeNull();
 }
 
-Object makeFunction(char * filepath, char ** bytecode, int argmin, int argmax)
+Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax)
 {
     int * argminptr = makeIntPtr(argmin);
     int * argmaxptr = makeIntPtr(argmax);
     // pushTrash(argminptr);
     // pushTrash(argmaxptr);
 
-    Object self;
+    Object * self = objectPointer();
 
-    self.name = "function";
+    self->name = "function";
 
     // 5 Attributes
-    self.names = malloc(5 * sizeof(char *));
-    self.values = malloc(5 * sizeof(void *));
-    self.value_count = 0;
+    self->names = malloc(5 * sizeof(char *));
+    self->values = malloc(5 * sizeof(void *));
+    self->value_count = 0;
 
     // Values
     self = objectAddAttr(self, "value", *bytecode);

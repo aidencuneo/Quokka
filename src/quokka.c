@@ -72,8 +72,6 @@ int main(int argc, char ** argv)
         }
     }
 
-    // resetTrash();
-
     if (verbose) println("--START--\n");
 
     if (argc < 2 || !newargc)
@@ -112,7 +110,7 @@ int main(int argc, char ** argv)
                     if (stack_size)
                     {
                         // Get top of stack
-                        Object * arglist = makeArglist(stack[stack_size - 1]);
+                        Object ** arglist = makeArglist(stack[stack_size - 1]);
 
                         // Print it
                         q_function_println(1, arglist);
@@ -146,7 +144,7 @@ int main(int argc, char ** argv)
                 if (stack_size)
                 {
                     // Get top of stack
-                    Object * arglist = makeArglist(stack[stack_size - 1]);
+                    Object ** arglist = makeArglist(stack[stack_size - 1]);
 
                     // Print it
                     q_function_println(1, arglist);
@@ -190,13 +188,15 @@ int main(int argc, char ** argv)
         main_bytecode = readfile(fname);
     else
     {
+        resetTrash();
+
         // Compile Quokka script into Quokka bytecode
         compile_init();
         main_bytecode = quokka_compile_fname(fname);
         free(bytecode_constants);
         free(file_tokens);
 
-        // emptyTrash();
+        emptyTrash();
     }
 
     if (verbose) println("\n--BYTECODE--\n");
@@ -223,17 +223,19 @@ int main(int argc, char ** argv)
     {
         if (verbose) println("\n--OUTPUT--");
 
-        // resetTrash();
+        resetTrash();
 
         interp_init();
+        println("YO");
         quokka_interpret(main_bytecode);
 
-        freeConsts();
+        // freeMemory();
         freeStack();
-        // freeVars();
         freeRetStack();
+        freeVars();
+        freeConsts();
 
-        // emptyTrash();
+        emptyTrash();
 
         if (verbose) println("--SUCCESS--");
     }

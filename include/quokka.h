@@ -1,5 +1,5 @@
 // VERSION STUFF
-#define VERSION "0.3.0"
+#define VERSION "0.4.0"
 
 // Defines
 #define LN10 2.3025850929940456840179914546844
@@ -36,6 +36,15 @@ int in_cli_mode = 0;
 //
 
 #include "qdef.h"
+
+//
+/// Memory
+//
+
+// Object ** mem;
+// int memsize;
+// int memalloc;
+// int memalloc_size = 20; // Reallocates new memory per 20 Objects
 
 //
 /// Function declarations
@@ -92,8 +101,8 @@ char * cpprint(char * value);
     char *   : cpprintln,\
     default  : cpprintln)(value)
 
-// Used to typecast Object pointers into Quokka functions
-typedef Object (*standard_func_def)(int argc, Object * argv);
+// Used to typecast Object * pointers into Quokka functions
+typedef Object * (*standard_func_def)(int argc, Object ** argv);
 
 //
 /// All the rest

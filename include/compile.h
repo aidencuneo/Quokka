@@ -5,6 +5,12 @@
 #define SEPARATOR_LEN 1
 #define INSTRUCTION_END_LEN 1
 
+// Trash
+void ** trash;
+int trashsize;
+int trash_alloc;
+int trash_alloc_size = 10;
+
 // Bytecode Constants
 char * bytecode_constants;
 int bytecode_constant_count;
@@ -107,6 +113,35 @@ void error(char * text, int line)
         cleanupAll();
         exit(1);
     }
+}
+
+// Trash
+void emptyTrash()
+{
+    for (int i = 0; i < trashsize; i++)
+        free(trash[i]);
+
+    free(trash);
+    trashsize = 0;
+}
+
+void resetTrash()
+{
+    trash_alloc = trash_alloc_size;
+    trash = malloc(trash_alloc * sizeof(void *));
+    trashsize = 0;
+}
+
+// DO NOT pass an un-malloc'd pointer to this function
+void pushTrash(void * ptr)
+{
+    if (++trashsize >= trash_alloc)
+    {
+        trash_alloc += trash_alloc_size;
+        trash = realloc(trash, trash_alloc * sizeof(void *));
+    }
+
+    trash[trashsize - 1] = ptr;
 }
 
 int isidentifier(char * word)
@@ -260,14 +295,23 @@ int findNextIfChain(char * kwtype, int cur_line, int cur_tok_index, int scp)
     if (!strcmp(kwtype, "if"))
         kw = 0;
     else if (!strcmp(kwtype, "elif"))
+    {
+        tempscope++; // elif will not increase scope
         kw = 1;
+    }
     else if (!strcmp(kwtype, "else"))
+    {
+        tempscope++; // else will not increase scope
         kw = 2;
+    }
 
     int real_line = cur_line;
 
     for (int i = cur_tok_index; i < file_line_count; i++)
     {
+        if (kw == 2)
+            println(file_tokens[i]);
+
         char ** templine = quokka_tok(file_tokens[i]);
 
         if (file_tokens[i][0] == '\n' || !file_tokens[i][0])
@@ -280,7 +324,7 @@ int findNextIfChain(char * kwtype, int cur_line, int cur_tok_index, int scp)
         }
 
         // Error checking
-        if (tempscope == scp)
+        if (tempscope == scp && i > cur_tok_index)
         {
             if (kw == 1 && !strcmp(templine[0], "if"))
             {
@@ -319,7 +363,7 @@ int findNextIfChain(char * kwtype, int cur_line, int cur_tok_index, int scp)
                (!strcmp(templine[0], "elif") && (kw == 0 || kw == 1)) ||
                (!strcmp(templine[0], "else") && (kw == 0 || kw == 1)))
             {
-                if (tempscope == scp)
+                if (tempscope == scp && i > cur_tok_index)
                 {
                     ind = real_line;
 
@@ -349,6 +393,9 @@ int findNextEnd(char * kwtype, int cur_line, int cur_tok_index, int scp)
     int tempscope = scp - 1;
     int blanks = 0; // Num of consecutive blank lines
 
+    if (!strcmp(kwtype, "elif") || !strcmp(kwtype, "else"))
+        tempscope++; // elif and else will not increase scope
+
     int real_line = cur_line;
 
     for (int i = cur_tok_index; file_tokens[i] != NULL; i++)
@@ -368,13 +415,13 @@ int findNextEnd(char * kwtype, int cur_line, int cur_tok_index, int scp)
             !strcmp(templine[0], "while") ||
             !strcmp(templine[0], "until") ||
             !strcmp(templine[0], "fun") ||
-            !strcmp(templine[0], "for") || i == cur_tok_index)
+            !strcmp(templine[0], "for"))
         {
             tempscope++;
         }
         else if (!strcmp(templine[0], "end"))
         {
-            if (tempscope == scp)
+            if (tempscope == scp && i > cur_tok_index)
             {
                 ind = real_line;
 
@@ -538,29 +585,69 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (!isidentifier(line[0]))
             error("variable name to assign must be a valid identifier", num - 1);
 
-        if (strcmp(line[1], "="))
-            error("invalid syntax", num - 1);
+        // variable[index] = value
+        if (startswith(line[1], "[") && endswith(line[1], "]"))
+        {
+            if (strcmp(line[2], "="))
+                error("invalid syntax", num - 1);
 
-        if (len < 3)
-            error("variable definition missing variable value", num - 1);
+            if (len < 4)
+                error("variable definition missing variable value", num - 1);
 
-        char * varname = strndup(line[0], strlen(line[0]));
+            char * sliced = strSlice(line[1], 1, 1);
+            char * ind = quokka_compile_line(sliced, num, -1, 1);
 
-        arrlstrip(line);
-        arrlstrip(line);
-        len -= 2;
-        char * temp = quokka_compile_line_tokens(line, num, len, 1);
+            mstrcatline(&bytecode,
+                "LOAD_NAME",
+                SEPARATOR,
+                line[0],
+                INSTRUCTION_END);
 
-        mstrcat(&bytecode, temp);
+            mstrcat(&bytecode, ind);
 
-        free(temp);
+            free(sliced);
+            free(ind);
 
-        mstrcat(&bytecode, "STORE_NAME");
-        mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, varname);
-        mstrcat(&bytecode, INSTRUCTION_END);
+            arrlstrip(line);
+            arrlstrip(line);
+            arrlstrip(line);
+            len -= 3;
 
-        free(varname);
+            char * temp = quokka_compile_line_tokens(line, num, len, 1);
+            mstrcat(&bytecode, temp);
+            free(temp);
+
+            mstrcattrip(&bytecode,
+                "SET_INDEX",
+                INSTRUCTION_END);
+        }
+        // variable = value
+        else
+        {
+            if (strcmp(line[1], "="))
+                error("invalid syntax", num - 1);
+
+            if (len < 3)
+                error("variable definition missing variable value", num - 1);
+
+            char * varname = strndup(line[0], strlen(line[0]));
+
+            arrlstrip(line);
+            arrlstrip(line);
+            len -= 2;
+            char * temp = quokka_compile_line_tokens(line, num, len, 1);
+
+            mstrcat(&bytecode, temp);
+
+            free(temp);
+
+            mstrcat(&bytecode, "STORE_NAME");
+            mstrcat(&bytecode, SEPARATOR);
+            mstrcat(&bytecode, varname);
+            mstrcat(&bytecode, INSTRUCTION_END);
+
+            free(varname);
+        }
     }
     else if (stringInList(line, "+="))
     {
@@ -844,7 +931,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             error("elif statement requires a condition", num - 1);
 
         int nextend = findNextEnd("elif", num, file_token_index, scope);
-        if (nextend == -1)
+        if (nextend < 0)
             error("elif statement missing 'end' keyword", num - 1);
 
         mstrcat(&bytecode, "JUMP_TO");
@@ -1071,6 +1158,27 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 error("invalid syntax", num - 1);
 
             mstrcat(&bytecode, "DEL_VAR");
+            mstrcat(&bytecode, SEPARATOR);
+            mstrcat(&bytecode, line[i]);
+            mstrcat(&bytecode, INSTRUCTION_END);
+        }
+    }
+    else if (!strcmp(line[0], "global"))
+    {
+        if (isInline)
+            error("global statement must be at the start of a line", num - 1);
+
+        mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        for (int i = 1; i < len; i++)
+        {
+            if (!strcmp(line[i], ","))
+                continue;
+
+            if (!isidentifier(line[i]))
+                error("invalid syntax", num - 1);
+
+            mstrcat(&bytecode, "MAKE_GLOBAL");
             mstrcat(&bytecode, SEPARATOR);
             mstrcat(&bytecode, line[i]);
             mstrcat(&bytecode, INSTRUCTION_END);
@@ -2136,7 +2244,7 @@ char * quokka_compile_fname(char * filename)
     if (!buffer)
         return 0;
 
-    // pushTrash(buffer);
+    pushTrash(buffer);
 
     return quokka_compile_raw(buffer, 0);
 }
@@ -2203,7 +2311,9 @@ char ** quokka_file_tok(char * text)
             tokenstr = realloc(tokenstr, strlen(tokenstr) + strlen(separator) + 1);
             strncat(tokenstr, separator, strlen(separator));
         }
-        if (c == '\'' && !(
+
+        if (comment >= 2);
+        else if (c == '\'' && !(
             dq || rb > 0 || sb > 0 || cb > 0))
             sq = !sq;
         else if (c == '"' && !(
@@ -2276,7 +2386,7 @@ char ** quokka_file_tok(char * text)
     output = realloc(output, (i + 2) * sizeof(char *));
     output[i + 1] = NULL;
 
-    // pushTrash(tokenstr);
+    pushTrash(tokenstr);
 
     return output;
 }
@@ -2434,7 +2544,7 @@ char ** quokka_tok(char * line)
     output = realloc(output, (i + 2) * sizeof(char *));
     output[i + 1] = NULL;
 
-    // pushTrash(tokenstr);
+    pushTrash(tokenstr);
 
     return output;
 }

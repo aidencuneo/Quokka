@@ -1,14 +1,71 @@
-Object __add___list(int argc, Object * argv)
+Object * __setindex___list(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1].name, "list"))
+    if (strcmp(argv[1]->name, "int"))
     {
-        Object * first = objectGetAttr(argv[0], "value");
-        Object * secnd = objectGetAttr(argv[1], "value");
+        char * err = malloc(40 + strlen(argv[1]->name) + 1 + 1);
+        strcpy(err, "list index argument must be 'int', not '");
+        strcat(err, argv[1]->name);
+        strcat(err, "'");
+        error(err, line_num);
+    }
+
+    int ind = ((int *)objectGetAttr(argv[1], "value"))[0];
+    int length = ((int *)objectGetAttr(argv[0], "length"))[0];
+
+    // If index is -1, use length - 1
+    if (ind < 0)
+        ind = length + ind;
+
+    // Check bounds
+    if (ind >= length)
+    {
+        char * indstr = intToStr(ind);
+        char * lenstr = intToStr(length);
+
+        char * err = malloc(25 + strlen(indstr) + 4 + strlen(lenstr) + 1);
+        strcpy(err, "list index out of range, ");
+        strcat(err, indstr);
+        strcat(err, " >= ");
+        strcat(err, lenstr);
+
+        free(indstr);
+        free(lenstr);
+
+        error(err, line_num);
+    }
+    if (ind < 0)
+    {
+        char * indstr = intToStr(ind);
+
+        char * err = malloc(25 + strlen(indstr) + 4 + 1);
+        strcpy(err, "list index out of range, ");
+        strcat(err, indstr);
+        strcat(err, " < 0");
+
+        free(indstr);
+
+        error(err, line_num);
+    }
+
+    // Set the index
+    ((Object **)objectGetAttr(argv[0], "value"))[ind] = argv[2];
+
+    // Push a COPY of this Object * to memory
+
+    return argv[0];
+}
+
+Object * __add___list(int argc, Object ** argv)
+{
+    if (!strcmp(argv[1]->name, "list"))
+    {
+        Object ** first = objectGetAttr(argv[0], "value");
+        Object ** secnd = objectGetAttr(argv[1], "value");
 
         int firstlen = ((int *)objectGetAttr(argv[0], "length"))[0];
         int secndlen = ((int *)objectGetAttr(argv[1], "length"))[0];
 
-        Object * third = malloc((firstlen + secndlen) * sizeof(Object));
+        Object ** third = malloc((firstlen + secndlen) * sizeof(Object *));
 
         // Add first list to final list
         for (int i = 0; i < firstlen; i++)
@@ -18,29 +75,29 @@ Object __add___list(int argc, Object * argv)
         for (int i = 0; i < secndlen; i++)
             third[firstlen + i] = secnd[i];
 
-        Object ret = makeList(firstlen + secndlen, third, 0);
+        Object * ret = makeList(firstlen + secndlen, third, 0);
 
         free(third);
 
         return ret;
     }
 
-    char * err = malloc(18 + strlen(argv[1].name) + 30 + 1);
+    char * err = malloc(18 + strlen(argv[1]->name) + 30 + 1);
     strcpy(err, "types 'list' and '");
-    strcat(err, argv[1].name);
+    strcat(err, argv[1]->name);
     strcat(err, "' are invalid operands for '+'");
     error(err, line_num);
 
     return makeNull();
 }
 
-Object __index___list(int argc, Object * argv)
+Object * __index___list(int argc, Object ** argv)
 {
-    if (strcmp(argv[1].name, "int"))
+    if (strcmp(argv[1]->name, "int"))
     {
-        char * err = malloc(40 + strlen(argv[1].name) + 1 + 1);
+        char * err = malloc(40 + strlen(argv[1]->name) + 1 + 1);
         strcpy(err, "list index argument must be 'int', not '");
-        strcat(err, argv[1].name);
+        strcat(err, argv[1]->name);
         strcat(err, "'");
         error(err, line_num);
     }
@@ -58,25 +115,25 @@ Object __index___list(int argc, Object * argv)
     if (ind < 0)
         return makeNull();
 
-    Object obj = ((Object *)objectGetAttr(argv[0], "value"))[ind];
+    Object * obj = ((Object **)objectGetAttr(argv[0], "value"))[ind];
 
-    // Push a COPY of this Object to memory
+    // Push a COPY of this Object * to memory
 
     return obj;//objectCopy(obj);
 }
 
-Object __sizeof___list(int argc, Object * argv)
+Object * __sizeof___list(int argc, Object ** argv)
 {
-    int * thisvalue = objectGetAttr(argv[0], "value");
+    Object ** thisvalue = objectGetAttr(argv[0], "value");
     int * length = objectGetAttr(argv[0], "length");
 
     int * size = makeIntPtr(sizeof(argv[0]) + (sizeof(thisvalue[0]) * length[0]));
     // pushTrash(size);
 
-    return makeInt(size);
+    return makeInt(size, 1);
 }
 
-Object __copy___list(int argc, Object * argv)
+Object * __copy___list(int argc, Object ** argv)
 {
     return makeList(
         ((int *)objectGetAttr(argv[0], "length"))[0],
@@ -84,33 +141,35 @@ Object __copy___list(int argc, Object * argv)
         0); // 0 so it doesn't flip
 }
 
-Object __len___list(int argc, Object * argv)
+Object * __len___list(int argc, Object ** argv)
 {
-    return makeInt(objectGetAttr(argv[0], "length"));
+    int * length = objectGetAttr(argv[0], "length");
+
+    return makeInt(makeIntPtr(length[0]), 1);
 }
 
-Object __bool___list(int argc, Object * argv)
+Object * __bool___list(int argc, Object ** argv)
 {
     int length = ((int *)objectGetAttr(argv[0], "length"))[0];
 
     if (length)
-        return makeInt(&truePtr);
-    return makeInt(&falsePtr);
+        return makeInt(&truePtr, 0);
+    return makeInt(&falsePtr, 0);
 }
 
-Object __disp___list(int argc, Object * argv)
+Object * __disp___list(int argc, Object ** argv)
 {
     char * out = malloc(2);
     strcpy(out, "[");
 
-    Object * lst = objectGetAttr(argv[0], "value");
+    Object ** lst = objectGetAttr(argv[0], "value");
     int lstlen = ((int *)objectGetAttr(argv[0], "length"))[0];
 
     for (int p = 0; p < lstlen; p++)
     {
-        Object * arglist = makeArglist(lst[p]);
+        Object ** arglist = makeArglist(lst[p]);
 
-        Object disp = q_function_display(1, arglist);
+        Object * disp = q_function_display(1, arglist);
 
         free(arglist);
 
@@ -128,9 +187,26 @@ Object __disp___list(int argc, Object * argv)
     return makeString(out);
 }
 
-Object makeList(int length, Object * value, int flipped)
+Object * __free___list(int argc, Object ** argv)
 {
-    Object * lst = malloc(length * sizeof(Object));
+    Object ** thisvalue = objectGetAttr(argv[0], "value");
+    int * length = objectGetAttr(argv[0], "length");
+
+    for (int i = 0; i < length[0]; i++)
+    {
+        // Unreference each Object inside this list
+        objUnref(thisvalue[i]);
+    }
+
+    free(thisvalue);
+    free(length);
+
+    return makeNull();
+}
+
+Object * makeList(int length, Object ** value, int flipped)
+{
+    Object ** lst = malloc(length * sizeof(Object *));
 
     // Contents of this list will be freed after program execution
     // pushTrash(lst);
@@ -145,20 +221,25 @@ Object makeList(int length, Object * value, int flipped)
     }
 
     int * len_ptr = makeIntPtr(length);
-    // pushTrash(len_ptr);
 
-    Object self;
+    Object * self = objectPointer();
 
-    self.name = "list";
+    self->name = "list";
 
-    // 18 Attributes
-    self.names = malloc(18 * sizeof(char *));
-    self.values = malloc(18 * sizeof(void *));
-    self.value_count = 0;
+    // 21 Attributes
+    self->names = malloc(21 * sizeof(char *));
+    self->values = malloc(21 * sizeof(void *));
+    self->value_count = 0;
 
     // Values
     self = objectAddAttr(self, "value", lst);
     self = objectAddAttr(self, "length", len_ptr);
+
+    // Three argument methods
+
+    // __setindex__
+    self = objectAddAttr(self, "__setindex__", &__setindex___list);
+    self = objectAddAttr(self, "__setindex__argc", &threeArgc);
 
     // Two argument methods
 
@@ -193,8 +274,11 @@ Object makeList(int length, Object * value, int flipped)
     self = objectAddAttr(self, "__disp__argc", &oneArgc);
 
     // __string__
-    self = addObjectValue(self, "__string__", &__disp___list);
-    self = addObjectValue(self, "__string__argc", &oneArgc);
+    self = objectAddAttr(self, "__string__", &__disp___list);
+    self = objectAddAttr(self, "__string__argc", &oneArgc);
+
+    // __free__
+    self = objectAddAttr(self, "__free__", &__free___list);
 
     return self;
 }
