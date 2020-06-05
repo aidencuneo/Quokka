@@ -123,10 +123,10 @@ Object * makeInt(int * value, int is_malloc_ptr);
 Object * makeIntRaw(int * value, int is_malloc_ptr);
 
 // long
-Object * makeLong(long long * value);
+Object * makeLong(long long * value, int is_malloc_ptr);
 
 // string
-Object * makeString(char * value);
+Object * makeString(char * value, int is_malloc_ptr);
 
 // list
 Object * makeList(int length, Object ** value, int flipped);

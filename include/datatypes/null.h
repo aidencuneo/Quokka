@@ -8,7 +8,7 @@ Object * __sizeof___null(int argc, Object ** argv)
 
 Object * __disp___null(int argc, Object ** argv)
 {
-    return makeString("null");
+    return makeString("null", 0);
 }
 
 Object * __bool___null(int argc, Object ** argv)

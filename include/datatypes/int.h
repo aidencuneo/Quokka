@@ -6,7 +6,6 @@ Object * __add___int(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         int * third = makeIntPtr(first[0] + secnd[0]);
-        // pushTrash(third);
 
         return makeInt(third, 1);
     }
@@ -16,9 +15,8 @@ Object * __add___int(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(first[0] + secnd[0]);
-        // pushTrash(third);
 
-        return makeLong(third);
+        return makeLong(third, 1);
     }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
@@ -38,7 +36,6 @@ Object * __sub___int(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         int * third = makeIntPtr(first[0] - secnd[0]);
-        // pushTrash(third);
 
         return makeInt(third, 1);
     }
@@ -48,9 +45,8 @@ Object * __sub___int(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(first[0] - secnd[0]);
-        // pushTrash(third);
 
-        return makeLong(third);
+        return makeLong(third, 1);
     }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
@@ -70,7 +66,6 @@ Object * __mul___int(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         int * third = makeIntPtr(first[0] * secnd[0]);
-        // pushTrash(third);
 
         return makeInt(third, 1);
     }
@@ -80,9 +75,8 @@ Object * __mul___int(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(first[0] * secnd[0]);
-        // pushTrash(third);
 
-        return makeLong(third);
+        return makeLong(third, 1);
     }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
@@ -105,7 +99,6 @@ Object * __div___int(int argc, Object ** argv)
             return makeInt(&falsePtr, 0);
 
         int * third = makeIntPtr(first[0] / secnd[0]);
-        // pushTrash(third);
 
         return makeInt(third, 1);
     }
@@ -118,9 +111,8 @@ Object * __div___int(int argc, Object ** argv)
             return makeInt(&falsePtr, 0);
 
         long long * third = makeLLPtr(first[0] / secnd[0]);
-        // pushTrash(third);
 
-        return makeLong(third);
+        return makeLong(third, 1);
     }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
@@ -140,7 +132,6 @@ Object * __pow___int(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         int * third = makeIntPtr(ipowMath(first[0], secnd[0]));
-        // pushTrash(third);
 
         return makeInt(third, 1);
     }
@@ -150,9 +141,8 @@ Object * __pow___int(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(lpowMath(first[0], secnd[0]));
-        // pushTrash(third);
 
-        return makeLong(third);
+        return makeLong(third, 1);
     }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
@@ -346,9 +336,8 @@ Object * __disp___int(int argc, Object ** argv)
     int * thisvalue = objectGetAttr(argv[0], "value");
 
     char * tostr = intToStr(thisvalue[0]);
-    // pushTrash(tostr);
 
-    return makeString(tostr);
+    return makeString(tostr, 1);
 }
 
 Object * __bool___int(int argc, Object ** argv)
@@ -365,6 +354,13 @@ Object * __int___int(int argc, Object ** argv)
     int * first = objectGetAttr(argv[0], "value");
 
     return makeInt(makeIntPtr(first[0]), 1);
+}
+
+Object * __long___int(int argc, Object ** argv)
+{
+    int * first = objectGetAttr(argv[0], "value");
+
+    return makeLong(makeLLPtr(first[0]), 1);
 }
 
 Object * __free___int(int argc, Object ** argv)
@@ -393,16 +389,16 @@ Object * makeIntRaw(int * value, int is_malloc_ptr)
 
     self->name = "int";
 
-    // 33 to 34 Attributes
+    // 35 to 36 Attributes
     if (is_malloc_ptr)
     {
-        self->names = malloc(34 * sizeof(char *));
-        self->values = malloc(34 * sizeof(void *));
+        self->names = malloc(36 * sizeof(char *));
+        self->values = malloc(36 * sizeof(void *));
     }
     else
     {
-        self->names = malloc(33 * sizeof(char *));
-        self->values = malloc(33 * sizeof(void *));
+        self->names = malloc(35 * sizeof(char *));
+        self->values = malloc(35 * sizeof(void *));
     }
     self->value_count = 0;
 
@@ -475,6 +471,10 @@ Object * makeIntRaw(int * value, int is_malloc_ptr)
     // __int__
     self = objectAddAttr(self, "__int__", &__int___int);
     self = objectAddAttr(self, "__int__argc", &oneArgc);
+
+    // __long__
+    self = objectAddAttr(self, "__long__", &__long___int);
+    self = objectAddAttr(self, "__long__argc", &oneArgc);
 
     // // __string__
     // self = objectAddAttr(self, "__string__", &__disp___int);

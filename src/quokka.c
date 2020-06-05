@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <signal.h>
+#include <inttypes.h>
 
 // CLI options (bools):
 int verbose = 0;
@@ -226,7 +227,6 @@ int main(int argc, char ** argv)
         resetTrash();
 
         interp_init();
-        println("YO");
         quokka_interpret(main_bytecode);
 
         // freeMemory();

@@ -34,13 +34,22 @@ Object * q_function_display(int argc, Object ** argv)
     }
     else
     {
-        mstrcattrip(&out, "<", obj->name);
-        mstrcat(&out, ">");
+        char * obj_addr = strObjAddress(obj);
+
+        char * temp = malloc(2 + strlen(obj->name) + 12 + strlen(obj_addr) + 1 + 1);
+        strcpy(temp, "<'");
+        strcat(temp, obj->name);
+        strcat(temp, "' Object at ");
+        strcat(temp, obj_addr);
+        strcat(temp, ">");
+
+        mstrcat(&out, temp);
+
+        free(obj_addr);
+        free(temp);
     }
 
-    // pushTrash(out);
-
-    return makeString(out);
+    return makeString(out, 1);
 }
 
 Object * q_function_print(int argc, Object ** argv)
@@ -89,7 +98,7 @@ Object * q_function_print(int argc, Object ** argv)
 
     long long * llptr = makeLLPtr(ret);
 
-    return makeLong(llptr);
+    return makeLong(llptr, 1);
 }
 
 Object * q_function_println(int argc, Object ** argv)
@@ -143,7 +152,7 @@ Object * q_function_println(int argc, Object ** argv)
 
     long long * llptr = makeLLPtr(ret);
 
-    return makeLong(llptr);
+    return makeLong(llptr, 1);
 }
 
 Object * q_function_input(int argc, Object ** argv)
@@ -173,9 +182,7 @@ Object * q_function_input(int argc, Object ** argv)
 
     buffer[buflen - 1] = '\0';
 
-    // pushTrash(buffer);
-
-    return makeString(buffer);
+    return makeString(buffer, 1);
 }
 
 
@@ -318,7 +325,7 @@ Object * q_function_long(int argc, Object ** argv)
 
 Object * q_function_type(int argc, Object ** argv)
 {
-    return makeString(argv[0]->name);
+    return makeString(argv[0]->name, 0);
 }
 
 Object * q_function_len(int argc, Object ** argv)
@@ -366,19 +373,21 @@ Object * q_function_exec(int argc, Object ** argv)
 
 Object * q_function_exit(int argc, Object ** argv)
 {
-    freeVars();
-    freeStack();
-    freeRetStack();
+    // freeVars();
+    // freeStack();
+    // freeRetStack();
     // emptyTrash();
 
-    // Free scope stack (from compilation)
-    free(scpstk);
-    free(scps);
-    free(scplines);
+    // // Free scope stack (from compilation)
+    // free(scpstk);
+    // free(scps);
+    // free(scplines);
 
-    free(full_file_name);
-    free(full_dir_name);
-    free(main_bytecode);
+    // free(full_file_name);
+    // free(full_dir_name);
+    // free(main_bytecode);
+
+    cleanupAll();
 
     exit(1);
 
@@ -469,7 +478,7 @@ Object * q_function_tochar(int argc, Object ** argv)
     charptr[0] = val;
     charptr[1] = 0;
 
-    return makeString(charptr);
+    return makeString(charptr, 1);
 }
 
 Object * q_function_charcode(int argc, Object ** argv)

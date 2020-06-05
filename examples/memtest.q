@@ -1,17 +1,28 @@
-num = 15
-lst = [num, num, num]
-println(lst)
+// Declaring two variables with the EXACT same constant
 
-// println(15)
-// println(15, 10, 69, 690, 69900)
+num_one = 12
+num_two = num_one
 
-// a = 7
-// b = 10
-// c = 13
-// println(a, b, c)
-// println(8, 11, 14)
-// println(8 - 11, b * c)
-// println('+ ' + ' -')
+println(string(num_one) + ', ' + string(num_two))
 
-// nil = println('Oh')
-// println(nil)
+println('num_one == num_two:', num_one == num_two)
+println('num_one is num_two:', num_one is num_two)
+println('')
+
+// Declaring two variables using separate constants
+
+num_one = 15
+num_two = 15
+
+println(string(num_one) + ', ' + string(num_two))
+
+println('num_one == num_two:', num_one == num_two)
+println('num_one is num_two:', num_one is num_two)
+println('')
+
+// Using the address operator
+
+str_var = 'This is a string'
+println('Address of str_var is', &str_var)
+
+println(println)

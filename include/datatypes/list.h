@@ -182,9 +182,7 @@ Object * __disp___list(int argc, Object ** argv)
 
     mstrcat(&out, "]");
 
-    // pushTrash(out);
-
-    return makeString(out);
+    return makeString(out, 1);
 }
 
 Object * __free___list(int argc, Object ** argv)

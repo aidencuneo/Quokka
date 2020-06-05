@@ -9,9 +9,7 @@ Object * __add___string(int argc, Object ** argv)
         strcpy(third, first);
         strcat(third, secnd);
 
-        // pushTrash(third);
-
-        return makeString(third);
+        return makeString(third, 1);
     }
     else if (!strcmp(argv[1]->name, "null"))
     {
@@ -26,9 +24,7 @@ Object * __add___string(int argc, Object ** argv)
 
         free(arglist);
 
-        // pushTrash(third);
-
-        return makeString(third);
+        return makeString(third, 1);
     }
 
     char * err = malloc(20 + strlen(argv[1]->name) + 30 + 1);
@@ -55,9 +51,7 @@ Object * __mul___string(int argc, Object ** argv)
             mstrcat(&third, first);
         }
 
-        // pushTrash(third);
-
-        return makeString(third);
+        return makeString(third, 1);
     }
 
     char * err = malloc(20 + strlen(argv[1]->name) + 30 + 1);
@@ -111,7 +105,7 @@ Object * __index___string(int argc, Object ** argv)
         char * chst = malloc(1);
         chst[0] = '\0';
 
-        return makeString(chst);
+        return makeString(chst, 1);
     }
 
     if (ind < 0)
@@ -119,7 +113,7 @@ Object * __index___string(int argc, Object ** argv)
         char * chst = malloc(1);
         chst[0] = '\0';
 
-        return makeString(chst);
+        return makeString(chst, 1);
     }
 
     char ch = ((char *)objectGetAttr(argv[0], "value"))[ind];
@@ -128,7 +122,7 @@ Object * __index___string(int argc, Object ** argv)
     chst[0] = ch;
     chst[1] = '\0';
 
-    return makeString(chst);
+    return makeString(chst, 1);
 }
 
 Object * __sizeof___string(int argc, Object ** argv)
@@ -142,7 +136,9 @@ Object * __sizeof___string(int argc, Object ** argv)
 
 Object * __copy___string(int argc, Object ** argv)
 {
-    return makeString((char *)objectGetAttr(argv[0], "value"));
+    char * thisvalue = (char *)objectGetAttr(argv[0], "value");
+
+    return makeString(strdup(thisvalue), 1);
 }
 
 Object * __len___string(int argc, Object ** argv)
@@ -159,7 +155,7 @@ Object * __disp___string(int argc, Object ** argv)
     char * selftext = (char *)objectGetAttr(argv[0], "value");
     char * rawst = makeRawString(selftext);
 
-    return makeString(rawst);
+    return makeString(rawst, 1);
 }
 
 Object * __bool___string(int argc, Object ** argv)
@@ -186,7 +182,7 @@ Object * __long___string(int argc, Object ** argv)
 
     long long * tolong = makeLLPtr(strtoll(thisvalue, NULL, 10));
 
-    return makeLong(tolong);
+    return makeLong(tolong, 1);
 }
 
 Object * __string___string(int argc, Object ** argv)
@@ -200,20 +196,34 @@ Object * __string___string(int argc, Object ** argv)
 
     char * thisvalue = ((char *)objectGetAttr(argv[0], "value"));
 
-    char * valcopy = strdup(thisvalue);
-
-    return makeString(valcopy);
+    return makeString(strdup(thisvalue), 1);
 }
 
-Object * makeString(char * value)
+Object * __free___string(int argc, Object ** argv)
+{
+    char * thisvalue = objectGetAttr(argv[0], "value");
+    free(thisvalue);
+
+    return makeNull();
+}
+
+Object * makeString(char * value, int is_malloc_ptr)
 {
     Object * self = objectPointer();
 
     self->name = "string";
 
-    // 25 Attributes
-    self->names = malloc(25 * sizeof(char *));
-    self->values = malloc(25 * sizeof(void *));
+    // 25 to 26 Attributes
+    if (is_malloc_ptr)
+    {
+        self->names = malloc(26 * sizeof(char *));
+        self->values = malloc(26 * sizeof(void *));
+    }
+    else
+    {
+        self->names = malloc(25 * sizeof(char *));
+        self->values = malloc(25 * sizeof(void *));
+    }
     self->value_count = 0;
 
     self = objectAddAttr(self, "value", value);
@@ -269,6 +279,12 @@ Object * makeString(char * value)
     // __string__
     self = objectAddAttr(self, "__string__", &__string___string);
     self = objectAddAttr(self, "__string__argc", &oneArgc);
+
+    if (is_malloc_ptr)
+    {
+        // __free__
+        self = objectAddAttr(self, "__free__", &__free___string);
+    }
 
     return self;
 }

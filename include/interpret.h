@@ -123,17 +123,24 @@ void freeVars()
 // Cleanup (ONLY called on a sudden exit)
 void cleanupAll()
 {
-    free(bytecode_constants);
-    free(file_tokens);
+    // free(bytecode_constants);
+    // free(file_tokens);
+    free(bc_tokens);
+
+    free(scpstk);
+    free(scps);
+    free(scplines);
 
     free(full_file_name);
     free(full_dir_name);
     free(main_bytecode);
-    free(bc_tokens);
 
-    freeVars();
     freeStack();
     freeRetStack();
+    freeVars();
+    freeConsts();
+
+    emptyTrash();
 }
 
 // Init
@@ -392,7 +399,7 @@ void * objectGetAttr(Object * obj, char * name)
 }
 
 
-// Free an Object * and all objects within (if Object * is iterable)
+// Free an Object and all objects within (if Object is iterable)
 void freeObjectR(Object * obj)
 {
     // If obj is iterable, free all items within it
@@ -408,11 +415,13 @@ void freeObjectR(Object * obj)
 
     free(obj->names);
     free(obj->values);
+    free(obj);
 }
 
-// Free an object, no recursion for lists
+// Free an Object using the __free__ attribute if the Object has one
 void freeObject(Object * obj)
 {
+    // Call the obj.__free__ function to properly free it
     void * freeFunction = objectGetAttr(obj, "__free__");
     if (freeFunction != NULL)
     {
@@ -433,21 +442,19 @@ void objUnref(Object * obj)
 
     if (obj->refs <= 0)
     {
-        // Call the obj.__free__ function to properly free a particular object
-        println("Unreferencing");
+        // println("Unreferencing");
         freeObject(obj);
     }
-    else println("Unreferencing??");
+    // else println("Unreferencing??");
 }
 
 // Dereference an Object * (set references to 0)
 void objDeref(Object * obj)
 {
-    // Call the obj.__free__ function to properly free a particular object
     // If this object is not dereferenced, dereference it
     if (obj->refs != -1)
     {
-        println("Dereferencing");
+        // println("Dereferencing");
         freeObject(obj);
     }
 }
@@ -806,9 +813,8 @@ void quokka_interpret_line_tokens(char ** line)
     if (!strcmp(line[0], "LOAD_STRING"))
     {
         char * literal_str = makeLiteralString(line[1]);
-        // pushTrash(literal_str);
 
-        pushConst(makeString(literal_str));
+        pushConst(makeString(literal_str, 1));
     }
     else if (!strcmp(line[0], "LOAD_INT"))
     {
@@ -817,7 +823,7 @@ void quokka_interpret_line_tokens(char ** line)
         {
             long long * llptr = makeLLPtrFromStr(line[1]);
 
-            pushConst(makeLong(llptr));
+            pushConst(makeLong(llptr, 1));
         }
         else
         {
@@ -829,9 +835,8 @@ void quokka_interpret_line_tokens(char ** line)
     else if (!strcmp(line[0], "LOAD_LONG"))
     {
         long long * llptr = makeLLPtrFromStr(line[1]);
-        // pushTrash(llptr);
 
-        pushConst(makeLong(llptr));
+        pushConst(makeLong(llptr, 1));
     }
     if (!strcmp(line[0], "LOAD_NULL"))
     {
@@ -846,12 +851,13 @@ void quokka_interpret_line_tokens(char ** line)
     else if (!strcmp(line[0], "LOAD_NAME"))
     {
         pushTop(getVar(line[1]));
-        // Most of the slowdown was caused by this line:
-        // pushTop(objectCopy(getVar(line[1])));
     }
     else if (!strcmp(line[0], "STORE_NAME"))
     {
-        addVar(line[1], popTop());
+        Object * obj = popTop();
+        obj->refs--;
+
+        addVar(line[1], obj);
     }
     else if (!strcmp(line[0], "MAKE_LIST"))
     {
@@ -865,7 +871,11 @@ void quokka_interpret_line_tokens(char ** line)
             value[i] = popTop();
         }
 
-        pushTop(makeList(lstsize, value, 1));
+        Object * lst = makeList(lstsize, value, 1);
+        lst->refs = -1;
+
+        // Pushing to stack will reference this list
+        pushTop(lst);
 
         free(value);
     }
@@ -1062,6 +1072,17 @@ void quokka_interpret_line_tokens(char ** line)
 
     //     freeObjectR(obj);
     // }
+    else if (!strcmp(line[0], "GET_ADDRESS"))
+    {
+        Object * first = popTop();
+
+        // Get pointer address as an int
+        unsigned long firstaddr = intObjAddress(first);
+
+        pushTop(makeLong(makeLLPtr(firstaddr), 1));
+
+        objUnref(first);
+    }
     else if (!strcmp(line[0], "UNARY_ADD"))
     {
         Object * first = popTop();
@@ -1369,6 +1390,24 @@ void quokka_interpret_line_tokens(char ** line)
         objUnref(secnd);
 
         free(arglist);
+    }
+    else if (!strcmp(line[0], "CMP_IDENTICAL"))
+    {
+        Object * first = popTop();
+        Object * secnd = popTop();
+
+        // Get pointer addresses
+        unsigned long firstaddr = intObjAddress(first);
+        unsigned long secndaddr = intObjAddress(secnd);
+
+        // Check if both Objects are IDENTICAL
+        if (firstaddr == secndaddr)
+            pushTop(makeInt(&truePtr, 0));
+        else
+            pushTop(makeInt(&falsePtr, 0));
+
+        objUnref(first);
+        objUnref(secnd);
     }
     else if (!strcmp(line[0], "CMP_NEQ"))
     {

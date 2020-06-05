@@ -6,9 +6,8 @@ Object * __add___long(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(first[0] + secnd[0]);
-        // pushTrash(third);
 
-        return makeLong(third);
+        return makeLong(third, 1);
     }
     else if (!strcmp(argv[1]->name, "long"))
     {
@@ -16,9 +15,8 @@ Object * __add___long(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(first[0] + secnd[0]);
-        // pushTrash(third);
 
-        return makeLong(third);
+        return makeLong(third, 1);
     }
 
     char * err = malloc(18 + strlen(argv[1]->name) + 30 + 1);
@@ -38,9 +36,8 @@ Object * __sub___long(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(first[0] - secnd[0]);
-        // pushTrash(third);
 
-        return makeLong(third);
+        return makeLong(third, 1);
     }
     else if (!strcmp(argv[1]->name, "long"))
     {
@@ -48,9 +45,8 @@ Object * __sub___long(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(first[0] - secnd[0]);
-        // pushTrash(third);
 
-        return makeLong(third);
+        return makeLong(third, 1);
     }
 
     char * err = malloc(18 + strlen(argv[1]->name) + 30 + 1);
@@ -70,9 +66,8 @@ Object * __mul___long(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(first[0] * secnd[0]);
-        // pushTrash(third);
 
-        return makeLong(third);
+        return makeLong(third, 1);
     }
     else if (!strcmp(argv[1]->name, "long"))
     {
@@ -80,9 +75,8 @@ Object * __mul___long(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(first[0] * secnd[0]);
-        // pushTrash(third);
 
-        return makeLong(third);
+        return makeLong(third, 1);
     }
 
     char * err = malloc(18 + strlen(argv[1]->name) + 30 + 1);
@@ -105,9 +99,8 @@ Object * __div___long(int argc, Object ** argv)
             return makeInt(&falsePtr, 0);
 
         long long * third = makeLLPtr(first[0] / secnd[0]);
-        // pushTrash(third);
 
-        return makeLong(third);
+        return makeLong(third, 1);
     }
     else if (!strcmp(argv[1]->name, "long"))
     {
@@ -118,9 +111,8 @@ Object * __div___long(int argc, Object ** argv)
             return makeInt(&falsePtr, 0);
 
         long long * third = makeLLPtr(first[0] / secnd[0]);
-        // pushTrash(third);
 
-        return makeLong(third);
+        return makeLong(third, 1);
     }
 
     char * err = malloc(18 + strlen(argv[1]->name) + 30 + 1);
@@ -140,9 +132,8 @@ Object * __pow___long(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(lpowMath(first[0], secnd[0]));
-        // pushTrash(third);
 
-        return makeLong(third);
+        return makeLong(third, 1);
     }
     else if (!strcmp(argv[1]->name, "long"))
     {
@@ -150,9 +141,8 @@ Object * __pow___long(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         long long * third = makeLLPtr(lpowMath(first[0], secnd[0]));
-        // pushTrash(third);
 
-        return makeLong(third);
+        return makeLong(third, 1);
     }
 
     char * err = malloc(18 + strlen(argv[1]->name) + 31 + 1);
@@ -345,9 +335,8 @@ Object * __neg___long(int argc, Object ** argv)
     long long * thisvalue = objectGetAttr(argv[0], "value");
 
     long long * negptr = makeLLPtr(-thisvalue[0]);
-    // pushTrash(negptr);
 
-    return makeLong(negptr);
+    return makeLong(negptr, 1);
 }
 
 Object * __disp___long(int argc, Object ** argv)
@@ -356,9 +345,8 @@ Object * __disp___long(int argc, Object ** argv)
 
     char * tostr = LLToStr(thisvalue[0]);
     mstrcat(&tostr, "L");
-    // pushTrash(tostr);
 
-    return makeString(tostr);
+    return makeString(tostr, 1);
 }
 
 Object * __bool___long(int argc, Object ** argv)
@@ -388,15 +376,23 @@ Object * __free___long(int argc, Object ** argv)
     return makeNull();
 }
 
-Object * makeLong(long long * value)
+Object * makeLong(long long * value, int is_malloc_ptr)
 {
     Object * self = objectPointer();
 
     self->name = "long";
 
-    // 34 Attributes
-    self->names = malloc(34 * sizeof(char *));
-    self->values = malloc(34 * sizeof(void *));
+    // 33 to 34 Attributes
+    if (is_malloc_ptr)
+    {
+        self->names = malloc(34 * sizeof(char *));
+        self->values = malloc(34 * sizeof(void *));
+    }
+    else
+    {
+        self->names = malloc(33 * sizeof(char *));
+        self->values = malloc(33 * sizeof(void *));
+    }
     self->value_count = 0;
 
     self = objectAddAttr(self, "value", value);
@@ -473,8 +469,11 @@ Object * makeLong(long long * value)
     // self = objectAddAttr(self, "__string__", &__disp___long);
     // self = objectAddAttr(self, "__string__argc", &oneArgc);
 
-    // __free__
-    self = objectAddAttr(self, "__free__", &__free___long);
+    if (is_malloc_ptr)
+    {
+        // __free__
+        self = objectAddAttr(self, "__free__", &__free___long);
+    }
 
     return self;
 }

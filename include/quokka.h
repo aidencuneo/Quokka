@@ -108,6 +108,21 @@ typedef Object * (*standard_func_def)(int argc, Object ** argv);
 /// All the rest
 //
 
+unsigned long intObjAddress(Object * ptr)
+{
+    return (uintptr_t)ptr;
+}
+
+char * strObjAddress(Object * ptr)
+{
+    // Can contain up to a 19 digit pointer address (in hexadecimal)
+    char * res = malloc(20);
+
+    snprintf(res, 20, "0x%" PRIXPTR, intObjAddress(ptr));
+
+    return res;
+}
+
 int carrsize(char ** arr)
 {
     int i;

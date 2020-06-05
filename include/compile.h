@@ -1472,7 +1472,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 if (lastwasop)
                     error("invalid syntax at 'is'", num - 1);
 
-                mstrcattrip(&operslist, "CMP_EQ", INSTRUCTION_END);
+                mstrcattrip(&operslist, "CMP_IDENTICAL", INSTRUCTION_END);
 
                 lastwasop = 1;
             }
@@ -1607,6 +1607,21 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcat(&bytecode, SEPARATOR);
         mstrcat(&bytecode, line[0]);
         mstrcat(&bytecode, INSTRUCTION_END);
+    }
+    else if (!strcmp(line[0], "&"))
+    {
+        // Set new line
+        if (!isInline)
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        arrlstrip(line);
+        len--;
+
+        char * temp = quokka_compile_line_tokens(line, num, len, 1);
+        mstrcat(&bytecode, temp);
+        free(temp);
+
+        mstrcattrip(&bytecode, "GET_ADDRESS", INSTRUCTION_END);
     }
     else if (stringInList(line, "+") ||
              stringInList(line, "-") ||
