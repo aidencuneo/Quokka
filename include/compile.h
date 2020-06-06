@@ -2308,6 +2308,8 @@ char ** quokka_file_tok(char * text)
         q = p;
         char c = text[i];
 
+        int semicolon = 0;
+
         if      (isalpha(c))
             p = 'A'; // Alphabet
         else if (isdigit(c))
@@ -2315,16 +2317,19 @@ char ** quokka_file_tok(char * text)
         else if (ispunct(c))
             p = 'S'; // Symbol
         else if (c == '\n')
-            p = 'L'; // Line ending
+            p = 'L'; // Line endings
         else if (isspace(c))
             p = 'W'; // Whitespace
 
-        if (p == 'L' && !(
+        if ((p == 'L' || c == ';') && !(
             sq || dq || bt || rb > 0 || sb > 0 || cb > 0
         ))
         {
             tokenstr = realloc(tokenstr, strlen(tokenstr) + strlen(separator) + 1);
             strncat(tokenstr, separator, strlen(separator));
+
+            if (c == ';')
+                semicolon = 1;
         }
 
         if (comment >= 2);
@@ -2368,8 +2373,12 @@ char ** quokka_file_tok(char * text)
         {
             if (comment && c != '/')
                 comment = 0;
-            tokenstr = realloc(tokenstr, strlen(tokenstr) + 1 + 1);
-            strncat(tokenstr, &c, 1);
+
+            if (!semicolon)
+            {
+                tokenstr = realloc(tokenstr, strlen(tokenstr) + 1 + 1);
+                strncat(tokenstr, &c, 1);
+            }
         }
 
         t = c;
