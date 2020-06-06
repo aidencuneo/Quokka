@@ -69,11 +69,17 @@ Object * __add___list(int argc, Object ** argv)
 
         // Add first list to final list
         for (int i = 0; i < firstlen; i++)
+        {
             third[i] = first[i];
+            third[i]->refs++;
+        }
 
         // Add second list to final list
         for (int i = 0; i < secndlen; i++)
+        {
             third[firstlen + i] = secnd[i];
+            third[firstlen + i]->refs++;
+        }
 
         Object * ret = makeList(firstlen + secndlen, third, 0);
 
@@ -117,9 +123,7 @@ Object * __index___list(int argc, Object ** argv)
 
     Object * obj = ((Object **)objectGetAttr(argv[0], "value"))[ind];
 
-    // Push a COPY of this Object * to memory
-
-    return obj;//objectCopy(obj);
+    return obj;
 }
 
 Object * __sizeof___list(int argc, Object ** argv)
@@ -128,7 +132,6 @@ Object * __sizeof___list(int argc, Object ** argv)
     int * length = objectGetAttr(argv[0], "length");
 
     int * size = makeIntPtr(sizeof(argv[0]) + (sizeof(thisvalue[0]) * length[0]));
-    // pushTrash(size);
 
     return makeInt(size, 1);
 }

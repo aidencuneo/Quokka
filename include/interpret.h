@@ -17,6 +17,9 @@ int const_alloc_size = 10;
 
 Object ** ret_stack;
 int ret_stack_size;
+int ret_stack_alloc;
+int ret_stack_alloc_size = 5;
+
 int can_return;
 
 // Bytecode file stuff
@@ -80,19 +83,21 @@ void resetConsts()
 }
 
 // Return Stack
-void resetRetStack()
+void freeRetStack()
 {
     for (int i = 0; i < ret_stack_size; i++)
         objUnref(ret_stack[i]);
 
     free(ret_stack);
-    ret_stack = malloc(sizeof(Object *));
-    ret_stack_size = 0;
 }
 
-void freeRetStack()
+void resetRetStack()
 {
-    free(ret_stack);
+    freeRetStack();
+
+    ret_stack_alloc = ret_stack_alloc_size;
+    ret_stack = malloc(ret_stack_alloc * sizeof(Object *));
+    ret_stack_size = 0;
 }
 
 // Var cleaning
@@ -452,7 +457,7 @@ void objUnref(Object * obj)
 void objDeref(Object * obj)
 {
     // If this object is not dereferenced, dereference it
-    if (obj->refs != -1)
+    if (obj->refs > -1)
     {
         // println("Dereferencing");
         freeObject(obj);
@@ -493,6 +498,19 @@ void pushTop(Object * obj)
     }
 
     obj->refs++;
+    stack[stack_size - 1] = obj;
+}
+
+// Push to top of stack and do NOT reference the Object being pushed
+void pushTopM(Object * obj)
+{
+    // Increment and use new stack_size in one expression
+    if (++stack_size >= stack_alloc)
+    {
+        stack_alloc += stack_alloc_size;
+        stack = realloc(stack, stack_alloc * sizeof(Object *));
+    }
+
     stack[stack_size - 1] = obj;
 }
 
@@ -548,16 +566,18 @@ Return Stack
 
 void pushRetTop(Object * obj)
 {
-    ret_stack = realloc(ret_stack, (ret_stack_size + 1) * sizeof(Object *));
-    ret_stack[ret_stack_size] = obj;
-    ret_stack_size++;
+    if (++ret_stack_size >= ret_stack_alloc)
+    {
+        ret_stack_alloc += ret_stack_alloc_size;
+        ret_stack = realloc(ret_stack, ret_stack_alloc * sizeof(Object *));
+    }
+
+    ret_stack[ret_stack_size - 1] = obj;
 }
 
 Object * popRetTop()
 {
-    ret_stack = realloc(ret_stack, (ret_stack_size + 1) * sizeof(Object *));
     ret_stack_size--;
-
     return ret_stack[ret_stack_size];
 }
 
@@ -872,7 +892,7 @@ void quokka_interpret_line_tokens(char ** line)
         }
 
         Object * lst = makeList(lstsize, value, 1);
-        lst->refs = -1;
+        // lst->refs = -1;
 
         // Pushing to stack will reference this list
         pushTop(lst);
@@ -1060,17 +1080,6 @@ void quokka_interpret_line_tokens(char ** line)
     // else if (!strcmp(line[0], "GET_ATTR"))
     // {
     //     Object * obj = popTop();
-
-    //     if (!objectHasAttr(obj, "__pos__"))
-    //     {
-    //         char * err = malloc(6 + strlen(obj->name) + 38 + 1);
-    //         strcpy(err, "type '");
-    //         strcat(err, obj->name);
-    //         strcat(err, "' does not have a method for unary '+'");
-    //         error(err, line_num);
-    //     }
-
-    //     freeObjectR(obj);
     // }
     else if (!strcmp(line[0], "GET_ADDRESS"))
     {
@@ -1932,11 +1941,11 @@ void quokka_interpret_line_tokens(char ** line)
                 arglist[i + 1] = arglist[i];
             arglist[0] = func;
 
-            pushTop(((standard_func_def)call_attr)(argcount, arglist));
+            pushTopM(((standard_func_def)call_attr)(argcount, arglist));
 
             // Unreference all arguments passed into this function (function itself included)
-            // for (int i = 0; i < argcount + 1; i++)
-            //     objUnref(arglist[i]);
+            for (int i = 0; i < argcount + 1; i++)
+                objUnref(arglist[i]);
         }
 
         free(arglist);
@@ -2019,11 +2028,11 @@ void quokka_interpret_line_tokens(char ** line)
             error(err, line_num);
         }
 
-        pushTop(((standard_func_def)setindex_attr)(3, arglist));
+        val = ((standard_func_def)setindex_attr)(3, arglist);
 
         objUnref(val);
         objUnref(ind);
-        objUnref(obj);
+        // Don't unreference the Object that just got assigned
 
         free(arglist);
     }

@@ -17,15 +17,6 @@ Object * __call___function(int argc, Object ** argv)
     stack = realloc(stack, stack_alloc * sizeof(Object *));
     stack_size = 0;
 
-    // char ** old_locals_names = malloc(locals.count * sizeof(char *));
-    // Object * old_locals_values = malloc(locals.count * sizeof(Object *));
-    // for (int i = 0; i < locals.count; i++)
-    // {
-    //     old_locals_names[i] = locals.names[i];
-    //     old_locals_values[i] = locals.values[i];
-    // }
-    // int old_locals_count = locals.count;
-
     // Function call will not affect currently defined locals
     int old_locals_offset = locals.offset;
     locals.offset = locals.count;
@@ -40,32 +31,31 @@ Object * __call___function(int argc, Object ** argv)
 
     // Vars
     int * intptr = makeIntPtr(argc);
-    // pushTrash(intptr);
 
     addVar("argc", makeInt(intptr, 1));
+    int argc_var = locals.count - 1;
 
     Object ** arglist = malloc(argc * sizeof(Object *));
     for (int i = 0; i < argc; i++)
+    {
         arglist[i] = argv[i + 1];
+        arglist[i]->refs++;
+    }
 
     addVar("argv", makeList(argc, arglist, 0));
+    int argv_var = locals.count - 1;
 
     free(arglist);
 
     // Interpret
     quokka_interpret(code);
 
+    // Clear argc and argv
+    // addVar("argc", makeNull());
+    // addVar("argv", makeNull());
+
     // Reset filepath
     current_file = old_file;
-
-    // int argcind = getVarIndex("argc");
-    // int argvind = getVarIndex("argv");
-
-    // if (argcind != -1)
-    //     delLVarIndex(argcind);
-
-    // if (argvind != -1)
-    //     delLVarIndex(argvind);
 
     bc_line = old_bc_line;
     bc_line_count = old_bc_line_count;
@@ -79,28 +69,14 @@ Object * __call___function(int argc, Object ** argv)
 
     for (int i = 0; i < old_stack_size; i++)
     {
-        pushTop(old_stack[i]);
+        pushTopM(old_stack[i]);
     }
 
     free(old_stack);
 
     // Recreate and realign variable lists (only locals for now)
+
     locals.offset = old_locals_offset;
-    // free(locals.names);
-    // free(locals.values);
-
-    // locals.count = old_locals_count;
-    // locals.names = malloc((locals.count + 1) * sizeof(char *));
-    // locals.values = malloc((locals.count + 1) * sizeof(Object *));
-
-    // for (int i = 0; i < locals.count; i++)
-    // {
-    //     locals.names[i] = old_locals_names[i];
-    //     locals.values[i] = old_locals_values[i];
-    // }
-
-    // free(old_locals_names);
-    // free(old_locals_values);
 
     // If there's anything to return, return it
     if (ret_stack_size)
@@ -109,6 +85,26 @@ Object * __call___function(int argc, Object ** argv)
     }
 
     // Return null by default
+    Object * null_obj = makeNull();
+    null_obj->refs++;
+
+    return null_obj;
+}
+
+Object * __free___function(int argc, Object ** argv)
+{
+    char * filepath = objectGetAttr(argv[0], "filepath");
+    char * value = objectGetAttr(argv[0], "value");
+
+    free(filepath);
+    free(value);
+
+    int * argminptr = objectGetAttr(argv[0], "__call__argmin");
+    int * argmaxptr = objectGetAttr(argv[0], "__call__argmax");
+
+    free(argminptr);
+    free(argmaxptr);
+
     return makeNull();
 }
 
@@ -116,16 +112,14 @@ Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax)
 {
     int * argminptr = makeIntPtr(argmin);
     int * argmaxptr = makeIntPtr(argmax);
-    // pushTrash(argminptr);
-    // pushTrash(argmaxptr);
 
     Object * self = objectPointer();
 
     self->name = "function";
 
-    // 5 Attributes
-    self->names = malloc(5 * sizeof(char *));
-    self->values = malloc(5 * sizeof(void *));
+    // 6 Attributes
+    self->names = malloc(6 * sizeof(char *));
+    self->values = malloc(6 * sizeof(void *));
     self->value_count = 0;
 
     // Values
@@ -136,6 +130,9 @@ Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax)
     self = objectAddAttr(self, "__call__", &__call___function);
     self = objectAddAttr(self, "__call__argmin", argminptr);
     self = objectAddAttr(self, "__call__argmax", argmaxptr);
+
+    // __free__
+    self = objectAddAttr(self, "__free__", &__free___function);
 
     return self;
 }

@@ -375,10 +375,18 @@ Object * makeInt(int * value, int is_malloc_ptr)
 {
     // If value == 0, return the already made constant for 0
     if (!value[0])
+    {
+        if (is_malloc_ptr)
+            free(value);
         return constants[0];
+    }
     // If value == 1, return the already made constant for 1
     if (value[0] == 1)
+    {
+        if (is_malloc_ptr)
+            free(value);
         return constants[1];
+    }
 
     return makeIntRaw(value, is_malloc_ptr);
 }
