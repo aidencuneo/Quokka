@@ -1157,10 +1157,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             if (!isidentifier(line[i]))
                 error("invalid syntax", num - 1);
 
-            mstrcat(&bytecode, "DEL_VAR");
-            mstrcat(&bytecode, SEPARATOR);
-            mstrcat(&bytecode, line[i]);
-            mstrcat(&bytecode, INSTRUCTION_END);
+            mstrcatline(&bytecode,
+                "DEL_VAR",
+                SEPARATOR,
+                line[i],
+                INSTRUCTION_END);
         }
     }
     else if (!strcmp(line[0], "global"))
@@ -1168,6 +1169,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (isInline)
             error("global statement must be at the start of a line", num - 1);
 
+        // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         for (int i = 1; i < len; i++)
@@ -1178,10 +1180,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             if (!isidentifier(line[i]))
                 error("invalid syntax", num - 1);
 
-            mstrcat(&bytecode, "MAKE_GLOBAL");
-            mstrcat(&bytecode, SEPARATOR);
-            mstrcat(&bytecode, line[i]);
-            mstrcat(&bytecode, INSTRUCTION_END);
+            mstrcatline(&bytecode,
+                "MAKE_GLOBAL",
+                SEPARATOR,
+                line[i],
+                INSTRUCTION_END);
         }
     }
     else if (!strcmp(line[0], "ret"))
@@ -1189,6 +1192,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (isInline)
             error("ret statement must be at the start of a line", num - 1);
 
+        // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         arrlstrip(line);
@@ -1208,6 +1212,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (isInline)
             error("import keyword must be at the start of a line", num - 1);
 
+        // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         for (int i = 1; i < len; i++)
@@ -1916,6 +1921,59 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         free(temp);
         free(templine);
     }
+    else if (stringInList(line, "."))
+    {
+        char * latestvalue = malloc(1);
+        strcpy(latestvalue, "");
+
+        int lastwasdot = 0;
+
+        for (int p = 0; p < len; p++)
+        {
+            if (!strlen(line[p]))
+                break;
+
+            if (!strcmp(line[p], "."))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                mstrcat(&bytecode, temp);
+                free(temp);
+
+                latestvalue = realloc(latestvalue, 1);
+                strcpy(latestvalue, "");
+
+                lastwasdot = 1;
+            }
+            else
+            {
+                if (lastwasdot)
+                {
+                    mstrcatline(&bytecode,
+                        "GET_ATTR",
+                        SEPARATOR,
+                        line[p],
+                        INSTRUCTION_END);
+                }
+                else
+                {
+                    latestvalue = realloc(latestvalue, strlen(latestvalue) + strlen(line[p]) + 1 + 1);
+                    strcat(latestvalue, line[p]);
+                    strcat(latestvalue, " ");
+                }
+
+                lastwasdot = 0;
+            }
+        }
+
+        if (strlen(latestvalue))
+        {
+            char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+            mstrcat(&bytecode, temp);
+            free(temp);
+        }
+
+        free(latestvalue);
+    }
     else if (startswith(line[len - 1], "(") && endswith(line[len - 1], ")") && len > 1)
     {
         // Set new line
@@ -2475,12 +2533,12 @@ char ** quokka_tok(char * line)
             (t == '-' || t == '+' || t == '*' || t == '/' || t == '=' || t == '>' || t == '<' || t == '!') && c == '='
         // ) && !(
         //     q == 'A' && c == '.' // Join together names like `word.upper` (second part is below)
+        // ) && !(
+        //     p == 'A' && t == '.' // Second part to the line above.
         ) && !(
-            p == 'A' && t == '.' // Second part to the line above.
+            t == '_' && p == 'A' // Join together names like `string_one` (second part is below)
         ) && !(
-            t == '_' && (p == 'A' || c == '.') // Join together names like `string_one` (second part is below)
-        ) && !(
-            (q == 'A' || t == '.') && c == '_' // Second part to the line above.
+            q == 'A' && c == '_' // Second part to the line above.
         ) && !(
             t == '_' && c == '_' // Join together double underscores `__`
         ) && !(

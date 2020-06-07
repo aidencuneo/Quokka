@@ -987,6 +987,8 @@ void quokka_interpret_line_tokens(char ** line)
         // Compile imported file
         compile_init();
         char * imported_bytecode = quokka_compile_fname(import_path);
+        free(bytecode_constants);
+        free(file_tokens);
 
         // Set up the environment for the interpret call
         Object ** old_stack = malloc(stack_size * sizeof(Object *));
@@ -1022,6 +1024,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Interpret the imported file
         quokka_interpret(imported_bytecode);
+
+        free(imported_bytecode);
 
         current_file = old_file;
 
@@ -1077,10 +1081,129 @@ void quokka_interpret_line_tokens(char ** line)
         // Immediately return result and exit the function
         bc_line = bc_line_count;
     }
-    // else if (!strcmp(line[0], "GET_ATTR"))
-    // {
-    //     Object * obj = popTop();
-    // }
+    else if (!strcmp(line[0], "GET_ATTR"))
+    {
+        Object * obj = popTop();
+
+        int gotten = 0;
+        int invalid = 0;
+
+        // The following type names are in alphabetical order
+
+        if (!strcmp(obj->name, "function"))
+        {
+            if (!strcmp(line[1], "value"))
+            {
+                char * func_value = objectGetAttr(obj, "value");
+                pushTop(makeString(func_value, 0));
+
+                gotten = 1;
+            }
+            else if (!strcmp(line[1], "filepath"))
+            {
+                char * func_path = objectGetAttr(obj, "filepath");
+                pushTop(makeString(func_path, 0));
+
+                gotten = 1;
+            }
+            else if (!strcmp(line[1], "__call__"))
+            {
+                pushTop(obj);
+
+                gotten = 1;
+            }
+            else if (startswith(line[1], "__"))
+                invalid = 1;
+        }
+        if (!strcmp(obj->name, "int"))
+        {
+            if (!strcmp(line[1], "value"))
+            {
+                pushTop(obj);
+
+                gotten = 1;
+            }
+            else if (startswith(line[1], "__"))
+                invalid = 1;
+        }
+        if (!strcmp(obj->name, "list"))
+        {
+            if (!strcmp(line[1], "value"))
+            {
+                pushTop(obj);
+
+                gotten = 1;
+            }
+            else if (!strcmp(line[1], "length"))
+            {
+                int * lstlen = objectGetAttr(obj, "length");
+                pushTop(makeInt(lstlen, 0));
+
+                gotten = 1;
+            }
+            else if (startswith(line[1], "__"))
+                invalid = 1;
+        }
+        if (!strcmp(obj->name, "long"))
+        {
+            if (!strcmp(line[1], "value"))
+            {
+                pushTop(obj);
+
+                gotten = 1;
+            }
+            else if (startswith(line[1], "__"))
+                invalid = 1;
+        }
+        if (!strcmp(obj->name, "null"))
+        {
+            if (!strcmp(line[1], "value"))
+            {
+                pushTop(obj);
+
+                gotten = 1;
+            }
+            // This will always be invalid, because null is designed
+            // to be a placeholder value, so there wouldn't be any
+            // purpose for retrieving attributes from null
+            else
+                invalid = 1;
+        }
+        if (!strcmp(obj->name, "string"))
+        {
+            if (!strcmp(line[1], "value"))
+            {
+                pushTop(obj);
+
+                gotten = 1;
+            }
+            else if (startswith(line[1], "__"))
+                invalid = 1;
+        }
+
+        if (!gotten)
+        {
+            void * attribute;
+            if (!invalid)
+                attribute = objectGetAttr(obj, line[1]);
+
+            if (attribute == NULL || invalid)
+            {
+                char * err = malloc(6 + strlen(obj->name) + 20 + strlen(line[1]) + 1 + 1);
+                strcpy(err, "type '");
+                strcat(err, obj->name);
+                strcat(err, "' has no attribute '");
+                strcat(err, line[1]);
+                strcat(err, "'");
+                error(err, line_num);
+            }
+
+            pushTop((Object *)attribute);
+        }
+
+        // Unreference the Object that we've retrieved an attribute from
+        objUnref(obj);
+    }
     else if (!strcmp(line[0], "GET_ADDRESS"))
     {
         Object * first = popTop();
