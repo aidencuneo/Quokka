@@ -1,5 +1,5 @@
 // VERSION STUFF
-#define VERSION "0.4.2"
+#define VERSION "0.4.4"
 
 // Defines
 #define LN10 2.3025850929940456840179914546844
@@ -68,7 +68,7 @@ void emptyTrash();
 void cleanupAll();
 
 // arrsize
-int carrsize(char * arr[]);
+int arrsize(char ** arr);
 int iarrsize(int * arr);
 
 // println
@@ -84,11 +84,6 @@ char cprint(char value);
 char * cpprint(char * value);
 
 // Definitions
-#define arrsize(value) _Generic((value),\
-    char **  : carrsize,\
-    int *    : iarrsize,\
-    default  : carrsize)(value)
-
 #define print(value) _Generic((value),\
     int      : iprint,\
     char     : cprint,\
@@ -123,7 +118,7 @@ char * strObjAddress(Object * ptr)
     return res;
 }
 
-int carrsize(char ** arr)
+int arrsize(char ** arr)
 {
     int i;
     for (i = 0; arr[i] != NULL; i++);
@@ -425,13 +420,22 @@ char * intToStr(int value)
 
 char * LLToStr(long long value)
 {
-    char * newval = malloc(20);
+    int length = snprintf(NULL, 0, "%lld", value);
+
+    if (!length)
+    {
+        char * empty = malloc(1);
+        empty[0] = '\0';
+
+        return empty;
+    }
+
+    char * newval = malloc(length + 1);
+    strcpy(newval, "");
+
     sprintf(newval, "%lld", value);
 
-    char * out = strndup(newval, strlen(newval));
-    free(newval);
-
-    return out;
+    return newval;
 }
 
 int ipowMath(int base, int exp)

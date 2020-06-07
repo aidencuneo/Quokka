@@ -1,3 +1,8 @@
+INT_MAX  = +(2**32L/2)
+UINT_MAX = +(2**32L)
+LONG_MAX = 2**62L*2-1
+
+
 fun min 1
     lst = argv[0]
     lstlen = len(lst)
@@ -8,7 +13,7 @@ fun min 1
         if lst[i] < smallest
             smallest = lst[i]
         end
-        i +
+        i++
     end
 
     ret smallest
@@ -25,7 +30,7 @@ fun max 1
         if lst[i] > largest
             largest = lst[i]
         end
-        i +
+        i++
     end
 
     ret largest
@@ -50,7 +55,7 @@ fun lpad 1 2
     i = 0
     while i < lstlen
         new += [pad * (largest - len(lst[i])) + lst[i]]
-        i +
+        i++
     end
 
     ret new
@@ -76,7 +81,7 @@ fun cpad 1 2
     while i < lstlen
         most = pad * ((largest - len(lst[i])) / 2) + lst[i]
         new += [most + (pad * (largest - len(most)))]
-        i +
+        i++
     end
 
     ret new
@@ -97,11 +102,11 @@ fun map 1 *
         m = argc - 1
         while j < m
             item = argv[j](item)
-            j +
+            j++
         end
 
         new += [item]
-        i +
+        i++
     end
 
     ret new
@@ -118,7 +123,7 @@ fun same 1
         if lst[i] != item
             ret false
         end
-        i +
+        i++
     end
 
     ret true
@@ -134,7 +139,7 @@ fun any 1
         if lst[i]
             ret true
         end
-        i +
+        i++
     end
 
     ret false
@@ -150,7 +155,7 @@ fun all 1
         if not lst[i]
             ret false
         end
-        i +
+        i++
     end
 
     ret true
@@ -178,7 +183,7 @@ fun split 1 2
         else
             current += str[i]
         end
-        i +
+        i++
     end
 
     ret lst + [current]
@@ -194,13 +199,13 @@ fun strsum *
         length = len(l)
         while a < length
             str += l[a]
-            a += 1
+            a++
         end
     else
         a = 0
         while a < argc
             str += argv[a]
-            a += 1
+            a++
         end
     end
 

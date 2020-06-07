@@ -137,4 +137,7 @@ Object * makeNull();
 // function
 Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax);
 
+// module
+Object * makeModule(char * name, int item_count);
+
 #endif

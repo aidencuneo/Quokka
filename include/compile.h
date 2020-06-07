@@ -199,11 +199,9 @@ int islong(char * word)
 
 int stringInList(char ** arr, char * key)
 {
-    int len = arrsize(arr);
-
-    for (int n = 0; arr[n] != NULL; ++n)
+    for (int n = 0; arr[n] != NULL; n++)
     {
-        if (strcmp(arr[n], key) == 0)
+        if (!strcmp(arr[n], key))
             return 1;
     }
 
@@ -212,30 +210,27 @@ int stringInList(char ** arr, char * key)
 
 void arrlstrip(char ** line)
 {
-    int n = arrsize(line);
-
-    for (int c = 0; c < n - 1; c++)
+    int c;
+    for (c = 0; line[c + 1] != NULL; c++)
         line[c] = line[c + 1];
 
-    line[n - 1] = "";
+    line[c] = "";
 }
 
 void arrdelindex(char ** line, int index)
 {
-    int n = arrsize(line);
-
-    for (int c = index; c < n - 1; c++)
+    int c;
+    for (c = index; line[c + 1] != NULL; c++)
         line[c] = line[c + 1];
 
-    line[n - 1] = "";
+    line[c] = "";
 }
 
 int stringCount(char ** lst, char * st)
 {
-    int len = arrsize(lst);
     int count = 0;
 
-    for (int i = 0; i < len; i++)
+    for (int i = 0; lst[i] != NULL; i++)
     {
         if (!strcmp(lst[i], st))
             count++;
@@ -494,7 +489,7 @@ int addBytecodeConstant(char * const_type, char * literal_value)
     return bytecode_constant_count++;
 }
 
-void compile_init()
+void set_bytecode_constants()
 {
     /*
     
@@ -525,7 +520,12 @@ void compile_init()
 
     // Remember to update this number to match the
     // constant count that the program begins with
-    bytecode_constant_count = 3;
+    bytecode_constant_count += 3;
+}
+
+void compile_init()
+{
+    current_line = 0;
 
     free(scpstk);
     free(scps);
@@ -1215,7 +1215,13 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
-        for (int i = 1; i < len; i++)
+        // Unpack values?
+        int unpack = 0;
+
+        if (!strcmp(line[1], "*"))
+            unpack = 1;
+
+        for (int i = 1 + unpack; i < len; i++)
         {
             if (!strcmp(line[i], ","))
                 continue;
@@ -1226,7 +1232,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
             free(temp);
 
-            mstrcattrip(&bytecode, "IMPORT", INSTRUCTION_END);
+            if (unpack)
+                mstrcattrip(&bytecode, "IMPORT_UNPACK", INSTRUCTION_END);
+            else
+                mstrcattrip(&bytecode, "IMPORT", INSTRUCTION_END);
         }
     }
     else if (stringInList(line, ","))
@@ -1554,35 +1563,28 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             mstrcattrip(&bytecode, "BOOLEAN_NOT", INSTRUCTION_END);
         }
     }
-    else if (isidentifier(line[0]) && !strcmp(line[1], "+") && len == 2)
+    else if (isidentifier(line[0]) && !strcmp(line[1], "+") && !strcmp(line[2], "+"))
     {
-        if (isInline)
-            error("incremental operator can only be placed at the start of a line", num - 1);
+        if (len > 3)
+            error("invalid syntax", num);
 
         // Set new line
         if (!isInline)
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
-        // Load 1
-        mstrcat(&bytecode, "LOAD_CONST");
-        mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, "1");
-        mstrcat(&bytecode, INSTRUCTION_END);
-
         // Load var
-        mstrcat(&bytecode, "LOAD_NAME");
-        mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, line[0]);
-        mstrcat(&bytecode, INSTRUCTION_END);
+        mstrcatline(&bytecode,
+            "LOAD_NAME",
+            SEPARATOR,
+            line[0],
+            INSTRUCTION_END);
 
-        // Add them
-        mstrcattrip(&bytecode, "BINARY_ADD", INSTRUCTION_END);
-
-        // Store result
-        mstrcat(&bytecode, "STORE_NAME");
-        mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, line[0]);
-        mstrcat(&bytecode, INSTRUCTION_END);
+        // Increment and return original value
+        mstrcatline(&bytecode,
+            "INCREMENT",
+            SEPARATOR,
+            line[0],
+            INSTRUCTION_END);
     }
     else if (isidentifier(line[0]) && !strcmp(line[1], "-") && len == 2)
     {
@@ -1921,6 +1923,53 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         free(temp);
         free(templine);
     }
+    else if (startswith(line[len - 1], "(") && endswith(line[len - 1], ")") && len > 1)
+    {
+        // Set new line
+        if (!isInline)
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        char * temp = quokka_compile_line_tokens(line, num, len - 1, 1);
+
+        mstrcat(&bytecode, temp);
+
+        free(temp);
+
+        // If arguments were given to the function
+        if (strlen(line[len - 1]) > 2)
+        {
+            // Split up the argument list into it's elements
+            char * sliced = strSlice(line[len - 1], 1, 1);
+
+            char ** templine;
+            int templen = compile_comma_list_string(&templine, sliced);
+
+            char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
+
+            mstrcat(&bytecode, temp);
+
+            free(sliced);
+            free(temp);
+
+            char * argcount = intToStr(stringCountUntil(templine, ",", templen) + 1);
+
+            mstrcat(&bytecode, "CALL");
+            mstrcat(&bytecode, SEPARATOR);
+            mstrcat(&bytecode, argcount);
+            mstrcat(&bytecode, INSTRUCTION_END);
+
+            free(templine);
+            free(argcount);
+        }
+        // If no arguments were given
+        else
+        {
+            mstrcat(&bytecode, "CALL");
+            mstrcat(&bytecode, SEPARATOR);
+            mstrcat(&bytecode, "0");
+            mstrcat(&bytecode, INSTRUCTION_END);
+        }
+    }
     else if (stringInList(line, "."))
     {
         char * latestvalue = malloc(1);
@@ -1973,53 +2022,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         }
 
         free(latestvalue);
-    }
-    else if (startswith(line[len - 1], "(") && endswith(line[len - 1], ")") && len > 1)
-    {
-        // Set new line
-        if (!isInline)
-            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
-
-        char * temp = quokka_compile_line_tokens(line, num, len - 1, 1);
-
-        mstrcat(&bytecode, temp);
-
-        free(temp);
-
-        // If arguments were given to the function
-        if (strlen(line[len - 1]) > 2)
-        {
-            // Split up the argument list into it's elements
-            char * sliced = strSlice(line[len - 1], 1, 1);
-
-            char ** templine;
-            int templen = compile_comma_list_string(&templine, sliced);
-
-            char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
-
-            mstrcat(&bytecode, temp);
-
-            free(sliced);
-            free(temp);
-
-            char * argcount = intToStr(stringCountUntil(templine, ",", templen) + 1);
-
-            mstrcat(&bytecode, "CALL");
-            mstrcat(&bytecode, SEPARATOR);
-            mstrcat(&bytecode, argcount);
-            mstrcat(&bytecode, INSTRUCTION_END);
-
-            free(templine);
-            free(argcount);
-        }
-        // If no arguments were given
-        else
-        {
-            mstrcat(&bytecode, "CALL");
-            mstrcat(&bytecode, SEPARATOR);
-            mstrcat(&bytecode, "0");
-            mstrcat(&bytecode, INSTRUCTION_END);
-        }
     }
     else if (islong(line[0]) && len == 1)
     {
@@ -2312,6 +2314,11 @@ char * quokka_compile_raw(char * rawtext, int isInline)
 
 char * quokka_compile_fname(char * filename)
 {
+    /* Start */
+    set_bytecode_constants();
+    compile_init();
+
+    /* Main */
     char * buffer = readfile(filename);
 
     if (!buffer)
@@ -2319,7 +2326,13 @@ char * quokka_compile_fname(char * filename)
 
     pushTrash(buffer);
 
-    return quokka_compile_raw(buffer, 0);
+    char * res = quokka_compile_raw(buffer, 0);
+
+    /* End */
+    free(bytecode_constants);
+    free(file_tokens);
+
+    return res;
 }
 
 char ** quokka_file_tok(char * text)

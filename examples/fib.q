@@ -1,15 +1,15 @@
-fun fibinc 1
-    lst = argv[0]
-    ret [lst[-1], lst[0] + lst[-1]]
-end
+fun fib 1
+    l = [0L, 1L]
+    res = []
 
-l = [0L, 1L]
+    a = 0
+    while a < argv[0]
+        l = [l[-1], l[0] + l[-1]]
+        res += [l[-1]]
+        a++
+    end
 
-a = 0
-while a < 90
-    l = fibinc(l)
-    println(l[-1])
-    a +
+    ret res
 end
 
 // :   0.073s

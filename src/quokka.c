@@ -192,10 +192,7 @@ int main(int argc, char ** argv)
         resetTrash();
 
         // Compile Quokka script into Quokka bytecode
-        compile_init();
         main_bytecode = quokka_compile_fname(fname);
-        free(bytecode_constants);
-        free(file_tokens);
 
         emptyTrash();
     }
