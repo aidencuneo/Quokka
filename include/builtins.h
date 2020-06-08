@@ -55,6 +55,14 @@ Object * q_function_display(int argc, Object ** argv)
 Object * q_function_print(int argc, Object ** argv)
 {
     int ret = 0;
+    char * printsep = " ";
+
+    Object * printsep_obj = getVarSilent("PRINTSEP");
+    if (printsep_obj != NULL)
+        if (!strcmp(printsep_obj->name, "string"))
+            printsep = objectGetAttr(printsep_obj, "value");
+
+    int printsep_len = strlen(printsep);
 
     for (int i = 0; i < argc; i++)
     {
@@ -91,8 +99,8 @@ Object * q_function_print(int argc, Object ** argv)
 
         if (i + 1 < argc)
         {
-            printf(" ");
-            ret++;
+            printf("%s", printsep);
+            ret += printsep_len;
         }
     }
 
@@ -104,6 +112,14 @@ Object * q_function_print(int argc, Object ** argv)
 Object * q_function_println(int argc, Object ** argv)
 {
     int ret = 0;
+    char * printsep = " ";
+
+    Object * printsep_obj = getVarSilent("PRINTSEP");
+    if (printsep_obj != NULL)
+        if (!strcmp(printsep_obj->name, "string"))
+            printsep = objectGetAttr(printsep_obj, "value");
+
+    int printsep_len = strlen(printsep);
 
     for (int i = 0; i < argc; i++)
     {
@@ -140,8 +156,8 @@ Object * q_function_println(int argc, Object ** argv)
 
         if (i + 1 < argc)
         {
-            printf(" ");
-            ret++;
+            printf("%s", printsep);
+            ret += printsep_len;
         }
         else
         {

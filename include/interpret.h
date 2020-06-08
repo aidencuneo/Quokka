@@ -154,6 +154,7 @@ void interp_init()
 
     addGVar("true", makeIntRaw(&truePtr, 0));
     addGVar("false", makeIntRaw(&falsePtr, 0));
+    addGVar("PRINTSEP", makeString(" ", 0));
 
     /*
     No argument restraints
@@ -266,6 +267,7 @@ Objects
 Object * objectPointer()
 {
     Object * ptr = malloc(sizeof(Object));
+    ptr->value_count = 0;
     ptr->refs = 0;
 
     return ptr;
@@ -388,6 +390,15 @@ void * objectGetAttr(Object * obj, char * name)
             return obj->values[i];
 
     return NULL;
+}
+
+int objectGetAttrIndex(Object * obj, char * name)
+{
+    for (int i = 0; i < obj->value_count; i++)
+        if (!strcmp(obj->names[i], name))
+            return i;
+
+    return -1;
 }
 
 
@@ -637,6 +648,16 @@ Object * getGVar(char * name)
     return makeNull();
 }
 
+Object * getGVarSilent(char * name)
+{
+    // Check globals
+    for (int i = globals.offset; i < globals.count; i++)
+        if (!strcmp(globals.names[i], name))
+            return globals.values[i];
+
+    return NULL;
+}
+
 Object * getLVar(char * name)
 {
     // Check locals
@@ -651,6 +672,16 @@ Object * getLVar(char * name)
     error(err, line_num);
 
     return makeNull();
+}
+
+Object * getLVarSilent(char * name)
+{
+    // Check locals
+    for (int i = globals.offset; i < locals.count; i++)
+        if (!strcmp(locals.names[i], name))
+            return locals.values[i];
+
+    return NULL;
 }
 
 Object * getVar(char * name)
@@ -672,6 +703,21 @@ Object * getVar(char * name)
     error(err, line_num);
 
     return makeNull();
+}
+
+Object * getVarSilent(char * name)
+{
+    // Check locals
+    for (int i = locals.offset; i < locals.count; i++)
+        if (!strcmp(locals.names[i], name))
+            return locals.values[i];
+
+    // Check globals
+    for (int i = globals.offset; i < globals.count; i++)
+        if (!strcmp(globals.names[i], name))
+            return globals.values[i];
+
+    return NULL;
 }
 
 int getGVarIndex(char * name)
@@ -760,12 +806,15 @@ Object ** makeArglist(Object * obj)
 /// datatypes
 //
 
+#include "datatypes/function.h"
+#include "datatypes/cfunction.h"
+// #include "datatypes/method.h"
+#include "datatypes/cmethod.h"
 #include "datatypes/int.h"
 #include "datatypes/long.h"
 #include "datatypes/string.h"
 #include "datatypes/list.h"
 #include "datatypes/null.h"
-#include "datatypes/function.h"
 #include "datatypes/module.h"
 
 #include "import.h"

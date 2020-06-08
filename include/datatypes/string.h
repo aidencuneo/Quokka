@@ -201,10 +201,55 @@ Object * __string___string(int argc, Object ** argv)
 
 Object * __free___string(int argc, Object ** argv)
 {
+    int method_start = objectGetAttrIndex(argv[0], "upper");
+    int method_count = 2;
+
+    for (int i = 0; i < method_count; i++)
+        freeObject(argv[0]->values[method_start + i]);
+
+    return makeNull();
+}
+
+Object * __free_malloc___string(int argc, Object ** argv)
+{
     char * thisvalue = objectGetAttr(argv[0], "value");
     free(thisvalue);
 
-    return makeNull();
+    return __free___string(argc, argv);
+}
+
+Object * upper_string(int argc, Object ** argv)
+{
+    char * thisvalue = objectGetAttr(argv[0], "value");
+    int len = strlen(thisvalue);
+
+    char * new_string = malloc(len + 1);
+
+    int i;
+    for (i = 0; i < len; i++)
+        new_string[i] = toupper(thisvalue[i]);
+
+    // NULL Byte
+    new_string[i] = 0;
+
+    return makeString(new_string, 1);
+}
+
+Object * lower_string(int argc, Object ** argv)
+{
+    char * thisvalue = objectGetAttr(argv[0], "value");
+    int len = strlen(thisvalue);
+
+    char * new_string = malloc(len + 1);
+
+    int i;
+    for (i = 0; i < len; i++)
+        new_string[i] = tolower(thisvalue[i]);
+
+    // NULL Byte
+    new_string[i] = 0;
+
+    return makeString(new_string, 1);
 }
 
 Object * makeString(char * value, int is_malloc_ptr)
@@ -213,18 +258,10 @@ Object * makeString(char * value, int is_malloc_ptr)
 
     self->name = "string";
 
-    // 25 to 26 Attributes
-    if (is_malloc_ptr)
-    {
-        self->names = malloc(26 * sizeof(char *));
-        self->values = malloc(26 * sizeof(void *));
-    }
-    else
-    {
-        self->names = malloc(25 * sizeof(char *));
-        self->values = malloc(25 * sizeof(void *));
-    }
-    self->value_count = 0;
+    // 28 Attributes
+    int attr_count = 28;
+    self->names = malloc(attr_count * sizeof(char *));
+    self->values = malloc(attr_count * sizeof(void *));
 
     self = objectAddAttr(self, "value", value);
 
@@ -283,8 +320,25 @@ Object * makeString(char * value, int is_malloc_ptr)
     if (is_malloc_ptr)
     {
         // __free__
+        self = objectAddAttr(self, "__free__", &__free_malloc___string);
+    }
+    else
+    {
+        // __free__
         self = objectAddAttr(self, "__free__", &__free___string);
     }
+
+    // Regular methods (must go at end)
+
+    // upper
+    Object * upper_string_cfunc = makeCMethod(self, &upper_string, 0, 0);
+    upper_string_cfunc->refs++;
+    self = objectAddAttr(self, "upper", upper_string_cfunc);
+
+    // lower
+    Object * lower_string_cfunc = makeCMethod(self, &lower_string, 0, 0);
+    lower_string_cfunc->refs++;
+    self = objectAddAttr(self, "lower", lower_string_cfunc);
 
     return self;
 }

@@ -62,11 +62,11 @@ Object * __call___function(int argc, Object ** argv)
 
 Object * __free___function(int argc, Object ** argv)
 {
-    char * filepath = objectGetAttr(argv[0], "filepath");
     char * value = objectGetAttr(argv[0], "value");
+    char * filepath = objectGetAttr(argv[0], "filepath");
 
-    free(filepath);
     free(value);
+    free(filepath);
 
     int * argminptr = objectGetAttr(argv[0], "__call__argmin");
     int * argmaxptr = objectGetAttr(argv[0], "__call__argmax");

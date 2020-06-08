@@ -1870,36 +1870,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         free(valuelist);
         free(operslist);
     }
-    /* Will fix this another time
-
-    else if (startswith(line[len - 1], "."))
-    {
-        char * templine = malloc(1);
-        int is_first_item = 1;
-
-        for (int i = 0; i < len; i++)
-        {
-            if (startswith(line[i], "."))
-            {
-                char ** temp = quokka_tok(line[i]);
-                println("get attr");
-            }
-            else println(line[i]);
-        }
-
-        exit(1);
-
-        char * temp = quokka_compile_line(templine, num, -1, 1);
-        mstrcat(&bytecode, temp);
-
-        free(temp);
-        free(templine);
-
-        mstrcat(&bytecode, "GET_ATTR");
-        mstrcat(&bytecode, INSTRUCTION_END);
-    }
-
-    */
     else if (startswith(line[0], "(") && endswith(line[0], ")"))
     {
         // Set new line

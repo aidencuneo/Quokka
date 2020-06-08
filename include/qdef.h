@@ -93,7 +93,13 @@ void pushTrash(void * ptr);
 void addGVar(char * name, Object * obj);
 void addVar(char * name, Object * obj);
 
+Object * getGVar(char * name);
+Object * getGVarSilent(char * name);
+Object * getLVar(char * name);
+Object * getLVarSilent(char * name);
 Object * getVar(char * name);
+Object * getVarSilent(char * name);
+
 int getGVarIndex(char * name);
 int getLVarIndex(char * name);
 int getVarIndex(char * name);
@@ -136,6 +142,15 @@ Object * makeNull();
 
 // function
 Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax);
+
+// cfunction
+Object * makeCFunction(void * function_pointer, int argmin, int argmax);
+
+// method
+// Not implemented
+
+// cmethod
+Object * makeCMethod(Object * parent, void * method_pointer, int argmin, int argmax);
 
 // module
 Object * makeModule(char * name, int item_count);

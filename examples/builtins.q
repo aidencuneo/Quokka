@@ -1,40 +1,6 @@
 INT_MAX  = +(2**32L/2)
-UINT_MAX = +(2**32L)
+UINT_MAX = 2**32L
 LONG_MAX = 2**62L*2-1
-
-
-fun min 1
-    lst = argv[0]
-    lstlen = len(lst)
-    smallest = lst[0] + 1
-
-    i = 0
-    while i < lstlen
-        if lst[i] < smallest
-            smallest = lst[i]
-        end
-        i++
-    end
-
-    ret smallest
-end
-
-
-fun max 1
-    lst = argv[0]
-    lstlen = len(lst)
-    largest = lst[0] - 1
-
-    i = 0
-    while i < lstlen
-        if lst[i] > largest
-            largest = lst[i]
-        end
-        i++
-    end
-
-    ret largest
-end
 
 
 // Left Pad (Align list items to left)
@@ -81,6 +47,26 @@ fun cpad 1 2
     while i < lstlen
         most = pad * ((largest - len(lst[i])) / 2) + lst[i]
         new += [most + (pad * (largest - len(most)))]
+        i++
+    end
+
+    ret new
+end
+
+
+// Pad num (Pad list items to be the length of a given number)
+fun padnum 3
+    pad = argv[0][0] // Limit pad to one char
+    num = argv[1]
+    lst = argv[2]
+
+    new = []
+
+    lstlen  = len(lst)
+
+    i = 0
+    while i < lstlen
+        new += [pad * (num - len(lst[i])) + lst[i]]
         i++
     end
 
@@ -210,4 +196,9 @@ fun strsum *
     end
 
     ret str
+end
+
+
+fun modulo 2
+    ret argv[0] - (argv[1] * (argv[0] / argv[1]))
 end
