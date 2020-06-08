@@ -1,35 +1,6 @@
-import 'builtins'
-
-
-fun modulo 2
-    ret argv[0] - (argv[1] * (argv[0] / argv[1]))
-end
-
-
-fun lpadwith 3
-    pad = argv[0]
-    pad = pad[0] // Limit pad to one char
-
-    first = argv[1]
-    secnd = argv[2]
-
-    // Pad until both strings are the same length
-    if len(secnd) > len(first)
-        i = 0
-        while i < (len(secnd) - len(first)) + 1
-            first = pad + first
-            i += 1
-        end
-    elif len(first) > len(secnd)
-        i = 0
-        while i < (len(first) - len(secnd)) + 1
-            secnd = pad + secnd
-            i += 1
-        end
-    end
-
-    ret [first, secnd]
-end
+import * (
+    'builtins',
+)
 
 
 fun binary 1

@@ -465,10 +465,6 @@ Object * makeLong(long long * value, int is_malloc_ptr)
     self = objectAddAttr(self, "__int__", &__int___long);
     self = objectAddAttr(self, "__int__argc", &oneArgc);
 
-    // // __string__
-    // self = objectAddAttr(self, "__string__", &__disp___long);
-    // self = objectAddAttr(self, "__string__argc", &oneArgc);
-
     if (is_malloc_ptr)
     {
         // __free__

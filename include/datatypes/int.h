@@ -484,10 +484,6 @@ Object * makeIntRaw(int * value, int is_malloc_ptr)
     self = objectAddAttr(self, "__long__", &__long___int);
     self = objectAddAttr(self, "__long__argc", &oneArgc);
 
-    // // __string__
-    // self = objectAddAttr(self, "__string__", &__disp___int);
-    // self = objectAddAttr(self, "__string__argc", &oneArgc);
-
     if (is_malloc_ptr)
     {
         // __free__

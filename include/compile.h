@@ -1893,6 +1893,104 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         free(temp);
         free(templine);
     }
+    else if (stringInList(line, "."))
+    {
+        char * latestvalue = malloc(1);
+        strcpy(latestvalue, "");
+
+        int lastwasdot = 0;
+
+        for (int p = 0; p < len + 1; p++)
+        {
+            if (p == len)
+                line[p] = ".";
+
+            if (!strlen(line[p]))
+                break;
+
+            if (!strcmp(line[p], ".") || p == len)
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                mstrcat(&bytecode, temp);
+                free(temp);
+
+                latestvalue = realloc(latestvalue, 1);
+                strcpy(latestvalue, "");
+
+                lastwasdot = 1;
+            }
+            else
+            {
+                if (lastwasdot)
+                {
+                    mstrcatline(&bytecode,
+                        "GET_ATTR",
+                        SEPARATOR,
+                        line[p],
+                        INSTRUCTION_END);
+                }
+                else if (startswith(line[p], "(") && endswith(line[p], ")"))
+                {
+                    // Split up the argument list into it's elements
+                    char * sliced = strSlice(line[p], 1, 1);
+
+                    char ** templine;
+                    int templen = compile_comma_list_string(&templine, sliced);
+
+                    free(sliced);
+
+                    char * argcount;
+                    if (templen)
+                        argcount = intToStr(stringCountUntil(templine, ",", templen) + 1);
+                    else
+                    {
+                        argcount = malloc(2);
+                        strcpy(argcount, "0");
+                    }
+
+                    if (p == len - 1)
+                    {
+                        mstrcatline(&bytecode,
+                            "CALL_METHOD",
+                            SEPARATOR,
+                            argcount,
+                            INSTRUCTION_END);
+                    }
+                    else
+                    {
+                        mstrcatline(&bytecode,
+                            "CALL",
+                            SEPARATOR,
+                            argcount,
+                            INSTRUCTION_END);
+                    }
+
+                    free(templine);
+                    free(argcount);
+
+                    if (p < len - 1)
+                        mstrcattrip(&bytecode, "REF_TOP", INSTRUCTION_END);
+                }
+                else
+                {
+                    latestvalue = realloc(latestvalue, strlen(latestvalue) + strlen(line[p]) + 1 + 1);
+                    strcat(latestvalue, line[p]);
+                    strcat(latestvalue, " ");
+                }
+
+                lastwasdot = 0;
+            }
+        }
+
+        if (strlen(latestvalue))
+        {
+            char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+            mstrcat(&bytecode, temp);
+            free(temp);
+        }
+
+        free(latestvalue);
+    }
     else if (startswith(line[len - 1], "(") && endswith(line[len - 1], ")") && len > 1)
     {
         // Set new line
@@ -1939,59 +2037,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             mstrcat(&bytecode, "0");
             mstrcat(&bytecode, INSTRUCTION_END);
         }
-    }
-    else if (stringInList(line, "."))
-    {
-        char * latestvalue = malloc(1);
-        strcpy(latestvalue, "");
-
-        int lastwasdot = 0;
-
-        for (int p = 0; p < len; p++)
-        {
-            if (!strlen(line[p]))
-                break;
-
-            if (!strcmp(line[p], "."))
-            {
-                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-                mstrcat(&bytecode, temp);
-                free(temp);
-
-                latestvalue = realloc(latestvalue, 1);
-                strcpy(latestvalue, "");
-
-                lastwasdot = 1;
-            }
-            else
-            {
-                if (lastwasdot)
-                {
-                    mstrcatline(&bytecode,
-                        "GET_ATTR",
-                        SEPARATOR,
-                        line[p],
-                        INSTRUCTION_END);
-                }
-                else
-                {
-                    latestvalue = realloc(latestvalue, strlen(latestvalue) + strlen(line[p]) + 1 + 1);
-                    strcat(latestvalue, line[p]);
-                    strcat(latestvalue, " ");
-                }
-
-                lastwasdot = 0;
-            }
-        }
-
-        if (strlen(latestvalue))
-        {
-            char * temp = quokka_compile_line(latestvalue, num, -1, 1);
-            mstrcat(&bytecode, temp);
-            free(temp);
-        }
-
-        free(latestvalue);
     }
     else if (islong(line[0]) && len == 1)
     {

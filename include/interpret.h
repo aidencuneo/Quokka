@@ -1170,6 +1170,11 @@ void quokka_interpret_line_tokens(char ** line)
         // Unreference the Object that we've retrieved an attribute from
         objUnref(obj);
     }
+    else if (!strcmp(line[0], "REF_TOP"))
+    {
+        if (stack_size)
+            stack[stack_size - 1]->refs++;
+    }
     else if (!strcmp(line[0], "GET_ADDRESS"))
     {
         Object * first = popTop();
@@ -1205,7 +1210,35 @@ void quokka_interpret_line_tokens(char ** line)
         addVar(line[1], stack[stack_size - 1]);
 
         objUnref(first);
-        // Don't unreference the constant for 1s
+        // Don't unreference the constant for 1
+
+        free(arglist);
+    }
+    else if (!strcmp(line[0], "DECREMENT"))
+    {
+        Object * first = popTop();
+        Object * secnd = makeInt(&truePtr, 0);
+
+        void * func = objectGetAttr(first, "__sub__");
+
+        if (func == NULL)
+        {
+            char * err = malloc(6 + strlen(first->name) + 40 + 1);
+            strcpy(err, "type '");
+            strcat(err, first->name);
+            strcat(err, "' does not have a method for subtraction");
+            error(err, line_num);
+        }
+
+        Object ** arglist = malloc(2 * sizeof(Object *));
+        arglist[0] = first;
+        arglist[1] = secnd;
+
+        pushTop(((standard_func_def)func)(2, arglist));
+        addVar(line[1], stack[stack_size - 1]);
+
+        objUnref(first);
+        // Don't unreference the constant for 1
 
         free(arglist);
     }
@@ -1983,7 +2016,7 @@ void quokka_interpret_line_tokens(char ** line)
             }
         }
     }
-    else if (!strcmp(line[0], "CALL"))
+    else if (!strcmp(line[0], "CALL") || !strcmp(line[0], "CALL_METHOD"))
     {
         int argcount = strtol(line[1], NULL, 10);
 
@@ -2009,16 +2042,18 @@ void quokka_interpret_line_tokens(char ** line)
             funcmin = ((int *)argc_attr)[0];
             funcmax = funcmin;
         }
+        else
+        {
+            // Get argmin (if it exists)
+            void * argmin_attr = objectGetAttr(func, "__call__argmin");
+            if (argmin_attr != NULL)
+                funcmin = ((int *)argmin_attr)[0];
 
-        // Get argmin (if it exists)
-        void * argmin_attr = objectGetAttr(func, "__call__argmin");
-        if (argmin_attr != NULL)
-            funcmin = ((int *)argmin_attr)[0];
-
-        // Get argmax (if it exists)
-        void * argmax_attr = objectGetAttr(func, "__call__argmax");
-        if (argmax_attr != NULL)
-            funcmax = ((int *)argmax_attr)[0];
+            // Get argmax (if it exists)
+            void * argmax_attr = objectGetAttr(func, "__call__argmax");
+            if (argmax_attr != NULL)
+                funcmax = ((int *)argmax_attr)[0];
+        }
 
         // Check if argument count given is inside the function's argument count boundaries
         if (argcount > funcmax && funcmax != -1)
@@ -2062,7 +2097,7 @@ void quokka_interpret_line_tokens(char ** line)
                 arglist[i + 1] = arglist[i];
             arglist[0] = func;
 
-            pushTopM(((standard_func_def)call_attr)(argcount, arglist));
+            pushTop(((standard_func_def)call_attr)(argcount, arglist));
 
             // Unreference all arguments passed into this function (function itself included)
             for (int i = 0; i < argcount + 1; i++)

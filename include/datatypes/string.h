@@ -202,10 +202,18 @@ Object * __string___string(int argc, Object ** argv)
 Object * __free___string(int argc, Object ** argv)
 {
     int method_start = objectGetAttrIndex(argv[0], "upper");
-    int method_count = 2;
 
-    for (int i = 0; i < method_count; i++)
-        freeObject(argv[0]->values[method_start + i]);
+    for (int i = method_start; i < argv[0]->value_count; i++)
+    {
+        char * name = ((Object *)argv[0]->values[i])->name;
+
+        // If current value is not a method, exit loop
+        if (strcmp(name, "method") &&
+            strcmp(name, "cmethod"))
+            break;
+
+        freeObject(argv[0]->values[i]);
+    }
 
     return makeNull();
 }
@@ -252,14 +260,38 @@ Object * lower_string(int argc, Object ** argv)
     return makeString(new_string, 1);
 }
 
+Object * isupper_string(int argc, Object ** argv)
+{
+    char * thisvalue = objectGetAttr(argv[0], "value");
+    int len = strlen(thisvalue);
+
+    for (int i = 0; i < len; i++)
+        if (islower(thisvalue[i])) // If anything is lower, return false
+            return makeInt(&falsePtr, 0);
+
+    return makeInt(&truePtr, 0);
+}
+
+Object * islower_string(int argc, Object ** argv)
+{
+    char * thisvalue = objectGetAttr(argv[0], "value");
+    int len = strlen(thisvalue);
+
+    for (int i = 0; i < len; i++)
+        if (isupper(thisvalue[i])) // If anything is upper, return false
+            return makeInt(&falsePtr, 0);
+
+    return makeInt(&truePtr, 0);
+}
+
 Object * makeString(char * value, int is_malloc_ptr)
 {
     Object * self = objectPointer();
 
     self->name = "string";
 
-    // 28 Attributes
-    int attr_count = 28;
+    // 30 Attributes
+    int attr_count = 30;
     self->names = malloc(attr_count * sizeof(char *));
     self->values = malloc(attr_count * sizeof(void *));
 
@@ -339,6 +371,16 @@ Object * makeString(char * value, int is_malloc_ptr)
     Object * lower_string_cfunc = makeCMethod(self, &lower_string, 0, 0);
     lower_string_cfunc->refs++;
     self = objectAddAttr(self, "lower", lower_string_cfunc);
+
+    // isupper
+    Object * isupper_string_cfunc = makeCMethod(self, &isupper_string, 0, 0);
+    isupper_string_cfunc->refs++;
+    self = objectAddAttr(self, "isupper", isupper_string_cfunc);
+
+    // islower
+    Object * islower_string_cfunc = makeCMethod(self, &islower_string, 0, 0);
+    islower_string_cfunc->refs++;
+    self = objectAddAttr(self, "islower", islower_string_cfunc);
 
     return self;
 }

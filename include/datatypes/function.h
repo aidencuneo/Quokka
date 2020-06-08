@@ -50,14 +50,14 @@ Object * __call___function(int argc, Object ** argv)
     // If there's anything to return, return it
     if (ret_stack_size)
     {
-        return popRetTop();
+        Object * ret = popRetTop();
+        ret->refs--;
+
+        return ret;
     }
 
     // Return null by default
-    Object * null_obj = makeNull();
-    null_obj->refs++;
-
-    return null_obj;
+    return makeNull();
 }
 
 Object * __free___function(int argc, Object ** argv)
