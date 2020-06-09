@@ -1,7 +1,7 @@
-Object * __disp___module(int argc, Object ** argv)
-{
-    return makeString("<module>", 0);
-}
+// Object * __disp___module(int argc, Object ** argv)
+// {
+//     return makeString("<module>", 0);
+// }
 
 Object * __free___module(int argc, Object ** argv)
 {
@@ -25,9 +25,9 @@ Object * makeModule(char * name, int item_count)
 
     self->name = "module";
 
-    // 4 Attributes
-    self->names = malloc((4 + item_count) * sizeof(char *));
-    self->values = malloc((4 + item_count) * sizeof(void *));
+    // 2 Attributes
+    self->names = malloc((2 + item_count) * sizeof(char *));
+    self->values = malloc((2 + item_count) * sizeof(void *));
     self->value_count = 0;
 
     self = objectAddAttr(self, "value", name);
@@ -35,8 +35,8 @@ Object * makeModule(char * name, int item_count)
     // One argument methods
 
     // __disp__
-    self = objectAddAttr(self, "__disp__", &__disp___module);
-    self = objectAddAttr(self, "__disp__argc", &oneArgc);
+    // self = objectAddAttr(self, "__disp__", &__disp___module);
+    // self = objectAddAttr(self, "__disp__argc", &oneArgc);
 
     // __free__
     self = objectAddAttr(self, "__free__", &__free___module);

@@ -1056,7 +1056,36 @@ void quokka_interpret_line_tokens(char ** line)
 
         // The following type names are in alphabetical order
 
-        if (!strcmp(obj->name, "function"))
+        if (!strcmp(obj->name, "cfunction"))
+        {
+            if (!strcmp(line[1], "__call__"))
+            {
+                pushTop(obj);
+
+                gotten = 1;
+            }
+            else if (startswith(line[1], "__"))
+                invalid = 1;
+        }
+        else if (!strcmp(obj->name, "cmethod"))
+        {
+            if (!strcmp(line[1], "parent"))
+            {
+                Object * parent = objectGetAttr(obj, "parent");
+                pushTop(parent);
+
+                gotten = 1;
+            }
+            else if (!strcmp(line[1], "__call__"))
+            {
+                pushTop(obj);
+
+                gotten = 1;
+            }
+            else if (startswith(line[1], "__"))
+                invalid = 1;
+        }
+        else if (!strcmp(obj->name, "function"))
         {
             if (!strcmp(line[1], "value"))
             {
@@ -1081,7 +1110,7 @@ void quokka_interpret_line_tokens(char ** line)
             else if (startswith(line[1], "__"))
                 invalid = 1;
         }
-        if (!strcmp(obj->name, "int"))
+        else if (!strcmp(obj->name, "int"))
         {
             if (!strcmp(line[1], "value"))
             {
@@ -1092,7 +1121,7 @@ void quokka_interpret_line_tokens(char ** line)
             else if (startswith(line[1], "__"))
                 invalid = 1;
         }
-        if (!strcmp(obj->name, "list"))
+        else if (!strcmp(obj->name, "list"))
         {
             if (!strcmp(line[1], "value"))
             {
@@ -1110,7 +1139,7 @@ void quokka_interpret_line_tokens(char ** line)
             else if (startswith(line[1], "__"))
                 invalid = 1;
         }
-        if (!strcmp(obj->name, "long"))
+        else if (!strcmp(obj->name, "long"))
         {
             if (!strcmp(line[1], "value"))
             {
@@ -1121,7 +1150,19 @@ void quokka_interpret_line_tokens(char ** line)
             else if (startswith(line[1], "__"))
                 invalid = 1;
         }
-        if (!strcmp(obj->name, "null"))
+        else if (!strcmp(obj->name, "module"))
+        {
+            if (!strcmp(line[1], "value"))
+            {
+                char * name = objectGetAttr(obj, "value");
+                pushTop(makeString(name, 0));
+
+                gotten = 1;
+            }
+            else if (startswith(line[1], "__"))
+                invalid = 1;
+        }
+        else if (!strcmp(obj->name, "null"))
         {
             if (!strcmp(line[1], "value"))
             {
@@ -1135,7 +1176,7 @@ void quokka_interpret_line_tokens(char ** line)
             else
                 invalid = 1;
         }
-        if (!strcmp(obj->name, "string"))
+        else if (!strcmp(obj->name, "string"))
         {
             if (!strcmp(line[1], "value"))
             {
@@ -2102,6 +2143,12 @@ void quokka_interpret_line_tokens(char ** line)
             // Unreference all arguments passed into this function (function itself included)
             for (int i = 0; i < argcount + 1; i++)
                 objUnref(arglist[i]);
+        }
+
+        if (!strcmp(line[0], "CALL_METHOD"))
+        {
+            Object * parent = objectGetAttr(func, "parent");
+            objUnref(parent);
         }
 
         free(arglist);

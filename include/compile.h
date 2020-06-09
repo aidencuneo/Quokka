@@ -1899,6 +1899,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcpy(latestvalue, "");
 
         int lastwasdot = 0;
+        int dotcount = 0; // Number of dots `.` in this expression
 
         for (int p = 0; p < len + 1; p++)
         {
@@ -1907,6 +1908,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
             if (!strlen(line[p]))
                 break;
+
+            if (!strcmp(line[p], "."))
+                dotcount++;
 
             if (!strcmp(line[p], ".") || p == len)
             {
@@ -1948,7 +1952,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                         strcpy(argcount, "0");
                     }
 
-                    if (p == len - 1)
+                    if (dotcount > 1)
                     {
                         mstrcatline(&bytecode,
                             "CALL_METHOD",
