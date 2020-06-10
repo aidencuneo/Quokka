@@ -272,6 +272,9 @@ Object * q_function_string(int argc, Object ** argv)
 
 Object * q_function_int(int argc, Object ** argv)
 {
+    if (!strcmp(argv[0]->name, "int"))
+        return argv[0];
+
     if (!objectHasAttr(argv[0], "__int__"))
     {
         char * err = malloc(6 + strlen(argv[0]->name) + 36 + 1);
@@ -389,22 +392,7 @@ Object * q_function_exec(int argc, Object ** argv)
 
 Object * q_function_exit(int argc, Object ** argv)
 {
-    // freeVars();
-    // freeStack();
-    // freeRetStack();
-    // emptyTrash();
-
-    // // Free scope stack (from compilation)
-    // free(scpstk);
-    // free(scps);
-    // free(scplines);
-
-    // free(full_file_name);
-    // free(full_dir_name);
-    // free(main_bytecode);
-
     cleanupAll();
-
     exit(1);
 
     // The following line is simply to prevent a warning that may
@@ -428,7 +416,7 @@ Object * q_function_min(int argc, Object ** argv)
     Object ** lst = objectGetAttr(argv[0], "value");
     int lstlen = ((int *)objectGetAttr(argv[0], "length"))[0];
 
-    int smallest;
+    int smallest = 0;
 
     for (int i = 0; i < lstlen; i++)
     {
@@ -448,7 +436,6 @@ Object * q_function_min(int argc, Object ** argv)
     }
 
     int * intptr = makeIntPtr(smallest);
-    // pushTrash(intptr);
 
     return makeInt(intptr, 1);
 }
@@ -458,7 +445,7 @@ Object * q_function_max(int argc, Object ** argv)
     Object ** lst = objectGetAttr(argv[0], "value");
     int lstlen = ((int *)objectGetAttr(argv[0], "length"))[0];
 
-    int largest;
+    int largest = 0;
 
     for (int i = 0; i < lstlen; i++)
     {
@@ -478,7 +465,6 @@ Object * q_function_max(int argc, Object ** argv)
     }
 
     int * intptr = makeIntPtr(largest);
-    // pushTrash(intptr);
 
     return makeInt(intptr, 1);
 }

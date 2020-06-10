@@ -1,16 +1,16 @@
-==8890== Memcheck, a memory error detector
-==8890== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==8890== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
-==8890== Command: bin/quokka examples/stuff.q -c
-==8890== Parent PID: 8884
-==8890== 
-==8890== error calling PR_SET_PTRACER, vgdb might block
-==8890== 
-==8890== HEAP SUMMARY:
-==8890==     in use at exit: 0 bytes in 0 blocks
-==8890==   total heap usage: 4,733 allocs, 4,733 frees, 231,875 bytes allocated
-==8890== 
-==8890== All heap blocks were freed -- no leaks are possible
-==8890== 
-==8890== For lists of detected and suppressed errors, rerun with: -s
-==8890== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==11030== Memcheck, a memory error detector
+==11030== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==11030== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==11030== Command: bin/quokka examples/stuff.q
+==11030== Parent PID: 11024
+==11030== 
+==11030== error calling PR_SET_PTRACER, vgdb might block
+==11030== 
+==11030== HEAP SUMMARY:
+==11030==     in use at exit: 0 bytes in 0 blocks
+==11030==   total heap usage: 93,852 allocs, 93,852 frees, 7,700,573 bytes allocated
+==11030== 
+==11030== All heap blocks were freed -- no leaks are possible
+==11030== 
+==11030== For lists of detected and suppressed errors, rerun with: -s
+==11030== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

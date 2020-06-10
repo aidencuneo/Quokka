@@ -132,6 +132,7 @@ Object * makeIntRaw(int * value, int is_malloc_ptr);
 Object * makeLong(long long * value, int is_malloc_ptr);
 
 // string
+Object * makeStringRaw(char * value, int is_malloc_ptr);
 Object * makeString(char * value, int is_malloc_ptr);
 
 // list

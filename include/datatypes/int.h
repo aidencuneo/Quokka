@@ -349,13 +349,6 @@ Object * __bool___int(int argc, Object ** argv)
     return makeInt(&falsePtr, 0);
 }
 
-Object * __int___int(int argc, Object ** argv)
-{
-    int * first = objectGetAttr(argv[0], "value");
-
-    return makeInt(makeIntPtr(first[0]), 1);
-}
-
 Object * __long___int(int argc, Object ** argv)
 {
     int * first = objectGetAttr(argv[0], "value");
@@ -373,19 +366,13 @@ Object * __free___int(int argc, Object ** argv)
 
 Object * makeInt(int * value, int is_malloc_ptr)
 {
-    // If value == 0, return the already made constant for 0
-    if (!value[0])
+    // If 0 <= value < int_const_count, return the constant for this number
+    if (value[0] >= 0 && value[0] < int_const_count)
     {
+        int ind = value[0];
         if (is_malloc_ptr)
             free(value);
-        return constants[0];
-    }
-    // If value == 1, return the already made constant for 1
-    if (value[0] == 1)
-    {
-        if (is_malloc_ptr)
-            free(value);
-        return constants[1];
+        return int_consts[ind];
     }
 
     return makeIntRaw(value, is_malloc_ptr);
@@ -397,16 +384,17 @@ Object * makeIntRaw(int * value, int is_malloc_ptr)
 
     self->name = "int";
 
-    // 35 to 36 Attributes
+    // 23 to 24 Attributes
+    int max_attr_count = 24;
     if (is_malloc_ptr)
     {
-        self->names = malloc(36 * sizeof(char *));
-        self->values = malloc(36 * sizeof(void *));
+        self->names = malloc(max_attr_count * sizeof(char *));
+        self->values = malloc(max_attr_count * sizeof(void *));
     }
     else
     {
-        self->names = malloc(35 * sizeof(char *));
-        self->values = malloc(35 * sizeof(void *));
+        self->names = malloc((max_attr_count) * sizeof(char *));
+        self->values = malloc((max_attr_count) * sizeof(void *));
     }
     self->value_count = 0;
 
@@ -416,43 +404,33 @@ Object * makeIntRaw(int * value, int is_malloc_ptr)
 
     // __add__
     self = objectAddAttr(self, "__add__", &__add___int);
-    self = objectAddAttr(self, "__add__argc", &twoArgc);
 
     // __sub__
     self = objectAddAttr(self, "__sub__", &__sub___int);
-    self = objectAddAttr(self, "__sub__argc", &twoArgc);
 
     // __mul__
     self = objectAddAttr(self, "__mul__", &__mul___int);
-    self = objectAddAttr(self, "__mul__argc", &twoArgc);
 
     // __div__
     self = objectAddAttr(self, "__div__", &__div___int);
-    self = objectAddAttr(self, "__div__argc", &twoArgc);
 
     // __pow__
     self = objectAddAttr(self, "__pow__", &__pow___int);
-    self = objectAddAttr(self, "__pow__argc", &twoArgc);
 
     // __eq__
     self = objectAddAttr(self, "__eq__", &__eq___int);
-    self = objectAddAttr(self, "__eq__argc", &twoArgc);
 
     // __lt__
     self = objectAddAttr(self, "__lt__", &__lt___int);
-    self = objectAddAttr(self, "__lt__argc", &twoArgc);
 
     // __le__
     self = objectAddAttr(self, "__le__", &__le___int);
-    self = objectAddAttr(self, "__le__argc", &twoArgc);
 
     // __gt__
     self = objectAddAttr(self, "__gt__", &__gt___int);
-    self = objectAddAttr(self, "__gt__argc", &twoArgc);
 
     // __ge__
     self = objectAddAttr(self, "__ge__", &__ge___int);
-    self = objectAddAttr(self, "__ge__argc", &twoArgc);
 
     // One argument methods
 
@@ -475,10 +453,6 @@ Object * makeIntRaw(int * value, int is_malloc_ptr)
     // __bool__
     self = objectAddAttr(self, "__bool__", &__bool___int);
     self = objectAddAttr(self, "__bool__argc", &oneArgc);
-
-    // __int__
-    self = objectAddAttr(self, "__int__", &__int___int);
-    self = objectAddAttr(self, "__int__argc", &oneArgc);
 
     // __long__
     self = objectAddAttr(self, "__long__", &__long___int);

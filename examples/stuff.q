@@ -1,21 +1,26 @@
-// PRINTSEP = ', '
-name = 'aidEN'
+fun pf 1
+    obj = argv[0]
+    s = '<' + type(obj) + '>[\n'
+    i = 0
+    while i < len(obj)
+        s += '  ' + disp(obj[i]) + ',\n'
+        i++
+    end
+    ret s + '](' + string(len(obj)) + ')'
+end
 
-// println(
-//     name,
-//     name.upper(),
-//     name.lower(),
-// )
 
-// println('AIDEN'.isupper())
+lst = [
+    53,
+    23423,
+    189,
+    598,
+    null,
+    835,
+]
 
-println(name.lower())
-println(name.lower().upper())
-println(name.lower().upper().lower())
-println(name.lower().upper().lower().upper())
-println(name.lower().upper().lower().upper().lower())
-println(name.lower().upper().lower().upper().lower().upper())
-println(name.lower.__call__)
-// println(name.lower().upper().lower().upper())
-// println(name.lower().islower())
-// println(name.upper().isupper())
+println(pf(lst))
+
+lst += ['yo'.upper]
+
+println(pf(lst))

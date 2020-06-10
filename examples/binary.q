@@ -42,7 +42,7 @@ fun binxor 2
     new = ''
     i = 0
     while i < len(first)
-        if first[i] is secnd[i]
+        if first[i] == secnd[i]
             new += '0'
         else
             new += '1'
@@ -55,10 +55,10 @@ end
 
 
 print('Enter first number  : ')
-one = 8 // long(input())
+one = 235 // long(input())
 
 print('Enter second number : ')
-two = 5 // long(input())
+two = 401 // long(input())
 
 b_one = binary(one)
 b_two = binary(two)

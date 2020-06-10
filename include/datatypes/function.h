@@ -12,8 +12,9 @@ Object * __call___function(int argc, Object ** argv)
     can_return = 1;
 
     // Variables
-    // int old_locals_count = locals.count;
+    int old_locals_count = locals.count;
     int old_locals_offset = locals.offset;
+    locals.offset = locals.count;
 
     // Arguments
     int * intptr = makeIntPtr(argc);
@@ -44,7 +45,12 @@ Object * __call___function(int argc, Object ** argv)
     current_file = old_file;
     can_return = old_can_return;
 
-    // locals.count = old_locals_count;
+    // Unreference all the new variables that got created
+    // during this function call
+    for (int i = old_locals_count; i < locals.count; i++)
+        objUnref(locals.values[i]);
+
+    locals.count = old_locals_count;
     locals.offset = old_locals_offset;
 
     // If there's anything to return, return it

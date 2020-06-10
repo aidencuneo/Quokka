@@ -230,6 +230,7 @@ int main(int argc, char ** argv)
         freeStack();
         freeRetStack();
         freeVars();
+        freeIntConsts();
         freeConsts();
 
         emptyTrash();

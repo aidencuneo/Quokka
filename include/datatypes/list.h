@@ -97,6 +97,47 @@ Object * __add___list(int argc, Object ** argv)
     return makeNull();
 }
 
+Object * __inadd___list(int argc, Object ** argv)
+{
+    if (!strcmp(argv[1]->name, "list"))
+    {
+        int firstind = objectGetAttrIndex(argv[0], "value");
+        Object ** first = argv[0]->values[firstind];
+        Object ** secnd = objectGetAttr(argv[1], "value");
+
+        int firstlen = ((int *)objectGetAttr(argv[0], "length"))[0];
+        int secndlen = ((int *)objectGetAttr(argv[1], "length"))[0];
+
+        first = realloc(first, (firstlen + secndlen) * sizeof(Object *));
+
+        // Add second list to first list
+        for (int i = 0; i < secndlen; i++)
+        {
+            first[firstlen + i] = secnd[i];
+            first[firstlen + i]->refs++;
+        }
+
+        argv[0]->values[firstind] = first;
+
+        // Assign the new length to the list and free the old length
+        int * newlen = makeIntPtr(firstlen + secndlen);
+        int lenind = objectGetAttrIndex(argv[0], "length");
+
+        free(argv[0]->values[lenind]);
+        argv[0]->values[lenind] = newlen;
+
+        return makeNull();
+    }
+
+    char * err = malloc(18 + strlen(argv[1]->name) + 31 + 1);
+    strcpy(err, "types 'list' and '");
+    strcat(err, argv[1]->name);
+    strcat(err, "' are invalid operands for '+='");
+    error(err, line_num);
+
+    return makeNull();
+}
+
 Object * __index___list(int argc, Object ** argv)
 {
     if (strcmp(argv[1]->name, "int"))
@@ -227,9 +268,9 @@ Object * makeList(int length, Object ** value, int flipped)
 
     self->name = "list";
 
-    // 21 Attributes
-    self->names = malloc(21 * sizeof(char *));
-    self->values = malloc(21 * sizeof(void *));
+    // 19 Attributes
+    self->names = malloc(19 * sizeof(char *));
+    self->values = malloc(19 * sizeof(void *));
     self->value_count = 0;
 
     // Values
@@ -240,17 +281,17 @@ Object * makeList(int length, Object ** value, int flipped)
 
     // __setindex__
     self = objectAddAttr(self, "__setindex__", &__setindex___list);
-    self = objectAddAttr(self, "__setindex__argc", &threeArgc);
 
     // Two argument methods
 
     // __add__
     self = objectAddAttr(self, "__add__", &__add___list);
-    self = objectAddAttr(self, "__add__argc", &twoArgc);
+
+    // __inadd__
+    self = objectAddAttr(self, "__inadd__", &__inadd___list);
 
     // __index__
     self = objectAddAttr(self, "__index__", &__index___list);
-    self = objectAddAttr(self, "__index__argc", &twoArgc);
 
     // One argument methods
 

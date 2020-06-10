@@ -18,7 +18,7 @@ Object * __bool___null(int argc, Object ** argv)
 
 Object * makeNull()
 {
-    return constants[2];
+    return constants[0];
 }
 
 Object * makeNullRaw()

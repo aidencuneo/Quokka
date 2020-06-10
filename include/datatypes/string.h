@@ -11,7 +11,7 @@ Object * __add___string(int argc, Object ** argv)
 
         return makeString(third, 1);
     }
-    else if (!strcmp(argv[1]->name, "null"))
+    else
     {
         Object ** arglist = makeArglist(argv[1]);
 
@@ -32,6 +32,38 @@ Object * __add___string(int argc, Object ** argv)
     strcat(err, argv[1]->name);
     strcat(err, "' are invalid operands for '+'");
     error(err, line_num);
+
+    return makeNull();
+}
+
+Object * __inadd___string(int argc, Object ** argv)
+{
+    if (!strcmp(argv[1]->name, "string"))
+    {
+        int firstind = objectGetAttrIndex(argv[0], "value");
+        char * first = argv[0]->values[firstind];
+        char * secnd = objectGetAttr(argv[1], "value");
+
+        first = realloc(first, strlen(first) + strlen(secnd) + 1);
+        strcat(first, secnd);
+
+        argv[0]->values[firstind] = first;
+    }
+    else
+    {
+        Object ** arglist = makeArglist(argv[1]);
+
+        int firstind = objectGetAttrIndex(argv[0], "value");
+        char * first = argv[0]->values[firstind];
+        char * secnd = objectGetAttr(q_function_string(1, arglist), "value");
+
+        first = realloc(first, strlen(first) + strlen(secnd) + 1);
+        strcat(first, secnd);
+
+        argv[0]->values[firstind] = first;
+
+        free(arglist);
+    }
 
     return makeNull();
 }
@@ -286,12 +318,25 @@ Object * islower_string(int argc, Object ** argv)
 
 Object * makeString(char * value, int is_malloc_ptr)
 {
+    // If length of string is 0, return the empty string constant
+    if (!value[0])
+    {
+        if (is_malloc_ptr)
+            free(value);
+        return constants[1];
+    }
+
+    return makeStringRaw(value, is_malloc_ptr);
+}
+
+Object * makeStringRaw(char * value, int is_malloc_ptr)
+{
     Object * self = objectPointer();
 
     self->name = "string";
 
-    // 30 Attributes
-    int attr_count = 30;
+    // 27 Attributes
+    int attr_count = 27;
     self->names = malloc(attr_count * sizeof(char *));
     self->values = malloc(attr_count * sizeof(void *));
 
@@ -301,19 +346,18 @@ Object * makeString(char * value, int is_malloc_ptr)
 
     // __add__
     self = objectAddAttr(self, "__add__", &__add___string);
-    self = objectAddAttr(self, "__add__argc", &twoArgc);
+
+    // __inadd__
+    self = objectAddAttr(self, "__inadd__", &__inadd___string);
 
     // __mul__
     self = objectAddAttr(self, "__mul__", &__mul___string);
-    self = objectAddAttr(self, "__mul__argc", &twoArgc);
 
     // __eq__
     self = objectAddAttr(self, "__eq__", &__eq___string);
-    self = objectAddAttr(self, "__eq__argc", &twoArgc);
 
     // __index__
     self = objectAddAttr(self, "__index__", &__index___string);
-    self = objectAddAttr(self, "__index__argc", &twoArgc);
 
     // One argument methods
 

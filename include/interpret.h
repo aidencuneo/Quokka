@@ -10,10 +10,13 @@ int stack_size;
 int stack_alloc;
 int stack_alloc_size = 10;
 
+Object ** int_consts;
+int int_const_count = 16384; // 65536
+
 Object ** constants;
 int constant_count;
 int const_alloc;
-int const_alloc_size = 10;
+int const_alloc_size = 20;
 
 Object ** ret_stack;
 int ret_stack_size;
@@ -60,13 +63,24 @@ void freeConsts()
     free(constants);
 }
 
-void resetConsts()
+void freeIntConsts()
 {
-    freeConsts();
+    for (int i = 0; i < int_const_count; i++)
+        objDeref(int_consts[i]);
 
-    const_alloc = const_alloc_size;
-    constants = malloc(const_alloc * sizeof(Object *));
-    constant_count = 0;
+    free(int_consts);
+}
+
+void initIntConsts()
+{
+    int_consts = malloc(int_const_count * sizeof(Object *));
+
+    for (int i = 0; i < int_const_count; i++)
+    {
+        int * ptr = makeIntPtr(i);
+        int_consts[i] = makeIntRaw(ptr, 1);
+        int_consts[i]->refs++;
+    }
 }
 
 // Return Stack
@@ -130,6 +144,7 @@ void cleanupAll()
     freeStack();
     freeRetStack();
     freeVars();
+    freeIntConsts();
     freeConsts();
 
     emptyTrash();
@@ -140,6 +155,7 @@ void interp_init()
 {
     resetStack();
     resetRetStack();
+    initIntConsts();
 
     oneArgc = 1;
     twoArgc = 2;
@@ -587,7 +603,7 @@ void addGVar(char * name, Object * obj)
     int check = getGVarIndex(name);
     if (check != -1)
     {
-        // Free the old Object * non-recursively to prevent lists from losing their objects
+        // Unreference the old variable with this name
         objUnref(globals.values[check]);
 
         globals.values[check] = obj;
@@ -614,7 +630,7 @@ void addVar(char * name, Object * obj)
     int check = getLVarIndex(name);
     if (check != -1)
     {
-        // Free the old Object * non-recursively to prevent lists from losing their objects
+        // Unreference the old variable with this name
         objUnref(locals.values[check]);
 
         locals.values[check] = obj;
@@ -624,8 +640,8 @@ void addVar(char * name, Object * obj)
     if (++locals.count >= locals.alloc)
     {
         locals.alloc += 10;
-        locals.names = realloc(locals.names, globals.alloc * sizeof(char *));
-        locals.values = realloc(locals.values, globals.alloc * sizeof(Object *));
+        locals.names = realloc(locals.names, locals.alloc * sizeof(char *));
+        locals.values = realloc(locals.values, locals.alloc * sizeof(Object *));
     }
 
     locals.names[locals.count - 1] = name;
@@ -661,11 +677,11 @@ Object * getGVarSilent(char * name)
 Object * getLVar(char * name)
 {
     // Check locals
-    for (int i = globals.offset; i < locals.count; i++)
+    for (int i = locals.offset; i < locals.count; i++)
         if (!strcmp(locals.names[i], name))
             return locals.values[i];
 
-    char * err = malloc(1 + strlen(name) + 37 + 1);
+    char * err = malloc(1 + strlen(name) + 36 + 1);
     strcpy(err, "'");
     strcat(err, name);
     strcat(err, "' is not defined as a local variable");
@@ -677,7 +693,7 @@ Object * getLVar(char * name)
 Object * getLVarSilent(char * name)
 {
     // Check locals
-    for (int i = globals.offset; i < locals.count; i++)
+    for (int i = locals.offset; i < locals.count; i++)
         if (!strcmp(locals.names[i], name))
             return locals.values[i];
 
@@ -743,12 +759,12 @@ int getLVarIndex(char * name)
 int getVarIndex(char * name)
 {
     // Check locals
-    for (int i = locals.offset; i < locals.count; i++)
+    for (int i = locals.count - 1; i >= locals.offset; i--)
         if (!strcmp(locals.names[i], name))
             return i;
 
     // Check globals
-    for (int i = globals.offset; i < globals.count; i++)
+    for (int i = globals.count - 1; i >= globals.offset; i--)
         if (!strcmp(globals.names[i], name))
             return i;
 
@@ -757,7 +773,7 @@ int getVarIndex(char * name)
 
 void delGVarIndex(int index)
 {
-    freeObject(globals.values[index]);
+    objUnref(globals.values[index]);
 
     for (int i = index; i < locals.count; i++)
     {
@@ -766,14 +782,11 @@ void delGVarIndex(int index)
     }
 
     globals.count--;
-
-    globals.names = realloc(globals.names, (globals.count + 1) * sizeof(char *));
-    globals.values = realloc(globals.values, (globals.count + 1) * sizeof(Object *));
 }
 
 void delLVarIndex(int index)
 {
-    freeObject(locals.values[index]);
+    objUnref(locals.values[index]);
 
     for (int i = index; i < locals.count; i++)
     {
@@ -782,9 +795,6 @@ void delLVarIndex(int index)
     }
 
     locals.count--;
-
-    locals.names = realloc(locals.names, (locals.count + 1) * sizeof(char *));
-    locals.values = realloc(locals.values, (locals.count + 1) * sizeof(Object *));
 }
 
 Object ** makeArglist(Object * obj)
@@ -831,7 +841,10 @@ Object ** makeArglist(Object * obj)
 
 void quokka_interpret_line(char * linetext)
 {
-    char ** line = quokka_tok(linetext);
+    char * waste;
+    char ** line = quokka_tok(linetext, &waste);
+    pushTrash(waste);
+
     quokka_interpret_line_tokens(line);
 
     free(line);
@@ -873,7 +886,7 @@ void quokka_interpret_line_tokens(char ** line)
     {
         char * literal_str = makeLiteralString(line[1]);
 
-        pushConst(makeString(literal_str, 1));
+        pushConst(makeStringRaw(literal_str, 1));
     }
     else if (!strcmp(line[0], "LOAD_INT"))
     {
@@ -906,6 +919,12 @@ void quokka_interpret_line_tokens(char ** line)
         int ind = strtol(line[1], NULL, 10);
 
         pushTop(constants[ind]);
+    }
+    if (!strcmp(line[0], "LOAD_INT_CONST"))
+    {
+        int ind = strtol(line[1], NULL, 10);
+
+        pushTop(int_consts[ind]);
     }
     else if (!strcmp(line[0], "LOAD_NAME"))
     {
@@ -1229,31 +1248,44 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "INCREMENT"))
     {
-        Object * first = popTop();
+        Object * first = getVar(line[1]);
         Object * secnd = makeInt(&truePtr, 0);
 
-        void * func = objectGetAttr(first, "__add__");
-
-        if (func == NULL)
+        void * func = objectGetAttr(first, "__inadd__");
+        if (func != NULL)
         {
-            char * err = malloc(6 + strlen(first->name) + 37 + 1);
-            strcpy(err, "type '");
-            strcat(err, first->name);
-            strcat(err, "' does not have a method for addition");
-            error(err, line_num);
+            Object ** arglist = malloc(2 * sizeof(Object *));
+            arglist[0] = first;
+            arglist[1] = secnd;
+
+            ((standard_func_def)func)(2, arglist);
+
+            // Don't unreference the constant for 1
+
+            free(arglist);
         }
+        else
+        {
+            func = objectGetAttr(first, "__add__");
+            if (func == NULL)
+            {
+                char * err = malloc(6 + strlen(first->name) + 37 + 1);
+                strcpy(err, "type '");
+                strcat(err, first->name);
+                strcat(err, "' does not have a method for addition");
+                error(err, line_num);
+            }
 
-        Object ** arglist = malloc(2 * sizeof(Object *));
-        arglist[0] = first;
-        arglist[1] = secnd;
+            Object ** arglist = malloc(2 * sizeof(Object *));
+            arglist[0] = first;
+            arglist[1] = secnd;
 
-        pushTop(((standard_func_def)func)(2, arglist));
-        addVar(line[1], stack[stack_size - 1]);
+            addVar(line[1], ((standard_func_def)func)(2, arglist));
 
-        objUnref(first);
-        // Don't unreference the constant for 1
+            // Don't unreference the constant for 1
 
-        free(arglist);
+            free(arglist);
+        }
     }
     else if (!strcmp(line[0], "DECREMENT"))
     {
@@ -1555,6 +1587,170 @@ void quokka_interpret_line_tokens(char ** line)
 
         free(arglist);
     }
+    else if (!strcmp(line[0], "INPLACE_ADD"))
+    {
+        Object * first = getVar(line[1]);
+        Object * secnd = popTop();
+
+        void * func = objectGetAttr(first, "__inadd__");
+        if (func != NULL)
+        {
+            Object ** arglist = malloc(2 * sizeof(Object *));
+            arglist[0] = first;
+            arglist[1] = secnd;
+
+            ((standard_func_def)func)(2, arglist);
+
+            objUnref(secnd);
+
+            free(arglist);
+        }
+        else
+        {
+            func = objectGetAttr(first, "__add__");
+            if (func == NULL)
+            {
+                char * err = malloc(6 + strlen(first->name) + 37 + 1);
+                strcpy(err, "type '");
+                strcat(err, first->name);
+                strcat(err, "' does not have a method for addition");
+                error(err, line_num);
+            }
+
+            Object ** arglist = malloc(2 * sizeof(Object *));
+            arglist[0] = first;
+            arglist[1] = secnd;
+
+            addVar(line[1], ((standard_func_def)func)(2, arglist));
+
+            objUnref(secnd);
+
+            free(arglist);
+        }
+    }
+    else if (!strcmp(line[0], "INPLACE_SUB"))
+    {
+        Object * first = getVar(line[1]);
+        Object * secnd = popTop();
+
+        void * func = objectGetAttr(first, "__insub__");
+        if (func != NULL)
+        {
+            Object ** arglist = malloc(2 * sizeof(Object *));
+            arglist[0] = first;
+            arglist[1] = secnd;
+
+            ((standard_func_def)func)(2, arglist);
+
+            objUnref(secnd);
+
+            free(arglist);
+        }
+        else
+        {
+            func = objectGetAttr(first, "__sub__");
+            if (func == NULL)
+            {
+                char * err = malloc(6 + strlen(first->name) + 40 + 1);
+                strcpy(err, "type '");
+                strcat(err, first->name);
+                strcat(err, "' does not have a method for subtraction");
+                error(err, line_num);
+            }
+
+            Object ** arglist = malloc(2 * sizeof(Object *));
+            arglist[0] = first;
+            arglist[1] = secnd;
+
+            addVar(line[1], ((standard_func_def)func)(2, arglist));
+
+            objUnref(secnd);
+
+            free(arglist);
+        }
+    }
+    else if (!strcmp(line[0], "INPLACE_MUL"))
+    {
+        Object * first = getVar(line[1]);
+        Object * secnd = popTop();
+
+        void * func = objectGetAttr(first, "__inmul__");
+        if (func != NULL)
+        {
+            Object ** arglist = malloc(2 * sizeof(Object *));
+            arglist[0] = first;
+            arglist[1] = secnd;
+
+            ((standard_func_def)func)(2, arglist);
+
+            objUnref(secnd);
+
+            free(arglist);
+        }
+        else
+        {
+            func = objectGetAttr(first, "__mul__");
+            if (func == NULL)
+            {
+                char * err = malloc(6 + strlen(first->name) + 43 + 1);
+                strcpy(err, "type '");
+                strcat(err, first->name);
+                strcat(err, "' does not have a method for multiplication");
+                error(err, line_num);
+            }
+
+            Object ** arglist = malloc(2 * sizeof(Object *));
+            arglist[0] = first;
+            arglist[1] = secnd;
+
+            addVar(line[1], ((standard_func_def)func)(2, arglist));
+
+            objUnref(secnd);
+
+            free(arglist);
+        }
+    }
+    else if (!strcmp(line[0], "INPLACE_DIV"))
+    {
+        Object * first = getVar(line[1]);
+        Object * secnd = popTop();
+
+        void * func = objectGetAttr(first, "__indiv__");
+        if (func != NULL)
+        {
+            Object ** arglist = malloc(2 * sizeof(Object *));
+            arglist[0] = first;
+            arglist[1] = secnd;
+
+            ((standard_func_def)func)(2, arglist);
+
+            objUnref(secnd);
+
+            free(arglist);
+        }
+        else
+        {
+            func = objectGetAttr(first, "__div__");
+            if (func == NULL)
+            {
+                char * err = malloc(6 + strlen(first->name) + 37 + 1);
+                strcpy(err, "type '");
+                strcat(err, first->name);
+                strcat(err, "' does not have a method for division");
+                error(err, line_num);
+            }
+
+            Object ** arglist = malloc(2 * sizeof(Object *));
+            arglist[0] = first;
+            arglist[1] = secnd;
+
+            addVar(line[1], ((standard_func_def)func)(2, arglist));
+
+            objUnref(secnd);
+
+            free(arglist);
+        }
+    }
     else if (!strcmp(line[0], "CMP_EQ"))
     {
         Object * first = popTop();
@@ -1622,10 +1818,10 @@ void quokka_interpret_line_tokens(char ** line)
 
         if (func == NULL)
         {
-            char * err = malloc(6 + strlen(first->name) + 53 + 1);
+            char * err = malloc(6 + strlen(first->name) + 52 + 1);
             strcpy(err, "type '");
             strcat(err, first->name);
-            strcat(err, "' does not have a method for equality (==) comparison");
+            strcat(err, "' does not have a method for pointer (is) comparison");
             error(err, line_num);
         }
 
@@ -2013,14 +2209,12 @@ void quokka_interpret_line_tokens(char ** line)
             return;
 
         // If true, jump
-        for (int i = bc_line + 1; i < bc_line_count; i++)
-        {
-            if (!strcmp(bc_tokens[i], line[1]) || i + 1 == bc_line_count)
-            {
-                bc_line = i;
+        int i;
+        for (i = bc_line + 1; i < bc_line_count - 1; i++)
+            if (!strcmp(bc_tokens[i], line[1]))
                 break;
-            }
-        }
+
+        bc_line = i;
     }
     else if (!strcmp(line[0], "JUMP_IF_FALSE"))
     {
@@ -2048,14 +2242,12 @@ void quokka_interpret_line_tokens(char ** line)
             return;
 
         // If false, jump
-        for (int i = bc_line + 1; i < bc_line_count; i++)
-        {
-            if (!strcmp(bc_tokens[i], line[1]) || i + 1 == bc_line_count)
-            {
-                bc_line = i;
+        int i;
+        for (i = bc_line + 1; i < bc_line_count - 1; i++)
+            if (!strcmp(bc_tokens[i], line[1]))
                 break;
-            }
-        }
+
+        bc_line = i;
     }
     else if (!strcmp(line[0], "CALL") || !strcmp(line[0], "CALL_METHOD"))
     {
@@ -2328,9 +2520,9 @@ void quokka_interpret(char * bytecode)
     bc_tokens = realloc(bc_tokens, (i + 2) * sizeof(char *));
     bc_tokens[i + 1] = NULL;
 
-    pushTrash(dupe);
-
     quokka_interpret_tokens(bc_tokens);
+
+    free(dupe);
 
     /* End */
     line_num = old_line_num;
