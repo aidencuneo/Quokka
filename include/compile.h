@@ -1050,10 +1050,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 argmax = -1;
             }
             else
-            {
-                argmin = strtol(line[2], NULL, 10);
-                argmax = argmin;
-            }
+                argmin = argmax = strtol(line[2], NULL, 10);
         }
 
         char * funcbytecode = malloc(1);
@@ -1067,7 +1064,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 current_line++;
 
             char * comp_bc = quokka_compile_line(t, current_line, -1, 0);
-            char * bc = strReplace(comp_bc, "\n", "\t");
+            char * bc = strReplace(comp_bc, INSTRUCTION_END, "\t");
 
             mstrcat(&funcbytecode, bc);
 
@@ -1087,13 +1084,16 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             error("minimum argument count for function definition can not be below 0", num - 1);
         if (argmax < argmin && argmax != -1)
             error("maximum argument count for function definition can not be below minimum argument count",
-                num);
+                num - 1);
 
-        mstrcat(&bytecode, "DEFINE_FUNCTION");
-        mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, funcname);
-        mstrcat(&bytecode, SEPARATOR);
+        // Start defining the function
+        mstrcatline(&bytecode,
+            "DEFINE_FUNCTION",
+            SEPARATOR,
+            funcname,
+            SEPARATOR);
 
+        // Append argmin
         if (argmin == -1)
             mstrcat(&bytecode, "*");
         else
@@ -1103,8 +1103,10 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             free(intstr);
         }
 
+        // Separator
         mstrcat(&bytecode, SEPARATOR);
 
+        // Append argmax
         if (argmax == -1)
             mstrcat(&bytecode, "*");
         else
@@ -1114,15 +1116,119 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             free(intstr);
         }
 
+        // Separator
         mstrcat(&bytecode, SEPARATOR);
-        mstrcat(&bytecode, "[");
-        mstrcat(&bytecode, funcbytecode);
-        mstrcat(&bytecode, "]");
-        mstrcat(&bytecode, INSTRUCTION_END);
+
+        // Append function bytecode
+        mstrcatline(&bytecode,
+            "[",
+            funcbytecode,
+            "]",
+            INSTRUCTION_END);
 
         free(funcbytecode);
 
         scope++;
+    }
+    else if (!strcmp(line[0], "lam"))
+    {
+        // Set new line
+        if (!isInline)
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        if (len < 3)
+            error("invalid syntax", num - 1);
+
+        int argmin, argmax;
+
+        if (!strcmp(line[1], ":"))
+            argmin = argmax = 0;
+        else if (!strcmp(line[2], ":"))
+        {
+            if (!strcmp(line[1], "*"))
+            {
+                argmin = 0;
+                argmax = -1;
+            }
+            else
+                argmin = argmax = strtol(line[1], NULL, 10);
+
+            arrlstrip(line);
+            len--;
+        }
+        else if (!strcmp(line[3], ":"))
+        {
+            if (!strcmp(line[1], "*"))
+                argmin = 0;
+            else
+                argmin = strtol(line[1], NULL, 10);
+
+            if (!strcmp(line[2], "*"))
+                argmax = -1;
+            else
+                argmax = strtol(line[2], NULL, 10);
+
+            arrlstrip(line);
+            arrlstrip(line);
+            len -= 2;
+        }
+
+        if (argmin < 0 && argmin != -1)
+            error("minimum argument count for lambda definition can not be below 0", num - 1);
+        if (argmax < argmin && argmax != -1)
+            error("maximum argument count for lambda definition can not be below minimum argument count",
+                num - 1);
+
+        arrlstrip(line);
+        arrlstrip(line);
+        len -= 2;
+
+        char * raw_bc = quokka_compile_line_tokens(line, num, len, 1);
+        char * lam_bytecode = strReplace(raw_bc, INSTRUCTION_END, "\t");
+
+        free(raw_bc);
+
+        mstrcat(&lam_bytecode, "RETURN\t");
+
+        // Start defining the lambda function
+        mstrcattrip(&bytecode,
+            "MAKE_LAMBDA",
+            SEPARATOR);
+
+        // Append argmin
+        if (argmin == -1)
+            mstrcat(&bytecode, "*");
+        else
+        {
+            char * intstr = intToStr(argmin);
+            mstrcat(&bytecode, intstr);
+            free(intstr);
+        }
+
+        // Separator
+        mstrcat(&bytecode, SEPARATOR);
+
+        // Append argmax
+        if (argmax == -1)
+            mstrcat(&bytecode, "*");
+        else
+        {
+            char * intstr = intToStr(argmax);
+            mstrcat(&bytecode, intstr);
+            free(intstr);
+        }
+
+        // Separator
+        mstrcat(&bytecode, SEPARATOR);
+
+        // Append lambda bytecode
+        mstrcatline(&bytecode,
+            "[",
+            lam_bytecode,
+            "]",
+            INSTRUCTION_END);
+
+        free(lam_bytecode);
     }
     else if (!strcmp(line[0], "del"))
     {
@@ -1548,7 +1654,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (isidentifier(line[0]) && !strcmp(line[1], "+") && !strcmp(line[2], "+"))
     {
         if (len > 3)
-            error("invalid syntax", num);
+            error("invalid syntax", num - 1);
 
         // Set new line
         if (!isInline)
@@ -1571,7 +1677,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     else if (isidentifier(line[0]) && !strcmp(line[1], "-") && !strcmp(line[2], "-"))
     {
         if (len > 3)
-            error("invalid syntax", num);
+            error("invalid syntax", num - 1);
 
         // Set new line
         if (!isInline)
@@ -1846,29 +1952,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         free(valuelist);
         free(operslist);
     }
-    else if (startswith(line[0], "(") && endswith(line[0], ")"))
-    {
-        // Set new line
-        if (!isInline)
-            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
-
-        if (len > 1)
-            error("invalid syntax", num - 1);
-
-        // Split up the argument list into it's elements
-        char * sliced = strSlice(line[0], 1, 1);
-
-        char ** templine;
-        int templen = compile_comma_list_string(&templine, sliced);
-
-        char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
-
-        mstrcat(&bytecode, temp);
-
-        free(sliced);
-        free(temp);
-        free(templine);
-    }
     else if (stringInList(line, "."))
     {
         char * latestvalue = malloc(1);
@@ -2018,11 +2101,33 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             mstrcat(&bytecode, INSTRUCTION_END);
         }
     }
-    else if (islong(line[0]) && len == 1)
+    else if (startswith(line[0], "(") && endswith(line[0], ")") && len == 1)
     {
         // Set new line
         if (!isInline)
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        // Split up the argument list into it's elements
+        char * sliced = strSlice(line[0], 1, 1);
+
+        char ** templine;
+        int templen = compile_comma_list_string(&templine, sliced);
+
+        char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
+
+        mstrcat(&bytecode, temp);
+
+        free(sliced);
+        free(temp);
+        free(templine);
+    }
+    else if (islong(line[0]) && len == 1)
+    {
+        if (!isInline)
+        {
+            free(str_line_num);
+            return bytecode;
+        }
 
         // Clear leading 0's on integers
         while (startswith(line[0], "0") && strlen(line[0]) > 2)
@@ -2040,9 +2145,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else if (isinteger(line[0]) && len == 1)
     {
-        // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+        {
+            free(str_line_num);
+            return bytecode;
+        }
 
         // Clear leading 0's on integers
         while (startswith(line[0], "0") && strlen(line[0]) > 1)
@@ -2094,11 +2201,13 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else if (!strcmp(line[0], "null") && len == 1)
     {
-        // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+        {
+            free(str_line_num);
+            return bytecode;
+        }
 
-        // Load constant number 2
+        // Load constant 0
         mstrcatline(&bytecode, "LOAD_CONST", SEPARATOR, "0", INSTRUCTION_END);
     }
     else if ((
@@ -2106,9 +2215,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         (startswith(line[0], "\"") && endswith(line[0], "\""))
     ) && len == 1)
     {
-        // Set new line
         if (!isInline)
-            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+        {
+            free(str_line_num);
+            return bytecode;
+        }
 
         int ind = addBytecodeConstant("LOAD_STRING", line[0]);
 
@@ -2252,7 +2363,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
 
     free(str_line_num);
-
     return bytecode;
 }
 

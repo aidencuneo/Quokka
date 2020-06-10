@@ -11,7 +11,7 @@ int stack_alloc;
 int stack_alloc_size = 10;
 
 Object ** int_consts;
-int int_const_count = 16384; // 65536
+int int_const_count;
 
 Object ** constants;
 int constant_count;
@@ -73,6 +73,7 @@ void freeIntConsts()
 
 void initIntConsts()
 {
+    int_const_count = 16384; // 65536
     int_consts = malloc(int_const_count * sizeof(Object *));
 
     for (int i = 0; i < int_const_count; i++)
@@ -957,6 +958,29 @@ void quokka_interpret_line_tokens(char ** line)
 
         free(value);
     }
+    else if (!strcmp(line[0], "MAKE_LAMBDA"))
+    {
+        int argmin, argmax;
+
+        if (!strcmp(line[1], "*"))
+            argmin = 0;
+        else
+            argmin = strtol(line[1], NULL, 10);
+
+        if (!strcmp(line[2], "*"))
+            argmax = -1;
+        else
+            argmax = strtol(line[2], NULL, 10);
+
+        char * replaced = strReplace(line[3], "\t", "\n");
+        char * f_code = strSlice(replaced, 1, 1);
+
+        free(replaced);
+
+        char * filepath_dupe = strndup(current_file, strlen(current_file));
+
+        pushTop(makeFunction(filepath_dupe, &f_code, argmin, argmax));
+    }
     else if (!strcmp(line[0], "DEFINE_FUNCTION"))
     {
         int argmin, argmax;
@@ -976,12 +1000,7 @@ void quokka_interpret_line_tokens(char ** line)
 
         free(replaced);
 
-        // f_code points to the exact memory location of the new function's
-        // bytecode, so f_code must be freed when the program exits.
-        // pushTrash(f_code);
-
         char * filepath_dupe = strndup(current_file, strlen(current_file));
-        // pushTrash(filepath_dupe);
 
         addGVar(line[1], makeFunction(filepath_dupe, &f_code, argmin, argmax));
     }
