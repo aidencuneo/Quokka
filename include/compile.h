@@ -1992,7 +1992,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                         line[p],
                         INSTRUCTION_END);
                 }
-                else if (startswith(line[p], "(") && endswith(line[p], ")"))
+                else if (strlen(latestvalue) && startswith(line[p], "(") && endswith(line[p], ")"))
                 {
                     // Split up the argument list into it's elements
                     char * sliced = strSlice(line[p], 1, 1);
@@ -2123,11 +2123,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else if (islong(line[0]) && len == 1)
     {
+        // Set new line
         if (!isInline)
-        {
-            free(str_line_num);
-            return bytecode;
-        }
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         // Clear leading 0's on integers
         while (startswith(line[0], "0") && strlen(line[0]) > 2)
@@ -2145,11 +2143,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else if (isinteger(line[0]) && len == 1)
     {
+        // Set new line
         if (!isInline)
-        {
-            free(str_line_num);
-            return bytecode;
-        }
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         // Clear leading 0's on integers
         while (startswith(line[0], "0") && strlen(line[0]) > 1)
@@ -2201,11 +2197,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     }
     else if (!strcmp(line[0], "null") && len == 1)
     {
+        // Set new line
         if (!isInline)
-        {
-            free(str_line_num);
-            return bytecode;
-        }
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         // Load constant 0
         mstrcatline(&bytecode, "LOAD_CONST", SEPARATOR, "0", INSTRUCTION_END);
@@ -2215,11 +2209,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         (startswith(line[0], "\"") && endswith(line[0], "\""))
     ) && len == 1)
     {
+        // Set new line
         if (!isInline)
-        {
-            free(str_line_num);
-            return bytecode;
-        }
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         int ind = addBytecodeConstant("LOAD_STRING", line[0]);
 

@@ -21,17 +21,12 @@ lst = [
 
 println(pf(lst))
 
-lst += ['yo'.upper]
+hey = 'hey'
+lst += [hey.upper, (hey).upper, ((hey)).upper]
 
 println(pf(lst))
 
 // condition ? t : f
 
-println((
-    lam 1 : argv[0] + 1
-)(
-    51
-))
-
-lam 1 : argv[0] + 1
-lam 1 2 : argv[0] * 2
+inc = lam 1 : argv[0] + 1
+println(inc)
