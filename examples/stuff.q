@@ -10,23 +10,9 @@ fun pf 1
 end
 
 
-lst = [
-    53,
-    23423,
-    189,
-    598,
-    null,
-    835,
-]
+condition = 15
 
-println(pf(lst))
+thing1 = len(string(condition)) == 2 ? true + 1
+thing2 = len(string(condition)) == 2 ? true + 1 : false - 1
 
-hey = 'hey'
-lst += [hey.upper, (hey).upper, ((hey)).upper]
-
-println(pf(lst))
-
-// condition ? t : f
-
-inc = lam 1 : argv[0] + 1
-println(inc)
+println(thing1, thing2)

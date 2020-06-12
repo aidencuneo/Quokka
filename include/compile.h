@@ -34,7 +34,7 @@ int scpstk_size;
 int isidentifier(char * word);
 int isinteger(char * word);
 int islong(char * word);
-int stringInList(char ** arr, char * key);
+int stringInList(char ** arr, char * key, int len);
 void arrlstrip(char ** line);
 int stringCount(char ** lst, char * st);
 int stringCountUntil(char ** lst, char * st, int len);
@@ -197,9 +197,14 @@ int islong(char * word)
     return 1;
 }
 
-int stringInList(char ** arr, char * key)
+int stringInList(char ** arr, char * key, int len)
 {
-    for (int n = 0; arr[n] != NULL; n++)
+    // If len is -1, make len INT_MAX to prevent
+    // the loop from stopping at a fixed length
+    if (len == -1)
+        len = INT_MAX;
+
+    for (int n = 0; arr[n] != NULL && n < len; n++)
     {
         if (!strcmp(arr[n], key))
             return 1;
@@ -664,7 +669,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
     // The current line number as a char pointer
     char * str_line_num = intToStr(current_line);
 
-    if (stringInList(line, "="))
+    if (stringInList(line, "=", len))
     {
         // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
@@ -739,7 +744,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             free(varname);
         }
     }
-    else if (stringInList(line, "+="))
+    else if (stringInList(line, "+=", len))
     {
         // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
@@ -754,7 +759,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcat(&bytecode, temp);
         free(temp);
     }
-    else if (stringInList(line, "-="))
+    else if (stringInList(line, "-=", len))
     {
         // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
@@ -769,7 +774,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcat(&bytecode, temp);
         free(temp);
     }
-    else if (stringInList(line, "*="))
+    else if (stringInList(line, "*=", len))
     {
         // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
@@ -784,7 +789,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcat(&bytecode, temp);
         free(temp);
     }
-    else if (stringInList(line, "/="))
+    else if (stringInList(line, "/=", len))
     {
         // Set new line
         mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
@@ -1326,7 +1331,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 mstrcattrip(&bytecode, "IMPORT", INSTRUCTION_END);
         }
     }
-    else if (stringInList(line, ","))
+    else if (stringInList(line, ",", len))
     {
         char * latestvalue = malloc(1);
         strcpy(latestvalue, "");
@@ -1368,10 +1373,81 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         free(latestvalue);
     }
-    else if (stringInList(line, "or") ||
-             stringInList(line, "xor") ||
-             stringInList(line, "nor") ||
-             stringInList(line, "and"))
+    else if (stringInList(line, "?", len))
+    {
+        // Set new line
+        if (!isInline)
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        // These statements can look like this:
+        // condition ? true : false
+        //
+        // Or this:
+        // condition ? true
+        //
+        // In the second case, `: null` is silently added to the end,
+        // therefore returning null if condition is false.
+
+        // condition ? true : false
+        // <LOAD 0>
+        // <LOAD 1>
+        // <LOAD condition>
+        // TERNARY_IF
+
+        // // Count length needed to hold the condition before allocating
+        // int condition_len = 0;
+        // int first_marker = 0; // Equal to index of first "?"
+        // for (; strcmp(line[first_marker], "?") && first_marker < len; first_marker++)
+        //     condition_len += strlen(line[first_marker]) + 1;
+
+        // // Allocate condition code string
+        // char * condition_code = malloc(condition_len + 1);
+        // strcpy(condition_code, "");
+
+        // for (int i = 0; i < first_marker; i++)
+        // {
+        //     strcat(condition_code, line[i]);
+        //     strcat(condition_code, " ");
+        // }
+
+        // println(condition_code);
+
+        // Find first "?"
+        int first_marker;
+        for (first_marker = 0; strcmp(line[first_marker], "?") && first_marker < len; first_marker++);
+
+        // Error checking
+        if (first_marker == len)
+            error("ternary if statement missing `?`, or `?` is out of bounds", num - 1);
+
+        // Add condition_code to bytecode
+        char * condition_code = quokka_compile_line_tokens(line, num, first_marker, 1);
+        mstrcat(&bytecode, condition_code);
+        free(condition_code);
+
+        // Strip the line
+        for (int i = 0; i < first_marker; i++)
+            arrlstrip(line);
+        len -= first_marker;
+
+        // Find ":" if it exists
+        int secnd_marker;
+        for (secnd_marker = first_marker; strcmp(line[first_marker], ":") && secnd_marker < len; secnd_marker++);
+
+        // Add true_code to bytecode
+        char * true_code = quokka_compile_line_tokens(line, num, secnd_marker, 1);
+        mstrcat(&bytecode, true_code);
+        free(true_code);
+
+        // Strip the line
+        for (int i = first_marker; i < secnd_marker; i++)
+            arrlstrip(line);
+        len -= (secnd_marker - first_marker);
+    }
+    else if (stringInList(line, "or", len) ||
+             stringInList(line, "xor", len) ||
+             stringInList(line, "nor", len) ||
+             stringInList(line, "and", len))
     {
         // Set new line
         if (!isInline)
@@ -1475,13 +1551,13 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         free(valuelist);
         free(operslist);
     }
-    else if (stringInList(line, "<") ||
-             stringInList(line, ">") ||
-             stringInList(line, "<=") ||
-             stringInList(line, ">=") ||
-             stringInList(line, "==") ||
-             stringInList(line, "is") ||
-             stringInList(line, "!="))
+    else if (stringInList(line, "<", len) ||
+             stringInList(line, ">", len) ||
+             stringInList(line, "<=", len) ||
+             stringInList(line, ">=", len) ||
+             stringInList(line, "==", len) ||
+             stringInList(line, "is", len) ||
+             stringInList(line, "!=", len))
     {
         // Set new line
         if (!isInline)
@@ -1712,11 +1788,11 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         mstrcattrip(&bytecode, "GET_ADDRESS", INSTRUCTION_END);
     }
-    else if (stringInList(line, "+") ||
-             stringInList(line, "-") ||
-             stringInList(line, "*") ||
-             stringInList(line, "/") ||
-             stringInList(line, "**"))
+    else if (stringInList(line, "+", len) ||
+             stringInList(line, "-", len) ||
+             stringInList(line, "*", len) ||
+             stringInList(line, "/", len) ||
+             stringInList(line, "**", len))
     {
         // Set new line
         if (!isInline)
@@ -1952,7 +2028,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         free(valuelist);
         free(operslist);
     }
-    else if (stringInList(line, "."))
+    else if (stringInList(line, ".", len))
     {
         char * latestvalue = malloc(1);
         strcpy(latestvalue, "");
