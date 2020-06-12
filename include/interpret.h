@@ -2180,6 +2180,48 @@ void quokka_interpret_line_tokens(char ** line)
         objUnref(first);
         objUnref(secnd);
     }
+    else if (!strcmp(line[0], "TERNARY_IF"))
+    {
+        Object * first = popTop();
+
+        int firstbool;
+
+        // Convert first to bool
+        if (objectHasAttr(first, "__bool__"))
+        {
+            Object ** arglist = makeArglist(first);
+            firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
+            free(arglist);
+        }
+        else
+            firstbool = 0;
+
+        // Perform Ternary IF
+        if (firstbool)
+        {
+            char * replaced = strReplace(line[1], "\t", "\n");
+            char * true_code = strSlice(replaced, 1, 1);
+
+            _quokka_interpret(true_code);
+
+            free(true_code);
+            free(replaced);
+        }
+        else if (!strcmp(line[2], "[]"))
+            pushTop(makeNull());
+        else
+        {
+            char * replaced = strReplace(line[2], "\t", "\n");
+            char * false_code = strSlice(replaced, 1, 1);
+
+            _quokka_interpret(false_code);
+
+            free(false_code);
+            free(replaced);
+        }
+
+        objUnref(first);
+    }
     else if (!strcmp(line[0], "JUMP_TO"))
     {
         for (int i = bc_line + 1; i < bc_line_count; i++)
@@ -2484,29 +2526,12 @@ void quokka_interpret_tokens(char ** tokens)
         bc_line++;
     }
 
-    // if (!can_return)
-    resetStack();
-
     free(tokens);
 }
 
-void quokka_interpret(char * bytecode)
+void _quokka_interpret(char * bytecode)
 {
     /* Start */
-
-    // Stack
-    Object ** old_stack = malloc(stack_size * sizeof(Object *));
-    for (int i = 0; i < stack_size; i++)
-        old_stack[i] = stack[i];
-    int old_stack_size = stack_size;
-    // print("OLD : ");
-    // println(old_stack_size);
-
-    stack_alloc = stack_alloc_size;
-    stack = realloc(stack, stack_alloc * sizeof(Object *));
-    stack_size = 0;
-
-    // The rest
     int old_line_num = line_num;
     int old_bc_line = bc_line;
     int old_bc_line_count = bc_line_count;
@@ -2516,7 +2541,7 @@ void quokka_interpret(char * bytecode)
     bc_tokens = malloc(sizeof(char **));
     bc_tokens[0] = "";
 
-    char * dupe = strndup(bytecode, strlen(bytecode));
+    char * dupe = strdup(bytecode);
 
     int i = 0;
     bc_tokens[0] = cpstrip(nstrtok(dupe, "\n"));
@@ -2548,6 +2573,31 @@ void quokka_interpret(char * bytecode)
     bc_line = old_bc_line;
     bc_line_count = old_bc_line_count;
     bc_tokens = old_bc_tokens;
+}
+
+// Interpret Quokka bytecode
+void quokka_interpret(char * bytecode)
+{
+    /* Start */
+
+    // Stack
+    Object ** old_stack = malloc(stack_size * sizeof(Object *));
+    for (int i = 0; i < stack_size; i++)
+        old_stack[i] = stack[i];
+    int old_stack_size = stack_size;
+    // print("OLD : ");
+    // println(old_stack_size);
+
+    stack_alloc = stack_alloc_size;
+    stack = realloc(stack, stack_alloc * sizeof(Object *));
+    stack_size = 0;
+
+    _quokka_interpret(bytecode);
+
+    /* End */
+
+    // Unreference Objects from the stack used in this interpretation
+    resetStack();
 
     // Recreate and realign previous stack
     stack_alloc = stack_alloc_size;

@@ -10,9 +10,5 @@ fun pf 1
 end
 
 
-condition = 15
-
-thing1 = len(string(condition)) == 2 ? true + 1
-thing2 = len(string(condition)) == 2 ? true + 1 : false - 1
-
-println(thing1, thing2)
+p = pf([1, 2, 3])
+input('[y/n]').lower() == 'y' ? println(p)
