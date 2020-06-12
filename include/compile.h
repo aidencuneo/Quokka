@@ -2068,7 +2068,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                         line[p],
                         INSTRUCTION_END);
                 }
-                else if (strlen(latestvalue) && startswith(line[p], "(") && endswith(line[p], ")"))
+                else if ((strlen(latestvalue) || !lastwasdot) && startswith(line[p], "(") && endswith(line[p], ")"))
                 {
                     // Split up the argument list into it's elements
                     char * sliced = strSlice(line[p], 1, 1);
