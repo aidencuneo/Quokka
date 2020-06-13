@@ -2117,6 +2117,17 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                         strcpy(argcount, "0");
                     }
 
+                    char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                    mstrcat(&bytecode, temp);
+                    free(temp);
+
+                    temp = quokka_compile_line_tokens(templine, num, templen, 1);
+                    mstrcat(&bytecode, temp);
+                    free(temp);
+
+                    latestvalue = realloc(latestvalue, 1);
+                    strcpy(latestvalue, "");
+
                     if (dotcount > 1)
                     {
                         mstrcatline(&bytecode,

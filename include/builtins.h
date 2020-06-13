@@ -176,7 +176,7 @@ Object * q_function_input(int argc, Object ** argv)
     if (argc)
     {
         Object ** arglist = makeArglist(argv[0]);
-        q_function_print(1, arglist);
+        objUnref(q_function_print(1, arglist));
         free(arglist);
     }
 
