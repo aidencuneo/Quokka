@@ -2064,6 +2064,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         strcpy(latestvalue, "");
 
         int lastwasdot = 0;
+        int lasthadcall = 0; // Did the expression before the previous `.` call something?
         int dotcount = 0; // Number of dots `.` in this expression
 
         for (int p = 0; p < len + 1; p++)
@@ -2097,6 +2098,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                         SEPARATOR,
                         line[p],
                         INSTRUCTION_END);
+
+                    lastwasdot = 0;
                 }
                 else if ((strlen(latestvalue) || !lastwasdot) && startswith(line[p], "(") && endswith(line[p], ")"))
                 {
@@ -2128,7 +2131,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                     latestvalue = realloc(latestvalue, 1);
                     strcpy(latestvalue, "");
 
-                    if (dotcount > 1)
+                    if (lasthadcall)
                     {
                         mstrcatline(&bytecode,
                             "CALL_METHOD",
@@ -2150,15 +2153,18 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
                     if (p < len - 1)
                         mstrcat(&bytecode, "REF_TOP" INSTRUCTION_END);
+
+                    lastwasdot = 0;
+                    lasthadcall = 1;
                 }
                 else
                 {
                     latestvalue = realloc(latestvalue, strlen(latestvalue) + strlen(line[p]) + 1 + 1);
                     strcat(latestvalue, line[p]);
                     strcat(latestvalue, " ");
-                }
 
-                lastwasdot = 0;
+                    lastwasdot = 0;
+                }
             }
         }
 

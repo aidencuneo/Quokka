@@ -11,4 +11,6 @@ end
 
 
 p = pf([1, 2, 3])
+
 input('[y/n]').lower() == 'y' ? println(p)
+println('heyo'.lower().upper().lower())

@@ -22,3 +22,4 @@ end
 
 PRINTSEP = '\n'
 println('Random number:', rand(), rand())
+println << ['Random number:', rand(), rand()]
