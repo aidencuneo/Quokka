@@ -280,6 +280,30 @@ void scpstkPop()
     scpstk_size--;
 }
 
+// Expand a square bracket bytecode expression into usable bytecode
+char * expandSBrackExp(char * orig)
+{
+    int len = strlen(orig);
+    char * expanded = malloc(len - 2 + 1); // `- 2` for `[]`, and `+ 1` for null byte
+
+    int sb = 0; // Square-bracket = 0
+
+    for (int i = 0; i < len - 2; i++)
+    {
+        expanded[i] = orig[i + 1];
+
+        if      (expanded[i] == '[')
+            sb++;
+        else if (expanded[i] == ']')
+            sb--;
+        else if (expanded[i] == '\t' && !sb)
+            expanded[i] = '\n';
+    }
+
+    expanded[len - 2] = 0;
+    return expanded;
+}
+
 int findNextIfChain(char * kwtype, int cur_line, int cur_tok_index, int scp)
 {
     // Index will be -1 if 'end' not found

@@ -972,10 +972,7 @@ void quokka_interpret_line_tokens(char ** line)
         else
             argmax = strtol(line[2], NULL, 10);
 
-        char * replaced = strReplace(line[3], "\t", "\n");
-        char * f_code = strSlice(replaced, 1, 1);
-
-        free(replaced);
+        char * f_code = expandSBrackExp(line[3]);
 
         char * filepath_dupe = strndup(current_file, strlen(current_file));
 
@@ -995,10 +992,7 @@ void quokka_interpret_line_tokens(char ** line)
         else
             argmax = strtol(line[3], NULL, 10);
 
-        char * replaced = strReplace(line[4], "\t", "\n");
-        char * f_code = strSlice(replaced, 1, 1);
-
-        free(replaced);
+        char * f_code = expandSBrackExp(line[4]);
 
         char * filepath_dupe = strndup(current_file, strlen(current_file));
 
