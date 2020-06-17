@@ -11,12 +11,10 @@
 
 
 // p = pf([1, 2, 3])
+// println(p)
+
+a = 10
+b = 8
+println(a + b + a + b)
 
 // input('[y/n]').lower() == 'y' ? println(p)
-// println('heyo'.lower().upper().lower())
-
-l = lam : 1 + 1 + 1 ? 1 / 1 + 1 * 2
-println(l)
-println(l())
-// println(1?1)
-// println((lam:1?1)())

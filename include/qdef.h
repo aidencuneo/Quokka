@@ -106,6 +106,7 @@ int getLVarIndex(char * name);
 int getVarIndex(char * name);
 
 Object ** makeArglist(Object * obj);
+Object ** makeDoubleArglist(Object * first, Object * secnd);
 
 //
 /// Function

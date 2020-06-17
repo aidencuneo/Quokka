@@ -1,5 +1,5 @@
 // VERSION STUFF
-#define VERSION "0.5.1"
+#define VERSION "0.5.2"
 
 // Defines
 #define LN10 2.3025850929940456840179914546844
@@ -176,6 +176,12 @@ char * readfile(char * fname)
     fseek(f, 0, SEEK_END);
     length = ftell(f);
     fseek(f, 0, SEEK_SET);
+
+    if (!length)
+    {
+        fclose(f);
+        return 0;
+    }
 
     buffer = malloc(length);
     strcpy(buffer, "");
@@ -368,6 +374,35 @@ char * makeRawString(char * str)
     if (dquotes)
         mstrcat(&newstr, "\"");
     else mstrcat(&newstr, "'");
+
+    return newstr;
+}
+
+// Convert literals into their escaped forms within a string
+char * convertLiterals(char * str)
+{
+    char * newstr = malloc(2);
+    strcpy(newstr, "");
+
+    int len = strlen(str);
+    int escaped = 0;
+
+    for (int i = 0; i < len; i++)
+    {
+        if      (str[i] == '\a') mstrcat(&newstr, "\\a");
+        else if (str[i] == '\b') mstrcat(&newstr, "\\b");
+        else if (str[i] == '\e') mstrcat(&newstr, "\\e");
+        else if (str[i] == '\f') mstrcat(&newstr, "\\f");
+        else if (str[i] == '\n') mstrcat(&newstr, "\\n");
+        else if (str[i] == '\r') mstrcat(&newstr, "\\r");
+        else if (str[i] == '\t') mstrcat(&newstr, "\\t");
+        else if (str[i] == '\v') mstrcat(&newstr, "\\v");
+        else
+        {
+            newstr = realloc(newstr, strlen(newstr) + 1 + 1);
+            strncat(newstr, &str[i], 1);
+        }
+    }
 
     return newstr;
 }

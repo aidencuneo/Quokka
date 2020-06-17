@@ -806,6 +806,15 @@ Object ** makeArglist(Object * obj)
     return arglist;
 }
 
+Object ** makeDoubleArglist(Object * first, Object * secnd)
+{
+    Object ** arglist = malloc(2 * sizeof(Object *));
+    arglist[0] = first;
+    arglist[1] = secnd;
+
+    return arglist;
+}
+
 // void addMethod(Object * method)
 // {
 //     methods = realloc(methods, (method_count + 1) * sizeof(Object *));
@@ -814,7 +823,7 @@ Object ** makeArglist(Object * obj)
 // }
 
 //
-/// datatypes
+/// Datatypes & Includes
 //
 
 #include "datatypes/function.h"
@@ -827,6 +836,8 @@ Object ** makeArglist(Object * obj)
 #include "datatypes/list.h"
 #include "datatypes/null.h"
 #include "datatypes/module.h"
+
+#include "datatypes/operations.h"
 
 #include "import.h"
 
@@ -1267,9 +1278,7 @@ void quokka_interpret_line_tokens(char ** line)
         void * func = objectGetAttr(first, "__inadd__");
         if (func != NULL)
         {
-            Object ** arglist = malloc(2 * sizeof(Object *));
-            arglist[0] = first;
-            arglist[1] = secnd;
+            Object ** arglist = makeDoubleArglist(first, secnd);
 
             ((standard_func_def)func)(2, arglist);
 
@@ -1279,19 +1288,9 @@ void quokka_interpret_line_tokens(char ** line)
         }
         else
         {
-            func = objectGetAttr(first, "__add__");
-            if (func == NULL)
-            {
-                char * err = malloc(6 + strlen(first->name) + 37 + 1);
-                strcpy(err, "type '");
-                strcat(err, first->name);
-                strcat(err, "' does not have a method for addition");
-                error(err, line_num);
-            }
+            func = objOperAdd(first);
 
-            Object ** arglist = malloc(2 * sizeof(Object *));
-            arglist[0] = first;
-            arglist[1] = secnd;
+            Object ** arglist = makeDoubleArglist(first, secnd);
 
             addVar(line[1], ((standard_func_def)func)(2, arglist));
 
@@ -1316,9 +1315,7 @@ void quokka_interpret_line_tokens(char ** line)
             error(err, line_num);
         }
 
-        Object ** arglist = malloc(2 * sizeof(Object *));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        Object ** arglist = makeDoubleArglist(first, secnd);
 
         pushTop(((standard_func_def)func)(2, arglist));
         addVar(line[1], stack[stack_size - 1]);
@@ -1405,33 +1402,9 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = popTop();
         Object * secnd = popTop();
 
-        void * func = objectGetAttr(first, "__add__");
+        void * func = objOperAdd(first);
 
-        if (func == NULL)
-        {
-            char * err = malloc(6 + strlen(first->name) + 37 + 1);
-            strcpy(err, "type '");
-            strcat(err, first->name);
-            strcat(err, "' does not have a method for addition");
-            error(err, line_num);
-        }
-
-        // if (!objectHasAttr(first, "__add__argc"))
-        // {
-        //     char * err = malloc(28 + strlen(first->name) + 56 + 1);
-        //     strcpy(err, "the __add__ method of type '");
-        //     strcat(err, first->name);
-        //     strcat(err, "' is missing an argument limit, this should never happen");
-        //     error(err, line_num);
-        // }
-
-        // int funcargc = ((int *)objectGetAttr(first, "__add__argc"))[0];
-        // if (funcargc != 2)
-        //     error("__add__ function requires an invalid amount of arguments, should be 2", line_num);
-
-        Object ** arglist = malloc(2 * sizeof(Object *));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        Object ** arglist = makeDoubleArglist(first, secnd);
 
         pushTop(((standard_func_def)func)(2, arglist));
 
@@ -1445,33 +1418,9 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = popTop();
         Object * secnd = popTop();
 
-        void * func = objectGetAttr(first, "__sub__");
+        void * func = objOperSub(first);
 
-        if (func == NULL)
-        {
-            char * err = malloc(6 + strlen(first->name) + 37 + 1);
-            strcpy(err, "type '");
-            strcat(err, first->name);
-            strcat(err, "' does not have a method for subtraction");
-            error(err, line_num);
-        }
-
-        // if (!objectHasAttr(first, "__sub__argc"))
-        // {
-        //     char * err = malloc(28 + strlen(first->name) + 56 + 1);
-        //     strcpy(err, "the __sub__ method of type '");
-        //     strcat(err, first->name);
-        //     strcat(err, "' is missing an argument limit, this should never happen");
-        //     error(err, line_num);
-        // }
-
-        // int funcargc = ((int *)objectGetAttr(first, "__sub__argc"))[0];
-        // if (funcargc != 2)
-        //     error("__sub__ function requires an invalid amount of arguments, should be 2", line_num);
-
-        Object ** arglist = malloc(2 * sizeof(Object *));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        Object ** arglist = makeDoubleArglist(first, secnd);
 
         pushTop(((standard_func_def)func)(2, arglist));
 
@@ -1485,33 +1434,9 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = popTop();
         Object * secnd = popTop();
 
-        void * func = objectGetAttr(first, "__mul__");
+        void * func = objOperMul(first);
 
-        if (func == NULL)
-        {
-            char * err = malloc(6 + strlen(first->name) + 43 + 1);
-            strcpy(err, "type '");
-            strcat(err, first->name);
-            strcat(err, "' does not have a method for multiplication");
-            error(err, line_num);
-        }
-
-        // if (!objectHasAttr(first, "__mul__argc"))
-        // {
-        //     char * err = malloc(28 + strlen(first->name) + 56 + 1);
-        //     strcpy(err, "the __mul__ method of type '");
-        //     strcat(err, first->name);
-        //     strcat(err, "' is missing an argument limit, this should never happen");
-        //     error(err, line_num);
-        // }
-
-        // int funcargc = ((int *)objectGetAttr(first, "__mul__argc"))[0];
-        // if (funcargc != 2)
-        //     error("__mul__ function requires an invalid amount of arguments, should be 2", line_num);
-
-        Object ** arglist = malloc(2 * sizeof(Object *));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        Object ** arglist = makeDoubleArglist(first, secnd);
 
         pushTop(((standard_func_def)func)(2, arglist));
 
@@ -1525,33 +1450,9 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = popTop();
         Object * secnd = popTop();
 
-        void * func = objectGetAttr(first, "__div__");
+        void * func = objOperDiv(first);
 
-        if (func == NULL)
-        {
-            char * err = malloc(6 + strlen(first->name) + 37 + 1);
-            strcpy(err, "type '");
-            strcat(err, first->name);
-            strcat(err, "' does not have a method for division");
-            error(err, line_num);
-        }
-
-        // if (!objectHasAttr(first, "__div__argc"))
-        // {
-        //     char * err = malloc(28 + strlen(first->name) + 56 + 1);
-        //     strcpy(err, "the __div__ method of type '");
-        //     strcat(err, first->name);
-        //     strcat(err, "' is missing an argument limit, this should never happen");
-        //     error(err, line_num);
-        // }
-
-        // int funcargc = ((int *)objectGetAttr(first, "__div__argc"))[0];
-        // if (funcargc != 2)
-        //     error("__div__ function requires an invalid amount of arguments, should be 2", line_num);
-
-        Object ** arglist = malloc(2 * sizeof(Object *));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        Object ** arglist = makeDoubleArglist(first, secnd);
 
         pushTop(((standard_func_def)func)(2, arglist));
 
@@ -1565,33 +1466,9 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = popTop();
         Object * secnd = popTop();
 
-        void * func = objectGetAttr(first, "__pow__");
+        void * func = objOperPow(first);
 
-        if (func == NULL)
-        {
-            char * err = malloc(6 + strlen(first->name) + 37 + 1);
-            strcpy(err, "type '");
-            strcat(err, first->name);
-            strcat(err, "' does not have a method for indices");
-            error(err, line_num);
-        }
-
-        // if (!objectHasAttr(first, "__pow__argc"))
-        // {
-        //     char * err = malloc(28 + strlen(first->name) + 56 + 1);
-        //     strcpy(err, "the __pow__ method of type '");
-        //     strcat(err, first->name);
-        //     strcat(err, "' is missing an argument limit, this should never happen");
-        //     error(err, line_num);
-        // }
-
-        // int funcargc = ((int *)objectGetAttr(first, "__pow__argc"))[0];
-        // if (funcargc != 2)
-        //     error("__pow__ function requires an invalid amount of arguments, should be 2", line_num);
-
-        Object ** arglist = malloc(2 * sizeof(Object *));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        Object ** arglist = makeDoubleArglist(first, secnd);
 
         pushTop(((standard_func_def)func)(2, arglist));
 
@@ -1608,9 +1485,7 @@ void quokka_interpret_line_tokens(char ** line)
         void * func = objectGetAttr(first, "__inadd__");
         if (func != NULL)
         {
-            Object ** arglist = malloc(2 * sizeof(Object *));
-            arglist[0] = first;
-            arglist[1] = secnd;
+            Object ** arglist = makeDoubleArglist(first, secnd);
 
             ((standard_func_def)func)(2, arglist);
 
@@ -1620,19 +1495,9 @@ void quokka_interpret_line_tokens(char ** line)
         }
         else
         {
-            func = objectGetAttr(first, "__add__");
-            if (func == NULL)
-            {
-                char * err = malloc(6 + strlen(first->name) + 37 + 1);
-                strcpy(err, "type '");
-                strcat(err, first->name);
-                strcat(err, "' does not have a method for addition");
-                error(err, line_num);
-            }
+            func = objOperAdd(first);
 
-            Object ** arglist = malloc(2 * sizeof(Object *));
-            arglist[0] = first;
-            arglist[1] = secnd;
+            Object ** arglist = makeDoubleArglist(first, secnd);
 
             addVar(line[1], ((standard_func_def)func)(2, arglist));
 
@@ -1649,9 +1514,7 @@ void quokka_interpret_line_tokens(char ** line)
         void * func = objectGetAttr(first, "__insub__");
         if (func != NULL)
         {
-            Object ** arglist = malloc(2 * sizeof(Object *));
-            arglist[0] = first;
-            arglist[1] = secnd;
+            Object ** arglist = makeDoubleArglist(first, secnd);
 
             ((standard_func_def)func)(2, arglist);
 
@@ -1661,19 +1524,9 @@ void quokka_interpret_line_tokens(char ** line)
         }
         else
         {
-            func = objectGetAttr(first, "__sub__");
-            if (func == NULL)
-            {
-                char * err = malloc(6 + strlen(first->name) + 40 + 1);
-                strcpy(err, "type '");
-                strcat(err, first->name);
-                strcat(err, "' does not have a method for subtraction");
-                error(err, line_num);
-            }
+            func = objOperSub(first);
 
-            Object ** arglist = malloc(2 * sizeof(Object *));
-            arglist[0] = first;
-            arglist[1] = secnd;
+            Object ** arglist = makeDoubleArglist(first, secnd);
 
             addVar(line[1], ((standard_func_def)func)(2, arglist));
 
@@ -1690,9 +1543,7 @@ void quokka_interpret_line_tokens(char ** line)
         void * func = objectGetAttr(first, "__inmul__");
         if (func != NULL)
         {
-            Object ** arglist = malloc(2 * sizeof(Object *));
-            arglist[0] = first;
-            arglist[1] = secnd;
+            Object ** arglist = makeDoubleArglist(first, secnd);
 
             ((standard_func_def)func)(2, arglist);
 
@@ -1702,19 +1553,9 @@ void quokka_interpret_line_tokens(char ** line)
         }
         else
         {
-            func = objectGetAttr(first, "__mul__");
-            if (func == NULL)
-            {
-                char * err = malloc(6 + strlen(first->name) + 43 + 1);
-                strcpy(err, "type '");
-                strcat(err, first->name);
-                strcat(err, "' does not have a method for multiplication");
-                error(err, line_num);
-            }
+            func = objOperMul(first);
 
-            Object ** arglist = malloc(2 * sizeof(Object *));
-            arglist[0] = first;
-            arglist[1] = secnd;
+            Object ** arglist = makeDoubleArglist(first, secnd);
 
             addVar(line[1], ((standard_func_def)func)(2, arglist));
 
@@ -1731,9 +1572,7 @@ void quokka_interpret_line_tokens(char ** line)
         void * func = objectGetAttr(first, "__indiv__");
         if (func != NULL)
         {
-            Object ** arglist = malloc(2 * sizeof(Object *));
-            arglist[0] = first;
-            arglist[1] = secnd;
+            Object ** arglist = makeDoubleArglist(first, secnd);
 
             ((standard_func_def)func)(2, arglist);
 
@@ -1743,15 +1582,7 @@ void quokka_interpret_line_tokens(char ** line)
         }
         else
         {
-            func = objectGetAttr(first, "__div__");
-            if (func == NULL)
-            {
-                char * err = malloc(6 + strlen(first->name) + 37 + 1);
-                strcpy(err, "type '");
-                strcat(err, first->name);
-                strcat(err, "' does not have a method for division");
-                error(err, line_num);
-            }
+            func = objOperDiv(first);
 
             Object ** arglist = malloc(2 * sizeof(Object *));
             arglist[0] = first;
@@ -1769,33 +1600,9 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = popTop();
         Object * secnd = popTop();
 
-        void * func = objectGetAttr(first, "__eq__");
+        void * func = objOperEq(first);
 
-        if (func == NULL)
-        {
-            char * err = malloc(6 + strlen(first->name) + 53 + 1);
-            strcpy(err, "type '");
-            strcat(err, first->name);
-            strcat(err, "' does not have a method for equality (==) comparison");
-            error(err, line_num);
-        }
-
-        // if (!objectHasAttr(first, "__eq__argc"))
-        // {
-        //     char * err = malloc(27 + strlen(first->name) + 56 + 1);
-        //     strcpy(err, "the __eq__ method of type '");
-        //     strcat(err, first->name);
-        //     strcat(err, "' is missing an argument limit, this should never happen");
-        //     error(err, line_num);
-        // }
-
-        // int funcargc = ((int *)objectGetAttr(first, "__eq__argc"))[0];
-        // if (funcargc != 2)
-        //     error("__eq__ function requires an invalid amount of arguments, should be 2", line_num);
-
-        Object ** arglist = malloc(2 * sizeof(Object *));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        Object ** arglist = makeDoubleArglist(first, secnd);
 
         pushTop(((standard_func_def)func)(2, arglist));
 
@@ -1827,34 +1634,10 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = popTop();
         Object * secnd = popTop();
 
-        void * func = objectGetAttr(first, "__eq__");
-
-        if (func == NULL)
-        {
-            char * err = malloc(6 + strlen(first->name) + 52 + 1);
-            strcpy(err, "type '");
-            strcat(err, first->name);
-            strcat(err, "' does not have a method for pointer (is) comparison");
-            error(err, line_num);
-        }
-
-        // if (!objectHasAttr(first, "__eq__argc"))
-        // {
-        //     char * err = malloc(27 + strlen(first->name) + 56 + 1);
-        //     strcpy(err, "the __eq__ method of type '");
-        //     strcat(err, first->name);
-        //     strcat(err, "' is missing an argument limit, this should never happen");
-        //     error(err, line_num);
-        // }
-
-        // int funcargc = ((int *)objectGetAttr(first, "__eq__argc"))[0];
-        // if (funcargc != 2)
-        //     error("__eq__ function requires an invalid amount of arguments, should be 2", line_num);
+        void * func = objOperEq(first);
 
         // Get result from __eq__
-        Object ** arglist = malloc(2 * sizeof(Object *));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        Object ** arglist = makeDoubleArglist(first, secnd);
 
         Object * condition = ((standard_func_def)func)(2, arglist);
 
@@ -1884,33 +1667,9 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = popTop();
         Object * secnd = popTop();
 
-        void * func = objectGetAttr(first, "__lt__");
+        void * func = objOperLt(first);
 
-        if (func == NULL)
-        {
-            char * err = malloc(6 + strlen(first->name) + 53 + 1);
-            strcpy(err, "type '");
-            strcat(err, first->name);
-            strcat(err, "' does not have a method for less than (<) comparison");
-            error(err, line_num);
-        }
-
-        // if (!objectHasAttr(first, "__lt__argc"))
-        // {
-        //     char * err = malloc(27 + strlen(first->name) + 56 + 1);
-        //     strcpy(err, "the __lt__ method of type '");
-        //     strcat(err, first->name);
-        //     strcat(err, "' is missing an argument limit, this should never happen");
-        //     error(err, line_num);
-        // }
-
-        // int funcargc = ((int *)objectGetAttr(first, "__lt__argc"))[0];s
-        // if (funcargc != 2)
-        //     error("__lt__ function requires an invalid amount of arguments, should be 2", line_num);
-
-        Object ** arglist = malloc(2 * sizeof(Object *));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        Object ** arglist = makeDoubleArglist(first, secnd);
 
         pushTop(((standard_func_def)func)(2, arglist));
 
@@ -1924,33 +1683,9 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = popTop();
         Object * secnd = popTop();
 
-        void * func = objectGetAttr(first, "__gt__");
+        void * func = objOperGt(first);
 
-        if (func == NULL)
-        {
-            char * err = malloc(6 + strlen(first->name) + 56 + 1);
-            strcpy(err, "type '");
-            strcat(err, first->name);
-            strcat(err, "' does not have a method for greater than (>) comparison");
-            error(err, line_num);
-        }
-
-        // if (!objectHasAttr(first, "__gt__argc"))
-        // {
-        //     char * err = malloc(27 + strlen(first->name) + 56 + 1);
-        //     strcpy(err, "the __gt__ method of type '");
-        //     strcat(err, first->name);
-        //     strcat(err, "' is missing an argument limit, this should never happen");
-        //     error(err, line_num);
-        // }
-
-        // int funcargc = ((int *)objectGetAttr(first, "__gt__argc"))[0];
-        // if (funcargc != 2)
-        //     error("__gt__ function requires an invalid amount of arguments, should be 2", line_num);
-
-        Object ** arglist = malloc(2 * sizeof(Object *));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        Object ** arglist = makeDoubleArglist(first, secnd);
 
         pushTop(((standard_func_def)func)(2, arglist));
 
@@ -1964,33 +1699,9 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = popTop();
         Object * secnd = popTop();
 
-        void * func = objectGetAttr(first, "__le__");
+        void * func = objOperLe(first);
 
-        if (func == NULL)
-        {
-            char * err = malloc(6 + strlen(first->name) + 66 + 1);
-            strcpy(err, "type '");
-            strcat(err, first->name);
-            strcat(err, "' does not have a method for less than or equal to (<=) comparison");
-            error(err, line_num);
-        }
-
-        // if (!objectHasAttr(first, "__le__argc"))
-        // {
-        //     char * err = malloc(27 + strlen(first->name) + 56 + 1);
-        //     strcpy(err, "the __le__ method of type '");
-        //     strcat(err, first->name);
-        //     strcat(err, "' is missing an argument limit, this should never happen");
-        //     error(err, line_num);
-        // }
-
-        // int funcargc = ((int *)objectGetAttr(first, "__le__argc"))[0];
-        // if (funcargc != 2)
-        //     error("__le__ function requires an invalid amount of arguments, should be 2", line_num);
-
-        Object ** arglist = malloc(2 * sizeof(Object *));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        Object ** arglist = makeDoubleArglist(first, secnd);
 
         pushTop(((standard_func_def)func)(2, arglist));
 
@@ -2004,33 +1715,9 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = popTop();
         Object * secnd = popTop();
 
-        void * func = objectGetAttr(first, "__ge__");
+        void * func = objOperGe(first);
 
-        if (func == NULL)
-        {
-            char * err = malloc(6 + strlen(first->name) + 69 + 1);
-            strcpy(err, "type '");
-            strcat(err, first->name);
-            strcat(err, "' does not have a method for greater than or equal to (>=) comparison");
-            error(err, line_num);
-        }
-
-        // if (!objectHasAttr(first, "__ge__argc"))
-        // {
-        //     char * err = malloc(27 + strlen(first->name) + 56 + 1);
-        //     strcpy(err, "the __ge__ method of type '");
-        //     strcat(err, first->name);
-        //     strcat(err, "' is missing an argument limit, this should never happen");
-        //     error(err, line_num);
-        // }
-
-        // int funcargc = ((int *)objectGetAttr(first, "__ge__argc"))[0];
-        // if (funcargc != 2)
-        //     error("__ge__ function requires an invalid amount of arguments, should be 2", line_num);
-
-        Object ** arglist = malloc(2 * sizeof(Object *));
-        arglist[0] = first;
-        arglist[1] = secnd;
+        Object ** arglist = makeDoubleArglist(first, secnd);
 
         pushTop(((standard_func_def)func)(2, arglist));
 

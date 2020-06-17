@@ -2350,7 +2350,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (!isInline)
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
-        int ind = addBytecodeConstant("LOAD_STRING", line[0]);
+        char * processed_string = convertLiterals(line[0]);
+        int ind = addBytecodeConstant("LOAD_STRING", processed_string);
+        free(processed_string);
 
         char * intstr = intToStr(ind);
         mstrcatline(&bytecode,
@@ -2540,17 +2542,17 @@ char * quokka_compile_raw(char * rawtext, int isInline)
 char * quokka_compile_fname(char * filename)
 {
     /* Start */
-    set_bytecode_constants();
-    compile_init();
-
-    /* Main */
     char * buffer = readfile(filename);
 
     if (!buffer)
         return 0;
 
+    set_bytecode_constants();
+    compile_init();
+
     pushTrash(buffer);
 
+    /* Main */
     char * res = quokka_compile_raw(buffer, 0);
 
     /* End */

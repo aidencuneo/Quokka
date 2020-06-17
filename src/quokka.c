@@ -217,7 +217,7 @@ int main(int argc, char ** argv)
         free(outputfile);
     }
 
-    if (execute_code)
+    if (execute_code && main_bytecode)
     {
         if (verbose) println("\n--OUTPUT--");
 

@@ -384,8 +384,8 @@ Object * makeIntRaw(int * value, int is_malloc_ptr)
 
     self->name = "int";
 
-    // 23 to 24 Attributes
-    int max_attr_count = 24;
+    // 13 to 14 Attributes // 22 to 23
+    int max_attr_count = 14; // 24
     if (is_malloc_ptr)
     {
         self->names = malloc(max_attr_count * sizeof(char *));
@@ -393,44 +393,14 @@ Object * makeIntRaw(int * value, int is_malloc_ptr)
     }
     else
     {
-        self->names = malloc((max_attr_count) * sizeof(char *));
-        self->values = malloc((max_attr_count) * sizeof(void *));
+        self->names = malloc((max_attr_count - 1) * sizeof(char *));
+        self->values = malloc((max_attr_count - 1) * sizeof(void *));
     }
     self->value_count = 0;
 
     self = objectAddAttr(self, "value", value);
 
     // Two argument methods
-
-    // __add__
-    self = objectAddAttr(self, "__add__", &__add___int);
-
-    // __sub__
-    self = objectAddAttr(self, "__sub__", &__sub___int);
-
-    // __mul__
-    self = objectAddAttr(self, "__mul__", &__mul___int);
-
-    // __div__
-    self = objectAddAttr(self, "__div__", &__div___int);
-
-    // __pow__
-    self = objectAddAttr(self, "__pow__", &__pow___int);
-
-    // __eq__
-    self = objectAddAttr(self, "__eq__", &__eq___int);
-
-    // __lt__
-    self = objectAddAttr(self, "__lt__", &__lt___int);
-
-    // __le__
-    self = objectAddAttr(self, "__le__", &__le___int);
-
-    // __gt__
-    self = objectAddAttr(self, "__gt__", &__gt___int);
-
-    // __ge__
-    self = objectAddAttr(self, "__ge__", &__ge___int);
 
     // One argument methods
 
