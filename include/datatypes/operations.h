@@ -158,6 +158,94 @@ void * objOperPow(Object * obj)
     return func;
 }
 
+// Retrieve __mod__ method from an Object
+void * objOperMod(Object * obj)
+{
+    if (!strcmp(obj->name, "int"))
+        return &__mod___int;
+    if (!strcmp(obj->name, "long"))
+        return &__mod___long;
+
+    void * func = objectGetAttr(obj, "__mod__");
+
+    if (func == NULL)
+    {
+        char * err = malloc(6 + strlen(obj->name) + 35 + 1);
+        strcpy(err, "type '");
+        strcat(err, obj->name);
+        strcat(err, "' does not have a method for modulo");
+        error(err, line_num);
+    }
+
+    return func;
+}
+
+// Retrieve __xor__ method from an Object
+void * objOperXor(Object * obj)
+{
+    if (!strcmp(obj->name, "int"))
+        return &__xor___int;
+    if (!strcmp(obj->name, "long"))
+        return &__xor___long;
+
+    void * func = objectGetAttr(obj, "__xor__");
+
+    if (func == NULL)
+    {
+        char * err = malloc(6 + strlen(obj->name) + 32 + 1);
+        strcpy(err, "type '");
+        strcat(err, obj->name);
+        strcat(err, "' does not have a method for XOR");
+        error(err, line_num);
+    }
+
+    return func;
+}
+
+// Retrieve __lshift__ method from an Object
+void * objOperLshift(Object * obj)
+{
+    if (!strcmp(obj->name, "int"))
+        return &__lshift___int;
+    if (!strcmp(obj->name, "long"))
+        return &__lshift___long;
+
+    void * func = objectGetAttr(obj, "__lshift__");
+
+    if (func == NULL)
+    {
+        char * err = malloc(6 + strlen(obj->name) + 47 + 1);
+        strcpy(err, "type '");
+        strcat(err, obj->name);
+        strcat(err, "' does not have a method for bitwise left-shift");
+        error(err, line_num);
+    }
+
+    return func;
+}
+
+// Retrieve __rshift__ method from an Object
+void * objOperRshift(Object * obj)
+{
+    if (!strcmp(obj->name, "int"))
+        return &__rshift___int;
+    if (!strcmp(obj->name, "long"))
+        return &__rshift___long;
+
+    void * func = objectGetAttr(obj, "__rshift__");
+
+    if (func == NULL)
+    {
+        char * err = malloc(6 + strlen(obj->name) + 48 + 1);
+        strcpy(err, "type '");
+        strcat(err, obj->name);
+        strcat(err, "' does not have a method for bitwise right-shift");
+        error(err, line_num);
+    }
+
+    return func;
+}
+
 // Retrieve __inadd__ method from an Object (no error raising)
 void * objOperInadd(Object * obj)
 {

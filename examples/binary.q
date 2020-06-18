@@ -7,7 +7,7 @@ fun binary 1
     n = argv[0]
     b = ''
     while n > 0
-        b = string(modulo(n, 2)) + b
+        b = string(n % 2) + b
         n /= 2
     end
     ret b
@@ -23,7 +23,7 @@ fun bintoint 1
     rem = 0
 
     while num > 0
-        rem = modulo(num, 10)
+        rem = num % 10
         decimal_val += (rem * base)
         num /= 10
         base *= 2

@@ -319,12 +319,12 @@ Object * islower_string(int argc, Object ** argv)
 Object * makeString(char * value, int is_malloc_ptr)
 {
     // If length of string is 0, return the empty string constant
-    if (!value[0])
-    {
-        if (is_malloc_ptr)
-            free(value);
-        return constants[1];
-    }
+    // if (!value[0])
+    // {
+    //     if (is_malloc_ptr)
+    //         free(value);
+    //     return constants[1];
+    // }
 
     return makeStringRaw(value, is_malloc_ptr);
 }

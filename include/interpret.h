@@ -12,6 +12,7 @@ int stack_alloc_size = 10;
 
 Object ** int_consts;
 int int_const_count = 16384; // 65536
+int int_consts_init = 0;
 
 Object ** constants;
 int constant_count;
@@ -83,6 +84,7 @@ void freeIntConsts()
 void initIntConsts()
 {
     int_consts = malloc(int_const_count * sizeof(Object *));
+    int_consts_init = 1;
 
     for (int i = 0; i < int_const_count; i++)
     {
@@ -153,8 +155,9 @@ void cleanupAll()
     freeStack();
     freeRetStack();
     freeVars();
-    freeIntConsts();
     freeConsts();
+    if (int_consts_init)
+        freeIntConsts();
 
     emptyTrash();
 }
@@ -1441,6 +1444,70 @@ void quokka_interpret_line_tokens(char ** line)
 
         free(arglist);
     }
+    else if (!strcmp(line[0], "BINARY_MOD"))
+    {
+        Object * first = popTop();
+        Object * secnd = popTop();
+
+        void * func = objOperMod(first);
+
+        Object ** arglist = makeDoubleArglist(first, secnd);
+
+        pushTop(((standard_func_def)func)(2, arglist));
+
+        objUnref(first);
+        objUnref(secnd);
+
+        free(arglist);
+    }
+    else if (!strcmp(line[0], "BINARY_XOR"))
+    {
+        Object * first = popTop();
+        Object * secnd = popTop();
+
+        void * func = objOperXor(first);
+
+        Object ** arglist = makeDoubleArglist(first, secnd);
+
+        pushTop(((standard_func_def)func)(2, arglist));
+
+        objUnref(first);
+        objUnref(secnd);
+
+        free(arglist);
+    }
+    else if (!strcmp(line[0], "BINARY_LSHIFT"))
+    {
+        Object * first = popTop();
+        Object * secnd = popTop();
+
+        void * func = objOperLshift(first);
+
+        Object ** arglist = makeDoubleArglist(first, secnd);
+
+        pushTop(((standard_func_def)func)(2, arglist));
+
+        objUnref(first);
+        objUnref(secnd);
+
+        free(arglist);
+    }
+    else if (!strcmp(line[0], "BINARY_RSHIFT"))
+    {
+        Object * first = popTop();
+        Object * secnd = popTop();
+
+        void * func = objOperRshift(first);
+
+        Object ** arglist = makeDoubleArglist(first, secnd);
+
+        pushTop(((standard_func_def)func)(2, arglist));
+
+        objUnref(first);
+        objUnref(secnd);
+
+        free(arglist);
+    }
     else if (!strcmp(line[0], "INPLACE_ADD"))
     {
         Object * first = getVar(line[1]);
@@ -1893,22 +1960,18 @@ void quokka_interpret_line_tokens(char ** line)
     {
         Object * obj = popTop();
 
-        if (!objectHasAttr(obj, "__bool__"))
+        int condition = 0;
+
+        if (objOperBool(obj) != NULL)
         {
-            char * err = malloc(6 + strlen(obj->name) + 34 + 1);
-            strcpy(err, "type '");
-            strcat(err, obj->name);
-            strcat(err, "' can not be converted into a bool");
-            error(err, line_num);
+            Object ** arglist = makeArglist(obj);
+            Object * conditionobj = q_function_bool(1, arglist);
+            free(arglist);
+
+            condition = ((int *)objectGetAttr(conditionobj, "value"))[0];
+
+            objUnref(conditionobj);
         }
-
-        Object ** arglist = makeArglist(obj);
-        Object * conditionobj = q_function_bool(1, arglist);
-        free(arglist);
-
-        int condition = ((int *)objectGetAttr(conditionobj, "value"))[0];
-
-        objUnref(conditionobj);
 
         // If false, don't jump
         if (!condition)
@@ -1926,22 +1989,18 @@ void quokka_interpret_line_tokens(char ** line)
     {
         Object * obj = popTop();
 
-        if (!objectHasAttr(obj, "__bool__"))
+        int condition = 0;
+
+        if (objOperBool(obj) != NULL)
         {
-            char * err = malloc(6 + strlen(obj->name) + 34 + 1);
-            strcpy(err, "type '");
-            strcat(err, obj->name);
-            strcat(err, "' can not be converted into a bool");
-            error(err, line_num);
+            Object ** arglist = makeArglist(obj);
+            Object * conditionobj = q_function_bool(1, arglist);
+            free(arglist);
+
+            condition = ((int *)objectGetAttr(conditionobj, "value"))[0];
+
+            objUnref(conditionobj);
         }
-
-        Object ** arglist = makeArglist(obj);
-        Object * conditionobj = q_function_bool(1, arglist);
-        free(arglist);
-
-        int condition = ((int *)objectGetAttr(conditionobj, "value"))[0];
-
-        objUnref(conditionobj);
 
         // If true, don't jump
         if (condition)

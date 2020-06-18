@@ -5,21 +5,16 @@ import 'builtins'
 //
 
 
-fun modulo 2
-    ret argv[0] - (argv[1] * (argv[0] / argv[1]))
-end
-
-
 fun binary 1
     n = argv[0]
     b = []
 
     while n > 0
-        b = [modulo(n, 2)] + b
+        b = [n % 2] + b
         n /= 2
     end
 
-    while modulo(len(b), 8)
+    while len(b) % 8
         b = [0] + b
     end
 
@@ -34,7 +29,7 @@ fun binary_s 2
     b = []
 
     while n > 0
-        b = [modulo(n, 2)] + b
+        b = [n % 2] + b
         n /= 2
     end
 

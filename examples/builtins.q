@@ -199,6 +199,13 @@ fun strsum *
 end
 
 
-fun modulo 2
-    ret argv[0] - (argv[1] * (argv[0] / argv[1]))
+fun pf 1
+    obj = argv[0]
+    s = '<' + type(obj) + '>[\n'
+    i = 0
+    while i < len(obj)
+        s += '  ' + disp(obj[i]) + ',\n'
+        i++
+    end
+    ret s + '](' + string(len(obj)) + ')'
 end

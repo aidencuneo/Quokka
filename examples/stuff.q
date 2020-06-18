@@ -1,26 +1,19 @@
-// fun pf 1
-//     obj = argv[0]
-//     s = '<' + type(obj) + '>[\n'
-//     i = 0
-//     while i < len(obj)
-//         s += '  ' + disp(obj[i]) + ',\n'
-//         i++
-//     end
-//     ret s + '](' + string(len(obj)) + ')'
-// end
+println(': Modulo')
+println(23948239842739844L % 10)
+println(12 % 5)
+println('')
 
+println(': XOR')
+println(73 ^ 134)
+println(73 ^ 134 ^ 73)
+println('')
 
-// p = pf([1, 2, 3])
-// println(p)
+println(': Bitwise left-shift')
+println(42 << 1)
+println(50 << 3)
+println('')
 
-a = 10
-b = 8
-println(a + b + a + b)
-println(null)
-println(sizeof(null))
-s = 'hey'
-println(s, sizeof(s))
-
-println([sizeof(255), sizeof(255L)])
-
-// input('[y/n]').lower() == 'y' ? println(p)
+println(': Bitwise right-shift')
+println(42 >> 1)
+println(50 >> 3)
+println('')

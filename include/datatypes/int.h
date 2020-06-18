@@ -154,6 +154,108 @@ Object * __pow___int(int argc, Object ** argv)
     return makeNull();
 }
 
+Object * __mod___int(int argc, Object ** argv)
+{
+    if (!strcmp(argv[1]->name, "int"))
+    {
+        int * first = objectGetAttr(argv[0], "value");
+        int * secnd = objectGetAttr(argv[1], "value");
+
+        int * third = makeIntPtr(first[0] % secnd[0]);
+
+        return makeInt(third, 1);
+    }
+    else if (!strcmp(argv[1]->name, "long"))
+    {
+        int * first = objectGetAttr(argv[0], "value");
+        long long * secnd = objectGetAttr(argv[1], "value");
+
+        int * third = makeIntPtr(first[0] % secnd[0]);
+
+        return makeInt(third, 1);
+    }
+
+    char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
+    strcpy(err, "types 'int' and '");
+    strcat(err, argv[1]->name);
+    strcat(err, "' are invalid operands for '%'");
+    error(err, line_num);
+
+    return makeNull();
+}
+
+Object * __xor___int(int argc, Object ** argv)
+{
+    if (!strcmp(argv[1]->name, "int"))
+    {
+        int * first = objectGetAttr(argv[0], "value");
+        int * secnd = objectGetAttr(argv[1], "value");
+
+        int * third = makeIntPtr(first[0] ^ secnd[0]);
+
+        return makeInt(third, 1);
+    }
+    else if (!strcmp(argv[1]->name, "long"))
+    {
+        int * first = objectGetAttr(argv[0], "value");
+        long long * secnd = objectGetAttr(argv[1], "value");
+
+        long long * third = makeLLPtr(first[0] ^ secnd[0]);
+
+        return makeLong(third, 1);
+    }
+
+    char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
+    strcpy(err, "types 'int' and '");
+    strcat(err, argv[1]->name);
+    strcat(err, "' are invalid operands for '^'");
+    error(err, line_num);
+
+    return makeNull();
+}
+
+Object * __lshift___int(int argc, Object ** argv)
+{
+    if (!strcmp(argv[1]->name, "int"))
+    {
+        int * first = objectGetAttr(argv[0], "value");
+        int * secnd = objectGetAttr(argv[1], "value");
+
+        int * third = makeIntPtr(first[0] << secnd[0]);
+
+        return makeInt(third, 1);
+    }
+
+    char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
+    strcpy(err, "types 'int' and '");
+    strcat(err, argv[1]->name);
+    strcat(err, "' are invalid operands for '<<'");
+    error(err, line_num);
+
+    return makeNull();
+}
+
+Object * __rshift___int(int argc, Object ** argv)
+{
+    if (!strcmp(argv[1]->name, "int"))
+    {
+        int * first = objectGetAttr(argv[0], "value");
+        int * secnd = objectGetAttr(argv[1], "value");
+
+        int * third = makeIntPtr(first[0] >> secnd[0]);
+
+        return makeInt(third, 1);
+    }
+
+    char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
+    strcpy(err, "types 'int' and '");
+    strcat(err, argv[1]->name);
+    strcat(err, "' are invalid operands for '>>'");
+    error(err, line_num);
+
+    return makeNull();
+}
+
 Object * __eq___int(int argc, Object ** argv)
 {
     if (!strcmp(argv[1]->name, "int"))

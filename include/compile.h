@@ -1781,6 +1781,21 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             mstrcat(&bytecode, "BOOLEAN_NOT" INSTRUCTION_END);
         }
     }
+    else if (!strcmp(line[0], "&"))
+    {
+        // Set new line
+        if (!isInline)
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        arrlstrip(line);
+        len--;
+
+        char * temp = quokka_compile_line_tokens(line, num, len, 1);
+        mstrcat(&bytecode, temp);
+        free(temp);
+
+        mstrcat(&bytecode, "GET_ADDRESS" INSTRUCTION_END);
+    }
     else if (isidentifier(line[0]) && !strcmp(line[1], "+") && !strcmp(line[2], "+"))
     {
         if (len > 3)
@@ -1827,26 +1842,15 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             line[0],
             INSTRUCTION_END);
     }
-    else if (!strcmp(line[0], "&"))
-    {
-        // Set new line
-        if (!isInline)
-            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
-
-        arrlstrip(line);
-        len--;
-
-        char * temp = quokka_compile_line_tokens(line, num, len, 1);
-        mstrcat(&bytecode, temp);
-        free(temp);
-
-        mstrcat(&bytecode, "GET_ADDRESS" INSTRUCTION_END);
-    }
     else if (stringInList(line, "+", len) ||
              stringInList(line, "-", len) ||
              stringInList(line, "*", len) ||
              stringInList(line, "/", len) ||
-             stringInList(line, "**", len))
+             stringInList(line, "**", len) ||
+             stringInList(line, "%", len) ||
+             stringInList(line, "^", len) ||
+             stringInList(line, "<<", len) ||
+             stringInList(line, ">>", len))
     {
         // Set new line
         if (!isInline)
@@ -2043,6 +2047,86 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 memset(latestvalue, 0, 1);
 
                 mstrcat(&operslist, "BINARY_POW" INSTRUCTION_END);
+
+                lastwasop = 1;
+                lastwasunary = 0;
+            }
+            else if (!strcmp(line[i], "%"))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                strInsertStart(&valuelist, temp);
+                free(temp);
+
+                if (lastwasop)
+                    error("'%' missing first argument", num - 1);
+
+                if (i + 1 >= len)
+                    error("'%' missing second argument", num - 1);
+
+                latestvalue = realloc(latestvalue, 1);
+                memset(latestvalue, 0, 1);
+
+                mstrcat(&operslist, "BINARY_MOD" INSTRUCTION_END);
+
+                lastwasop = 1;
+                lastwasunary = 0;
+            }
+            else if (!strcmp(line[i], "^"))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                strInsertStart(&valuelist, temp);
+                free(temp);
+
+                if (lastwasop)
+                    error("'^' missing first argument", num - 1);
+
+                if (i + 1 >= len)
+                    error("'^' missing second argument", num - 1);
+
+                latestvalue = realloc(latestvalue, 1);
+                memset(latestvalue, 0, 1);
+
+                mstrcat(&operslist, "BINARY_XOR" INSTRUCTION_END);
+
+                lastwasop = 1;
+                lastwasunary = 0;
+            }
+            else if (!strcmp(line[i], "<<"))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                strInsertStart(&valuelist, temp);
+                free(temp);
+
+                if (lastwasop)
+                    error("'<<' missing first argument", num - 1);
+
+                if (i + 1 >= len)
+                    error("'<<' missing second argument", num - 1);
+
+                latestvalue = realloc(latestvalue, 1);
+                memset(latestvalue, 0, 1);
+
+                mstrcat(&operslist, "BINARY_LSHIFT" INSTRUCTION_END);
+
+                lastwasop = 1;
+                lastwasunary = 0;
+            }
+            else if (!strcmp(line[i], ">>"))
+            {
+                char * temp = quokka_compile_line(latestvalue, num, -1, 1);
+                strInsertStart(&valuelist, temp);
+                free(temp);
+
+                if (lastwasop)
+                    error("'>>' missing first argument", num - 1);
+
+                if (i + 1 >= len)
+                    error("'>>' missing second argument", num - 1);
+
+                latestvalue = realloc(latestvalue, 1);
+                memset(latestvalue, 0, 1);
+
+                mstrcat(&operslist, "BINARY_RSHIFT" INSTRUCTION_END);
 
                 lastwasop = 1;
                 lastwasunary = 0;
@@ -2350,17 +2434,23 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (!isInline)
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
-        char * processed_string = convertLiterals(line[0]);
-        int ind = addBytecodeConstant("LOAD_STRING", processed_string);
-        free(processed_string);
+        // If length of string <= 2, it's empty, so load the empty string constant
+        if (strnlen(line[0], 3) <= 2)
+            mstrcat(&bytecode, "LOAD_CONST" SEPARATOR "1" INSTRUCTION_END);
+        else
+        {
+            char * processed_string = convertLiterals(line[0]);
+            int ind = addBytecodeConstant("LOAD_STRING", processed_string);
+            free(processed_string);
 
-        char * intstr = intToStr(ind);
-        mstrcatline(&bytecode,
-            "LOAD_CONST",
-            SEPARATOR,
-            intstr,
-            INSTRUCTION_END);
-        free(intstr);
+            char * intstr = intToStr(ind);
+            mstrcatline(&bytecode,
+                "LOAD_CONST",
+                SEPARATOR,
+                intstr,
+                INSTRUCTION_END);
+            free(intstr);
+        }
     }
     else if (isidentifier(line[0]) && len == 1)
     {
@@ -2791,6 +2881,10 @@ char ** quokka_tok(char * line, char ** waste)
             t == '.' && c == '.' // Join together all `.` tokens.
         ) && !(
             t == '*' && c == '*' // Join together all `*` tokens.
+        ) && !(
+            t == '<' && c == '<' // Join together all '<' tokens.
+        ) && !(
+            t == '>' && c == '>' // Join together all '>' tokens.
         ))
         {
             tokenstr = realloc(tokenstr, strlen(tokenstr) + strlen(separator) + 1);
