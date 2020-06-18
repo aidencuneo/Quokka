@@ -88,8 +88,12 @@ int main(int argc, char ** argv)
         cli_current_line = malloc(1);
         strcpy(cli_current_line, "");
 
+        set_bytecode_constants();
         compile_init();
         interp_init(); // Test it without these init lines
+
+        // Interpret initial bytecode constants
+        _quokka_interpret(bytecode_constants);
 
         int in_compound_line = 0;
         for (;;)
@@ -105,18 +109,31 @@ int main(int argc, char ** argv)
 
                 if (!strcmp(line, "end"))
                 {
+                    resetStack();
+                    resetRetStack();
+                    resetConsts();
                     char * bytecode = quokka_compile_raw(cli_current_line, 0);
-                    quokka_interpret(bytecode);
+
+                    _quokka_interpret(bytecode_constants);
+                    _quokka_interpret(bytecode);
 
                     if (stack_size)
                     {
-                        // Get top of stack
-                        Object ** arglist = makeArglist(stack[stack_size - 1]);
+                        if (strcmp(stack[stack_size - 1]->name, "null"))
+                        {
+                            // Get top of stack
+                            Object ** arglist = makeArglist(stack[stack_size - 1]);
 
-                        // Print it
-                        q_function_println(1, arglist);
+                            // Print it
+                            Object * disp = q_function_display(1, arglist);
 
-                        free(arglist);
+                            println((char *)objectGetAttr(disp, "value"));
+
+                            free(arglist);
+                            freeObject(disp);
+                        }
+
+                        resetStack();
                     }
 
                     free(bytecode);
@@ -127,33 +144,51 @@ int main(int argc, char ** argv)
             else
             {
                 print("--> ");
-                char * line = cpstrip(getinput());
+                char * in = getinput();
+                char * line = cpstrip(in);
+
                 cli_current_line = realloc(cli_current_line, strlen(cli_current_line) + strlen(line) + 1 + 1);
                 strcpy(cli_current_line, line);
                 strcat(cli_current_line, "\n");
 
                 if (startswith(line, "if ") ||
-                    startswith(line, "while "))
+                    startswith(line, "while ") ||
+                    startswith(line, "for ") ||
+                    startswith(line, "fun "))
                 {
                     in_compound_line = 1;
                     continue;
                 }
 
+                resetStack();
+                resetRetStack();
+                resetConsts();
                 char * bytecode = quokka_compile_line(line, 0, -1, 0);
-                quokka_interpret(bytecode);
+
+                _quokka_interpret(bytecode_constants);
+                _quokka_interpret(bytecode);
 
                 if (stack_size)
                 {
-                    // Get top of stack
-                    Object ** arglist = makeArglist(stack[stack_size - 1]);
+                    if (strcmp(stack[stack_size - 1]->name, "null"))
+                    {
+                        // Get top of stack
+                        Object ** arglist = makeArglist(stack[stack_size - 1]);
 
-                    // Print it
-                    q_function_println(1, arglist);
+                        // Print it
+                        Object * disp = q_function_display(1, arglist);
 
-                    free(arglist);
+                        println((char *)objectGetAttr(disp, "value"));
+
+                        free(arglist);
+                        freeObject(disp);
+                    }
+
+                    resetStack();
                 }
 
                 free(bytecode);
+                free(in);
             }
         }
 

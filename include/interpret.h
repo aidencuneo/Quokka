@@ -11,7 +11,7 @@ int stack_alloc;
 int stack_alloc_size = 10;
 
 Object ** int_consts;
-int int_const_count;
+int int_const_count = 16384; // 65536
 
 Object ** constants;
 int constant_count;
@@ -63,6 +63,15 @@ void freeConsts()
     free(constants);
 }
 
+void resetConsts()
+{
+    freeConsts();
+
+    const_alloc = const_alloc_size;
+    constants = malloc(const_alloc * sizeof(Object *));
+    constant_count = 0;
+}
+
 void freeIntConsts()
 {
     for (int i = 0; i < int_const_count; i++)
@@ -73,7 +82,6 @@ void freeIntConsts()
 
 void initIntConsts()
 {
-    int_const_count = 16384; // 65536
     int_consts = malloc(int_const_count * sizeof(Object *));
 
     for (int i = 0; i < int_const_count; i++)
@@ -1689,7 +1697,7 @@ void quokka_interpret_line_tokens(char ** line)
         int firstbool;
 
         // Convert first to bool
-        if (objectHasAttr(first, "__bool__"))
+        if (objOperBool(first) != NULL)
         {
             Object ** arglist = makeArglist(first);
             firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
@@ -1715,7 +1723,7 @@ void quokka_interpret_line_tokens(char ** line)
         int secndbool;
 
         // Convert first to bool
-        if (objectHasAttr(first, "__bool__"))
+        if (objOperBool(first) != NULL)
         {
             Object ** arglist = makeArglist(first);
             firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
@@ -1725,7 +1733,7 @@ void quokka_interpret_line_tokens(char ** line)
             firstbool = 0;
 
         // Convert secnd to bool
-        if (objectHasAttr(secnd, "__bool__"))
+        if (objOperBool(secnd) != NULL)
         {
             Object ** arglist = makeArglist(secnd);
             secndbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
@@ -1752,7 +1760,7 @@ void quokka_interpret_line_tokens(char ** line)
         int secndbool;
 
         // Convert first to bool
-        if (objectHasAttr(first, "__bool__"))
+        if (objOperBool(first) != NULL)
         {
             Object ** arglist = makeArglist(first);
             firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
@@ -1762,7 +1770,7 @@ void quokka_interpret_line_tokens(char ** line)
             firstbool = 0;
 
         // Convert secnd to bool
-        if (objectHasAttr(secnd, "__bool__"))
+        if (objOperBool(secnd) != NULL)
         {
             Object ** arglist = makeArglist(secnd);
             secndbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
@@ -1789,7 +1797,7 @@ void quokka_interpret_line_tokens(char ** line)
         int secndbool;
 
         // Convert first to bool
-        if (objectHasAttr(first, "__bool__"))
+        if (objOperBool(first) != NULL)
         {
             Object ** arglist = makeArglist(first);
             firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
@@ -1799,7 +1807,7 @@ void quokka_interpret_line_tokens(char ** line)
             firstbool = 0;
 
         // Convert secnd to bool
-        if (objectHasAttr(secnd, "__bool__"))
+        if (objOperBool(secnd) != NULL)
         {
             Object ** arglist = makeArglist(secnd);
             secndbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
@@ -1824,7 +1832,7 @@ void quokka_interpret_line_tokens(char ** line)
         int firstbool;
 
         // Convert first to bool
-        if (objectHasAttr(first, "__bool__"))
+        if (objOperBool(first) != NULL)
         {
             Object ** arglist = makeArglist(first);
             firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];

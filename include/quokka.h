@@ -602,7 +602,7 @@ char * getinput()
     {
         last = getchar();
 
-        buffer = realloc(buffer, strlen(buffer) + 1);
+        buffer = realloc(buffer, buflen + 1 + 1);
         buffer[buflen] = last;
 
         buflen++;

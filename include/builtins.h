@@ -59,7 +59,7 @@ Object * q_function_print(int argc, Object ** argv)
     {
         Object * obj = argv[i];
 
-        if (objectHasAttr(obj, "__string__"))
+        if (objOperString(obj) != NULL)
         {
             Object ** arglist = makeArglist(argv[i]);
             Object * strtext = q_function_string(1, arglist);
@@ -116,7 +116,7 @@ Object * q_function_println(int argc, Object ** argv)
     {
         Object * obj = argv[i];
 
-        if (objectHasAttr(obj, "__string__"))
+        if (objOperString(obj) != NULL)
         {
             Object ** arglist = makeArglist(argv[i]);
             Object * strtext = q_function_string(1, arglist);
