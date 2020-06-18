@@ -158,4 +158,16 @@ Object * makeCMethod(Object * parent, void * method_pointer, int argmin, int arg
 // module
 Object * makeModule(char * name, int item_count);
 
+//
+/// Operation functions
+//
+
+void * objOperBool(Object * obj);
+void * objOperInt(Object * obj);
+void * objOperLong(Object * obj);
+void * objOperString(Object * obj);
+void * objOperDisp(Object * obj);
+void * objOperLen(Object * obj);
+void * objOperSizeof(Object * obj);
+
 #endif

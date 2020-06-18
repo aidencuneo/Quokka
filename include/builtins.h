@@ -3,15 +3,13 @@ Object * q_function_string(int argc, Object ** argv);
 
 Object * q_function_display(int argc, Object ** argv)
 {
-    char * out = malloc(1);
-    strcpy(out, "");
+    char * out;
 
-    Object * obj = argv[0];
-
-    if (objectHasAttr(obj, "__disp__"))
+    void * func = objOperDisp(argv[0]);
+    if (func != NULL)
     {
         Object ** arglist = makeArglist(argv[0]);
-        Object * strtext = ((standard_func_def)objectGetAttr(obj, "__disp__"))(1, arglist);
+        Object * strtext = ((standard_func_def)func)(1, arglist);
 
         if (strcmp(strtext->name, "string"))
         {
@@ -22,31 +20,24 @@ Object * q_function_display(int argc, Object ** argv)
             error(err, line_num);
         }
 
-        char * text = objectGetAttr(strtext, "value");
-
         free(arglist);
 
-        mstrcat(&out, text);
+        out = strdup(objectGetAttr(strtext, "value"));
 
         freeObject(strtext);
-
-        // pushTrash(text);
     }
     else
     {
-        char * obj_addr = strObjAddress(obj);
+        char * obj_addr = strObjAddress(argv[0]);
 
-        char * temp = malloc(2 + strlen(obj->name) + 12 + strlen(obj_addr) + 1 + 1);
-        strcpy(temp, "<'");
-        strcat(temp, obj->name);
-        strcat(temp, "' Object at ");
-        strcat(temp, obj_addr);
-        strcat(temp, ">");
-
-        mstrcat(&out, temp);
+        char * out = malloc(2 + strlen(argv[0]->name) + 12 + strlen(obj_addr) + 1 + 1);
+        strcpy(out, "<'");
+        strcat(out, argv[0]->name);
+        strcat(out, "' Object at ");
+        strcat(out, obj_addr);
+        strcat(out, ">");
 
         free(obj_addr);
-        free(temp);
     }
 
     return makeString(out, 1);
@@ -204,7 +195,8 @@ Object * q_function_input(int argc, Object ** argv)
 
 Object * q_function_bool(int argc, Object ** argv)
 {
-    if (!objectHasAttr(argv[0], "__bool__"))
+    void * func = objOperBool(argv[0]);
+    if (func == NULL)
     {
         char * err = malloc(6 + strlen(argv[0]->name) + 34 + 1);
         strcpy(err, "type '");
@@ -213,7 +205,7 @@ Object * q_function_bool(int argc, Object ** argv)
         error(err, line_num);
     }
 
-    Object * ret = ((standard_func_def)objectGetAttr(argv[0], "__bool__"))(1, argv);
+    Object * ret = ((standard_func_def)func)(1, argv);
 
     if (strcmp(ret->name, "int"))
     {
@@ -230,9 +222,13 @@ Object * q_function_bool(int argc, Object ** argv)
 
 Object * q_function_string(int argc, Object ** argv)
 {
-    if (objectHasAttr(argv[0], "__string__"))
+    void * func;
+
+    // Try __string__
+    func = objOperString(argv[0]);
+    if (func != NULL)
     {
-        Object * ret = ((standard_func_def)objectGetAttr(argv[0], "__string__"))(1, argv);
+        Object * ret = ((standard_func_def)func)(1, argv);
 
         if (strcmp(ret->name, "string"))
         {
@@ -245,9 +241,11 @@ Object * q_function_string(int argc, Object ** argv)
 
         return ret;
     }
-    else if (objectHasAttr(argv[0], "__disp__"))
+    // Try __disp__ if __string__ can't be found
+    func = objOperDisp(argv[0]);
+    if (func != NULL)
     {
-        Object * ret = ((standard_func_def)objectGetAttr(argv[0], "__disp__"))(1, argv);
+        Object * ret = ((standard_func_def)func)(1, argv);
 
         if (strcmp(ret->name, "string"))
         {
@@ -275,16 +273,19 @@ Object * q_function_int(int argc, Object ** argv)
     if (!strcmp(argv[0]->name, "int"))
         return argv[0];
 
-    if (!objectHasAttr(argv[0], "__int__"))
+    void * func;
+
+    func = objOperInt(argv[0]);
+    if (func == NULL)
     {
-        char * err = malloc(6 + strlen(argv[0]->name) + 36 + 1);
+        char * err = malloc(6 + strlen(argv[0]->name) + 38 + 1);
         strcpy(err, "type '");
         strcat(err, argv[0]->name);
         strcat(err, "' can not be converted into an integer");
         error(err, line_num);
     }
 
-    Object * ret = ((standard_func_def)objectGetAttr(argv[0], "__int__"))(1, argv);
+    Object * ret = ((standard_func_def)func)(1, argv);
 
     if (strcmp(ret->name, "int"))
     {
@@ -300,10 +301,16 @@ Object * q_function_int(int argc, Object ** argv)
 
 Object * q_function_long(int argc, Object ** argv)
 {
+    if (!strcmp(argv[0]->name, "long"))
+        return argv[0];
+
+    void * func;
+
     // Try __long__
-    if (objectHasAttr(argv[0], "__long__"))
+    func = objOperLong(argv[0]);
+    if (func != NULL)
     {
-        Object * ret = ((standard_func_def)objectGetAttr(argv[0], "__long__"))(1, argv);
+        Object * ret = ((standard_func_def)func)(1, argv);
 
         if (strcmp(ret->name, "long"))
         {
@@ -317,9 +324,10 @@ Object * q_function_long(int argc, Object ** argv)
         return ret;
     }
     // Try __int__ if __long__ can't be found
-    else if (objectHasAttr(argv[0], "__int__"))
+    func = objOperInt(argv[0]);
+    if (func != NULL)
     {
-        Object * ret = ((standard_func_def)objectGetAttr(argv[0], "__int__"))(1, argv);
+        Object * ret = ((standard_func_def)func)(1, argv);
 
         if (strcmp(ret->name, "int"))
         {
@@ -349,7 +357,8 @@ Object * q_function_type(int argc, Object ** argv)
 
 Object * q_function_len(int argc, Object ** argv)
 {
-    if (!objectHasAttr(argv[0], "__len__"))
+    void * func = objOperLen(argv[0]);
+    if (func == NULL)
     {
         char * err = malloc(6 + strlen(argv[0]->name) + 45 + 1);
         strcpy(err, "type '");
@@ -358,7 +367,17 @@ Object * q_function_len(int argc, Object ** argv)
         error(err, line_num);
     }
 
-    return ((standard_func_def)objectGetAttr(argv[0], "__len__"))(1, argv);
+    return ((standard_func_def)func)(1, argv);
+}
+
+Object * q_function_sizeof(int argc, Object ** argv)
+{
+    void * func = objOperSizeof(argv[0]);
+    if (func != NULL)
+        return ((standard_func_def)func)(1, argv);
+
+    int * size = makeIntPtr(sizeof(argv[0]));
+    return makeInt(size, 1);
 }
 
 Object * q_function_exec(int argc, Object ** argv)
@@ -398,17 +417,6 @@ Object * q_function_exit(int argc, Object ** argv)
     // The following line is simply to prevent a warning that may
     // appear when compiling Quokka with some GCC or Clang versions
     return makeNull();
-}
-
-Object * q_function_sizeof(int argc, Object ** argv)
-{
-    if (objectHasAttr(argv[0], "__sizeof__"))
-        return ((standard_func_def)objectGetAttr(argv[0], "__sizeof__"))(1, argv);
-
-    int * size = makeIntPtr(sizeof(argv[0]));
-    // pushTrash(size);
-
-    return makeInt(size, 1);
 }
 
 Object * q_function_min(int argc, Object ** argv)

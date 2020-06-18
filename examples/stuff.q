@@ -16,5 +16,11 @@
 a = 10
 b = 8
 println(a + b + a + b)
+println(null)
+println(sizeof(null))
+s = 'hey'
+println(s, sizeof(s))
+
+println([sizeof(255), sizeof(255L)])
 
 // input('[y/n]').lower() == 'y' ? println(p)

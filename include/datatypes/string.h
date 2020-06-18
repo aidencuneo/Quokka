@@ -335,74 +335,19 @@ Object * makeStringRaw(char * value, int is_malloc_ptr)
 
     self->name = "string";
 
-    // 27 Attributes
-    int attr_count = 27;
+    // 6 Attributes
+    int attr_count = 6;
     self->names = malloc(attr_count * sizeof(char *));
     self->values = malloc(attr_count * sizeof(void *));
 
     self = objectAddAttr(self, "value", value);
 
-    // Two argument methods
-
-    // __add__
-    self = objectAddAttr(self, "__add__", &__add___string);
-
-    // __inadd__
-    self = objectAddAttr(self, "__inadd__", &__inadd___string);
-
-    // __mul__
-    self = objectAddAttr(self, "__mul__", &__mul___string);
-
-    // __eq__
-    self = objectAddAttr(self, "__eq__", &__eq___string);
-
-    // __index__
-    self = objectAddAttr(self, "__index__", &__index___string);
-
-    // One argument methods
-
-    // __sizeof__
-    self = objectAddAttr(self, "__sizeof__", &__sizeof___string);
-    self = objectAddAttr(self, "__sizeof__argc", &oneArgc);
-
-    // __copy__
-    self = objectAddAttr(self, "__copy__", &__copy___string);
-    self = objectAddAttr(self, "__copy__argc", &oneArgc);
-
-    // __len__
-    self = objectAddAttr(self, "__len__", &__len___string);
-    self = objectAddAttr(self, "__len__argc", &oneArgc);
-
-    // __disp__
-    self = objectAddAttr(self, "__disp__", &__disp___string);
-    self = objectAddAttr(self, "__disp__argc", &oneArgc);
-
-    // __bool__
-    self = objectAddAttr(self, "__bool__", &__bool___string);
-    self = objectAddAttr(self, "__bool__argc", &oneArgc);
-
-    // __int__
-    self = objectAddAttr(self, "__int__", &__int___string);
-    self = objectAddAttr(self, "__int__argc", &oneArgc);
-
-    // __long__
-    self = objectAddAttr(self, "__long__", &__long___string);
-    self = objectAddAttr(self, "__long__argc", &oneArgc);
-
-    // __string__
-    self = objectAddAttr(self, "__string__", &__string___string);
-    self = objectAddAttr(self, "__string__argc", &oneArgc);
-
     if (is_malloc_ptr)
-    {
         // __free__
         self = objectAddAttr(self, "__free__", &__free_malloc___string);
-    }
     else
-    {
         // __free__
         self = objectAddAttr(self, "__free__", &__free___string);
-    }
 
     // Regular methods (must go at end)
 

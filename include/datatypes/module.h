@@ -34,10 +34,6 @@ Object * makeModule(char * name, int item_count)
 
     // One argument methods
 
-    // __disp__
-    // self = objectAddAttr(self, "__disp__", &__disp___module);
-    // self = objectAddAttr(self, "__disp__argc", &oneArgc);
-
     // __free__
     self = objectAddAttr(self, "__free__", &__free___module);
 

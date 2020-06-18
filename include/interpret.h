@@ -1329,29 +1329,7 @@ void quokka_interpret_line_tokens(char ** line)
     {
         Object * first = popTop();
 
-        void * func = objectGetAttr(first, "__pos__");
-
-        if (func == NULL)
-        {
-            char * err = malloc(6 + strlen(first->name) + 38 + 1);
-            strcpy(err, "type '");
-            strcat(err, first->name);
-            strcat(err, "' does not have a method for unary '+'");
-            error(err, line_num);
-        }
-
-        // if (!objectHasAttr(first, "__pos__argc"))
-        // {
-        //     char * err = malloc(28 + strlen(first->name) + 56 + 1);
-        //     strcpy(err, "the __pos__ method of type '");
-        //     strcat(err, first->name);
-        //     strcat(err, "' is missing an argument limit, this should never happen");
-        //     error(err, line_num);
-        // }
-
-        // int funcargc = ((int *)objectGetAttr(first, "__pos__argc"))[0];
-        // if (funcargc != 1)
-        //     error("__pos__ function requires an invalid amount of arguments, should be 1", line_num);
+        void * func = objOperPos(first);
 
         Object ** arglist = makeArglist(first);
 
@@ -1365,29 +1343,7 @@ void quokka_interpret_line_tokens(char ** line)
     {
         Object * first = popTop();
 
-        void * func = objectGetAttr(first, "__neg__");
-
-        if (func == NULL)
-        {
-            char * err = malloc(6 + strlen(first->name) + 38 + 1);
-            strcpy(err, "type '");
-            strcat(err, first->name);
-            strcat(err, "' does not have a method for unary '-'");
-            error(err, line_num);
-        }
-
-        // if (!objectHasAttr(first, "__neg__argc"))
-        // {
-        //     char * err = malloc(28 + strlen(first->name) + 56 + 1);
-        //     strcpy(err, "the __neg__ method of type '");
-        //     strcat(err, first->name);
-        //     strcat(err, "' is missing an argument limit, this should never happen");
-        //     error(err, line_num);
-        // }
-
-        // int funcargc = ((int *)objectGetAttr(first, "__neg__argc"))[0];
-        // if (funcargc != 1)
-        //     error("__neg__ function requires an invalid amount of arguments, should be 1", line_num);
+        void * func = objOperNeg(first);
 
         Object ** arglist = makeArglist(first);
 
@@ -1482,7 +1438,7 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = getVar(line[1]);
         Object * secnd = popTop();
 
-        void * func = objectGetAttr(first, "__inadd__");
+        void * func = objOperInadd(first);
         if (func != NULL)
         {
             Object ** arglist = makeDoubleArglist(first, secnd);
@@ -1511,7 +1467,7 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = getVar(line[1]);
         Object * secnd = popTop();
 
-        void * func = objectGetAttr(first, "__insub__");
+        void * func = objOperInsub(first);
         if (func != NULL)
         {
             Object ** arglist = makeDoubleArglist(first, secnd);
@@ -1540,7 +1496,7 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = getVar(line[1]);
         Object * secnd = popTop();
 
-        void * func = objectGetAttr(first, "__inmul__");
+        void * func = objOperInmul(first);
         if (func != NULL)
         {
             Object ** arglist = makeDoubleArglist(first, secnd);
@@ -1569,7 +1525,7 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = getVar(line[1]);
         Object * secnd = popTop();
 
-        void * func = objectGetAttr(first, "__indiv__");
+        void * func = objOperIndiv(first);
         if (func != NULL)
         {
             Object ** arglist = makeDoubleArglist(first, secnd);
@@ -2095,15 +2051,7 @@ void quokka_interpret_line_tokens(char ** line)
         {
             Object * obj = popTop();
 
-            void * copy_attr = objectGetAttr(obj, "__copy__");
-            if (copy_attr == NULL)
-            {
-                char * err = malloc(6 + strlen(obj->name) + 36 + 1);
-                strcpy(err, "type '");
-                strcat(err, obj->name);
-                strcat(err, "' does not have a method for copying");
-                error(err, line_num);
-            }
+            void * copy_attr = objOperCopy(obj);
 
             Object ** arglist = makeArglist(obj);
 
@@ -2123,19 +2071,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[0] = obj;
         arglist[1] = ind;
 
-        void * index_attr = objectGetAttr(obj, "__index__");
-        if (index_attr == NULL)
-        {
-            char * err = malloc(6 + strlen(obj->name) + 45 + 1);
-            strcpy(err, "type '");
-            strcat(err, obj->name);
-            strcat(err, "' does not have a method for index retrieving");
-            error(err, line_num);
-        }
-
-        // int funcargc = ((int *)objectGetAttr(obj, "__index__argc"))[0];
-        // if (funcargc != 2)
-        //     error("__index__ function requires an invalid amount of arguments, should be 2", line_num);
+        void * index_attr = objOperIndex(obj);
 
         pushTop(((standard_func_def)index_attr)(2, arglist));
 
@@ -2155,15 +2091,7 @@ void quokka_interpret_line_tokens(char ** line)
         arglist[1] = ind;
         arglist[2] = val;
 
-        void * setindex_attr = objectGetAttr(obj, "__setindex__");
-        if (setindex_attr == NULL)
-        {
-            char * err = malloc(6 + strlen(obj->name) + 44 + 1);
-            strcpy(err, "type '");
-            strcat(err, obj->name);
-            strcat(err, "' does not have a method for index assigning");
-            error(err, line_num);
-        }
+        void * setindex_attr = objOperSetindex(obj);
 
         val = ((standard_func_def)setindex_attr)(3, arglist);
 

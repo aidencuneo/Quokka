@@ -317,27 +317,21 @@ Object * __pos___int(int argc, Object ** argv)
 {
     int * first = objectGetAttr(argv[0], "value");
 
-    int * ret = makeIntPtr(first[0]);
-
-    return makeInt(ret, 1);
+    return makeInt(makeIntPtr(first[0]), 1);
 }
 
 Object * __neg___int(int argc, Object ** argv)
 {
     int * first = objectGetAttr(argv[0], "value");
 
-    int * ret = makeIntPtr(-first[0]);
-
-    return makeInt(ret, 1);
+    return makeInt(makeIntPtr(-first[0]), 1);
 }
 
 Object * __disp___int(int argc, Object ** argv)
 {
     int * thisvalue = objectGetAttr(argv[0], "value");
 
-    char * tostr = intToStr(thisvalue[0]);
-
-    return makeString(tostr, 1);
+    return makeString(intToStr(thisvalue[0]), 1);
 }
 
 Object * __bool___int(int argc, Object ** argv)
@@ -384,49 +378,20 @@ Object * makeIntRaw(int * value, int is_malloc_ptr)
 
     self->name = "int";
 
-    // 13 to 14 Attributes // 22 to 23
-    int max_attr_count = 14; // 24
+    // 1 to 2 Attributes
     if (is_malloc_ptr)
     {
-        self->names = malloc(max_attr_count * sizeof(char *));
-        self->values = malloc(max_attr_count * sizeof(void *));
+        self->names = malloc(2 * sizeof(char *));
+        self->values = malloc(2 * sizeof(void *));
     }
     else
     {
-        self->names = malloc((max_attr_count - 1) * sizeof(char *));
-        self->values = malloc((max_attr_count - 1) * sizeof(void *));
+        self->names = malloc(sizeof(char *));
+        self->values = malloc(sizeof(void *));
     }
     self->value_count = 0;
 
     self = objectAddAttr(self, "value", value);
-
-    // Two argument methods
-
-    // One argument methods
-
-    // __sizeof__
-    self = objectAddAttr(self, "__sizeof__", &__sizeof___int);
-    self = objectAddAttr(self, "__sizeof__argc", &oneArgc);
-
-    // __pos__
-    self = objectAddAttr(self, "__pos__", &__pos___int);
-    self = objectAddAttr(self, "__pos__argc", &oneArgc);
-
-    // __neg__
-    self = objectAddAttr(self, "__neg__", &__neg___int);
-    self = objectAddAttr(self, "__neg__argc", &oneArgc);
-
-    // __disp__
-    self = objectAddAttr(self, "__disp__", &__disp___int);
-    self = objectAddAttr(self, "__disp__argc", &oneArgc);
-
-    // __bool__
-    self = objectAddAttr(self, "__bool__", &__bool___int);
-    self = objectAddAttr(self, "__bool__argc", &oneArgc);
-
-    // __long__
-    self = objectAddAttr(self, "__long__", &__long___int);
-    self = objectAddAttr(self, "__long__argc", &oneArgc);
 
     if (is_malloc_ptr)
     {

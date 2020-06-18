@@ -250,9 +250,6 @@ Object * makeList(int length, Object ** value, int flipped)
 {
     Object ** lst = malloc(length * sizeof(Object *));
 
-    // Contents of this list will be freed after program execution
-    // pushTrash(lst);
-
     // Reverse items before creating list
     for (int i = 0; i < length; i++)
     {
@@ -268,56 +265,14 @@ Object * makeList(int length, Object ** value, int flipped)
 
     self->name = "list";
 
-    // 19 Attributes
-    self->names = malloc(19 * sizeof(char *));
-    self->values = malloc(19 * sizeof(void *));
+    // 3 Attributes
+    self->names = malloc(3 * sizeof(char *));
+    self->values = malloc(3 * sizeof(void *));
     self->value_count = 0;
 
     // Values
     self = objectAddAttr(self, "value", lst);
     self = objectAddAttr(self, "length", len_ptr);
-
-    // Three argument methods
-
-    // __setindex__
-    self = objectAddAttr(self, "__setindex__", &__setindex___list);
-
-    // Two argument methods
-
-    // __add__
-    self = objectAddAttr(self, "__add__", &__add___list);
-
-    // __inadd__
-    self = objectAddAttr(self, "__inadd__", &__inadd___list);
-
-    // __index__
-    self = objectAddAttr(self, "__index__", &__index___list);
-
-    // One argument methods
-
-    // __sizeof__
-    self = objectAddAttr(self, "__sizeof__", &__sizeof___list);
-    self = objectAddAttr(self, "__sizeof__argc", &oneArgc);
-
-    // __copy__
-    self = objectAddAttr(self, "__copy__", &__copy___list);
-    self = objectAddAttr(self, "__copy__argc", &oneArgc);
-
-    // __len__
-    self = objectAddAttr(self, "__len__", &__len___list);
-    self = objectAddAttr(self, "__len__argc", &oneArgc);
-
-    // __bool__
-    self = objectAddAttr(self, "__bool__", &__bool___list);
-    self = objectAddAttr(self, "__bool__argc", &oneArgc);
-
-    // __disp__
-    self = objectAddAttr(self, "__disp__", &__disp___list);
-    self = objectAddAttr(self, "__disp__argc", &oneArgc);
-
-    // __string__
-    self = objectAddAttr(self, "__string__", &__disp___list);
-    self = objectAddAttr(self, "__string__argc", &oneArgc);
 
     // __free__
     self = objectAddAttr(self, "__free__", &__free___list);
