@@ -457,7 +457,7 @@ Object * __free___int(int argc, Object ** argv)
     int * thisvalue = objectGetAttr(argv[0], "value");
     free(thisvalue);
 
-    return makeNull();
+    // return makeNull();
 }
 
 Object * makeInt(int * value, int is_malloc_ptr)

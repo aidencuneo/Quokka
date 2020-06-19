@@ -1,7 +1,5 @@
 Object * quokka_import_module(char ** module_name, char * path)
 {
-    *module_name = strdup(path);
-
     char * import_path_rel = malloc(strlen(path) + 2 + 1);
     strcpy(import_path_rel, path);
 
@@ -10,14 +8,14 @@ Object * quokka_import_module(char ** module_name, char * path)
 
     char * import_path = getrealpath(import_path_rel);
 
+    // IMPORT FAILED, RETURN NULL
     if (!import_path)
     {
-        char * err = malloc(49 + strlen(import_path_rel) + 1 + 1);
-        strcpy(err, "(import) file path not found or not accessible: '");
-        strcat(err, import_path_rel);
-        strcat(err, "'");
-        error(err, line_num);
+        free(import_path_rel);
+        return NULL;
     }
+
+    *module_name = strdup(path);
 
     // Set up the environment for the calls
     char * old_file = current_file;
@@ -105,4 +103,15 @@ void quokka_import_standard(char * path)
 
     free(import_path_rel);
     free(import_path);
+}
+
+Object * builtin_import_module(char * name)
+{
+    // Go through all built-in modules, in alphabetical order
+    if (!strcmp(name, "os"))
+        return _os_import_module();
+    // if (!strcmp(name, "math"))
+    //     return _math_import_module();
+
+    return NULL;
 }

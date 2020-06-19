@@ -10,7 +10,7 @@ Object * __free___module(int argc, Object ** argv)
 
     // Remember to change this number to match the
     // initial number of attributes in a module (int i)
-    for (int i = 4; i < argv[0]->value_count; i++)
+    for (int i = 2; i < argv[0]->value_count; i++)
     {
         objUnref(argv[0]->values[i]);
     }

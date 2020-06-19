@@ -850,17 +850,13 @@ Object ** makeDoubleArglist(Object * first, Object * secnd)
 
 #include "datatypes/operations.h"
 
+//
+/// Modules
+//
+
+#include "modules/os.h"
+
 #include "import.h"
-
-// Object * makeMethod(Object * (*func)(Object ** argv), int * argc)
-// {
-//     Object * self = objectPointer();
-
-//     self = makeObject("method", argc);
-//     self = addObjectValue(self, "__call__", &func);
-
-//     return self;
-// }
 
 void quokka_interpret_line(char * linetext)
 {
@@ -873,12 +869,7 @@ void quokka_interpret_line(char * linetext)
     free(line);
 }
 
-/*
-
-Temporary
-
-*/
-
+/* Temporary */
 void STACK()
 {
     print("STACK : ");
@@ -1080,8 +1071,28 @@ void quokka_interpret_line_tokens(char ** line)
 
             char * import_path_bare = objectGetAttr(pathstrobj, "value");
 
-            char * module_name;
+            char * module_name = NULL;
             Object * imported_module = quokka_import_module(&module_name, import_path_bare);
+
+            // Check for built-in imports
+            if (imported_module == NULL)
+            {
+                imported_module = builtin_import_module(import_path_bare);
+                line_num++;
+            }
+
+            // If it's still NULL, raise an error
+            if (imported_module == NULL)
+            {
+                char * err = malloc(46 + strlen(import_path_bare) + 1 + 1);
+                strcpy(err, "(import) module not found or not accessible: '");
+                strcat(err, import_path_bare);
+                strcat(err, "'");
+                error(err, line_num);
+            }
+
+            if (module_name == NULL)
+                module_name = import_path_bare;
 
             addGVar(module_name, imported_module);
 

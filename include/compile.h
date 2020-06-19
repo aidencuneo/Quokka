@@ -333,9 +333,6 @@ int findNextIfChain(char * kwtype, int cur_line, int cur_tok_index, int scp)
 
     for (int i = cur_tok_index; i < file_line_count; i++)
     {
-        if (kw == 2)
-            println(file_tokens[i]);
-
         char * waste;
         char ** templine = quokka_tok(file_tokens[i], &waste);
 
@@ -431,7 +428,7 @@ int findNextEnd(char * kwtype, int cur_line, int cur_tok_index, int scp)
         char * waste;
         char ** templine = quokka_tok(file_tokens[i], &waste);
 
-        if (file_tokens[i][0] == '\n' || !file_tokens[i][0])
+        if (file_tokens[i][0] == '\n' || !file_tokens[i][0] || i == cur_tok_index)
             real_line++;
 
         if (templine[0] == NULL)
@@ -1754,33 +1751,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         free(valuelist);
         free(operslist);
     }
-    else if (!strcmp(line[0], "not"))
-    {
-        // Set new line
-        if (!isInline)
-            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
-
-        // If `not`, then act as `0` or `false`
-        if (len <= 1)
-        {
-            mstrcat(&bytecode, "LOAD_INT" SEPARATOR "0" INSTRUCTION_END);
-        }
-        // if `not value`, then perform boolean NOT on `value`
-        else
-        {
-            arrlstrip(line);
-            len--;
-
-            char * temp = quokka_compile_line_tokens(line, num, len, 1);
-
-            mstrcat(&bytecode, temp);
-
-            free(temp);
-
-            // Perform boolean NOT
-            mstrcat(&bytecode, "BOOLEAN_NOT" INSTRUCTION_END);
-        }
-    }
     else if (!strcmp(line[0], "&"))
     {
         // Set new line
@@ -2165,6 +2135,33 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
         free(valuelist);
         free(operslist);
+    }
+    else if (!strcmp(line[0], "not") || !strcmp(line[0], "!")) // `not` or `!`
+    {
+        // Set new line
+        if (!isInline)
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        // If `not` or `!`, then act as `0` or `false`
+        if (len <= 1)
+        {
+            mstrcat(&bytecode, "LOAD_INT_CONST" SEPARATOR "0" INSTRUCTION_END);
+        }
+        // if `not value` or `!value`, then perform boolean NOT on `value`
+        else
+        {
+            arrlstrip(line);
+            len--;
+
+            char * temp = quokka_compile_line_tokens(line, num, len, 1);
+
+            mstrcat(&bytecode, temp);
+
+            free(temp);
+
+            // Perform boolean NOT
+            mstrcat(&bytecode, "BOOLEAN_NOT" INSTRUCTION_END);
+        }
     }
     else if (stringInList(line, ".", len))
     {

@@ -5,7 +5,7 @@ Object * __call___cmethod(int argc, Object ** argv)
 
     Object ** arglist = malloc((argc + 1) * sizeof(Object *));
     arglist[0] = self;
-    for (int i = 1; i < argc; i++)
+    for (int i = 1; i < argc + 1; i++)
         arglist[i] = argv[i];
 
     Object * res = ((standard_func_def)func_pointer)(argc, arglist);
