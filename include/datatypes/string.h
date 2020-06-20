@@ -337,8 +337,8 @@ Object * makeStringRaw(char * value, int is_malloc_ptr)
 
     self->name = "string";
 
-    // 6 Attributes
-    int attr_count = 6;
+    // 2 Attributes
+    int attr_count = 2;
     self->names = malloc(attr_count * sizeof(char *));
     self->values = malloc(attr_count * sizeof(void *));
 
@@ -352,26 +352,6 @@ Object * makeStringRaw(char * value, int is_malloc_ptr)
         self = objectAddAttr(self, "__free__", &__free___string);
 
     // Regular methods (must go at end)
-
-    // upper
-    Object * upper_string_cfunc = makeCMethod(self, &upper_string, 0, 0);
-    upper_string_cfunc->refs++;
-    self = objectAddAttr(self, "upper", upper_string_cfunc);
-
-    // lower
-    Object * lower_string_cfunc = makeCMethod(self, &lower_string, 0, 0);
-    lower_string_cfunc->refs++;
-    self = objectAddAttr(self, "lower", lower_string_cfunc);
-
-    // isupper
-    Object * isupper_string_cfunc = makeCMethod(self, &isupper_string, 0, 0);
-    isupper_string_cfunc->refs++;
-    self = objectAddAttr(self, "isupper", isupper_string_cfunc);
-
-    // islower
-    Object * islower_string_cfunc = makeCMethod(self, &islower_string, 0, 0);
-    islower_string_cfunc->refs++;
-    self = objectAddAttr(self, "islower", islower_string_cfunc);
 
     return self;
 }

@@ -1,5 +1,3 @@
-i = 0
-while i < 10000
-    println(i)
-    i++
-end
+str = 'abc'
+up = str.upper
+println(up())

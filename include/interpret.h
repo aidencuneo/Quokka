@@ -426,26 +426,6 @@ int objectGetAttrIndex(Object * obj, char * name)
     return -1;
 }
 
-
-// Free an Object and all objects within (if Object is iterable)
-void freeObjectR(Object * obj)
-{
-    // If obj is iterable, free all items within it
-    if (!strcmp(obj->name, "list"))
-    {
-        int length = ((int *)objectGetAttr(obj, "length"))[0];
-        Object ** lst = objectGetAttr(obj, "value");
-        for (int i = 0; i < length; i++)
-        {
-            freeObjectR(lst[i]);
-        }
-    }
-
-    free(obj->names);
-    free(obj->values);
-    free(obj);
-}
-
 // Free an Object using the __free__ attribute if the Object has one
 void freeObject(Object * obj)
 {
@@ -489,23 +469,6 @@ void objDeref(Object * obj)
 
 /*
 
-Memory
-
-*/
-
-// void pushMem(Object * obj)
-// {
-//     if (++memsize >= memalloc_size)
-//     {
-//         memalloc += memalloc_size;
-//         mem = realloc(mem, memalloc * sizeof(Object *));
-//     }
-
-//     mem[memsize - 1] = obj;
-// }
-
-/*
-
 Stack
 
 */
@@ -540,13 +503,7 @@ void pushTopM(Object * obj)
 // Pop top of stack
 Object * popTop()
 {
-    // Decrement and use new stack_size in one expression
-    if (--stack_size < stack_alloc - stack_alloc_size)
-    {
-        stack_alloc -= stack_alloc_size;
-        stack = realloc(stack, stack_alloc * sizeof(Object *));
-    }
-
+    stack_size--;
     return stack[stack_size];
 }
 
@@ -572,12 +529,7 @@ void pushConst(Object * obj)
 // Pop top of constants (shouldn't really be used, but just in case)
 Object * popConst()
 {
-    if (--constant_count < const_alloc - const_alloc_size)
-    {
-        const_alloc -= const_alloc_size;
-        constants = realloc(constants, const_alloc * sizeof(Object *));
-    }
-
+    constant_count--;
     return constants[constant_count];
 }
 
@@ -857,7 +809,7 @@ Object ** makeDoubleArglist(Object * first, Object * secnd)
 
 void quokka_run_cli_interpreter()
 {
-    printf("Quokka %s:", VERSION);
+    printf("Quokka %s:\n", VERSION);
 
     current_file = "[CLI]";
     in_cli_mode = 1;
@@ -1352,14 +1304,23 @@ void quokka_interpret_line_tokens(char ** line)
         }
         else if (!strcmp(obj->name, "string"))
         {
-            if (!strcmp(line[1], "value"))
+            if (startswith(line[1], "__"))
+                invalid = 1;
+            else
             {
-                pushTop(obj);
+                if (!strcmp(line[1], "value"))
+                    pushTop(obj);
+                else if (!strcmp(line[1], "upper"))
+                    pushTop(makeCMethod(obj, &upper_string, 0, 0));
+                else if (!strcmp(line[1], "lower"))
+                    pushTop(makeCMethod(obj, &lower_string, 0, 0));
+                else if (!strcmp(line[1], "isupper"))
+                    pushTop(makeCMethod(obj, &isupper_string, 0, 0));
+                else if (!strcmp(line[1], "islower"))
+                    pushTop(makeCMethod(obj, &islower_string, 0, 0));
 
                 gotten = 1;
             }
-            else if (startswith(line[1], "__"))
-                invalid = 1;
         }
 
         if (!gotten)
@@ -2312,6 +2273,7 @@ void quokka_interpret_tokens(char *** tokens)
             // Comment the next two lines out if there's a segfault
             // if (!can_return)
             // resetStack();
+            stack_size = 0;
 
             bc_line++;
             continue;

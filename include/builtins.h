@@ -22,7 +22,7 @@ Object * q_function_display(int argc, Object ** argv)
 
         free(arglist);
 
-        out = strdup(objectGetAttr(strtext, "value"));
+        out = strdup(strtext->values[0]);
 
         freeObject(strtext);
     }
@@ -45,7 +45,6 @@ Object * q_function_display(int argc, Object ** argv)
 
 Object * q_function_print(int argc, Object ** argv)
 {
-    int ret = 0;
     char * printsep = " ";
 
     for (int i = 0; i < argc; i++)
@@ -66,9 +65,8 @@ Object * q_function_print(int argc, Object ** argv)
                 error(err, line_num);
             }
 
-            char * text = objectGetAttr(strtext, "value");
+            char * text = strtext->values[0];
 
-            ret += strlen(text);
             printf("%s", text);
 
             freeObject(strtext);
@@ -86,9 +84,8 @@ Object * q_function_print(int argc, Object ** argv)
                 error(err, line_num);
             }
 
-            char * text = objectGetAttr(strtext, "value");
+            char * text = strtext->values[0];
 
-            ret += strlen(text);
             printf("%s", text);
 
             freeObject(strtext);
@@ -98,14 +95,11 @@ Object * q_function_print(int argc, Object ** argv)
             printf("%s", printsep);
     }
 
-    long long * llptr = makeLLPtr(ret);
-
-    return makeLong(llptr, 1);
+    return makeNull();
 }
 
 Object * q_function_println(int argc, Object ** argv)
 {
-    int ret = 0;
     char * printsep = " ";
 
     for (int i = 0; i < argc; i++)
@@ -126,9 +120,8 @@ Object * q_function_println(int argc, Object ** argv)
                 error(err, line_num);
             }
 
-            char * text = objectGetAttr(strtext, "value");
+            char * text = strtext->values[0];
 
-            ret += strlen(text);
             printf("%s", text);
 
             freeObject(strtext);
@@ -146,9 +139,8 @@ Object * q_function_println(int argc, Object ** argv)
                 error(err, line_num);
             }
 
-            char * text = objectGetAttr(strtext, "value");
+            char * text = strtext->values[0];
 
-            ret += strlen(text);
             printf("%s", text);
 
             freeObject(strtext);
@@ -160,9 +152,7 @@ Object * q_function_println(int argc, Object ** argv)
             printf("\n");
     }
 
-    long long * llptr = makeLLPtr(ret);
-
-    return makeLong(llptr, 1);
+    return makeNull();
 }
 
 Object * q_function_input(int argc, Object ** argv)
@@ -394,7 +384,7 @@ Object * q_function_exec(int argc, Object ** argv)
         error(err, line_num);
     }
 
-    char * rawcode = (char *)objectGetAttr(argv[0], "value");
+    char * rawcode = argv[0]->values[0];
     char * code = malloc(strlen(rawcode) + 1 + 1);
     strcpy(code, rawcode);
     strcat(code, "\n");
@@ -424,7 +414,16 @@ Object * q_function_exit(int argc, Object ** argv)
 
 Object * q_function_min(int argc, Object ** argv)
 {
-    Object ** lst = objectGetAttr(argv[0], "value");
+    if (strcmp(argv[0]->name, "list"))
+    {
+        char * err = malloc(42 + strlen(argv[0]->name) + 1 + 1);
+        strcpy(err, "min argument must be of type 'list', not '");
+        strcat(err, argv[0]->name);
+        strcat(err, "'");
+        error(err, line_num);
+    }
+
+    Object ** lst = argv[0]->values[0];
     int lstlen = ((int *)objectGetAttr(argv[0], "length"))[0];
 
     int smallest = 0;
@@ -453,7 +452,16 @@ Object * q_function_min(int argc, Object ** argv)
 
 Object * q_function_max(int argc, Object ** argv)
 {
-    Object ** lst = objectGetAttr(argv[0], "value");
+    if (strcmp(argv[0]->name, "list"))
+    {
+        char * err = malloc(42 + strlen(argv[0]->name) + 1 + 1);
+        strcpy(err, "max argument must be of type 'list', not '");
+        strcat(err, argv[0]->name);
+        strcat(err, "'");
+        error(err, line_num);
+    }
+
+    Object ** lst = argv[0]->values[0];
     int lstlen = ((int *)objectGetAttr(argv[0], "length"))[0];
 
     int largest = 0;
@@ -483,9 +491,9 @@ Object * q_function_max(int argc, Object ** argv)
 Object * q_function_tochar(int argc, Object ** argv)
 {
     if (strcmp(argv[0]->name, "int"))
-        error("tochar first argument must be of type 'int'", line_num);
+        error("tochar argument must be of type 'int'", line_num);
 
-    int val = ((int *)objectGetAttr(argv[0], "value"))[0];
+    int val = ((int *)argv[0]->values[0])[0];
 
     char * charptr = malloc(2);
     charptr[0] = val;
@@ -497,9 +505,9 @@ Object * q_function_tochar(int argc, Object ** argv)
 Object * q_function_charcode(int argc, Object ** argv)
 {
     if (strcmp(argv[0]->name, "string"))
-        error("charcode first argument must be of type 'string'", line_num);
+        error("charcode argument must be of type 'string'", line_num);
 
-    char * val = objectGetAttr(argv[0], "value");
+    char * val = argv[0]->values[0];
 
     int * charptr = makeIntPtr(val[0]);
 
