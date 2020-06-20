@@ -47,6 +47,8 @@ char * quokka_compile_fname(char * filename);
 
 char ** quokka_file_tok(char * text);
 char ** quokka_tok(char * line, char ** waste);
+char *** quokka_bc_file_tok(char * text);
+char ** quokka_bc_tok(char * line);
 
 void error(char * text, int line)
 {
@@ -2960,4 +2962,77 @@ char ** quokka_tok(char * line, char ** waste)
     *waste = tokenstr;
 
     return output;
+}
+
+char *** quokka_bc_file_tok(char * text)
+{
+    // ESTIMATIONS WILL ALWAYS BE ENOUGH TO HOLD THE OUTPUT
+    int est = charCount(text, INSTRUCTION_END[0]) + 1; // Estimated token count
+    // int len = strlen(text); // Bytecode line length
+    // int est_tok = len / est; // Estimated token length
+
+    char *** tokens = malloc((est + 1) * sizeof(char **));
+
+    char * last;
+
+    int t = 0; // Current token index
+    last = strtok(text, INSTRUCTION_END);
+    while (last)
+    {
+        tokens[t] = quokka_bc_tok(last);
+        t++;
+        last = strtok(NULL, INSTRUCTION_END);
+    }
+
+    for (int i = 0; i < t; i++)
+    {
+        println("-- LINE --");
+        for (int j = 0; tokens[i][j] != NULL; j++)
+        {
+            // printf("len : %ld : ", strlen(tokens[i][j]));
+            printf("%s\n", tokens[i][j]);
+        }
+    }
+
+    tokens[t] = NULL;
+
+    return tokens;
+}
+
+char ** quokka_bc_tok(char * line)
+{
+    // ESTIMATIONS WILL ALWAYS BE ENOUGH TO HOLD THE OUTPUT
+    int est = charCount(line, SEPARATOR[0]) + 1; // Estimated token count
+    int len = strlen(line); // Bytecode line length
+    int est_tok = len + 1 / est; // Estimated token length
+
+    char ** tokens = malloc((est + 1) * sizeof(char *));
+    tokens[0] = malloc(est_tok + 1);
+    tokens[0][0] = 0;
+    int t = 0; // Current token index
+
+    // Ints
+    int sb = 0; // Square-bracket = 0
+
+    for (int i = 0; i < len; i++)
+    {
+        if (line[i] == ' ' && sb <= 0)
+        {
+            t++;
+            tokens[t] = malloc(est_tok + 1);
+            tokens[t][0] = 0;
+        }
+        else if (line[i] == '[')
+            sb++;
+        else if (line[i] == ']')
+            sb--;
+        if (line[i] != ' ' && line[i])
+        {
+            strncat(tokens[t], &line[i], 1);
+        }
+    }
+
+    tokens[t + 1] = NULL;
+
+    return tokens;
 }

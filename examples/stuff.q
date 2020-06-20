@@ -1,15 +1,5 @@
-import 'os'
-
-os.system('echo "hey"')
-
-println(os.cwd())
-os.chdir('..')
-println(os.cwd())
-os.chdir('..')
-println(os.cwd())
-os.chdir('..')
-println(os.cwd())
-os.chdir('..')
-println(os.cwd())
-os.chdir('..')
-println(os.cwd())
+// i = 0
+// while i < 1000
+//     println(i)
+//     i++
+// end

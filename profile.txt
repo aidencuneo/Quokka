@@ -1,0 +1,840 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+ no time accumulated
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  Ts/call  Ts/call  name    
+  0.00      0.00     0.00   652832     0.00     0.00  objectAddAttr
+  0.00      0.00     0.00   492821     0.00     0.00  objectGetAttr
+  0.00      0.00     0.00   186400     0.00     0.00  makeIntPtr
+  0.00      0.00     0.00   156396     0.00     0.00  makeArglist
+  0.00      0.00     0.00   126415     0.00     0.00  freeObject
+  0.00      0.00     0.00   126415     0.00     0.00  objectPointer
+  0.00      0.00     0.00   110010     0.00     0.00  makeNull
+  0.00      0.00     0.00   100018     0.00     0.00  charCount
+  0.00      0.00     0.00   100009     0.00     0.00  quokka_bc_tok
+  0.00      0.00     0.00   100009     0.00     0.00  quokka_interpret_line
+  0.00      0.00     0.00   100009     0.00     0.00  quokka_interpret_line_tokens
+  0.00      0.00     0.00    80024     0.00     0.00  objUnref
+  0.00      0.00     0.00    80008     0.00     0.00  __free___cmethod
+  0.00      0.00     0.00    80008     0.00     0.00  makeCMethod
+  0.00      0.00     0.00    70004     0.00     0.00  pushTop
+  0.00      0.00     0.00    50004     0.00     0.00  popTop
+  0.00      0.00     0.00    50001     0.00     0.00  getVar
+  0.00      0.00     0.00    40002     0.00     0.00  makeInt
+  0.00      0.00     0.00    20002     0.00     0.00  __free___string
+  0.00      0.00     0.00    20002     0.00     0.00  makeStringRaw
+  0.00      0.00     0.00    20002     0.00     0.00  objOperBool
+  0.00      0.00     0.00    20002     0.00     0.00  objectGetAttrIndex
+  0.00      0.00     0.00    20001     0.00     0.00  __free_malloc___string
+  0.00      0.00     0.00    20001     0.00     0.00  makeDoubleArglist
+  0.00      0.00     0.00    20001     0.00     0.00  makeString
+  0.00      0.00     0.00    16387     0.00     0.00  makeIntRaw
+  0.00      0.00     0.00    16387     0.00     0.00  objDeref
+  0.00      0.00     0.00    16385     0.00     0.00  __free___int
+  0.00      0.00     0.00    10015     0.00     0.00  intToStr
+  0.00      0.00     0.00    10001     0.00     0.00  __bool___int
+  0.00      0.00     0.00    10001     0.00     0.00  __lt___int
+  0.00      0.00     0.00    10001     0.00     0.00  addVar
+  0.00      0.00     0.00    10001     0.00     0.00  getLVarIndex
+  0.00      0.00     0.00    10001     0.00     0.00  objOperLt
+  0.00      0.00     0.00    10001     0.00     0.00  q_function_bool
+  0.00      0.00     0.00    10000     0.00     0.00  __add___int
+  0.00      0.00     0.00    10000     0.00     0.00  __disp___int
+  0.00      0.00     0.00    10000     0.00     0.00  __free___long
+  0.00      0.00     0.00    10000     0.00     0.00  getVarSilent
+  0.00      0.00     0.00    10000     0.00     0.00  makeLLPtr
+  0.00      0.00     0.00    10000     0.00     0.00  makeLong
+  0.00      0.00     0.00    10000     0.00     0.00  objOperAdd
+  0.00      0.00     0.00    10000     0.00     0.00  objOperDisp
+  0.00      0.00     0.00    10000     0.00     0.00  objOperString
+  0.00      0.00     0.00    10000     0.00     0.00  q_function_display
+  0.00      0.00     0.00    10000     0.00     0.00  q_function_println
+  0.00      0.00     0.00      209     0.00     0.00  stringInList
+  0.00      0.00     0.00       74     0.00     0.00  cpstrip
+  0.00      0.00     0.00       68     0.00     0.00  nstrtok
+  0.00      0.00     0.00       52     0.00     0.00  mstrcat
+  0.00      0.00     0.00       33     0.00     0.00  addObjectValue
+  0.00      0.00     0.00       21     0.00     0.00  startswith
+  0.00      0.00     0.00       20     0.00     0.00  addGVar
+  0.00      0.00     0.00       20     0.00     0.00  getGVarIndex
+  0.00      0.00     0.00       17     0.00     0.00  emptyObject
+  0.00      0.00     0.00       17     0.00     0.00  isidentifier
+  0.00      0.00     0.00       13     0.00     0.00  quokka_tok
+  0.00      0.00     0.00       11     0.00     0.00  arrsize
+  0.00      0.00     0.00        8     0.00     0.00  quokka_compile_line
+  0.00      0.00     0.00        8     0.00     0.00  quokka_compile_line_tokens
+  0.00      0.00     0.00        7     0.00     0.00  strReplace
+  0.00      0.00     0.00        5     0.00     0.00  isinteger
+  0.00      0.00     0.00        5     0.00     0.00  islong
+  0.00      0.00     0.00        5     0.00     0.00  mstrcattrip
+  0.00      0.00     0.00        4     0.00     0.00  mstrcatline
+  0.00      0.00     0.00        3     0.00     0.00  arrlstrip
+  0.00      0.00     0.00        3     0.00     0.00  endswith
+  0.00      0.00     0.00        3     0.00     0.00  freeStack
+  0.00      0.00     0.00        3     0.00     0.00  pushConst
+  0.00      0.00     0.00        3     0.00     0.00  pushTrash
+  0.00      0.00     0.00        2     0.00     0.00  emptyTrash
+  0.00      0.00     0.00        2     0.00     0.00  freeRetStack
+  0.00      0.00     0.00        2     0.00     0.00  resetStack
+  0.00      0.00     0.00        2     0.00     0.00  resetTrash
+  0.00      0.00     0.00        2     0.00     0.00  strInsertStart
+  0.00      0.00     0.00        2     0.00     0.00  strSlice
+  0.00      0.00     0.00        1     0.00     0.00  _quokka_interpret
+  0.00      0.00     0.00        1     0.00     0.00  addBytecodeConstant
+  0.00      0.00     0.00        1     0.00     0.00  compile_comma_list
+  0.00      0.00     0.00        1     0.00     0.00  compile_comma_list_string
+  0.00      0.00     0.00        1     0.00     0.00  compile_init
+  0.00      0.00     0.00        1     0.00     0.00  findNextEnd
+  0.00      0.00     0.00        1     0.00     0.00  freeConsts
+  0.00      0.00     0.00        1     0.00     0.00  freeGlobals
+  0.00      0.00     0.00        1     0.00     0.00  freeIntConsts
+  0.00      0.00     0.00        1     0.00     0.00  freeLocals
+  0.00      0.00     0.00        1     0.00     0.00  freeVars
+  0.00      0.00     0.00        1     0.00     0.00  getrealpath
+  0.00      0.00     0.00        1     0.00     0.00  initIntConsts
+  0.00      0.00     0.00        1     0.00     0.00  interp_init
+  0.00      0.00     0.00        1     0.00     0.00  makeIntPtrFromStr
+  0.00      0.00     0.00        1     0.00     0.00  makeLiteralString
+  0.00      0.00     0.00        1     0.00     0.00  makeNullRaw
+  0.00      0.00     0.00        1     0.00     0.00  quokka_compile_fname
+  0.00      0.00     0.00        1     0.00     0.00  quokka_compile_raw
+  0.00      0.00     0.00        1     0.00     0.00  quokka_compile_tokens
+  0.00      0.00     0.00        1     0.00     0.00  quokka_file_tok
+  0.00      0.00     0.00        1     0.00     0.00  quokka_interpret
+  0.00      0.00     0.00        1     0.00     0.00  quokka_interpret_tokens
+  0.00      0.00     0.00        1     0.00     0.00  readfile
+  0.00      0.00     0.00        1     0.00     0.00  resetRetStack
+  0.00      0.00     0.00        1     0.00     0.00  scpstkPop
+  0.00      0.00     0.00        1     0.00     0.00  scpstkPush
+  0.00      0.00     0.00        1     0.00     0.00  set_bytecode_constants
+  0.00      0.00     0.00        1     0.00     0.00  stringCountUntil
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 2 byte(s) no time propagated
+
+index % time    self  children    called     name
+[1]      0.0    0.00    0.00       6+10      <cycle 1 as a whole> [1]
+                0.00    0.00       8+4           quokka_compile_line_tokens <cycle 1> [53]
+                0.00    0.00       8             quokka_compile_line <cycle 1> [52]
+-----------------------------------------------
+[2]      0.0    0.00    0.00   46407+120011  <cycle 2 as a whole> [2]
+                0.00    0.00  126415             freeObject <cycle 2> [7]
+                0.00    0.00   20002             __free___string <cycle 2> [220]
+                0.00    0.00   20001             __free_malloc___string <cycle 2> [221]
+-----------------------------------------------
+                0.00    0.00   20000/652832      makeLong [34]
+                0.00    0.00   32772/652832      makeIntRaw [25]
+                0.00    0.00  120012/652832      makeStringRaw [20]
+                0.00    0.00  480048/652832      makeCMethod [15]
+[3]      0.0    0.00    0.00  652832         objectAddAttr [3]
+-----------------------------------------------
+                0.00    0.00   10000/492821      q_function_display [38]
+                0.00    0.00   10000/492821      __disp___int [226]
+                0.00    0.00   10000/492821      __free___long [227]
+                0.00    0.00   10000/492821      objOperString [37]
+                0.00    0.00   10001/492821      __bool___int [223]
+                0.00    0.00   16385/492821      __free___int [222]
+                0.00    0.00   20000/492821      q_function_println [39]
+                0.00    0.00   20000/492821      __add___int [225]
+                0.00    0.00   20001/492821      __free_malloc___string <cycle 2> [221]
+                0.00    0.00   20002/492821      __lt___int [224]
+                0.00    0.00   60001/492821      quokka_interpret_line_tokens [13]
+                0.00    0.00  126415/492821      freeObject <cycle 2> [7]
+                0.00    0.00  160016/492821      __free___cmethod [219]
+[4]      0.0    0.00    0.00  492821         objectGetAttr [4]
+-----------------------------------------------
+                0.00    0.00   10000/186400      __add___int [225]
+                0.00    0.00   16384/186400      initIntConsts [81]
+                0.00    0.00  160016/186400      makeCMethod [15]
+[5]      0.0    0.00    0.00  186400         makeIntPtr [5]
+-----------------------------------------------
+                0.00    0.00   10000/156396      q_function_display [38]
+                0.00    0.00   10000/156396      q_function_println [39]
+                0.00    0.00   10001/156396      quokka_interpret_line_tokens [13]
+                0.00    0.00  126395/156396      freeObject <cycle 2> [7]
+[6]      0.0    0.00    0.00  156396         makeArglist [6]
+-----------------------------------------------
+                               80008             __free___string <cycle 2> [220]
+                0.00    0.00   10000/46407       q_function_display [38]
+                0.00    0.00   10000/46407       q_function_println [39]
+                0.00    0.00   10020/46407       objUnref [14]
+                0.00    0.00   16387/46407       objDeref [26]
+[7]      0.0    0.00    0.00  126415         freeObject <cycle 2> [7]
+                0.00    0.00  126415/492821      objectGetAttr [4]
+                0.00    0.00  126395/156396      makeArglist [6]
+                0.00    0.00   80008/80008       __free___cmethod [219]
+                0.00    0.00   16385/16385       __free___int [222]
+                0.00    0.00   10000/10000       __free___long [227]
+                               20001             __free_malloc___string <cycle 2> [221]
+                                   1             __free___string <cycle 2> [220]
+-----------------------------------------------
+                0.00    0.00       1/126415      makeNullRaw [85]
+                0.00    0.00      17/126415      emptyObject [48]
+                0.00    0.00   10000/126415      makeLong [34]
+                0.00    0.00   16387/126415      makeIntRaw [25]
+                0.00    0.00   20002/126415      makeStringRaw [20]
+                0.00    0.00   80008/126415      makeCMethod [15]
+[8]      0.0    0.00    0.00  126415         objectPointer [8]
+-----------------------------------------------
+                0.00    0.00   10000/110010      __free___long [227]
+                0.00    0.00   20002/110010      __free___string <cycle 2> [220]
+                0.00    0.00   80008/110010      __free___cmethod [219]
+[9]      0.0    0.00    0.00  110010         makeNull [9]
+-----------------------------------------------
+                0.00    0.00       3/100018      findNextEnd [74]
+                0.00    0.00       6/100018      quokka_compile_tokens [88]
+                0.00    0.00  100009/100018      quokka_bc_tok [11]
+[10]     0.0    0.00    0.00  100018         charCount [10]
+-----------------------------------------------
+                0.00    0.00  100009/100009      quokka_interpret_line [12]
+[11]     0.0    0.00    0.00  100009         quokka_bc_tok [11]
+                0.00    0.00  100009/100018      charCount [10]
+-----------------------------------------------
+                0.00    0.00  100009/100009      quokka_interpret_tokens [91]
+[12]     0.0    0.00    0.00  100009         quokka_interpret_line [12]
+                0.00    0.00  100009/100009      quokka_bc_tok [11]
+                0.00    0.00  100009/100009      quokka_interpret_line_tokens [13]
+-----------------------------------------------
+                0.00    0.00  100009/100009      quokka_interpret_line [12]
+[13]     0.0    0.00    0.00  100009         quokka_interpret_line_tokens [13]
+                0.00    0.00   70004/70004       pushTop [16]
+                0.00    0.00   60001/492821      objectGetAttr [4]
+                0.00    0.00   50004/50004       popTop [17]
+                0.00    0.00   50003/80024       objUnref [14]
+                0.00    0.00   50001/50001       getVar [18]
+                0.00    0.00   20001/20001       makeDoubleArglist [23]
+                0.00    0.00   10001/10001       addVar [28]
+                0.00    0.00   10001/10001       objOperLt [30]
+                0.00    0.00   10001/10001       __lt___int [224]
+                0.00    0.00   10001/20002       objOperBool [21]
+                0.00    0.00   10001/156396      makeArglist [6]
+                0.00    0.00   10001/10001       q_function_bool [31]
+                0.00    0.00   10000/40002       makeInt [19]
+                0.00    0.00   10000/10000       objOperAdd [35]
+                0.00    0.00   10000/10000       __add___int [225]
+                0.00    0.00   10000/10000       q_function_println [39]
+                0.00    0.00       3/3           pushConst [62]
+                0.00    0.00       1/1           makeLiteralString [84]
+                0.00    0.00       1/20002       makeStringRaw [20]
+                0.00    0.00       1/1           makeIntPtrFromStr [83]
+                0.00    0.00       1/16387       makeIntRaw [25]
+                0.00    0.00       1/1           makeNullRaw [85]
+-----------------------------------------------
+                0.00    0.00       1/80024       freeLocals [78]
+                0.00    0.00      20/80024       freeGlobals [76]
+                0.00    0.00   10000/80024       addVar [28]
+                0.00    0.00   20000/80024       freeStack [61]
+                0.00    0.00   50003/80024       quokka_interpret_line_tokens [13]
+[14]     0.0    0.00    0.00   80024         objUnref [14]
+                0.00    0.00   10020/46407       freeObject <cycle 2> [7]
+-----------------------------------------------
+                0.00    0.00   80008/80008       makeStringRaw [20]
+[15]     0.0    0.00    0.00   80008         makeCMethod [15]
+                0.00    0.00  480048/652832      objectAddAttr [3]
+                0.00    0.00  160016/186400      makeIntPtr [5]
+                0.00    0.00   80008/126415      objectPointer [8]
+-----------------------------------------------
+                0.00    0.00   70004/70004       quokka_interpret_line_tokens [13]
+[16]     0.0    0.00    0.00   70004         pushTop [16]
+-----------------------------------------------
+                0.00    0.00   50004/50004       quokka_interpret_line_tokens [13]
+[17]     0.0    0.00    0.00   50004         popTop [17]
+-----------------------------------------------
+                0.00    0.00   50001/50001       quokka_interpret_line_tokens [13]
+[18]     0.0    0.00    0.00   50001         getVar [18]
+-----------------------------------------------
+                0.00    0.00   10000/40002       __add___int [225]
+                0.00    0.00   10000/40002       quokka_interpret_line_tokens [13]
+                0.00    0.00   10001/40002       __lt___int [224]
+                0.00    0.00   10001/40002       __bool___int [223]
+[19]     0.0    0.00    0.00   40002         makeInt [19]
+-----------------------------------------------
+                0.00    0.00       1/20002       quokka_interpret_line_tokens [13]
+                0.00    0.00   20001/20002       makeString [24]
+[20]     0.0    0.00    0.00   20002         makeStringRaw [20]
+                0.00    0.00  120012/652832      objectAddAttr [3]
+                0.00    0.00   80008/80008       makeCMethod [15]
+                0.00    0.00   20002/126415      objectPointer [8]
+-----------------------------------------------
+                0.00    0.00   10001/20002       q_function_bool [31]
+                0.00    0.00   10001/20002       quokka_interpret_line_tokens [13]
+[21]     0.0    0.00    0.00   20002         objOperBool [21]
+-----------------------------------------------
+                0.00    0.00   20002/20002       __free___string <cycle 2> [220]
+[22]     0.0    0.00    0.00   20002         objectGetAttrIndex [22]
+-----------------------------------------------
+                0.00    0.00   20001/20001       quokka_interpret_line_tokens [13]
+[23]     0.0    0.00    0.00   20001         makeDoubleArglist [23]
+-----------------------------------------------
+                0.00    0.00       1/20001       interp_init [82]
+                0.00    0.00   10000/20001       q_function_display [38]
+                0.00    0.00   10000/20001       __disp___int [226]
+[24]     0.0    0.00    0.00   20001         makeString [24]
+                0.00    0.00   20001/20002       makeStringRaw [20]
+-----------------------------------------------
+                0.00    0.00       1/16387       quokka_interpret_line_tokens [13]
+                0.00    0.00       2/16387       interp_init [82]
+                0.00    0.00   16384/16387       initIntConsts [81]
+[25]     0.0    0.00    0.00   16387         makeIntRaw [25]
+                0.00    0.00   32772/652832      objectAddAttr [3]
+                0.00    0.00   16387/126415      objectPointer [8]
+-----------------------------------------------
+                0.00    0.00       3/16387       freeConsts [75]
+                0.00    0.00   16384/16387       freeIntConsts [77]
+[26]     0.0    0.00    0.00   16387         objDeref [26]
+                0.00    0.00   16387/46407       freeObject <cycle 2> [7]
+-----------------------------------------------
+                0.00    0.00      15/10015       quokka_compile_line_tokens <cycle 1> [53]
+                0.00    0.00   10000/10015       __disp___int [226]
+[27]     0.0    0.00    0.00   10015         intToStr [27]
+-----------------------------------------------
+                0.00    0.00   10001/10001       quokka_interpret_line_tokens [13]
+[28]     0.0    0.00    0.00   10001         addVar [28]
+                0.00    0.00   10001/10001       getLVarIndex [29]
+                0.00    0.00   10000/80024       objUnref [14]
+-----------------------------------------------
+                0.00    0.00   10001/10001       addVar [28]
+[29]     0.0    0.00    0.00   10001         getLVarIndex [29]
+-----------------------------------------------
+                0.00    0.00   10001/10001       quokka_interpret_line_tokens [13]
+[30]     0.0    0.00    0.00   10001         objOperLt [30]
+-----------------------------------------------
+                0.00    0.00   10001/10001       quokka_interpret_line_tokens [13]
+[31]     0.0    0.00    0.00   10001         q_function_bool [31]
+                0.00    0.00   10001/20002       objOperBool [21]
+                0.00    0.00   10001/10001       __bool___int [223]
+-----------------------------------------------
+                0.00    0.00   10000/10000       q_function_println [39]
+[32]     0.0    0.00    0.00   10000         getVarSilent [32]
+-----------------------------------------------
+                0.00    0.00   10000/10000       q_function_println [39]
+[33]     0.0    0.00    0.00   10000         makeLLPtr [33]
+-----------------------------------------------
+                0.00    0.00   10000/10000       q_function_println [39]
+[34]     0.0    0.00    0.00   10000         makeLong [34]
+                0.00    0.00   20000/652832      objectAddAttr [3]
+                0.00    0.00   10000/126415      objectPointer [8]
+-----------------------------------------------
+                0.00    0.00   10000/10000       quokka_interpret_line_tokens [13]
+[35]     0.0    0.00    0.00   10000         objOperAdd [35]
+-----------------------------------------------
+                0.00    0.00   10000/10000       q_function_display [38]
+[36]     0.0    0.00    0.00   10000         objOperDisp [36]
+-----------------------------------------------
+                0.00    0.00   10000/10000       q_function_println [39]
+[37]     0.0    0.00    0.00   10000         objOperString [37]
+                0.00    0.00   10000/492821      objectGetAttr [4]
+-----------------------------------------------
+                0.00    0.00   10000/10000       q_function_println [39]
+[38]     0.0    0.00    0.00   10000         q_function_display [38]
+                0.00    0.00   10000/10000       objOperDisp [36]
+                0.00    0.00   10000/156396      makeArglist [6]
+                0.00    0.00   10000/10000       __disp___int [226]
+                0.00    0.00   10000/492821      objectGetAttr [4]
+                0.00    0.00   10000/46407       freeObject <cycle 2> [7]
+                0.00    0.00   10000/20001       makeString [24]
+-----------------------------------------------
+                0.00    0.00   10000/10000       quokka_interpret_line_tokens [13]
+[39]     0.0    0.00    0.00   10000         q_function_println [39]
+                0.00    0.00   20000/492821      objectGetAttr [4]
+                0.00    0.00   10000/10000       getVarSilent [32]
+                0.00    0.00   10000/10000       objOperString [37]
+                0.00    0.00   10000/156396      makeArglist [6]
+                0.00    0.00   10000/10000       q_function_display [38]
+                0.00    0.00   10000/46407       freeObject <cycle 2> [7]
+                0.00    0.00   10000/10000       makeLLPtr [33]
+                0.00    0.00   10000/10000       makeLong [34]
+-----------------------------------------------
+                0.00    0.00     209/209         quokka_compile_line_tokens <cycle 1> [53]
+[40]     0.0    0.00    0.00     209         stringInList [40]
+-----------------------------------------------
+                0.00    0.00      21/74          _quokka_interpret [228]
+                0.00    0.00      53/74          quokka_tok [50]
+[41]     0.0    0.00    0.00      74         cpstrip [41]
+-----------------------------------------------
+                0.00    0.00       7/68          quokka_file_tok [89]
+                0.00    0.00      21/68          _quokka_interpret [228]
+                0.00    0.00      40/68          quokka_tok [50]
+[42]     0.0    0.00    0.00      68         nstrtok [42]
+-----------------------------------------------
+                0.00    0.00       1/52          quokka_file_tok [89]
+                0.00    0.00       6/52          quokka_compile_tokens [88]
+                0.00    0.00      13/52          quokka_tok [50]
+                0.00    0.00      32/52          quokka_compile_line_tokens <cycle 1> [53]
+[43]     0.0    0.00    0.00      52         mstrcat [43]
+-----------------------------------------------
+                0.00    0.00      33/33          interp_init [82]
+[44]     0.0    0.00    0.00      33         addObjectValue [44]
+-----------------------------------------------
+                0.00    0.00       1/21          makeLiteralString [84]
+                0.00    0.00      20/21          quokka_compile_line_tokens <cycle 1> [53]
+[45]     0.0    0.00    0.00      21         startswith [45]
+-----------------------------------------------
+                0.00    0.00      20/20          interp_init [82]
+[46]     0.0    0.00    0.00      20         addGVar [46]
+                0.00    0.00      20/20          getGVarIndex [47]
+-----------------------------------------------
+                0.00    0.00      20/20          addGVar [46]
+[47]     0.0    0.00    0.00      20         getGVarIndex [47]
+-----------------------------------------------
+                0.00    0.00      17/17          interp_init [82]
+[48]     0.0    0.00    0.00      17         emptyObject [48]
+                0.00    0.00      17/126415      objectPointer [8]
+-----------------------------------------------
+                0.00    0.00      17/17          quokka_compile_line_tokens <cycle 1> [53]
+[49]     0.0    0.00    0.00      17         isidentifier [49]
+-----------------------------------------------
+                0.00    0.00       1/13          compile_comma_list_string [72]
+                0.00    0.00       4/13          findNextEnd [74]
+                0.00    0.00       8/13          quokka_compile_line <cycle 1> [52]
+[50]     0.0    0.00    0.00      13         quokka_tok [50]
+                0.00    0.00      53/74          cpstrip [41]
+                0.00    0.00      40/68          nstrtok [42]
+                0.00    0.00      13/52          mstrcat [43]
+-----------------------------------------------
+                0.00    0.00       1/11          compile_comma_list [71]
+                0.00    0.00       1/11          quokka_compile_tokens [88]
+                0.00    0.00       1/11          quokka_interpret_tokens [91]
+                0.00    0.00       8/11          quokka_compile_line_tokens <cycle 1> [53]
+[51]     0.0    0.00    0.00      11         arrsize [51]
+-----------------------------------------------
+                                   2             quokka_compile_line_tokens <cycle 1> [53]
+                0.00    0.00       6/6           quokka_compile_tokens [88]
+[52]     0.0    0.00    0.00       8         quokka_compile_line <cycle 1> [52]
+                0.00    0.00       8/13          quokka_tok [50]
+                                   8             quokka_compile_line_tokens <cycle 1> [53]
+-----------------------------------------------
+                                   4             quokka_compile_line_tokens <cycle 1> [53]
+                                   8             quokka_compile_line <cycle 1> [52]
+[53]     0.0    0.00    0.00       8+4       quokka_compile_line_tokens <cycle 1> [53]
+                0.00    0.00     209/209         stringInList [40]
+                0.00    0.00      32/52          mstrcat [43]
+                0.00    0.00      20/21          startswith [45]
+                0.00    0.00      17/17          isidentifier [49]
+                0.00    0.00      15/10015       intToStr [27]
+                0.00    0.00       8/11          arrsize [51]
+                0.00    0.00       5/5           mstrcattrip [57]
+                0.00    0.00       5/5           islong [56]
+                0.00    0.00       5/5           isinteger [55]
+                0.00    0.00       4/4           mstrcatline [58]
+                0.00    0.00       3/3           arrlstrip [59]
+                0.00    0.00       2/2           strInsertStart [68]
+                0.00    0.00       1/1           findNextEnd [74]
+                0.00    0.00       1/1           scpstkPush [95]
+                0.00    0.00       1/1           scpstkPop [94]
+                0.00    0.00       1/3           endswith [60]
+                0.00    0.00       1/2           strSlice [69]
+                0.00    0.00       1/1           compile_comma_list_string [72]
+                0.00    0.00       1/1           stringCountUntil [97]
+                0.00    0.00       1/1           addBytecodeConstant [70]
+                                   2             quokka_compile_line <cycle 1> [52]
+                                   4             quokka_compile_line_tokens <cycle 1> [53]
+-----------------------------------------------
+                0.00    0.00       1/7           getrealpath [80]
+                0.00    0.00       6/7           quokka_compile_tokens [88]
+[54]     0.0    0.00    0.00       7         strReplace [54]
+-----------------------------------------------
+                0.00    0.00       5/5           quokka_compile_line_tokens <cycle 1> [53]
+[55]     0.0    0.00    0.00       5         isinteger [55]
+-----------------------------------------------
+                0.00    0.00       5/5           quokka_compile_line_tokens <cycle 1> [53]
+[56]     0.0    0.00    0.00       5         islong [56]
+-----------------------------------------------
+                0.00    0.00       5/5           quokka_compile_line_tokens <cycle 1> [53]
+[57]     0.0    0.00    0.00       5         mstrcattrip [57]
+-----------------------------------------------
+                0.00    0.00       4/4           quokka_compile_line_tokens <cycle 1> [53]
+[58]     0.0    0.00    0.00       4         mstrcatline [58]
+-----------------------------------------------
+                0.00    0.00       3/3           quokka_compile_line_tokens <cycle 1> [53]
+[59]     0.0    0.00    0.00       3         arrlstrip [59]
+-----------------------------------------------
+                0.00    0.00       1/3           makeLiteralString [84]
+                0.00    0.00       1/3           quokka_compile_line_tokens <cycle 1> [53]
+                0.00    0.00       1/3           main [138]
+[60]     0.0    0.00    0.00       3         endswith [60]
+-----------------------------------------------
+                0.00    0.00       1/3           main [138]
+                0.00    0.00       2/3           resetStack [66]
+[61]     0.0    0.00    0.00       3         freeStack [61]
+                0.00    0.00   20000/80024       objUnref [14]
+-----------------------------------------------
+                0.00    0.00       3/3           quokka_interpret_line_tokens [13]
+[62]     0.0    0.00    0.00       3         pushConst [62]
+-----------------------------------------------
+                0.00    0.00       1/3           compile_comma_list_string [72]
+                0.00    0.00       1/3           quokka_compile_fname [86]
+                0.00    0.00       1/3           quokka_file_tok [89]
+[63]     0.0    0.00    0.00       3         pushTrash [63]
+-----------------------------------------------
+                0.00    0.00       2/2           main [138]
+[64]     0.0    0.00    0.00       2         emptyTrash [64]
+-----------------------------------------------
+                0.00    0.00       1/2           resetRetStack [93]
+                0.00    0.00       1/2           main [138]
+[65]     0.0    0.00    0.00       2         freeRetStack [65]
+-----------------------------------------------
+                0.00    0.00       1/2           interp_init [82]
+                0.00    0.00       1/2           quokka_interpret [90]
+[66]     0.0    0.00    0.00       2         resetStack [66]
+                0.00    0.00       2/3           freeStack [61]
+-----------------------------------------------
+                0.00    0.00       2/2           main [138]
+[67]     0.0    0.00    0.00       2         resetTrash [67]
+-----------------------------------------------
+                0.00    0.00       2/2           quokka_compile_line_tokens <cycle 1> [53]
+[68]     0.0    0.00    0.00       2         strInsertStart [68]
+-----------------------------------------------
+                0.00    0.00       1/2           makeLiteralString [84]
+                0.00    0.00       1/2           quokka_compile_line_tokens <cycle 1> [53]
+[69]     0.0    0.00    0.00       2         strSlice [69]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_compile_line_tokens <cycle 1> [53]
+[70]     0.0    0.00    0.00       1         addBytecodeConstant [70]
+-----------------------------------------------
+                0.00    0.00       1/1           compile_comma_list_string [72]
+[71]     0.0    0.00    0.00       1         compile_comma_list [71]
+                0.00    0.00       1/11          arrsize [51]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_compile_line_tokens <cycle 1> [53]
+[72]     0.0    0.00    0.00       1         compile_comma_list_string [72]
+                0.00    0.00       1/13          quokka_tok [50]
+                0.00    0.00       1/1           compile_comma_list [71]
+                0.00    0.00       1/3           pushTrash [63]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_compile_fname [86]
+[73]     0.0    0.00    0.00       1         compile_init [73]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_compile_line_tokens <cycle 1> [53]
+[74]     0.0    0.00    0.00       1         findNextEnd [74]
+                0.00    0.00       4/13          quokka_tok [50]
+                0.00    0.00       3/100018      charCount [10]
+-----------------------------------------------
+                0.00    0.00       1/1           main [138]
+[75]     0.0    0.00    0.00       1         freeConsts [75]
+                0.00    0.00       3/16387       objDeref [26]
+-----------------------------------------------
+                0.00    0.00       1/1           freeVars [79]
+[76]     0.0    0.00    0.00       1         freeGlobals [76]
+                0.00    0.00      20/80024       objUnref [14]
+-----------------------------------------------
+                0.00    0.00       1/1           main [138]
+[77]     0.0    0.00    0.00       1         freeIntConsts [77]
+                0.00    0.00   16384/16387       objDeref [26]
+-----------------------------------------------
+                0.00    0.00       1/1           freeVars [79]
+[78]     0.0    0.00    0.00       1         freeLocals [78]
+                0.00    0.00       1/80024       objUnref [14]
+-----------------------------------------------
+                0.00    0.00       1/1           main [138]
+[79]     0.0    0.00    0.00       1         freeVars [79]
+                0.00    0.00       1/1           freeGlobals [76]
+                0.00    0.00       1/1           freeLocals [78]
+-----------------------------------------------
+                0.00    0.00       1/1           main [138]
+[80]     0.0    0.00    0.00       1         getrealpath [80]
+                0.00    0.00       1/7           strReplace [54]
+-----------------------------------------------
+                0.00    0.00       1/1           interp_init [82]
+[81]     0.0    0.00    0.00       1         initIntConsts [81]
+                0.00    0.00   16384/186400      makeIntPtr [5]
+                0.00    0.00   16384/16387       makeIntRaw [25]
+-----------------------------------------------
+                0.00    0.00       1/1           main [138]
+[82]     0.0    0.00    0.00       1         interp_init [82]
+                0.00    0.00      33/33          addObjectValue [44]
+                0.00    0.00      20/20          addGVar [46]
+                0.00    0.00      17/17          emptyObject [48]
+                0.00    0.00       2/16387       makeIntRaw [25]
+                0.00    0.00       1/2           resetStack [66]
+                0.00    0.00       1/1           initIntConsts [81]
+                0.00    0.00       1/1           resetRetStack [93]
+                0.00    0.00       1/20001       makeString [24]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_interpret_line_tokens [13]
+[83]     0.0    0.00    0.00       1         makeIntPtrFromStr [83]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_interpret_line_tokens [13]
+[84]     0.0    0.00    0.00       1         makeLiteralString [84]
+                0.00    0.00       1/21          startswith [45]
+                0.00    0.00       1/3           endswith [60]
+                0.00    0.00       1/2           strSlice [69]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_interpret_line_tokens [13]
+[85]     0.0    0.00    0.00       1         makeNullRaw [85]
+                0.00    0.00       1/126415      objectPointer [8]
+-----------------------------------------------
+                0.00    0.00       1/1           main [138]
+[86]     0.0    0.00    0.00       1         quokka_compile_fname [86]
+                0.00    0.00       1/1           readfile [92]
+                0.00    0.00       1/1           set_bytecode_constants [96]
+                0.00    0.00       1/1           compile_init [73]
+                0.00    0.00       1/3           pushTrash [63]
+                0.00    0.00       1/1           quokka_compile_raw [87]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_compile_fname [86]
+[87]     0.0    0.00    0.00       1         quokka_compile_raw [87]
+                0.00    0.00       1/1           quokka_file_tok [89]
+                0.00    0.00       1/1           quokka_compile_tokens [88]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_compile_raw [87]
+[88]     0.0    0.00    0.00       1         quokka_compile_tokens [88]
+                0.00    0.00       6/7           strReplace [54]
+                0.00    0.00       6/6           quokka_compile_line <cycle 1> [52]
+                0.00    0.00       6/52          mstrcat [43]
+                0.00    0.00       6/100018      charCount [10]
+                0.00    0.00       1/11          arrsize [51]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_compile_raw [87]
+[89]     0.0    0.00    0.00       1         quokka_file_tok [89]
+                0.00    0.00       7/68          nstrtok [42]
+                0.00    0.00       1/52          mstrcat [43]
+                0.00    0.00       1/3           pushTrash [63]
+-----------------------------------------------
+                0.00    0.00       1/1           main [138]
+[90]     0.0    0.00    0.00       1         quokka_interpret [90]
+                0.00    0.00       1/1           _quokka_interpret [228]
+                0.00    0.00       1/2           resetStack [66]
+-----------------------------------------------
+                0.00    0.00       1/1           _quokka_interpret [228]
+[91]     0.0    0.00    0.00       1         quokka_interpret_tokens [91]
+                0.00    0.00  100009/100009      quokka_interpret_line [12]
+                0.00    0.00       1/11          arrsize [51]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_compile_fname [86]
+[92]     0.0    0.00    0.00       1         readfile [92]
+-----------------------------------------------
+                0.00    0.00       1/1           interp_init [82]
+[93]     0.0    0.00    0.00       1         resetRetStack [93]
+                0.00    0.00       1/2           freeRetStack [65]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_compile_line_tokens <cycle 1> [53]
+[94]     0.0    0.00    0.00       1         scpstkPop [94]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_compile_line_tokens <cycle 1> [53]
+[95]     0.0    0.00    0.00       1         scpstkPush [95]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_compile_fname [86]
+[96]     0.0    0.00    0.00       1         set_bytecode_constants [96]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_compile_line_tokens <cycle 1> [53]
+[97]     0.0    0.00    0.00       1         stringCountUntil [97]
+-----------------------------------------------
+                0.00    0.00   80008/80008       freeObject <cycle 2> [7]
+[219]    0.0    0.00    0.00   80008         __free___cmethod [219]
+                0.00    0.00  160016/492821      objectGetAttr [4]
+                0.00    0.00   80008/110010      makeNull [9]
+-----------------------------------------------
+                                   1             freeObject <cycle 2> [7]
+                               20001             __free_malloc___string <cycle 2> [221]
+[220]    0.0    0.00    0.00   20002         __free___string <cycle 2> [220]
+                0.00    0.00   20002/20002       objectGetAttrIndex [22]
+                0.00    0.00   20002/110010      makeNull [9]
+                               80008             freeObject <cycle 2> [7]
+-----------------------------------------------
+                               20001             freeObject <cycle 2> [7]
+[221]    0.0    0.00    0.00   20001         __free_malloc___string <cycle 2> [221]
+                0.00    0.00   20001/492821      objectGetAttr [4]
+                               20001             __free___string <cycle 2> [220]
+-----------------------------------------------
+                0.00    0.00   16385/16385       freeObject <cycle 2> [7]
+[222]    0.0    0.00    0.00   16385         __free___int [222]
+                0.00    0.00   16385/492821      objectGetAttr [4]
+-----------------------------------------------
+                0.00    0.00   10001/10001       q_function_bool [31]
+[223]    0.0    0.00    0.00   10001         __bool___int [223]
+                0.00    0.00   10001/492821      objectGetAttr [4]
+                0.00    0.00   10001/40002       makeInt [19]
+-----------------------------------------------
+                0.00    0.00   10001/10001       quokka_interpret_line_tokens [13]
+[224]    0.0    0.00    0.00   10001         __lt___int [224]
+                0.00    0.00   20002/492821      objectGetAttr [4]
+                0.00    0.00   10001/40002       makeInt [19]
+-----------------------------------------------
+                0.00    0.00   10000/10000       quokka_interpret_line_tokens [13]
+[225]    0.0    0.00    0.00   10000         __add___int [225]
+                0.00    0.00   20000/492821      objectGetAttr [4]
+                0.00    0.00   10000/186400      makeIntPtr [5]
+                0.00    0.00   10000/40002       makeInt [19]
+-----------------------------------------------
+                0.00    0.00   10000/10000       q_function_display [38]
+[226]    0.0    0.00    0.00   10000         __disp___int [226]
+                0.00    0.00   10000/492821      objectGetAttr [4]
+                0.00    0.00   10000/20001       makeString [24]
+                0.00    0.00   10000/10015       intToStr [27]
+-----------------------------------------------
+                0.00    0.00   10000/10000       freeObject <cycle 2> [7]
+[227]    0.0    0.00    0.00   10000         __free___long [227]
+                0.00    0.00   10000/492821      objectGetAttr [4]
+                0.00    0.00   10000/110010      makeNull [9]
+-----------------------------------------------
+                0.00    0.00       1/1           quokka_interpret [90]
+[228]    0.0    0.00    0.00       1         _quokka_interpret [228]
+                0.00    0.00      21/68          nstrtok [42]
+                0.00    0.00      21/74          cpstrip [41]
+                0.00    0.00       1/1           quokka_interpret_tokens [91]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+ [225] __add___int            [32] getVarSilent            [8] objectPointer
+ [223] __bool___int           [80] getrealpath            [17] popTop
+ [226] __disp___int           [81] initIntConsts          [62] pushConst
+ [219] __free___cmethod       [27] intToStr               [16] pushTop
+ [222] __free___int           [82] interp_init            [63] pushTrash
+ [227] __free___long          [49] isidentifier           [31] q_function_bool
+ [220] __free___string        [55] isinteger              [38] q_function_display
+ [221] __free_malloc___string [56] islong                 [39] q_function_println
+ [224] __lt___int              [6] makeArglist            [11] quokka_bc_tok
+ [228] _quokka_interpret      [15] makeCMethod            [86] quokka_compile_fname
+  [70] addBytecodeConstant    [23] makeDoubleArglist      [52] quokka_compile_line
+  [46] addGVar                [19] makeInt                [53] quokka_compile_line_tokens
+  [44] addObjectValue          [5] makeIntPtr             [87] quokka_compile_raw
+  [28] addVar                 [83] makeIntPtrFromStr      [88] quokka_compile_tokens
+  [59] arrlstrip              [25] makeIntRaw             [89] quokka_file_tok
+  [51] arrsize                [33] makeLLPtr              [90] quokka_interpret
+  [10] charCount              [84] makeLiteralString      [12] quokka_interpret_line
+  [71] compile_comma_list     [34] makeLong               [13] quokka_interpret_line_tokens
+  [72] compile_comma_list_string [9] makeNull             [91] quokka_interpret_tokens
+  [73] compile_init           [85] makeNullRaw            [50] quokka_tok
+  [41] cpstrip                [24] makeString             [92] readfile
+  [48] emptyObject            [20] makeStringRaw          [93] resetRetStack
+  [64] emptyTrash             [43] mstrcat                [66] resetStack
+  [60] endswith               [58] mstrcatline            [67] resetTrash
+  [74] findNextEnd            [57] mstrcattrip            [94] scpstkPop
+  [75] freeConsts             [42] nstrtok                [95] scpstkPush
+  [76] freeGlobals            [26] objDeref               [96] set_bytecode_constants
+  [77] freeIntConsts          [35] objOperAdd             [45] startswith
+  [78] freeLocals             [21] objOperBool            [68] strInsertStart
+   [7] freeObject             [36] objOperDisp            [54] strReplace
+  [65] freeRetStack           [30] objOperLt              [69] strSlice
+  [61] freeStack              [37] objOperString          [97] stringCountUntil
+  [79] freeVars               [14] objUnref               [40] stringInList
+  [47] getGVarIndex            [3] objectAddAttr           [1] <cycle 1>
+  [29] getLVarIndex            [4] objectGetAttr           [2] <cycle 2>
+  [18] getVar                 [22] objectGetAttrIndex

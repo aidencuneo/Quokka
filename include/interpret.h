@@ -338,11 +338,9 @@ Object * objectCopy(Object * orig)
     {
         char * name = malloc(strlen(orig->names[i]) + 1);
         strcpy(name, orig->names[i]);
-        // pushTrash(name);
 
         void ** newptr = malloc(sizeof(void *));
         *newptr = orig->values[i];
-        // pushTrash(newptr);
 
         self = addObjectValue(self, name, *newptr);
     }
@@ -858,11 +856,123 @@ Object ** makeDoubleArglist(Object * first, Object * secnd)
 
 #include "import.h"
 
+void quokka_run_cli_interpreter()
+{
+    printf("Quokka %s:", VERSION);
+
+    current_file = "[CLI]";
+    in_cli_mode = 1;
+    cli_current_line = malloc(1);
+    strcpy(cli_current_line, "");
+
+    set_bytecode_constants();
+    compile_init();
+    interp_init(); // Test it without these init lines
+
+    // Interpret initial bytecode constants
+    _quokka_interpret(bytecode_constants);
+
+    int in_compound_line = 0;
+    for (;;)
+    {
+        if (in_compound_line)
+        {
+            printf("  > ");
+            char * line = cpstrip(getinput());
+
+            cli_current_line = realloc(cli_current_line, strlen(cli_current_line) + strlen(line) + 1 + 1);
+            strcat(cli_current_line, line);
+            strcat(cli_current_line, "\n");
+
+            if (!strcmp(line, "end"))
+            {
+                resetStack();
+                resetRetStack();
+                resetConsts();
+                char * bytecode = quokka_compile_raw(cli_current_line, 0);
+
+                _quokka_interpret(bytecode_constants);
+                _quokka_interpret(bytecode);
+
+                if (stack_size)
+                {
+                    if (strcmp(stack[stack_size - 1]->name, "null"))
+                    {
+                        // Get top of stack
+                        Object ** arglist = makeArglist(stack[stack_size - 1]);
+
+                        // Print it
+                        Object * disp = q_function_display(1, arglist);
+
+                        printf("%s", (char *)objectGetAttr(disp, "value"));
+
+                        free(arglist);
+                        freeObject(disp);
+                    }
+
+                    resetStack();
+                }
+
+                free(bytecode);
+
+                in_compound_line = 0;
+            }
+        }
+        else
+        {
+            printf("--> ");
+            char * in = getinput();
+            char * line = cpstrip(in);
+
+            cli_current_line = realloc(cli_current_line, strlen(cli_current_line) + strlen(line) + 1 + 1);
+            strcpy(cli_current_line, line);
+            strcat(cli_current_line, "\n");
+
+            if (startswith(line, "if ") ||
+                startswith(line, "while ") ||
+                startswith(line, "for ") ||
+                startswith(line, "fun "))
+            {
+                in_compound_line = 1;
+                continue;
+            }
+
+            resetStack();
+            resetRetStack();
+            resetConsts();
+            char * bytecode = quokka_compile_line(line, 0, -1, 0);
+
+            _quokka_interpret(bytecode_constants);
+            _quokka_interpret(bytecode);
+
+            if (stack_size)
+            {
+                if (strcmp(stack[stack_size - 1]->name, "null"))
+                {
+                    // Get top of stack
+                    Object ** arglist = makeArglist(stack[stack_size - 1]);
+
+                    // Print it
+                    Object * disp = q_function_display(1, arglist);
+
+                    printf("%s", (char *)objectGetAttr(disp, "value"));
+
+                    free(arglist);
+                    freeObject(disp);
+                }
+
+                resetStack();
+            }
+
+            free(bytecode);
+            free(in);
+        }
+    }
+}
+
 void quokka_interpret_line(char * linetext)
 {
-    char * waste;
-    char ** line = quokka_tok(linetext, &waste);
-    pushTrash(waste);
+    char ** line = quokka_bc_tok(linetext);
 
     quokka_interpret_line_tokens(line);
 
@@ -2202,7 +2312,7 @@ void quokka_interpret_tokens(char ** tokens)
 
             // Comment the next two lines out if there's a segfault
             // if (!can_return)
-            resetStack();
+            // resetStack();
 
             bc_line++;
             continue;

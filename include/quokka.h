@@ -251,11 +251,9 @@ int stringHasChar(char * s, char c)
 
 int charCount(char * st, char ch)
 {
-    int len = strlen(st);
-
     int count = 0;
 
-    for (int i = 0; i < len; i++)
+    for (int i = 0; st[i]; i++)
     {
         if (st[i] == ch)
             count++;

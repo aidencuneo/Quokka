@@ -6,4 +6,4 @@ valgrind --leak-check=full \
          --show-leak-kinds=all \
          --track-origins=yes \
          --log-file=valgrind-out.txt\
-         bin/quokka $1 $2 $3
+         bin/quokka $@
