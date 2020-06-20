@@ -2984,16 +2984,6 @@ char *** quokka_bc_file_tok(char * text)
         last = strtok(NULL, INSTRUCTION_END);
     }
 
-    for (int i = 0; i < t; i++)
-    {
-        println("-- LINE --");
-        for (int j = 0; tokens[i][j] != NULL; j++)
-        {
-            // printf("len : %ld : ", strlen(tokens[i][j]));
-            printf("%s\n", tokens[i][j]);
-        }
-    }
-
     tokens[t] = NULL;
 
     return tokens;
@@ -3027,9 +3017,7 @@ char ** quokka_bc_tok(char * line)
         else if (line[i] == ']')
             sb--;
         if (line[i] != ' ' && line[i])
-        {
             strncat(tokens[t], &line[i], 1);
-        }
     }
 
     tokens[t + 1] = NULL;

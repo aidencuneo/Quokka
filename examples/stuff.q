@@ -1,5 +1,5 @@
-// i = 0
-// while i < 1000
-//     println(i)
-//     i++
-// end
+i = 0
+while i < 10000
+    println(i)
+    i++
+end

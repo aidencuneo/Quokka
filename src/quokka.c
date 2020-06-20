@@ -13,8 +13,7 @@ int execute_code = 1;
 
 char * full_file_name;
 char * full_dir_name;
-char * main_bytecode_raw;
-char *** main_bytecode;
+char * main_bytecode;
 int line_num;
 
 #include "../include/quokka.h"
@@ -109,22 +108,19 @@ int main(int argc, char ** argv)
     // If an already compiled .qc file is entered as the first argument,
     // then just retrieve the bytecode and interpret it
     if (endswith(fname, ".qc"))
-        main_bytecode_raw = readfile(fname);
+        main_bytecode = readfile(fname);
     else
     {
         resetTrash();
 
         // Compile Quokka script into Quokka bytecode
-        main_bytecode_raw = quokka_compile_fname(fname);
+        main_bytecode = quokka_compile_fname(fname);
 
         emptyTrash();
     }
 
-    // Tokenise the bytecode to make Quokka interpret faster
-    main_bytecode = quokka_bc_file_tok(main_bytecode_raw);
-
     if (verbose) println("\n--BYTECODE--\n");
-    if (verbose) println(main_bytecode_raw);
+    if (verbose) println(main_bytecode);
 
     if (export_bytecode)
     {
@@ -136,26 +132,26 @@ int main(int argc, char ** argv)
 
         FILE * fp = fopen(outputfile, "wb");
         if (export_bytecode)
-            fprintf(fp, "%s", main_bytecode_raw);
+            fprintf(fp, "%s", main_bytecode);
         fclose(fp);
 
         free(barefile);
         free(outputfile);
     }
 
-    if (execute_code && main_bytecode_raw)
+    if (execute_code && main_bytecode)
     {
         if (verbose) println("\n--OUTPUT--");
 
         resetTrash();
 
         interp_init();
-        // quokka_interpret(main_bytecode);
+        _quokka_interpret(main_bytecode);
 
         freeStack();
         freeRetStack();
-        // freeVars();
-        // freeIntConsts();
+        freeVars();
+        freeIntConsts();
         freeConsts();
 
         emptyTrash();
@@ -170,16 +166,6 @@ int main(int argc, char ** argv)
 
     free(full_file_name);
     free(full_dir_name);
-    free(main_bytecode_raw);
-
-    // Free all of the bytecode
-    for (int i = 0; main_bytecode[i] != NULL; i++)
-    {
-        for (int j = 0; main_bytecode[i][j] != NULL; j++)
-            free(main_bytecode[i][j]);
-        free(main_bytecode[i]);
-    }
-
     free(main_bytecode);
 
     return 0;

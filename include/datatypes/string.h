@@ -234,6 +234,8 @@ Object * __string___string(int argc, Object ** argv)
 Object * __free___string(int argc, Object ** argv)
 {
     int method_start = objectGetAttrIndex(argv[0], "upper");
+    if (method_start == -1)
+        return makeNull();
 
     for (int i = method_start; i < argv[0]->value_count; i++)
     {

@@ -69,7 +69,7 @@ struct __Varlist_Struct__
 void interp_init();
 void quokka_interpret_line(char * linetext);
 void quokka_interpret_line_tokens(char ** line);
-void quokka_interpret_tokens(char ** tokens);
+void quokka_interpret_tokens(char *** tokens);
 void quokka_interpret(char * bytecode);
 void _quokka_interpret(char * bytecode);
 

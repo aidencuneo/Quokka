@@ -11,7 +11,7 @@ int stack_alloc;
 int stack_alloc_size = 10;
 
 Object ** int_consts;
-int int_const_count = 16384; // 65536
+int int_const_count = 8192; // 16384 // 65536
 int int_consts_init = 0;
 
 Object ** constants;
@@ -27,7 +27,7 @@ int ret_stack_alloc_size = 5;
 int can_return;
 
 // Bytecode file stuff
-char ** bc_tokens;
+char *** bc_tokens;
 
 // Multi-use pointers
 int oneArgc;
@@ -182,7 +182,6 @@ void interp_init()
 
     addGVar("true", makeIntRaw(&truePtr, 0));
     addGVar("false", makeIntRaw(&falsePtr, 0));
-    addGVar("PRINTSEP", makeString(" ", 0));
 
     /*
     No argument restraints
@@ -2059,7 +2058,7 @@ void quokka_interpret_line_tokens(char ** line)
     {
         for (int i = bc_line + 1; i < bc_line_count; i++)
         {
-            if (!strcmp(bc_tokens[i], line[1]))
+            if (!strcmp(bc_tokens[i][0], line[1]))
             {
                 bc_line = i;
                 break;
@@ -2070,7 +2069,7 @@ void quokka_interpret_line_tokens(char ** line)
     {
         for (int i = bc_line - 1; i >= 0; i--)
         {
-            if (!strcmp(bc_tokens[i], line[1]))
+            if (!strcmp(bc_tokens[i][0], line[1]))
             {
                 bc_line = i;
                 break;
@@ -2101,7 +2100,7 @@ void quokka_interpret_line_tokens(char ** line)
         // If true, jump
         int i;
         for (i = bc_line + 1; i < bc_line_count - 1; i++)
-            if (!strcmp(bc_tokens[i], line[1]))
+            if (!strcmp(bc_tokens[i][0], line[1]))
                 break;
 
         bc_line = i;
@@ -2130,7 +2129,7 @@ void quokka_interpret_line_tokens(char ** line)
         // If false, jump
         int i;
         for (i = bc_line + 1; i < bc_line_count - 1; i++)
-            if (!strcmp(bc_tokens[i], line[1]))
+            if (!strcmp(bc_tokens[i][0], line[1]))
                 break;
 
         bc_line = i;
@@ -2291,14 +2290,14 @@ void quokka_interpret_line_tokens(char ** line)
     }
 }
 
-void quokka_interpret_tokens(char ** tokens)
+void quokka_interpret_tokens(char *** tokens)
 {
-    bc_line_count = arrsize(tokens);
+    bc_line_count = strarrsize(tokens);
 
     bc_line = 0;
     while (bc_line < bc_line_count)
     {
-        char * t = tokens[bc_line];
+        char ** t = tokens[bc_line];
 
         if (t == NULL)
         {
@@ -2306,9 +2305,9 @@ void quokka_interpret_tokens(char ** tokens)
             continue;
         }
 
-        if (isdigit(t[0])) // If line starts with a digit, interpret it as a new line number
+        if (isdigit(t[0][0])) // If line starts with a digit, interpret it as a new line number
         {
-            line_num = strtol(t, NULL, 10) - 1;
+            line_num = strtol(t[0], NULL, 10) - 1;
 
             // Comment the next two lines out if there's a segfault
             // if (!can_return)
@@ -2318,12 +2317,10 @@ void quokka_interpret_tokens(char ** tokens)
             continue;
         }
 
-        quokka_interpret_line(t);
+        quokka_interpret_line_tokens(t);
 
         bc_line++;
     }
-
-    free(tokens);
 }
 
 void _quokka_interpret(char * bytecode)
@@ -2332,38 +2329,21 @@ void _quokka_interpret(char * bytecode)
     int old_line_num = line_num;
     int old_bc_line = bc_line;
     int old_bc_line_count = bc_line_count;
-    char ** old_bc_tokens = bc_tokens;
+    char *** old_bc_tokens = bc_tokens;
 
     /* Main */
-    bc_tokens = malloc(sizeof(char **));
-    bc_tokens[0] = "";
-
-    char * dupe = strdup(bytecode);
-
-    int i = 0;
-    bc_tokens[0] = cpstrip(nstrtok(dupe, "\n"));
-
-    while (bc_tokens[i] != NULL)
-    {
-        // Protects against empty parts of a line or string
-        if (!strlen(bc_tokens[i]))
-        {
-            bc_tokens = realloc(bc_tokens, (i + 1) * sizeof(char *));
-            bc_tokens[i] = cpstrip(nstrtok(NULL, "\n"));
-            continue;
-        }
-
-        i++;
-        bc_tokens = realloc(bc_tokens, (i + 1) * sizeof(char *));
-        bc_tokens[i] = cpstrip(nstrtok(NULL, "\n"));
-    }
-
-    bc_tokens = realloc(bc_tokens, (i + 2) * sizeof(char *));
-    bc_tokens[i + 1] = NULL;
+    bc_tokens = quokka_bc_file_tok(bytecode);
 
     quokka_interpret_tokens(bc_tokens);
 
-    free(dupe);
+    // Free all of the tokenised bytecode
+    for (int i = 0; bc_tokens[i] != NULL; i++)
+    {
+        for (int j = 0; bc_tokens[i][j] != NULL; j++)
+            free(bc_tokens[i][j]);
+        free(bc_tokens[i]);
+    }
+    free(bc_tokens);
 
     /* End */
     line_num = old_line_num;

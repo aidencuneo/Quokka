@@ -48,39 +48,45 @@ Object * q_function_print(int argc, Object ** argv)
     int ret = 0;
     char * printsep = " ";
 
-    Object * printsep_obj = getVarSilent("PRINTSEP");
-    if (printsep_obj != NULL)
-        if (!strcmp(printsep_obj->name, "string"))
-            printsep = objectGetAttr(printsep_obj, "value");
-
-    int printsep_len = strlen(printsep);
-
     for (int i = 0; i < argc; i++)
     {
         Object * obj = argv[i];
+        void * func;
 
-        if (objOperString(obj) != NULL)
+        if ((func = objOperString(obj)) != NULL)
         {
-            Object ** arglist = makeArglist(argv[i]);
-            Object * strtext = q_function_string(1, arglist);
+            Object * strtext = ((standard_func_def)func)(1, argv);
+
+            if (strcmp(strtext->name, "string"))
+            {
+                char * err = malloc(27 + strlen(obj->name) + 27 + 1);
+                strcpy(err, "__string__ method of type '");
+                strcat(err, argv[0]->name);
+                strcat(err, "' must return type 'string'");
+                error(err, line_num);
+            }
 
             char * text = objectGetAttr(strtext, "value");
-
-            free(arglist);
 
             ret += strlen(text);
             printf("%s", text);
 
             freeObject(strtext);
         }
-        else
+        else if ((func = objOperDisp(obj)) != NULL)
         {
-            Object ** arglist = makeArglist(argv[i]);
-            Object * strtext = q_function_display(1, arglist);
+            Object * strtext = ((standard_func_def)func)(1, argv);
 
-            free(arglist);
+            if (strcmp(strtext->name, "string"))
+            {
+                char * err = malloc(25 + strlen(obj->name) + 27 + 1);
+                strcpy(err, "__disp__ method of type '");
+                strcat(err, argv[0]->name);
+                strcat(err, "' must return type 'string'");
+                error(err, line_num);
+            }
 
-            char * text = (char *)objectGetAttr(strtext, "value");
+            char * text = objectGetAttr(strtext, "value");
 
             ret += strlen(text);
             printf("%s", text);
@@ -89,10 +95,7 @@ Object * q_function_print(int argc, Object ** argv)
         }
 
         if (i + 1 < argc)
-        {
             printf("%s", printsep);
-            ret += printsep_len;
-        }
     }
 
     long long * llptr = makeLLPtr(ret);
@@ -105,23 +108,23 @@ Object * q_function_println(int argc, Object ** argv)
     int ret = 0;
     char * printsep = " ";
 
-    Object * printsep_obj = getVarSilent("PRINTSEP");
-    if (printsep_obj != NULL)
-        if (!strcmp(printsep_obj->name, "string"))
-            printsep = objectGetAttr(printsep_obj, "value");
-
-    int printsep_len = strlen(printsep);
-
     for (int i = 0; i < argc; i++)
     {
         Object * obj = argv[i];
+        void * func;
 
-        if (objOperString(obj) != NULL)
+        if ((func = objOperString(obj)) != NULL)
         {
-            Object ** arglist = makeArglist(argv[i]);
-            Object * strtext = q_function_string(1, arglist);
+            Object * strtext = ((standard_func_def)func)(1, argv);
 
-            free(arglist);
+            if (strcmp(strtext->name, "string"))
+            {
+                char * err = malloc(27 + strlen(obj->name) + 27 + 1);
+                strcpy(err, "__string__ method of type '");
+                strcat(err, argv[0]->name);
+                strcat(err, "' must return type 'string'");
+                error(err, line_num);
+            }
 
             char * text = objectGetAttr(strtext, "value");
 
@@ -130,12 +133,18 @@ Object * q_function_println(int argc, Object ** argv)
 
             freeObject(strtext);
         }
-        else
+        else if ((func = objOperDisp(obj)) != NULL)
         {
-            Object ** arglist = makeArglist(argv[i]);
-            Object * strtext = q_function_display(1, arglist);
+            Object * strtext = ((standard_func_def)func)(1, argv);
 
-            free(arglist);
+            if (strcmp(strtext->name, "string"))
+            {
+                char * err = malloc(25 + strlen(obj->name) + 27 + 1);
+                strcpy(err, "__disp__ method of type '");
+                strcat(err, argv[0]->name);
+                strcat(err, "' must return type 'string'");
+                error(err, line_num);
+            }
 
             char * text = objectGetAttr(strtext, "value");
 
@@ -146,15 +155,9 @@ Object * q_function_println(int argc, Object ** argv)
         }
 
         if (i + 1 < argc)
-        {
             printf("%s", printsep);
-            ret += printsep_len;
-        }
         else
-        {
             printf("\n");
-            ret++;
-        }
     }
 
     long long * llptr = makeLLPtr(ret);

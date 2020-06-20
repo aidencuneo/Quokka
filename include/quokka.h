@@ -126,6 +126,14 @@ int arrsize(char ** arr)
     return i;
 }
 
+int strarrsize(char *** arr)
+{
+    int i;
+    for (i = 0; arr[i] != NULL; i++);
+
+    return i;
+}
+
 int iarrsize(int * arr)
 {
     return sizeof(arr) / sizeof(int);
