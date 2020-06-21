@@ -503,3 +503,91 @@ Object * makeIntRaw(int * value, int is_malloc_ptr)
 
     return self;
 }
+
+void summary(char * arr, int len)
+{
+    for (int i = 0; i < len; i++)
+    {
+        printf("%d", arr[i]);
+    }
+    printf("\n");
+}
+
+char * arrayDivide(char * arr, int denom, int len)
+{
+    int carry = 0;
+    int convert = 10 / denom;
+
+    for (int i = 0; i < len; i++)
+    {
+        int rem = arr[i] % denom;
+        arr[i] /= denom;
+        arr[i] += carry;
+
+        carry = rem * convert;
+    }
+
+    // summary(arr, len);
+
+    return arr;
+}
+
+char * toDigits(char * str)
+{
+    int len = strlen(str);
+    for (int i = 0; i < len; i++)
+    {
+        str[i] -= '0';
+    }
+    return str;
+}
+
+int containsDigits(char * arr, int len)
+{
+    for (int i = 0; i < len; i++)
+        if (arr[i] != 0)
+            return 1;
+
+    return 0;
+}
+
+int * toBaseINTMAX(char * str)
+{
+    println(str);
+    int len = strlen(str);
+    str = toDigits(str);
+
+    int * out = malloc((len * 2) * sizeof(int));
+
+    int ind = 0;
+    int dec_base = 1;
+    int BASE = 2;
+    int carry = 0;
+
+    while (containsDigits(str, len))
+    {
+        out[ind] = str[len - 1] % BASE;
+        ind++;
+
+        // str = arrayDivide(str, 10, len);
+        str = arrayDivide(str, 2, len);
+        summary(str, len);
+    }
+
+    println("OUT");
+
+    int total = 0;
+    int base = 1;
+    for (int i = 0; i < len; i++)
+    {
+        printf("%d\n", out[i]);
+        total += out[i] * base;
+        base *= BASE;
+    }
+
+    println(total);
+
+    exit(1);
+
+    return out;
+}

@@ -1,5 +1,5 @@
 // VERSION STUFF
-#define VERSION "0.5.8"
+#define VERSION "0.6.0"
 
 // Defines
 #define LN10 2.3025850929940456840179914546844

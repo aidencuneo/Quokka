@@ -894,25 +894,31 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "LOAD_INT"))
     {
-        long long temp = strtoll(line[1], NULL, 10);
-        if (temp > INT_MAX)
-        {
-            long long * llptr = makeLLPtrFromStr(line[1]);
+        int * inf_int = toBaseINTMAX(line[1]);
+        int len = strlen(line[1]);
 
-            pushConst(makeLong(llptr, 1));
-        }
-        else
-        {
-            int * intptr = makeIntPtrFromStr(line[1]);
+        // long long temp = strtoll(line[1], NULL, 10);
+        // if (temp > INT_MAX)
+        // {
+        //     long long * llptr = makeLLPtrFromStr(line[1]);
 
-            pushConst(makeIntRaw(intptr, 1));
-        }
+        //     pushConst(makeLong(llptr, 1));
+        // }
+        // else
+        // {
+        //     int * intptr = makeIntPtrFromStr(line[1]);
+
+        //     pushConst(makeIntRaw(intptr, 1));
+        // }
     }
     else if (!strcmp(line[0], "LOAD_LONG"))
     {
-        long long * llptr = makeLLPtrFromStr(line[1]);
+        int * inf_int = toBaseINTMAX(line[1]);
+        int len = strlen(line[1]);
 
-        pushConst(makeLong(llptr, 1));
+        // long long * llptr = makeLLPtrFromStr(line[1]);
+
+        // pushConst(makeLong(llptr, 1));
     }
     if (!strcmp(line[0], "LOAD_NULL"))
     {

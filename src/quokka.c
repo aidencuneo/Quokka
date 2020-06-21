@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <signal.h>
 #include <inttypes.h>
+#include <errno.h>
 
 // CLI options (bools):
 int verbose = 0;
