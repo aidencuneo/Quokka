@@ -35,9 +35,9 @@ Object * makeCMethod(Object * parent, void * method_pointer, int argmin, int arg
 
     self->name = "cmethod";
 
-    // 6 Attributes
-    self->names = malloc(6 * sizeof(char *));
-    self->values = malloc(6 * sizeof(void *));
+    // 5 Attributes
+    self->names = malloc(5 * sizeof(char *));
+    self->values = malloc(5 * sizeof(void *));
     self->value_count = 0;
 
     // Values
@@ -48,9 +48,6 @@ Object * makeCMethod(Object * parent, void * method_pointer, int argmin, int arg
     self = objectAddAttr(self, "__call__", &__call___cmethod);
     self = objectAddAttr(self, "__call__argmin", argminptr);
     self = objectAddAttr(self, "__call__argmax", argmaxptr);
-
-    // __free__
-    self = objectAddAttr(self, "__free__", &__free___cmethod);
 
     return self;
 }

@@ -1,11 +1,9 @@
 #include <stdio.h>
-#include <stdlib.h>
 
 int main()
 {
-    char * ptr = malloc(16);
-    ptr = realloc(ptr, 32);
-    free(ptr);
+    for (int i = 0; i < 10000; i++)
+        printf("%d\n", i);
 
     return 0;
 }

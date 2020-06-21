@@ -27,18 +27,7 @@ Object * q_function_display(int argc, Object ** argv)
         freeObject(strtext);
     }
     else
-    {
-        char * obj_addr = strObjAddress(argv[0]);
-
-        char * out = malloc(2 + strlen(argv[0]->name) + 12 + strlen(obj_addr) + 1 + 1);
-        strcpy(out, "<'");
-        strcat(out, argv[0]->name);
-        strcat(out, "' Object at ");
-        strcat(out, obj_addr);
-        strcat(out, ">");
-
-        free(obj_addr);
-    }
+        out = neatObjAddress(argv[0]);
 
     return makeString(out, 1);
 }
@@ -89,6 +78,12 @@ Object * q_function_print(int argc, Object ** argv)
             printf("%s", text);
 
             freeObject(strtext);
+        }
+        else
+        {
+            char * text = neatObjAddress(obj);
+            printf("%s", text);
+            free(text);
         }
 
         if (i + 1 < argc)
@@ -145,6 +140,12 @@ Object * q_function_println(int argc, Object ** argv)
 
             freeObject(strtext);
         }
+        else
+        {
+            char * text = neatObjAddress(obj);
+            printf("%s", text);
+            free(text);
+        }
 
         if (i + 1 < argc)
             printf("%s", printsep);
@@ -154,37 +155,6 @@ Object * q_function_println(int argc, Object ** argv)
 
     return makeNull();
 }
-
-Object * q_function_input(int argc, Object ** argv)
-{
-    if (argc)
-    {
-        Object ** arglist = makeArglist(argv[0]);
-        objUnref(q_function_print(1, arglist));
-        free(arglist);
-    }
-
-    char * buffer = malloc(1);
-    strcpy(buffer, "");
-    int buflen = 0;
-
-    char last = 0;
-
-    while (last != '\n' && last != '\r')
-    {
-        last = getchar();
-
-        buffer = realloc(buffer, buflen + 1);
-        buffer[buflen] = last;
-
-        buflen++;
-    }
-
-    buffer[buflen - 1] = '\0';
-
-    return makeString(buffer, 1);
-}
-
 
 Object * q_function_bool(int argc, Object ** argv)
 {
@@ -211,7 +181,6 @@ Object * q_function_bool(int argc, Object ** argv)
 
     return ret;
 }
-
 
 Object * q_function_string(int argc, Object ** argv)
 {
@@ -512,4 +481,90 @@ Object * q_function_charcode(int argc, Object ** argv)
     int * charptr = makeIntPtr(val[0]);
 
     return makeInt(charptr, 1);
+}
+
+Object * q_function_input(int argc, Object ** argv)
+{
+    if (argc)
+    {
+        Object ** arglist = makeArglist(argv[0]);
+        objUnref(q_function_print(1, arglist));
+        free(arglist);
+    }
+
+    char * buffer = malloc(1);
+    strcpy(buffer, "");
+    int buflen = 0;
+
+    char last = 0;
+
+    while (last != '\n' && last != '\r')
+    {
+        last = getchar();
+
+        buffer = realloc(buffer, buflen + 1);
+        buffer[buflen] = last;
+
+        buflen++;
+    }
+
+    buffer[buflen - 1] = '\0';
+
+    return makeString(buffer, 1);
+}
+
+Object * q_function_open(int argc, Object ** argv)
+{
+    char * path;
+    char * mode = "r";
+
+    if (argc == 2)
+    {
+        if (strcmp(argv[1]->name, "string"))
+        {
+            char * err = malloc(39 + strlen(argv[0]->name) + 1 + 1);
+            strcpy(err, "file mode argument can not be of type '");
+            strcat(err, argv[0]->name);
+            strcat(err, "'");
+            error(err, line_num);
+        }
+
+        mode = argv[1]->values[0];
+
+        if (strcmp(mode, "r")   &&
+            strcmp(mode, "rb")  &&
+            strcmp(mode, "w")   &&
+            strcmp(mode, "wb")  &&
+            strcmp(mode, "a")   &&
+            strcmp(mode, "ab")  &&
+            strcmp(mode, "r+")  &&
+            strcmp(mode, "rb+") &&
+            strcmp(mode, "r+b") &&
+            strcmp(mode, "w+")  &&
+            strcmp(mode, "wb+") &&
+            strcmp(mode, "w+b") &&
+            strcmp(mode, "a+")  &&
+            strcmp(mode, "ab+") &&
+            strcmp(mode, "a+b"))
+        {
+            char * err = malloc(11 + strlen(mode) + 14 + 1);
+            strcpy(err, "file mode '");
+            strcat(err, mode);
+            strcat(err, "' is not valid");
+            error(err, line_num);
+        }
+    }
+
+    if (strcmp(argv[0]->name, "string"))
+    {
+        char * err = malloc(44 + strlen(argv[0]->name) + 1 + 1);
+        strcpy(err, "path to open must be of type 'string', not '");
+        strcat(err, argv[0]->name);
+        strcat(err, "'");
+        error(err, line_num);
+    }
+
+    path = argv[0]->values[0];
+
+    return makeFile(path, mode);
 }

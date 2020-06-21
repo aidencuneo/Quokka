@@ -2200,11 +2200,22 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             {
                 if (lastwasdot)
                 {
-                    mstrcatline(&bytecode,
-                        "GET_ATTR",
-                        SEPARATOR,
-                        line[p],
-                        INSTRUCTION_END);
+                    if ((lasthadcall || dotcount > 1) && p + 1 < len && startswith(line[p + 1], "(") && endswith(line[p + 1], ")"))
+                    {
+                        mstrcatline(&bytecode,
+                            "GET_METHOD",
+                            SEPARATOR,
+                            line[p],
+                            INSTRUCTION_END);
+                    }
+                    else
+                    {
+                        mstrcatline(&bytecode,
+                            "GET_ATTR",
+                            SEPARATOR,
+                            line[p],
+                            INSTRUCTION_END);
+                    }
 
                     lastwasdot = 0;
                 }
@@ -2238,7 +2249,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                     latestvalue = realloc(latestvalue, 1);
                     strcpy(latestvalue, "");
 
-                    if (lasthadcall)
+                    if (lasthadcall || dotcount > 1)
                     {
                         mstrcatline(&bytecode,
                             "CALL_METHOD",
@@ -2258,8 +2269,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                     free(templine);
                     free(argcount);
 
-                    if (p < len - 1)
-                        mstrcat(&bytecode, "REF_TOP" INSTRUCTION_END);
+                    // if (p < len - 1)
+                    //     mstrcat(&bytecode, "REF_TOP" INSTRUCTION_END);
 
                     lastwasdot = 0;
                     lasthadcall = 1;
@@ -3001,23 +3012,32 @@ char ** quokka_bc_tok(char * line)
     tokens[0][0] = 0;
     int t = 0; // Current token index
 
+    // Bools
+    int sq = 0; // Single-Quote = false
+    int dq = 0; // Double-Quote = false
+
     // Ints
     int sb = 0; // Square-bracket = 0
 
     for (int i = 0; i < len; i++)
     {
-        if (line[i] == ' ' && sb <= 0)
+        if (line[i] == ' ' && sb <= 0 && !sq && !dq)
         {
             t++;
             tokens[t] = malloc(est_tok + 1);
             tokens[t][0] = 0;
         }
-        else if (line[i] == '[')
+        else
+            strncat(tokens[t], &line[i], 1);
+
+        if (line[i] == '[')
             sb++;
         else if (line[i] == ']')
             sb--;
-        if (line[i] != ' ' && line[i])
-            strncat(tokens[t], &line[i], 1);
+        else if (line[i] == '\'')
+            sq = !sq;
+        else if (line[i] == '"')
+            dq = !dq;
     }
 
     tokens[t + 1] = NULL;

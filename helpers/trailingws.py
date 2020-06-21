@@ -25,7 +25,7 @@ def scan(path):
 
 def scandir(path):
     for i in os.listdir(path):
-        if i[0] != '.' and i != 'valgrind-out.txt':
+        if i[0] != '.' and i != 'valgrind-out.txt' and i != 'profile.txt':
             scan(path + '/' + i)
 
 

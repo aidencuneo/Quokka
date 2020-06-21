@@ -48,10 +48,9 @@ void freeStack()
 
 void resetStack()
 {
-    freeStack();
+    for (int i = 0; i < stack_size; i++)
+        objUnref(stack[i]);
 
-    stack_alloc = stack_alloc_size;
-    stack = malloc(stack_alloc * sizeof(Object *));
     stack_size = 0;
 }
 
@@ -176,112 +175,41 @@ void interp_init()
     truePtr = 1;
     falsePtr = 0;
 
-    /*
-    Global Variables
-    */
+    /* Global Variables */
 
+    addGVar("_", makeNullRaw());
     addGVar("true", makeIntRaw(&truePtr, 0));
     addGVar("false", makeIntRaw(&falsePtr, 0));
 
-    /*
-    No argument restraints
-    */
+    /* Argc : any */
 
-    Object * printFunction = emptyObject("bfunction");
-    printFunction = addObjectValue(printFunction, "__call__", &q_function_print);
-    addGVar("print", printFunction);
+    addGVar("print", makeCFunction(&q_function_print, 0, -1));
+    addGVar("println", makeCFunction(&q_function_println, 0, -1));
 
-    Object * printlnFunction = emptyObject("bfunction");
-    printlnFunction = addObjectValue(printlnFunction, "__call__", &q_function_println);
-    addGVar("println", printlnFunction);
+    /* Argc : 0 */
 
-    /*
-    Argc : 0
-    */
+    addGVar("exit", makeCFunction(&q_function_exit, 0, 0));
 
-    Object * exitFunction = emptyObject("bfunction");
-    exitFunction = addObjectValue(exitFunction, "__call__", &q_function_exit);
-    exitFunction = addObjectValue(exitFunction, "__call__argc", &falsePtr);
-    addGVar("exit", exitFunction);
+    /* Argc : 1 */
 
-    /*
-    Argc : 1
-    */
+    addGVar("string", makeCFunction(&q_function_string, 1, 1));
+    addGVar("int", makeCFunction(&q_function_int, 1, 1));
+    addGVar("long", makeCFunction(&q_function_long, 1, 1));
+    addGVar("bool", makeCFunction(&q_function_bool, 1, 1));
+    addGVar("type", makeCFunction(&q_function_type, 1, 1));
+    addGVar("disp", makeCFunction(&q_function_display, 1, 1));
+    addGVar("len", makeCFunction(&q_function_len, 1, 1));
+    addGVar("exec", makeCFunction(&q_function_exec, 1, 1));
+    addGVar("sizeof", makeCFunction(&q_function_sizeof, 1, 1));
+    addGVar("min", makeCFunction(&q_function_min, 1, 1));
+    addGVar("max", makeCFunction(&q_function_max, 1, 1));
+    addGVar("tochar", makeCFunction(&q_function_tochar, 1, 1));
+    addGVar("charcode", makeCFunction(&q_function_charcode, 1, 1));
 
-    Object * stringFunction = emptyObject("bfunction");
-    stringFunction = addObjectValue(stringFunction, "__call__", &q_function_string);
-    stringFunction = addObjectValue(stringFunction, "__call__argc", &oneArgc);
-    addGVar("string", stringFunction);
+    /* The rest */
 
-    Object * intFunction = emptyObject("bfunction");
-    intFunction = addObjectValue(intFunction, "__call__", &q_function_int);
-    intFunction = addObjectValue(intFunction, "__call__argc", &oneArgc);
-    addGVar("int", intFunction);
-
-    Object * longFunction = emptyObject("bfunction");
-    longFunction = addObjectValue(longFunction, "__call__", &q_function_long);
-    longFunction = addObjectValue(longFunction, "__call__argc", &oneArgc);
-    addGVar("long", longFunction);
-
-    Object * boolFunction = emptyObject("bfunction");
-    boolFunction = addObjectValue(boolFunction, "__call__", &q_function_bool);
-    boolFunction = addObjectValue(boolFunction, "__call__argc", &oneArgc);
-    addGVar("bool", boolFunction);
-
-    Object * typeFunction = emptyObject("bfunction");
-    typeFunction = addObjectValue(typeFunction, "__call__", &q_function_type);
-    typeFunction = addObjectValue(typeFunction, "__call__argc", &oneArgc);
-    addGVar("type", typeFunction);
-
-    Object * dispFunction = emptyObject("bfunction");
-    dispFunction = addObjectValue(dispFunction, "__call__", &q_function_display);
-    dispFunction = addObjectValue(dispFunction, "__call__argc", &oneArgc);
-    addGVar("disp", dispFunction);
-
-    Object * lenFunction = emptyObject("bfunction");
-    lenFunction = addObjectValue(lenFunction, "__call__", &q_function_len);
-    lenFunction = addObjectValue(lenFunction, "__call__argc", &oneArgc);
-    addGVar("len", lenFunction);
-
-    Object * execFunction = emptyObject("bfunction");
-    execFunction = addObjectValue(execFunction, "__call__", &q_function_exec);
-    execFunction = addObjectValue(execFunction, "__call__argc", &oneArgc);
-    addGVar("exec", execFunction);
-
-    Object * sizeofFunction = emptyObject("bfunction");
-    sizeofFunction = addObjectValue(sizeofFunction, "__call__", &q_function_sizeof);
-    sizeofFunction = addObjectValue(sizeofFunction, "__call__argc", &oneArgc);
-    addGVar("sizeof", sizeofFunction);
-
-    Object * minFunction = emptyObject("bfunction");
-    minFunction = addObjectValue(minFunction, "__call__", &q_function_min);
-    minFunction = addObjectValue(minFunction, "__call__argc", &oneArgc);
-    addGVar("min", minFunction);
-
-    Object * maxFunction = emptyObject("bfunction");
-    maxFunction = addObjectValue(maxFunction, "__call__", &q_function_max);
-    maxFunction = addObjectValue(maxFunction, "__call__argc", &oneArgc);
-    addGVar("max", maxFunction);
-
-    Object * tocharFunction = emptyObject("bfunction");
-    tocharFunction = addObjectValue(tocharFunction, "__call__", &q_function_tochar);
-    tocharFunction = addObjectValue(tocharFunction, "__call__argc", &oneArgc);
-    addGVar("tochar", tocharFunction);
-
-    Object * charcodeFunction = emptyObject("bfunction");
-    charcodeFunction = addObjectValue(charcodeFunction, "__call__", &q_function_charcode);
-    charcodeFunction = addObjectValue(charcodeFunction, "__call__argc", &oneArgc);
-    addGVar("charcode", charcodeFunction);
-
-    /*
-    The rest
-    */
-
-    Object * inputFunction = emptyObject("bfunction");
-    inputFunction = addObjectValue(inputFunction, "__call__", &q_function_input);
-    inputFunction = addObjectValue(inputFunction, "__call__argmin", &falsePtr);
-    inputFunction = addObjectValue(inputFunction, "__call__argmax", &oneArgc);
-    addGVar("input", inputFunction);
+    addGVar("input", makeCFunction(&q_function_input, 0, 1));
+    addGVar("open", makeCFunction(&q_function_open, 1, 2));
 }
 
 /*
@@ -426,15 +354,15 @@ int objectGetAttrIndex(Object * obj, char * name)
     return -1;
 }
 
-// Free an Object using the __free__ attribute if the Object has one
+// Free an Object using the __free__ attribute, if the Object has one
 void freeObject(Object * obj)
 {
     // Call the obj.__free__ function to properly free it
-    void * freeFunction = objectGetAttr(obj, "__free__");
-    if (freeFunction != NULL)
+    void * func = objOperFree(obj);
+    if (func != NULL)
     {
         Object ** arglist = makeArglist(obj);
-        ((standard_func_def)freeFunction)(1, arglist);
+        ((standard_func_def)func)(1, arglist);
         free(arglist);
     }
 
@@ -786,10 +714,11 @@ Object ** makeDoubleArglist(Object * first, Object * secnd)
 /// Datatypes & Includes
 //
 
-#include "datatypes/function.h"
 #include "datatypes/cfunction.h"
 // #include "datatypes/method.h"
 #include "datatypes/cmethod.h"
+#include "datatypes/file.h"
+#include "datatypes/function.h"
 #include "datatypes/int.h"
 #include "datatypes/long.h"
 #include "datatypes/string.h"
@@ -1173,7 +1102,7 @@ void quokka_interpret_line_tokens(char ** line)
         // Immediately return result and exit the function
         bc_line = bc_line_count;
     }
-    else if (!strcmp(line[0], "GET_ATTR"))
+    else if (!strcmp(line[0], "GET_ATTR") || !strcmp(line[0], "GET_METHOD"))
     {
         Object * obj = popTop();
 
@@ -1210,6 +1139,28 @@ void quokka_interpret_line_tokens(char ** line)
             }
             else if (startswith(line[1], "__"))
                 invalid = 1;
+        }
+        else if (!strcmp(obj->name, "file"))
+        {
+            if (startswith(line[1], "__"))
+                invalid = 1;
+            else
+            {
+                if (!strcmp(line[1], "value"))
+                    pushTop(obj);
+                else if (!strcmp(line[1], "mode"))
+                    pushTop(makeString(objectGetAttr(obj, "mode"), 0));
+                else if (!strcmp(line[1], "opened"))
+                    pushTop(makeInt(objectGetAttr(obj, "opened"), 0));
+                else if (!strcmp(line[1], "exists"))
+                    pushTop(makeCMethod(obj, &exists_file, 0, 0));
+                else if (!strcmp(line[1], "read"))
+                    pushTop(makeCMethod(obj, &read_file, 0, 0));
+                else if (!strcmp(line[1], "close"))
+                    pushTop(makeCMethod(obj, &close_file, 0, 0));
+
+                gotten = 1;
+            }
         }
         else if (!strcmp(obj->name, "function"))
         {
@@ -1344,7 +1295,8 @@ void quokka_interpret_line_tokens(char ** line)
         }
 
         // Unreference the Object that we've retrieved an attribute from
-        objUnref(obj);
+        if (!strcmp(line[0], "GET_ATTR"))
+            objUnref(obj);
     }
     else if (!strcmp(line[0], "REF_TOP"))
     {
@@ -2106,7 +2058,7 @@ void quokka_interpret_line_tokens(char ** line)
 
         Object * func = popTop(); // stack[stack_size - i - 1];
 
-        void * call_attr = objectGetAttr(func, "__call__");
+        void * call_attr = objOperCall(func);
 
         if (call_attr == NULL)
             error("not a callable type", line_num);
@@ -2115,23 +2067,12 @@ void quokka_interpret_line_tokens(char ** line)
         int funcmax = -1;
 
         // Get argc (if it exists)
-        void * argc_attr = objectGetAttr(func, "__call__argc");
+        void * argc_attr = objectGetAttr(func, "argc");
         if (argc_attr != NULL)
         {
-            funcmin = ((int *)argc_attr)[0];
-            funcmax = funcmin;
-        }
-        else
-        {
-            // Get argmin (if it exists)
-            void * argmin_attr = objectGetAttr(func, "__call__argmin");
-            if (argmin_attr != NULL)
-                funcmin = ((int *)argmin_attr)[0];
-
-            // Get argmax (if it exists)
-            void * argmax_attr = objectGetAttr(func, "__call__argmax");
-            if (argmax_attr != NULL)
-                funcmax = ((int *)argmax_attr)[0];
+            int * argc = argc_attr;
+            funcmin = argc[0];
+            funcmax = argc[1];
         }
 
         // Check if argument count given is inside the function's argument count boundaries
@@ -2158,17 +2099,25 @@ void quokka_interpret_line_tokens(char ** line)
             error(err, line_num);
         }
 
-        if (!strcmp(func->name, "bfunction"))
+        if (!strcmp(func->name, "cfunction"))
         {
             pushTop(((standard_func_def)call_attr)(argcount, arglist));
 
             // Unreference all arguments passed into this function
             for (int i = 0; i < argcount; i++)
                 objUnref(arglist[i]);
-
-            // Unreference the function itself
-            objUnref(func);
         }
+        // else if (!strcmp(func->name, "bfunction")) // The bfunction type will soon become deprecated
+        // {
+        //     pushTop(((standard_func_def)call_attr)(argcount, arglist));
+
+        //     // Unreference all arguments passed into this function
+        //     for (int i = 0; i < argcount; i++)
+        //         objUnref(arglist[i]);
+
+        //     // Unreference the function itself
+        //     objUnref(func);
+        // }
         else
         {
             arglist = realloc(arglist, (argcount + 1) * sizeof(Object *));
@@ -2178,16 +2127,24 @@ void quokka_interpret_line_tokens(char ** line)
 
             pushTop(((standard_func_def)call_attr)(argcount, arglist));
 
-            // Unreference all arguments passed into this function (function itself included)
-            for (int i = 0; i < argcount + 1; i++)
+            // Unreference all arguments passed into this function (not including the function itself)
+            for (int i = 1; i < argcount + 1; i++)
                 objUnref(arglist[i]);
         }
+
+        // Set `_` global to this function call's return value
+        objUnref(globals.values[0]);
+        globals.values[0] = stack[stack_size - 1];
+        stack[stack_size - 1]->refs++;
 
         if (!strcmp(line[0], "CALL_METHOD"))
         {
             Object * parent = objectGetAttr(func, "parent");
             objUnref(parent);
         }
+
+        // Unreference the function itself
+        objUnref(func);
 
         free(arglist);
     }
@@ -2272,8 +2229,7 @@ void quokka_interpret_tokens(char *** tokens)
 
             // Comment the next two lines out if there's a segfault
             // if (!can_return)
-            // resetStack();
-            stack_size = 0;
+            resetStack();
 
             bc_line++;
             continue;

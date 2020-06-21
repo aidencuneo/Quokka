@@ -92,9 +92,9 @@ Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax)
 
     self->name = "function";
 
-    // 6 Attributes
-    self->names = malloc(6 * sizeof(char *));
-    self->values = malloc(6 * sizeof(void *));
+    // 5 Attributes
+    self->names = malloc(5 * sizeof(char *));
+    self->values = malloc(5 * sizeof(void *));
     self->value_count = 0;
 
     // Values
@@ -105,9 +105,6 @@ Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax)
     self = objectAddAttr(self, "__call__", &__call___function);
     self = objectAddAttr(self, "__call__argmin", argminptr);
     self = objectAddAttr(self, "__call__argmax", argmaxptr);
-
-    // __free__
-    self = objectAddAttr(self, "__free__", &__free___function);
 
     return self;
 }

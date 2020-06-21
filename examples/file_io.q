@@ -3,7 +3,7 @@
 //
 
 // Open the file for writing
-f = fopen('file.txt', 'w')
+f = open('file.txt', 'w')
 
 // Write to the file
 f + 'Hello there, this is a file.\n'
@@ -17,10 +17,10 @@ f + 'Hello there, this is a file.\n'
 //
 
 // Open the file for reading
-f = fopen('file.txt')
+f = open('file.txt')
 
 // Print the contents of the file
-println(f)
+println(f.read())
 
 // Close the file
 - f
@@ -31,4 +31,4 @@ println(f)
 //
 
 // This will create a new file, then immediately close it
-- fopen('file.txt', 'w')
+- open('file.txt', 'w')

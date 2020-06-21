@@ -123,40 +123,44 @@ struct __Function_Struct__
 void addFunction(Function funcobj);
 
 //
-/// Quokka datatypes
+/// Quokka datatypes (alphabetical order)
 //
+
+// cfunction
+Object * makeCFunction(void * function_pointer, int argmin, int argmax);
+
+// cmethod
+Object * makeCMethod(Object * parent, void * method_pointer, int argmin, int argmax);
+
+// file
+Object * makeFile(char * path, char * mode);
+
+// function
+Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax);
 
 // int
 Object * makeInt(int * value, int is_malloc_ptr);
 Object * makeIntRaw(int * value, int is_malloc_ptr);
 
-// long
-Object * makeLong(long long * value, int is_malloc_ptr);
-
-// string
-Object * makeStringRaw(char * value, int is_malloc_ptr);
-Object * makeString(char * value, int is_malloc_ptr);
-
 // list
 Object * makeList(int length, Object ** value, int flipped);
 
-// null
-Object * makeNull();
-
-// function
-Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax);
-
-// cfunction
-Object * makeCFunction(void * function_pointer, int argmin, int argmax);
+// long
+Object * makeLong(long long * value, int is_malloc_ptr);
 
 // method
 // Not implemented
 
-// cmethod
-Object * makeCMethod(Object * parent, void * method_pointer, int argmin, int argmax);
-
 // module
 Object * makeModule(char * name, int item_count);
+
+// null
+Object * makeNull();
+Object * makeNullRaw();
+
+// string
+Object * makeString(char * value, int is_malloc_ptr);
+Object * makeStringRaw(char * value, int is_malloc_ptr);
 
 //
 /// Operation functions
@@ -169,5 +173,6 @@ void * objOperString(Object * obj);
 void * objOperDisp(Object * obj);
 void * objOperLen(Object * obj);
 void * objOperSizeof(Object * obj);
+void * objOperFree(Object * obj);
 
 #endif

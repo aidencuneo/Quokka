@@ -1,5 +1,5 @@
 // VERSION STUFF
-#define VERSION "0.5.7"
+#define VERSION "0.5.8"
 
 // Defines
 #define LN10 2.3025850929940456840179914546844
@@ -116,6 +116,22 @@ char * strObjAddress(Object * ptr)
     snprintf(res, 20, "0x%" PRIXPTR, intObjAddress(ptr));
 
     return res;
+}
+
+char * neatObjAddress(Object * ptr)
+{
+    char * obj_addr = strObjAddress(ptr);
+
+    char * out = malloc(2 + strlen(ptr->name) + 12 + strlen(obj_addr) + 1 + 1);
+    strcpy(out, "<'");
+    strcat(out, ptr->name);
+    strcat(out, "' Object at ");
+    strcat(out, obj_addr);
+    strcat(out, ">");
+
+    free(obj_addr);
+
+    return out;
 }
 
 int arrsize(char ** arr)
@@ -298,12 +314,13 @@ char * makeLiteralString(char * str)
         (startswith(str, "\"") && endswith(str, "\"")))
         str = strSlice(str, 1, 1);
 
-    char * newstr = malloc(strlen(str) + 1);
-    memset(newstr, 0, strlen(str) + 1);
-    strcpy(newstr, "");
-
+    int current = 0;
     int len = strlen(str);
     int escaped = 0;
+
+    char * newstr = malloc(len + 1);
+    memset(newstr, 0, len + 1);
+    strcpy(newstr, "");
 
     for (int i = 0; i < len; i++)
     {
@@ -323,11 +340,13 @@ char * makeLiteralString(char * str)
             else if (str[i] == '\'') strcat(newstr, "'");
             else if (str[i] == '"')  strcat(newstr, "\"");
             else if (str[i] == '?')  strcat(newstr, "?");
+            current++;
             escaped = 0;
         }
         else
         {
-            newstr[strlen(newstr)] = str[i];
+            newstr[current] = str[i];
+            current++;
             escaped = 0;
         }
     }

@@ -27,6 +27,8 @@ void * objOperNeg(Object * obj)
         return &__neg___int;
     if (!strcmp(obj->name, "long"))
         return &__neg___long;
+    if (!strcmp(obj->name, "file"))
+        return &__neg___file;
 
     void * func = objectGetAttr(obj, "__neg__");
 
@@ -387,6 +389,12 @@ void * objOperGe(Object * obj)
     return func;
 }
 
+// Retrieve __call__ method from an Object (no error raising)
+void * objOperCall(Object * obj)
+{
+    return objectGetAttr(obj, "__call__");
+}
+
 // Retrieve __index__ method from an Object
 void * objOperIndex(Object * obj)
 {
@@ -469,6 +477,8 @@ void * objOperBool(Object * obj)
         return &__bool___string;
     if (!strcmp(obj->name, "list"))
         return &__bool___list;
+    if (!strcmp(obj->name, "file"))
+        return &__bool___file;
 
     return objectGetAttr(obj, "__bool__");
 }
@@ -483,7 +493,6 @@ void * objOperInt(Object * obj)
 
     return objectGetAttr(obj, "__int__");
 }
-
 
 // Retrieve __long__ method from an Object
 void * objOperLong(Object * obj)
@@ -536,8 +545,6 @@ void * objOperLen(Object * obj)
 // Retrieve __sizeof__ method from an Object
 void * objOperSizeof(Object * obj)
 {
-    if (!strcmp(obj->name, "null"))
-        return &__sizeof___null;
     if (!strcmp(obj->name, "int"))
         return &__sizeof___int;
     if (!strcmp(obj->name, "long"))
@@ -548,4 +555,23 @@ void * objOperSizeof(Object * obj)
         return &__sizeof___list;
 
     return objectGetAttr(obj, "__sizeof__");
+}
+
+// Retrieve __free__ method from an Object
+void * objOperFree(Object * obj)
+{
+    if (!strcmp(obj->name, "cfunction"))
+        return &__free___cfunction;
+    if (!strcmp(obj->name, "cmethod"))
+        return &__free___cmethod;
+    if (!strcmp(obj->name, "file"))
+        return &__free___file;
+    if (!strcmp(obj->name, "function"))
+        return &__free___function;
+    if (!strcmp(obj->name, "list"))
+        return &__free___list;
+    if (!strcmp(obj->name, "module"))
+        return &__free___module;
+
+    return objectGetAttr(obj, "__free__");
 }
