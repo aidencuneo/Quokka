@@ -51,6 +51,7 @@ int in_cli_mode = 0;
 //
 
 char * strSlice(char * st, int start, int stop);
+char * strnSlice(char * st, int start, int stop, int len);
 char * strReplace(char * orig, char * rep, char * with);
 void strInsertStart(char ** st, char * newstr);
 void mstrcat(char ** charptr, char * newstr);
@@ -534,6 +535,23 @@ char * strSlice(char * st, int start, int stop)
 {
     int len = strlen(st);
 
+    char * x = malloc(len - start - stop + 1);
+    strcpy(x, "");
+
+    if (!st || !len)
+    {
+        free(x);
+        return st;
+    }
+
+    for (int i = start; i < len - stop; i++)
+        strncat(x, &st[i], 1);
+
+    return x;
+}
+
+char * strnSlice(char * st, int start, int stop, int len)
+{
     char * x = malloc(len - start - stop + 1);
     strcpy(x, "");
 

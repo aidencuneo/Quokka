@@ -140,7 +140,7 @@ Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax)
 
 // int
 Object * makeInt(int * value, int is_malloc_ptr);
-Object * makeIntRaw(int * value, int is_malloc_ptr);
+Object * makeIntRaw(int * value, int is_malloc_ptr, int digits);
 
 // list
 Object * makeList(int length, Object ** value, int flipped);

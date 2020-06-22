@@ -88,7 +88,7 @@ void initIntConsts()
     for (int i = 0; i < int_const_count; i++)
     {
         int * ptr = makeIntPtr(i);
-        int_consts[i] = makeIntRaw(ptr, 1);
+        int_consts[i] = makeIntRaw(ptr, 1, 1);
         int_consts[i]->refs++;
     }
 }
@@ -178,8 +178,8 @@ void interp_init()
     /* Global Variables */
 
     addGVar("_", makeNullRaw());
-    addGVar("true", makeIntRaw(&truePtr, 0));
-    addGVar("false", makeIntRaw(&falsePtr, 0));
+    addGVar("true", makeIntRaw(&truePtr, 0, 1));
+    addGVar("false", makeIntRaw(&falsePtr, 0, 1));
 
     /* Argc : any */
 
@@ -894,8 +894,7 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "LOAD_INT"))
     {
-        int * inf_int = toBaseINTMAX(line[1]);
-        int len = strlen(line[1]);
+        pushConst(qint_from_string(line[1]));
 
         // long long temp = strtoll(line[1], NULL, 10);
         // if (temp > INT_MAX)
@@ -913,12 +912,9 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "LOAD_LONG"))
     {
-        int * inf_int = toBaseINTMAX(line[1]);
-        int len = strlen(line[1]);
-
         // long long * llptr = makeLLPtrFromStr(line[1]);
 
-        // pushConst(makeLong(llptr, 1));
+        pushConst(qint_from_string(line[1]));
     }
     if (!strcmp(line[0], "LOAD_NULL"))
     {
