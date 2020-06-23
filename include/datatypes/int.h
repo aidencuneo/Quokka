@@ -1,4 +1,4 @@
-#define Q_INT_DIGIT_LEN 8
+#define Q_INT_DIGIT_LEN 9
 // 10 ^ Q_INT_DIGIT_LEN - 1 is the qint digit value limit
 
 Object * __add___int(int argc, Object ** argv)
@@ -440,8 +440,6 @@ Object * __disp___int(int argc, Object ** argv)
     if (digits == 1)
         return makeString(intToStr(value[0]), 1);
     
-    println("HERE");
-
     char * intstr = malloc(Q_INT_DIGIT_LEN * digits + 1);
     strcpy(intstr, "");
 
@@ -449,7 +447,6 @@ Object * __disp___int(int argc, Object ** argv)
     {
         char * buffer = malloc(Q_INT_DIGIT_LEN);
         snprintf(buffer, Q_INT_DIGIT_LEN + 1, "%u", value[i]);
-        println(buffer);
 
         strncat(intstr, buffer, Q_INT_DIGIT_LEN + 1);
         free(buffer);
@@ -533,10 +530,10 @@ Object * makeIntRaw(int * value, int is_malloc_ptr, int digits)
 //     printf("\n");
 // }
 
-void isummary(unsigned int * arr, int len)
+void isummary(long * arr, int len)
 {
     for (int i = 0; i < len; i++)
-        printf("%u ", arr[i]);
+        printf("%ld ", arr[i]);
     printf("\n");
 }
 
@@ -562,49 +559,48 @@ void isummary(unsigned int * arr, int len)
 //     return arr;
 // }
 
-int stringToDigitArray(char * str, unsigned int ** outptr)
-{
-    int digitlen = Q_INT_DIGIT_LEN;
+// int stringToDigitArray(char * str, unsigned ** outptr)
+// {
+//     int digitlen = Q_INT_DIGIT_LEN;
 
-    int slen = strlen(str);
-    int len = slen / digitlen + !!(slen % digitlen);
+//     int slen = strlen(str);
+//     int len = slen / digitlen + !!(slen % digitlen);
 
-    unsigned int * digits = malloc(len * sizeof(unsigned int *));
-    int ind = 0; // Start from end of array
+//     unsigned * digits = malloc(len * sizeof(unsigned *));
+//     int ind = 0; // Start from end of array
 
-    int i;
-    for (i = slen - 1; i >= digitlen; i -= digitlen)
-    {
-        digits[ind] =
-            (str[i - 8] - '0') * 1e8 +
-            (str[i - 7] - '0') * 1e7 +
-            (str[i - 6] - '0') * 1e6 +
-            (str[i - 5] - '0') * 1e5 +
-            (str[i - 4] - '0') * 1e4 +
-            (str[i - 3] - '0') * 1e3 +
-            (str[i - 2] - '0') * 1e2 +
-            (str[i - 1] - '0') * 1e1 +
-            (str[i]     - '0');
+//     int i;
+//     for (i = slen - 1; i >= digitlen; i -= digitlen)
+//     {
+//         digits[ind] =
+//             (str[i - 8] - '0') * 1e8 +
+//             (str[i - 7] - '0') * 1e7 +
+//             (str[i - 6] - '0') * 1e6 +
+//             (str[i - 5] - '0') * 1e5 +
+//             (str[i - 4] - '0') * 1e4 +
+//             (str[i - 3] - '0') * 1e3 +
+//             (str[i - 2] - '0') * 1e2 +
+//             (str[i - 1] - '0') * 1e1 +
+//             (str[i]     - '0');
 
-        ind++;
-    }
+//         ind++;
+//     }
 
-    digits[ind] = 0;
-    int base = ipowMath(10, i) / 10;
+//     int rem = i + 1; // Remaining digits
 
-    int rem = i; // Remaining digits
+//     digits[ind] = 0;
+//     int base = ipowMath(10, rem) / 10;
 
-    for (i = 0; i < rem; i++)
-    {
-        println(str[i] - '0');
-        digits[ind] += (str[i] - '0') * base;
-        base /= 10;
-    }
+//     for (i = 0; i < rem; i++)
+//     {
+//         digits[ind] += (str[i] - '0') * base;
+//         base /= 10;
+//     }
 
-    *outptr = digits;
+//     *outptr = digits;
 
-    return len;
-}
+//     return len;
+// }
 
 // int containsDigits(char * arr, int len)
 // {
@@ -634,50 +630,121 @@ int stringToDigitArray(char * str, unsigned int ** outptr)
 //     return out;
 // }
 
-Object * qint_from_string(char * str)
+
+#define SHIFT 16
+#define BASE  ((long)1 << SHIFT)
+#define MASK  (BASE - 1)
+
+// Remove trailing 0's from a qint
+void qint_normalise(Object * obj)
 {
-    println(str);
+    int digit_c = *(int *)obj->values[1];
+    long * digits = obj->values[0];
 
-    unsigned int * digits;
-    int len = stringToDigitArray(str, &digits);
+    int i;
+    for (i = digit_c - 1; i >= 0; i--)
+        if (digits[i])
+            break;
 
-    // unsigned int * out = malloc(len * sizeof(unsigned int));
-    // for (int i = 0; i < len; i++) out[i] = 0;
+    *(int *)obj->values[1] = i + 1;
+}
 
-    // int ind = 0;
-    // int dec_base = 1;
-    // int BASE = 1e9; // 1,000,000,000 (1 billion)
-    //  BASE 1e9 means every digit will be of length 8
-    // int carry = 0;
+Object * qint_muladd1(Object * obj, int n, int extra)
+{
+    int digit_c = *(int *)objectGetAttr(obj, "digits"); // Old digit count
 
-    isummary(digits, len);
+    Object * newobj = makeIntRaw(obj->values[0], 1, digit_c + 1);
 
-    // while (containsDigits(str, len))
-    // {
-    //     char * last = strnSlice(str, len - 2, 0, len);
-    //     unsigned int exp = expandDigits(last, len);
+    long * digits = newobj->values[0];
 
-    //     println((int)exp % BASE);
-    //     out[ind] = exp % BASE;
-    //     ind++;
+    printf("BEFORE : ");
+    isummary(digits, digit_c + 1);
 
-    //     free(last);
+    int carry = extra;
 
-    //     arrayDivide(str, 10, len);
-    //     arrayDivide(str, 10, len);
+    if (newobj == NULL)
+        return NULL;
 
-    //     summary(str, len);
-    // }
+    int i;
+    for (i = 0; i < digit_c; ++i)
+    {
+        carry += digits[i] * n;
+        digits[i] = (carry & MASK);
+        carry >>= SHIFT;
+    }
 
-    // unsigned long long total = 0;
-    // unsigned long long base = 1;
-    // for (int i = 0; i < len; i++)
-    // {
-    //     total += digits[i] * base;
-    //     base *= BASE;
-    // }
+    digits[i] = carry;
 
-    // printf("%llu\n", total);
+    printf("AFTER  : ");
+    isummary(digits, digit_c + 1);
 
-    return makeIntRaw(digits, 1, len);
+    qint_normalise(newobj);
+    return newobj;
+}
+
+Object * qint_from_string(char * str, int base)
+{
+    printf("%s (BASE %d)\n", str, base);
+
+    int len = strlen(str);
+
+    char * start;
+    Object * obj;
+
+    if ((base != 0 && base < 2) || base > 36)
+        error("invalid base for long literal", line_num);
+
+    if (!base)
+    {
+        if (str[0] != '0')
+            base = 10;
+        else if (str[1] == 'x' || str[1] == 'X')
+            base = 16;
+        else
+            base = 8;
+    }
+    // if (base == 16 && str[0] == '0' && (str[1] == 'x' || str[1] == 'X'))
+    //     str += 2;
+
+    obj = makeIntRaw(malloc(sizeof(long)), 1, 0);
+
+    // start = str;
+    int i = 0;
+    for ( ; i < len; i++) {
+        int k = -1;
+
+        if (str[i] <= '9')
+            k = str[i] - '0';
+        else if (str[i] >= 'a')
+            k = str[i] - 'a' + 10;
+        else if (str[i] >= 'A')
+            k = str[i] - 'A' + 10;
+        if (k < 0 || k >= base)
+            break;
+
+        obj = qint_muladd1(obj, base, k);
+    }
+
+    if (!i) // str == start
+    {
+        objDeref(obj);
+        error("no digits in long int constant", line_num);
+        return NULL;
+    }
+
+    int digits = *(int *)obj->values[1];
+    isummary(obj->values[0], digits);
+    printf("(BASE %ld)", BASE);
+
+    // if (sign < 0 && z != NULL && z->ob_size != 0)
+    //     z->ob_size = -(z->ob_size);
+
+    return obj;
+
+    // unsigned * digits;
+    // int len = stringToDigitArray(str, &digits);
+
+    // return makeIntRaw(digits, 1, len);
+}
+
 }

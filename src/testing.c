@@ -2,8 +2,6 @@
 
 int main()
 {
-    for (int i = 0; i < 10000; i++)
-        printf("%d\n", i);
-
+    printf("Size of an int on this machine : %ld (bytes)\n", sizeof(int));
     return 0;
 }

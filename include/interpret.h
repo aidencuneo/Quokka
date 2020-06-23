@@ -894,7 +894,7 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "LOAD_INT"))
     {
-        pushConst(qint_from_string(line[1]));
+        pushConst(qint_from_string(line[1], 10));
 
         // long long temp = strtoll(line[1], NULL, 10);
         // if (temp > INT_MAX)
@@ -914,7 +914,7 @@ void quokka_interpret_line_tokens(char ** line)
     {
         // long long * llptr = makeLLPtrFromStr(line[1]);
 
-        pushConst(qint_from_string(line[1]));
+        pushConst(qint_from_string(line[1], 10));
     }
     if (!strcmp(line[0], "LOAD_NULL"))
     {
