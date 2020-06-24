@@ -1,6 +1,3 @@
-#define Q_INT_DIGIT_LEN 9
-// 10 ^ Q_INT_DIGIT_LEN - 1 is the qint digit value limit
-
 Object * __add___int(int argc, Object ** argv)
 {
     if (!strcmp(argv[1]->name, "int"))
@@ -427,9 +424,20 @@ Object * __pos___int(int argc, Object ** argv)
 
 Object * __neg___int(int argc, Object ** argv)
 {
-    int * first = objectGetAttr(argv[0], "value");
+    int * value = argv[0]->values[0];
+    int digits = *(int *)argv[0]->values[1];
 
-    return makeInt(makeIntPtr(-first[0]), 1);
+    int * newval = malloc(digits * sizeof(long));
+
+    for (int i = 0; i < digits; i++)
+    {
+        println(value[i]);
+        newval[i] = -value[i];
+    }
+
+    isummary(newval, digits);
+
+    return makeInt(newval, digits);
 }
 
 Object * __disp___int(int argc, Object ** argv)
@@ -439,20 +447,23 @@ Object * __disp___int(int argc, Object ** argv)
 
     if (digits == 1)
         return makeString(intToStr(value[0]), 1);
-    
-    char * intstr = malloc(Q_INT_DIGIT_LEN * digits + 1);
-    strcpy(intstr, "");
 
-    for (int i = digits - 1; i >= 0; i--)
-    {
-        char * buffer = malloc(Q_INT_DIGIT_LEN);
-        snprintf(buffer, Q_INT_DIGIT_LEN + 1, "%u", value[i]);
+    char * s = string_from_qint(argv[0], 10);
+    return makeString(s, 1);
 
-        strncat(intstr, buffer, Q_INT_DIGIT_LEN + 1);
-        free(buffer);
-    }
+    // char * intstr = malloc(Q_INT_DIGIT_LEN * digits + 1);
+    // strcpy(intstr, "");
 
-    return makeString(intstr, 1);
+    // for (int i = digits - 1; i >= 0; i--)
+    // {
+    //     char * buffer = malloc(Q_INT_DIGIT_LEN);
+    //     snprintf(buffer, Q_INT_DIGIT_LEN + 1, "%u", value[i]);
+
+    //     strncat(intstr, buffer, Q_INT_DIGIT_LEN + 1);
+    //     free(buffer);
+    // }
+
+    // return makeString(intstr, 1);
 }
 
 Object * __bool___int(int argc, Object ** argv)
@@ -473,52 +484,43 @@ Object * __long___int(int argc, Object ** argv)
 
 Object * __free___int(int argc, Object ** argv)
 {
-    int * thisvalue = objectGetAttr(argv[0], "value");
+    int * thisvalue = argv[0]->values[0];
+    int * digits = argv[0]->values[1];
+
     free(thisvalue);
+    free(digits);
 
     // return makeNull();
 }
 
-Object * makeInt(int * value, int is_malloc_ptr)
+Object * makeInt(int * value, int digits)
 {
     // If 0 <= value < int_const_count, return the constant for this number
-    if (value[0] >= 0 && value[0] < int_const_count)
+    if (value[0] >= 0 && value[0] < int_const_count && digits == 1)
     {
         int ind = value[0];
-        if (is_malloc_ptr)
-            free(value);
+        free(value);
         return int_consts[ind];
     }
 
-    return makeIntRaw(value, is_malloc_ptr, 1);
+    return makeIntRaw(value, digits);
 }
 
-Object * makeIntRaw(int * value, int is_malloc_ptr, int digits)
+Object * makeIntRaw(int * value, int digits)
 {
     Object * self = objectPointer();
 
     self->name = "int";
 
-    // 2 to 3 Attributes
-    if (is_malloc_ptr)
-    {
-        self->names = malloc(3 * sizeof(char *));
-        self->values = malloc(3 * sizeof(void *));
-    }
-    else
-    {
-        self->names = malloc(2 * sizeof(char *));
-        self->values = malloc(2 * sizeof(void *));
-    }
+    // 3 Attributes
+    self->names = malloc(3 * sizeof(char *));
+    self->values = malloc(3 * sizeof(void *));
 
     self = objectAddAttr(self, "value", value);
     self = objectAddAttr(self, "digits", makeIntPtr(digits));
 
-    if (is_malloc_ptr)
-    {
-        // __free__
-        self = objectAddAttr(self, "__free__", &__free___int);
-    }
+    // __free__
+    self = objectAddAttr(self, "__free__", &__free___int);
 
     return self;
 }
@@ -631,8 +633,8 @@ void isummary(long * arr, int len)
 // }
 
 
-#define SHIFT 16
-#define BASE  ((long)1 << SHIFT)
+#define SHIFT 31
+#define BASE  ((long long)1 << SHIFT)
 #define MASK  (BASE - 1)
 
 // Remove trailing 0's from a qint
@@ -651,18 +653,19 @@ void qint_normalise(Object * obj)
 
 Object * qint_muladd1(Object * obj, int n, int extra)
 {
-    int digit_c = *(int *)objectGetAttr(obj, "digits"); // Old digit count
+    int digit_c = *(int *)obj->values[1]; // Old digit count
 
-    Object * newobj = makeIntRaw(obj->values[0], 1, digit_c + 1);
+    *(int *)obj->values[1] = digit_c + 1;
+    // Object * newobj = makeIntRaw(obj->values[0], 0, digit_c + 1);
 
-    long * digits = newobj->values[0];
+    long * digits = obj->values[0];
 
     printf("BEFORE : ");
     isummary(digits, digit_c + 1);
 
-    int carry = extra;
+    long carry = extra;
 
-    if (newobj == NULL)
+    if (obj == NULL)
         return NULL;
 
     int i;
@@ -675,11 +678,12 @@ Object * qint_muladd1(Object * obj, int n, int extra)
 
     digits[i] = carry;
 
-    printf("AFTER  : ");
-    isummary(digits, digit_c + 1);
+    qint_normalise(obj);
 
-    qint_normalise(newobj);
-    return newobj;
+    printf("AFTER  : ");
+    isummary(obj->values[0], *(int *)obj->values[1]);
+
+    return obj;
 }
 
 Object * qint_from_string(char * str, int base)
@@ -706,7 +710,7 @@ Object * qint_from_string(char * str, int base)
     // if (base == 16 && str[0] == '0' && (str[1] == 'x' || str[1] == 'X'))
     //     str += 2;
 
-    obj = makeIntRaw(malloc(sizeof(long)), 1, 0);
+    obj = makeIntRaw(calloc(len / 4 + 1, sizeof(long)), 0);
 
     // start = str;
     int i = 0;
@@ -722,19 +726,21 @@ Object * qint_from_string(char * str, int base)
         if (k < 0 || k >= base)
             break;
 
-        obj = qint_muladd1(obj, base, k);
+        qint_muladd1(obj, base, k);
+        // objUnref(obj);
+        // obj = newobj;
     }
 
     if (!i) // str == start
     {
         objDeref(obj);
-        error("no digits in long int constant", line_num);
+        error("no digits in integer", line_num);
         return NULL;
     }
 
-    int digits = *(int *)obj->values[1];
-    isummary(obj->values[0], digits);
-    printf("(BASE %ld)", BASE);
+    // int digit_count = *(int *)obj->values[1];
+    // isummary(obj->values[0], digit_count);
+    // printf("(BASE %ld)\n", BASE);
 
     // if (sign < 0 && z != NULL && z->ob_size != 0)
     //     z->ob_size = -(z->ob_size);
@@ -747,4 +753,189 @@ Object * qint_from_string(char * str, int base)
     // return makeIntRaw(digits, 1, len);
 }
 
+Object * qint_divrem1(Object * obj, int n, int * remptr)
+{
+    // Object * newobj;
+
+	int size = *(int *)obj->values[1];
+	long rem = 0;
+	
+    if (!(n > 0 && n <= MASK))
+        error("nooo", line_num);
+
+	// assert(n > 0 && n <= MASK);
+
+	if (obj == NULL)
+		return NULL;
+
+    int i;
+	for (i = size; --i >= 0; ) {
+		rem = (rem << SHIFT) + ((long *)obj->values[0])[i];
+		((long *)obj->values[0])[i] = rem / n;
+		rem %= n;
+	}
+
+	*remptr = rem;
+
+    qint_normalise(obj);
+	return obj;
+}
+
+char * string_from_qint(Object * obj, int base)
+{
+    register Object * a = obj;
+    char * str;
+
+    long * digits = a->values[0];
+    int size_a = *(int *)a->values[1];
+
+    int i;
+    char * p;
+    int bits;
+
+    // char sign = '\0';
+
+    if (a == NULL) // if (a == NULL || !PyLong_Check(a))
+        // PyErr_BadInternalCall();
+        return NULL;
+
+    if (base < 2 || base > 36)
+        error("that's a nono", line_num);
+
+    // assert(base >= 2 && base <= 36);
+
+    /* Compute a rough upper bound for the length of the string */
+    i = base;
+    bits = 0;
+    while (i > 1) {
+        ++bits;
+        i >>= 1;
+    }
+
+    i = 6 + (size_a*SHIFT + bits-1) / bits;
+
+    str = malloc(i + 1);
+    // str = (PyStringObject *) PyString_FromStringAndSize((char *)0, i);
+
+    p = str + i;
+    *p = '\0';
+
+    // if (a->ob_size < 0)
+    //     sign = '-';
+
+    if (a->values[1] == 0)
+        *--p = '0';
+    else if ((base & (base - 1)) == 0)
+    {
+        /* JRH: special case for power-of-2 bases */
+        long temp = digits[0];
+        int bitsleft = SHIFT;
+        int rem;
+        int last = *(int *)a->values[1];
+        int basebits = 1;
+        i = base;
+        while ((i >>= 1) > 1) ++basebits;
+        
+        i = 0;
+        for (;;)
+        {
+            while (bitsleft >= basebits)
+            {
+                if ((temp == 0) && (i >= last - 1))
+                    break;
+
+                rem = temp & (base - 1);
+
+                if (rem < 10)
+                    rem += '0';
+                else
+                    rem += 'A' - 10;
+
+                // assert(p > PyString_AS_STRING(str));
+
+                *--p = (char) rem;
+                bitsleft -= basebits;
+                temp >>= basebits;
+            }
+            if (++i >= last)
+            {
+                if (temp == 0) break;
+                bitsleft = 99;
+                /* loop again to pick up final digits */
+            }
+            else
+            {
+                temp = (digits[i] << bitsleft) | temp;
+                bitsleft += SHIFT;
+            }
+        }
+    }
+    else {
+        // Py_INCREF(a);
+
+        while (*(int *)a->values[1] != 0)
+        {
+            int rem;
+
+            qint_divrem1(a, base, &rem);
+            // Object * temp = qint_divrem1(a, base, &rem);
+
+            // if (temp == NULL)
+            // {
+            //     // Py_DECREF(a);
+            //     // Py_DECREF(str);
+            //     return NULL;
+            // }
+
+            if (rem < 10)
+                rem += '0';
+            else
+                rem += 'A' - 10;
+
+            if (!(p > str))
+                error("integer-to-string error", line_num);
+
+            // assert(p > PyString_AS_STRING(str));
+
+            *--p = (char) rem;
+            // objUnref(a);
+            // a = temp;
+        }
+
+        // Py_DECREF(a);
+    }
+
+    if (base == 8) {
+        if (size_a != 0)
+            *--p = '0';
+    }
+    else if (base == 16) {
+        *--p = 'x';
+        *--p = '0';
+    }
+    else if (base != 10) {
+        *--p = '#';
+        *--p = '0' + base%10;
+        if (base > 10)
+            *--p = '0' + base/10;
+    }
+
+    // if (sign)
+    // 	*--p = sign;
+
+    if (p != str)
+    {
+        char * q = str;
+        // char * q = PyString_AS_STRING(str);
+
+        if (!(p > q))
+            error("integer-to-string error", line_num);
+
+        while ((*q++ = *p++) != '\0');
+        q--;
+
+        // _PyString_Resize((PyObject **)&str,
+        //             (int) (q - PyString_AS_STRING(str)));
+    }
+    return str;
 }

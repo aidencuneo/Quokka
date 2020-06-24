@@ -1,7 +1,9 @@
 // INT   MAX 4294967295
 // LLONG MAX 18446744073709551615
 
-println(117322323984734890)
+i = 4294967296
+// println(i++)
+println(i)
 // println()
 
 // 41745A6

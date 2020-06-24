@@ -139,8 +139,10 @@ Object * makeFile(char * path, char * mode);
 Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax);
 
 // int
-Object * makeInt(int * value, int is_malloc_ptr);
-Object * makeIntRaw(int * value, int is_malloc_ptr, int digits);
+Object * makeInt(int * value, int digits);
+Object * makeIntRaw(int * value, int digits);
+
+char * string_from_qint(Object * obj, int base);
 
 // list
 Object * makeList(int length, Object ** value, int flipped);

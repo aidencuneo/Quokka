@@ -88,7 +88,7 @@ void initIntConsts()
     for (int i = 0; i < int_const_count; i++)
     {
         int * ptr = makeIntPtr(i);
-        int_consts[i] = makeIntRaw(ptr, 1, 1);
+        int_consts[i] = makeIntRaw(ptr, 1);
         int_consts[i]->refs++;
     }
 }
@@ -178,8 +178,8 @@ void interp_init()
     /* Global Variables */
 
     addGVar("_", makeNullRaw());
-    addGVar("true", makeIntRaw(&truePtr, 0, 1));
-    addGVar("false", makeIntRaw(&falsePtr, 0, 1));
+    addGVar("false", int_consts[0]);
+    addGVar("true", int_consts[1]);
 
     /* Argc : any */
 
@@ -1319,7 +1319,7 @@ void quokka_interpret_line_tokens(char ** line)
     else if (!strcmp(line[0], "INCREMENT"))
     {
         Object * first = getVar(line[1]);
-        Object * secnd = makeInt(&truePtr, 0);
+        Object * secnd = int_consts[1]; // int(1) in Quokka
 
         void * func = objectGetAttr(first, "__inadd__");
         if (func != NULL)
@@ -1348,7 +1348,7 @@ void quokka_interpret_line_tokens(char ** line)
     else if (!strcmp(line[0], "DECREMENT"))
     {
         Object * first = popTop();
-        Object * secnd = makeInt(&truePtr, 0);
+        Object * secnd = int_consts[1]; // int(1) in Quokka
 
         void * func = objectGetAttr(first, "__sub__");
 
@@ -1688,9 +1688,9 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Check if both Objects are IDENTICAL
         if (firstaddr == secndaddr)
-            pushTop(makeInt(&truePtr, 0));
+            pushTop(int_consts[1]);
         else
-            pushTop(makeInt(&falsePtr, 0));
+            pushTop(int_consts[0]);
 
         objUnref(first);
         objUnref(secnd);
@@ -1714,14 +1714,9 @@ void quokka_interpret_line_tokens(char ** line)
         Object * conditionbool = q_function_bool(1, arglist);
 
         // Flip it, then push it to stack
-        int * intptr;
+        int i = !(*(int *)objectGetAttr(conditionbool, "value"));
 
-        if (!((int *)objectGetAttr(conditionbool, "value"))[0])
-            intptr = &truePtr;
-        else
-            intptr = &falsePtr;
-
-        pushTop(makeInt(intptr, 0));
+        pushTop(int_consts[i]);
 
         objUnref(first);
         objUnref(secnd);
@@ -1810,9 +1805,9 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Perform Boolean NOT
         if (!firstbool)
-            pushTop(makeInt(&truePtr, 0));
+            pushTop(int_consts[1]);
         else
-            pushTop(makeInt(&falsePtr, 0));
+            pushTop(int_consts[0]);
 
         objUnref(first);
     }
@@ -1846,9 +1841,9 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Perform Inclusive OR
         if (firstbool || secndbool)
-            pushTop(makeInt(&truePtr, 0));
+            pushTop(int_consts[1]);
         else
-            pushTop(makeInt(&falsePtr, 0));
+            pushTop(int_consts[0]);
 
         objUnref(first);
         objUnref(secnd);
@@ -1883,9 +1878,9 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Perform Exclusive OR
         if (!!firstbool != !!secndbool)
-            pushTop(makeInt(&truePtr, 0));
+            pushTop(int_consts[1]);
         else
-            pushTop(makeInt(&falsePtr, 0));
+            pushTop(int_consts[0]);
 
         objUnref(first);
         objUnref(secnd);
@@ -1920,9 +1915,9 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Perform Boolean AND
         if (firstbool && secndbool)
-            pushTop(makeInt(&truePtr, 0));
+            pushTop(int_consts[1]);
         else
-            pushTop(makeInt(&falsePtr, 0));
+            pushTop(int_consts[0]);
 
         objUnref(first);
         objUnref(secnd);
