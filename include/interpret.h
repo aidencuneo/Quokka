@@ -88,7 +88,7 @@ void initIntConsts()
     for (int i = 0; i < int_const_count; i++)
     {
         int * ptr = makeIntPtr(i);
-        int_consts[i] = makeIntRaw(ptr, 1);
+        int_consts[i] = makeIntRaw(ptr, 1, 1);
         int_consts[i]->refs++;
     }
 }
@@ -1153,7 +1153,7 @@ void quokka_interpret_line_tokens(char ** line)
                 else if (!strcmp(line[1], "mode"))
                     pushTop(makeString(objectGetAttr(obj, "mode"), 0));
                 else if (!strcmp(line[1], "opened"))
-                    pushTop(makeInt(objectGetAttr(obj, "opened"), 0));
+                    pushTop(makeInt(objectGetAttr(obj, "opened"), 0, 1));
                 else if (!strcmp(line[1], "exists"))
                     pushTop(makeCMethod(obj, &exists_file, 0, 0));
                 else if (!strcmp(line[1], "read"))
@@ -1211,7 +1211,7 @@ void quokka_interpret_line_tokens(char ** line)
             else if (!strcmp(line[1], "length"))
             {
                 int * lstlen = objectGetAttr(obj, "length");
-                pushTop(makeInt(lstlen, 0));
+                pushTop(makeInt(lstlen, 0, 1));
 
                 gotten = 1;
             }

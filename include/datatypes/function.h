@@ -19,7 +19,7 @@ Object * __call___function(int argc, Object ** argv)
     // Arguments
     int * intptr = makeIntPtr(argc);
 
-    addVar("argc", makeInt(intptr, 1));
+    addVar("argc", makeInt(intptr, 1, 1));
     int argc_var = locals.count - 1;
 
     Object ** arglist = malloc(argc * sizeof(Object *));

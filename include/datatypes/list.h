@@ -174,7 +174,7 @@ Object * __sizeof___list(int argc, Object ** argv)
 
     int * size = makeIntPtr(sizeof(argv[0]) + (sizeof(thisvalue[0]) * length[0]));
 
-    return makeInt(size, 1);
+    return makeInt(size, 1, 1);
 }
 
 Object * __copy___list(int argc, Object ** argv)
@@ -189,7 +189,7 @@ Object * __len___list(int argc, Object ** argv)
 {
     int * length = objectGetAttr(argv[0], "length");
 
-    return makeInt(makeIntPtr(length[0]), 1);
+    return makeInt(makeIntPtr(length[0]), 1, 1);
 }
 
 Object * __bool___list(int argc, Object ** argv)
@@ -197,8 +197,8 @@ Object * __bool___list(int argc, Object ** argv)
     int length = ((int *)objectGetAttr(argv[0], "length"))[0];
 
     if (length)
-        return makeInt(&truePtr, 0);
-    return makeInt(&falsePtr, 0);
+        return makeInt(&truePtr, 0, 1);
+    return makeInt(&falsePtr, 0, 1);
 }
 
 Object * __disp___list(int argc, Object ** argv)

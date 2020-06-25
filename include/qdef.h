@@ -139,9 +139,11 @@ Object * makeFile(char * path, char * mode);
 Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax);
 
 // int
-Object * makeInt(int * value, int digits);
-Object * makeIntRaw(int * value, int digits);
+Object * makeInt(int * value, int digits, int mult);
+Object * makeIntRaw(int * value, int digits, int mult);
 
+Object * qint_addition(Object * a, Object * b);
+Object * qint_subtraction(Object * a, Object * b);
 char * string_from_qint(Object * obj, int base);
 
 // list

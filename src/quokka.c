@@ -48,6 +48,9 @@ int main(int argc, char ** argv)
     signal(30, sigpwrHandler);
     signal(31, sigsysHandler);
 
+    if (sizeof(int) == 2)
+        SHIFT = 16;
+
     char ** args = malloc(argc * sizeof(char *));
     int newargc = 0;
 

@@ -15,7 +15,7 @@ Object * __neg___file(int argc, Object ** argv)
 
 Object * __bool___file(int argc, Object ** argv)
 {
-    return makeInt(objectGetAttr(argv[0], "opened"), 0);
+    return makeInt(objectGetAttr(argv[0], "opened"), 0, 1);
 }
 
 Object * __free___file(int argc, Object ** argv)
@@ -35,7 +35,7 @@ Object * __free___file(int argc, Object ** argv)
 
 Object * exists_file(int argc, Object ** argv)
 {
-    return makeInt(objectGetAttr(argv[0], "opened"), 0);
+    return makeInt(objectGetAttr(argv[0], "opened"), 0, 1);
 }
 
 Object * read_file(int argc, Object ** argv)
@@ -105,7 +105,7 @@ Object * write_file(int argc, Object ** argv)
     int length = ftell(f);
     fseek(f, 0, SEEK_SET);
 
-    return makeInt(makeIntPtr(length), 1);
+    return makeInt(makeIntPtr(length), 1, 1);
 }
 
 Object * close_file(int argc, Object ** argv)

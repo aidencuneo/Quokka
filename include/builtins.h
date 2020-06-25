@@ -339,7 +339,7 @@ Object * q_function_sizeof(int argc, Object ** argv)
         return ((standard_func_def)func)(1, argv);
 
     int * size = makeIntPtr(sizeof(argv[0]));
-    return makeInt(size, 1);
+    return makeInt(size, 1, 1);
 }
 
 Object * q_function_exec(int argc, Object ** argv)
@@ -416,7 +416,7 @@ Object * q_function_min(int argc, Object ** argv)
 
     int * intptr = makeIntPtr(smallest);
 
-    return makeInt(intptr, 1);
+    return makeInt(intptr, 1, 1);
 }
 
 Object * q_function_max(int argc, Object ** argv)
@@ -454,7 +454,7 @@ Object * q_function_max(int argc, Object ** argv)
 
     int * intptr = makeIntPtr(largest);
 
-    return makeInt(intptr, 1);
+    return makeInt(intptr, 1, 1);
 }
 
 Object * q_function_tochar(int argc, Object ** argv)
@@ -480,7 +480,7 @@ Object * q_function_charcode(int argc, Object ** argv)
 
     int * charptr = makeIntPtr(val[0]);
 
-    return makeInt(charptr, 1);
+    return makeInt(charptr, 1, 1);
 }
 
 Object * q_function_input(int argc, Object ** argv)

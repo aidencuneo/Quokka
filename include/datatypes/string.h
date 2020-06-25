@@ -110,8 +110,8 @@ Object * __eq___string(int argc, Object ** argv)
     char * secnd = objectGetAttr(argv[1], "value");
 
     if (!strcmp(first, secnd))
-        return makeInt(&truePtr, 0);
-    return makeInt(&falsePtr, 0);
+        return makeInt(&truePtr, 0, 1);
+    return makeInt(&falsePtr, 0, 1);
 }
 
 Object * __index___string(int argc, Object ** argv)
@@ -163,7 +163,7 @@ Object * __sizeof___string(int argc, Object ** argv)
 
     int * size = makeIntPtr(sizeof(argv[0]) + strlen(thisvalue));
 
-    return makeInt(size, 1);
+    return makeInt(size, 1, 1);
 }
 
 Object * __copy___string(int argc, Object ** argv)
@@ -179,7 +179,7 @@ Object * __len___string(int argc, Object ** argv)
 
     int * size = makeIntPtr(len);
 
-    return makeInt(size, 1);
+    return makeInt(size, 1, 1);
 }
 
 Object * __disp___string(int argc, Object ** argv)
@@ -195,8 +195,8 @@ Object * __bool___string(int argc, Object ** argv)
     char * thisvalue = ((char *)objectGetAttr(argv[0], "value"));
 
     if (strlen(thisvalue))
-        return makeInt(&truePtr, 0);
-    return makeInt(&falsePtr, 0);
+        return makeInt(&truePtr, 0, 1);
+    return makeInt(&falsePtr, 0, 1);
 }
 
 Object * __int___string(int argc, Object ** argv)
@@ -205,7 +205,7 @@ Object * __int___string(int argc, Object ** argv)
 
     int * toint = makeIntPtr(strtol(thisvalue, NULL, 10));
 
-    return makeInt(toint, 1);
+    return makeInt(toint, 1, 1);
 }
 
 Object * __long___string(int argc, Object ** argv)
@@ -301,9 +301,9 @@ Object * isupper_string(int argc, Object ** argv)
 
     for (int i = 0; i < len; i++)
         if (islower(thisvalue[i])) // If anything is lower, return false
-            return makeInt(&falsePtr, 0);
+            return makeInt(&falsePtr, 0, 1);
 
-    return makeInt(&truePtr, 0);
+    return makeInt(&truePtr, 0, 1);
 }
 
 Object * islower_string(int argc, Object ** argv)
@@ -313,9 +313,9 @@ Object * islower_string(int argc, Object ** argv)
 
     for (int i = 0; i < len; i++)
         if (isupper(thisvalue[i])) // If anything is upper, return false
-            return makeInt(&falsePtr, 0);
+            return makeInt(&falsePtr, 0, 1);
 
-    return makeInt(&truePtr, 0);
+    return makeInt(&truePtr, 0, 1);
 }
 
 Object * makeString(char * value, int is_malloc_ptr)
