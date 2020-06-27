@@ -11,7 +11,7 @@ int stack_alloc;
 int stack_alloc_size = 10;
 
 Object ** int_consts;
-int int_const_count = 8192; // 16384 // 65536
+int int_const_count = 256; // 16384 // 65536
 int int_consts_init = 0;
 
 Object ** constants;
@@ -686,6 +686,14 @@ void delLVarIndex(int index)
     locals.count--;
 }
 
+// Retrieve and reference an int const
+// (no protection against out of bounds indexes)
+Object * getIntConst(int ind)
+{
+    int_consts[ind]->refs++;
+    return int_consts[ind];
+}
+
 Object ** makeArglist(Object * obj)
 {
     Object ** arglist = malloc(sizeof(Object *));
@@ -1321,54 +1329,55 @@ void quokka_interpret_line_tokens(char ** line)
         Object * first = getVar(line[1]);
         Object * secnd = int_consts[1]; // int(1) in Quokka
 
+        Object ** arglist;
+
         void * func = objectGetAttr(first, "__inadd__");
         if (func != NULL)
         {
-            Object ** arglist = makeDoubleArglist(first, secnd);
-
+            arglist = makeDoubleArglist(first, secnd);
             ((standard_func_def)func)(2, arglist);
 
             // Don't unreference the constant for 1
-
-            free(arglist);
         }
         else
         {
             func = objOperAdd(first);
-
-            Object ** arglist = makeDoubleArglist(first, secnd);
+            arglist = makeDoubleArglist(first, secnd);
 
             addVar(line[1], ((standard_func_def)func)(2, arglist));
 
             // Don't unreference the constant for 1
-
-            free(arglist);
         }
+
+        objUnref(first);
+        free(arglist);
     }
     else if (!strcmp(line[0], "DECREMENT"))
     {
         Object * first = popTop();
         Object * secnd = int_consts[1]; // int(1) in Quokka
 
-        void * func = objectGetAttr(first, "__sub__");
+        Object ** arglist;
 
-        if (func == NULL)
+        void * func = objectGetAttr(first, "__insub__");
+        if (func != NULL)
         {
-            char * err = malloc(6 + strlen(first->name) + 40 + 1);
-            strcpy(err, "type '");
-            strcat(err, first->name);
-            strcat(err, "' does not have a method for subtraction");
-            error(err, line_num);
+            arglist = makeDoubleArglist(first, secnd);
+            ((standard_func_def)func)(2, arglist);
+
+            // Don't unreference the constant for 1
+        }
+        else
+        {
+            func = objOperSub(first);
+            arglist = makeDoubleArglist(first, secnd);
+
+            addVar(line[1], ((standard_func_def)func)(2, arglist));
+
+            // Don't unreference the constant for 1
         }
 
-        Object ** arglist = makeDoubleArglist(first, secnd);
-
-        pushTop(((standard_func_def)func)(2, arglist));
-        addVar(line[1], stack[stack_size - 1]);
-
         objUnref(first);
-        // Don't unreference the constant for 1
-
         free(arglist);
     }
     else if (!strcmp(line[0], "UNARY_ADD"))
@@ -1998,10 +2007,12 @@ void quokka_interpret_line_tokens(char ** line)
             Object * conditionobj = q_function_bool(1, arglist);
             free(arglist);
 
-            condition = ((int *)objectGetAttr(conditionobj, "value"))[0];
+            condition = *(int *)conditionobj->values[0];
 
             objUnref(conditionobj);
         }
+
+        objUnref(obj);
 
         // If false, don't jump
         if (!condition)
@@ -2027,10 +2038,12 @@ void quokka_interpret_line_tokens(char ** line)
             Object * conditionobj = q_function_bool(1, arglist);
             free(arglist);
 
-            condition = ((int *)objectGetAttr(conditionobj, "value"))[0];
+            condition = *(int *)conditionobj->values[0];
 
             objUnref(conditionobj);
         }
+
+        objUnref(obj);
 
         // If true, don't jump
         if (condition)

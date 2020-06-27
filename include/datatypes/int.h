@@ -473,9 +473,9 @@ Object * __bool___int(int argc, Object ** argv)
 
     for (int i = 0; i < digits; i++)
         if (value[i])
-            return int_consts[1];
+            return getIntConst(1);
 
-    return int_consts[0];
+    return getIntConst(0);
 }
 
 Object * __long___int(int argc, Object ** argv)
@@ -487,11 +487,11 @@ Object * __long___int(int argc, Object ** argv)
 
 Object * __free___int(int argc, Object ** argv)
 {
-    int * thisvalue = argv[0]->values[0];
-    int * digits = argv[0]->values[1];
+    unsigned * value = argv[0]->values[0];
+    int * info = argv[0]->values[1];
 
-    free(thisvalue);
-    free(digits);
+    free(value);
+    free(info);
 
     return NULL;
 }
@@ -540,9 +540,6 @@ Object * makeIntRaw(int * value, int digits, int mult)
 // Remove trailing 0's from a qint
 void qint_normalise(Object * obj)
 {
-    // printf("SIZEOF LONG : %ld\nSIZEOF INT  : %ld\n", sizeof(long), sizeof(int));
-    // printf("SIZEOF LONG LONG : %ld\n", sizeof(long long));
-
     int digit_c = *(int *)obj->values[1];
     int * digits = obj->values[0];
 
@@ -646,25 +643,25 @@ Object * qint_subtraction(Object * a, Object * b)
     }
     else if (size_a == size_b)
     {
-		/* Find highest digit where a and b differ: */
-		i = size_a;
+        // Find highest digit where a and b differ:
+        i = size_a;
 
-		while (--i >= 0 && dig_a[i] == dig_b[i]);
+        while (--i >= 0 && dig_a[i] == dig_b[i]);
 
-		if (i < 0)
-			return int_consts[0];
+        if (i < 0)
+            return int_consts[0];
 
-		if (dig_a[i] < dig_b[i])
+        if (dig_a[i] < dig_b[i])
         {
-			sign = -1;
+            sign = -1;
 
             Object * temp = a;
             a = b;
             b = temp;
-		}
+        }
 
-		size_a = size_b = i + 1;
-	}
+        size_a = size_b = i + 1;
+    }
 
     z = makeIntRaw(
         malloc((size_a + 1) * sizeof(unsigned)),
@@ -747,11 +744,13 @@ Object * qint_from_string(char * str, int base)
     // if (base == 16 && str[0] == '0' && (str[1] == 'x' || str[1] == 'X'))
     //     str += 2;
 
-    obj = makeIntRaw(calloc(len / 4 + 1, sizeof(unsigned)), 0, 1);
+    int est_len = len / 2 + 1;
+    obj = makeIntRaw(malloc(est_len * sizeof(unsigned)), 0, 1);
 
     // start = str;
-    int i = 0;
-    for ( ; i < len; i++) {
+    int i;
+    for (i = 0; i < len; i++)
+    {
         int k = -1;
 
         if (str[i] <= '9')
@@ -767,6 +766,9 @@ Object * qint_from_string(char * str, int base)
         // objUnref(obj);
         // obj = newobj;
     }
+
+    for ( ; i < est_len; i++)
+        ((unsigned *)obj->values[0])[i] = 0;
 
     if (!i) // str == start
     {
@@ -795,30 +797,30 @@ Object * qint_divrem1(Object * obj, int n, int * remptr)
     // Object * newobj;
 
     unsigned * digits = obj->values[0];
-	int * info = obj->values[1];
+    int * info = obj->values[1];
     int size = info[0];
 
-	long rem = 0;
-	
+    long rem = 0;
+
     if (!(n > 0 && n <= MASK))
         error("nooo", line_num);
 
-	// assert(n > 0 && n <= MASK);
+    // assert(n > 0 && n <= MASK);
 
-	if (obj == NULL)
-		return NULL;
+    if (obj == NULL)
+        return NULL;
 
     int i;
-	for (i = size; --i >= 0; ) {
-		rem = (rem << SHIFT) + digits[i];
-		((unsigned *)obj->values[0])[i] = rem / n;
-		rem %= n;
-	}
+    for (i = size; --i >= 0; ) {
+        rem = (rem << SHIFT) + digits[i];
+        ((unsigned *)obj->values[0])[i] = rem / n;
+        rem %= n;
+    }
 
-	*remptr = rem;
+    *remptr = rem;
 
     qint_normalise(obj);
-	return obj;
+    return obj;
 }
 
 char * string_from_qint(Object * obj, int base)
@@ -872,7 +874,7 @@ char * string_from_qint(Object * obj, int base)
         *--p = '0';
     else if ((base & (base - 1)) == 0)
     {
-        /* JRH: special case for power-of-2 bases */
+        // JRH: special case for power-of-2 bases
         int temp = digits[0];
         int bitsleft = SHIFT;
         int rem;
@@ -880,7 +882,7 @@ char * string_from_qint(Object * obj, int base)
         int basebits = 1;
         i = base;
         while ((i >>= 1) > 1) ++basebits;
-        
+
         i = 0;
         for (;;)
         {

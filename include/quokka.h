@@ -21,10 +21,10 @@ int in_cli_mode = 0;
 
     char * strndup(const char * s1, size_t n)
     {
-    	char * copy = malloc(n + 1);
-    	memcpy(copy, s1, n);
-    	copy[n] = 0;
-    	return copy;
+        char * copy = malloc(n + 1);
+        memcpy(copy, s1, n);
+        copy[n] = 0;
+        return copy;
     }
 #else
     #include <unistd.h>
