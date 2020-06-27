@@ -36,16 +36,7 @@ Object * __add___int(int argc, Object ** argv)
 Object * __sub___int(int argc, Object ** argv)
 {
     if (!strcmp(argv[1]->name, "int"))
-    {
         return qint_subtraction(argv[0], argv[1]);
-
-        // int * first = objectGetAttr(argv[0], "value");
-        // int * secnd = objectGetAttr(argv[1], "value");
-
-        // int * third = makeIntPtr(first[0] - secnd[0]);
-
-        // return makeInt(third, 1, 1);
-    }
 
     // else if (!strcmp(argv[1]->name, "long"))
     // {
@@ -433,7 +424,7 @@ Object * __pos___int(int argc, Object ** argv)
     for (int i = 0; i < info[0]; i++)
         newval[i] = value[i];
 
-    return makeInt(newval, info[0], info[1]);
+    return makeInt((int *)newval, info[0], info[1]);
 }
 
 Object * __neg___int(int argc, Object ** argv)
@@ -446,7 +437,7 @@ Object * __neg___int(int argc, Object ** argv)
     for (int i = 0; i < info[0]; i++)
         newval[i] = value[i];
 
-    return makeInt(newval, info[0], -info[1]);
+    return makeInt((int *)newval, info[0], -info[1]);
 }
 
 Object * __disp___int(int argc, Object ** argv)
@@ -477,11 +468,14 @@ Object * __disp___int(int argc, Object ** argv)
 
 Object * __bool___int(int argc, Object ** argv)
 {
-    int * thisvalue = objectGetAttr(argv[0], "value");
+    unsigned * value = argv[0]->values[0];
+    int digits = *(int *)argv[0]->values[1];
 
-    if (thisvalue[0])
-        return makeInt(&truePtr, 0, 1);
-    return makeInt(&falsePtr, 0, 1);
+    for (int i = 0; i < digits; i++)
+        if (value[i])
+            return int_consts[1];
+
+    return int_consts[0];
 }
 
 Object * __long___int(int argc, Object ** argv)
@@ -499,7 +493,7 @@ Object * __free___int(int argc, Object ** argv)
     free(thisvalue);
     free(digits);
 
-    // return makeNull();
+    return NULL;
 }
 
 Object * makeInt(int * value, int digits, int mult)
@@ -575,8 +569,8 @@ Object * qint_addition(Object * a, Object * b)
 
     long carry = 0;
 
-    isummary(dig_a, size_a);
-    isummary(dig_a, size_b);
+    // isummary(dig_a, size_a);
+    // isummary(dig_a, size_b);
 
     // If b is larger than a, swap a and b
     if (size_a < size_b)
@@ -612,7 +606,7 @@ Object * qint_addition(Object * a, Object * b)
 
     ((unsigned *)z->values[0])[i] = carry;
 
-    isummary(((unsigned *)z->values[0]), size_a + 1);
+    // isummary(((unsigned *)z->values[0]), size_a + 1);
 
     qint_normalise(z);
     return z;
@@ -631,8 +625,8 @@ Object * qint_subtraction(Object * a, Object * b)
     unsigned * dig_a = a->values[0];
     unsigned * dig_b = b->values[0];
 
-    isummary(dig_a, size_a);
-    isummary(dig_a, size_b);
+    // isummary(dig_a, size_a);
+    // isummary(dig_a, size_b);
 
     long carry = 0;
     int sign = 1;
@@ -679,7 +673,7 @@ Object * qint_subtraction(Object * a, Object * b)
 
     for (i = 0; i < size_b; ++i)
     {
-        borrow = dig_a[i] - dig_b[i] - borrow;
+        borrow = (info_a[1] * dig_a[i]) - (info_b[1] * dig_b[i]) - borrow;
         ((unsigned *)z->values[0])[i] = borrow & MASK;
         borrow >>= SHIFT;
         borrow &= 1; // Keep only one sign bit
@@ -696,7 +690,7 @@ Object * qint_subtraction(Object * a, Object * b)
     ((unsigned *)z->values[0])[i] = carry;
     ((int *)z->values[1])[1] = sign;
 
-    isummary(((unsigned *)z->values[0]), size_a + 1);
+    // isummary(((unsigned *)z->values[0]), size_a + 1);
 
     qint_normalise(z);
     return z;
@@ -731,7 +725,7 @@ Object * qint_muladd1(Object * obj, int n, int extra)
 
 Object * qint_from_string(char * str, int base)
 {
-    printf("%s (BASE %d)\n", str, base);
+    // printf("%s (BASE %d)\n", str, base);
 
     int len = strlen(str);
 
@@ -781,9 +775,9 @@ Object * qint_from_string(char * str, int base)
         return NULL;
     }
 
-    int digit_count = *(int *)obj->values[1];
-    isummary(obj->values[0], digit_count);
-    printf("(BASE %lld)\n", BASE);
+    // int digit_count = *(int *)obj->values[1];
+    // isummary(obj->values[0], digit_count);
+    // printf("(BASE %lld)\n", BASE);
 
     // if (sign < 0 && z != NULL && z->ob_size != 0)
     //     z->ob_size = -(z->ob_size);
