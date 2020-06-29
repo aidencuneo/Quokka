@@ -2,6 +2,7 @@ int SHIFT = 32;
 #define BASE  ((long long)1 << SHIFT)
 #define MASK  (BASE - 1)
 
+// For debugging
 void isummary(unsigned * arr, int len)
 {
     for (int i = 0; i < len; i++)
@@ -43,16 +44,6 @@ Object * __add___int(int argc, Object ** argv)
         return qint_addition(argv[0], argv[1]);
     }
 
-    // else if (!strcmp(argv[1]->name, "long"))
-    // {
-    //     int * first = objectGetAttr(argv[0], "value");
-    //     long long * secnd = objectGetAttr(argv[1], "value");
-
-    //     long long * third = makeLLPtr(first[0] + secnd[0]);
-
-    //     return makeLong(third, 1);
-    // }
-
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
     strcpy(err, "types 'int' and '");
     strcat(err, argv[1]->name);
@@ -65,17 +56,33 @@ Object * __add___int(int argc, Object ** argv)
 Object * __sub___int(int argc, Object ** argv)
 {
     if (!strcmp(argv[1]->name, "int"))
+    {
+        Object * res;
+
+        int size_a = *(int *)argv[0]->values[1];
+        int size_b = *(int *)argv[1]->values[1];
+
+        if (size_a < 0)
+        {
+            if (size_b < 0)
+                res = qint_subtraction(argv[0], argv[1]);
+            else
+                res = qint_addition(argv[0], argv[1]);
+            if (*(int *)res->values[1])
+                // If this number is real, invert it
+                *(int *)res->values[1] = -(*(int *)res->values[1]);
+        }
+        else
+        {
+            if (size_b < 0)
+                res = qint_addition(argv[0], argv[1]);
+            else
+                res = qint_subtraction(argv[0], argv[1]);
+        }
+        return res;
+
         return qint_subtraction(argv[0], argv[1]);
-
-    // else if (!strcmp(argv[1]->name, "long"))
-    // {
-    //     int * first = objectGetAttr(argv[0], "value");
-    //     long long * secnd = objectGetAttr(argv[1], "value");
-
-    //     long long * third = makeLLPtr(first[0] - secnd[0]);
-
-    //     return makeLong(third, 1);
-    // }
+    }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
     strcpy(err, "types 'int' and '");
@@ -90,21 +97,62 @@ Object * __mul___int(int argc, Object ** argv)
 {
     if (!strcmp(argv[1]->name, "int"))
     {
-        int * first = objectGetAttr(argv[0], "value");
-        int * secnd = objectGetAttr(argv[1], "value");
+        Object * z;
 
-        int * third = makeIntPtr(first[0] * secnd[0]);
+        unsigned * value_a = argv[0]->values[0];
+        unsigned * value_b = argv[1]->values[0];
+        unsigned * value_z;
 
-        return makeInt(third, 1, 1);
-    }
-    else if (!strcmp(argv[1]->name, "long"))
-    {
-        int * first = objectGetAttr(argv[0], "value");
-        long long * secnd = objectGetAttr(argv[1], "value");
+        int size_a = *(int *)argv[0]->values[1];
+        int size_b = *(int *)argv[1]->values[1];
+        int size_z = size_a + size_b;
 
-        long long * third = makeLLPtr(first[0] * secnd[0]);
+        value_z = malloc(size_z * sizeof(unsigned));
 
-        return makeLong(third, 1);
+        z = makeIntRaw(
+            value_z,
+            size_z,
+            1);
+
+        int i;
+
+        for (i = 0; i < size_z; i++)
+            value_z[i] = 0;
+
+        isummary(value_z, size_z);
+
+        for (i = 0; i < size_a; i++)
+        {
+            long carry = 0;
+            long f = value_a[i];
+
+            int j;
+
+            for (j = 0; j < size_b; j++)
+            {
+                carry += (long)value_z[i + j] + value_b[j] * f;
+                value_z[i + j] = (carry & MASK);
+                carry >>= SHIFT;
+            }
+
+            for ( ; carry != 0; j++)
+            {
+                // assert(i+j < z->ob_size);
+                carry += (long)value_z[i + j];
+                value_z[i + j] = (carry & MASK);
+                carry >>= SHIFT;
+            }
+        }
+
+        if (size_a < 0)
+            size_z = -(size_z);
+        if (size_b < 0)
+            size_z = -(size_z);
+
+        isummary(value_z, abs(size_z));
+
+        qint_normalise(z);
+        return z;
     }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
@@ -120,27 +168,7 @@ Object * __div___int(int argc, Object ** argv)
 {
     if (!strcmp(argv[1]->name, "int"))
     {
-        int * first = objectGetAttr(argv[0], "value");
-        int * secnd = objectGetAttr(argv[1], "value");
-
-        if (!secnd[0])
-            return makeInt(&falsePtr, 0, 1);
-
-        int * third = makeIntPtr(first[0] / secnd[0]);
-
-        return makeInt(third, 1, 1);
-    }
-    else if (!strcmp(argv[1]->name, "long"))
-    {
-        int * first = objectGetAttr(argv[0], "value");
-        long long * secnd = objectGetAttr(argv[1], "value");
-
-        if (!secnd[0])
-            return makeInt(&falsePtr, 0, 1);
-
-        long long * third = makeLLPtr(first[0] / secnd[0]);
-
-        return makeLong(third, 1);
+        return NULL;
     }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
@@ -436,38 +464,39 @@ Object * __ge___int(int argc, Object ** argv)
 
 Object * __sizeof___int(int argc, Object ** argv)
 {
-    int * thisvalue = objectGetAttr(argv[0], "value");
+    int * value = argv[0]->values[0];
+    int * size = argv[0]->values[1];
 
-    int * size = makeIntPtr(sizeof(argv[0]) + sizeof(thisvalue));
-
-    return makeInt(size, 1, 1);
+    return makeInt(
+        makeIntPtr(sizeof(value) + sizeof(size)),
+        1,
+        1);
 }
 
 Object * __pos___int(int argc, Object ** argv)
 {
     unsigned * value = argv[0]->values[0];
-    int * info = argv[0]->values[1];
+    int size = *(int *)argv[0]->values[1];
 
-    unsigned * newval = malloc(info[0] * sizeof(unsigned));
+    unsigned * newval = malloc(abs(size) * sizeof(unsigned));
 
-    for (int i = 0; i < info[0]; i++)
+    for (int i = 0; i < abs(size); i++)
         newval[i] = value[i];
 
-    return makeInt((int *)newval, info[0], info[1]);
+    return makeInt(newval, abs(size), intsign(size));
 }
 
 Object * __neg___int(int argc, Object ** argv)
 {
     unsigned * value = argv[0]->values[0];
     int size = *(int *)argv[0]->values[1];
-    int absize = abs(size);
 
-    unsigned * newval = malloc(absize * sizeof(unsigned));
+    unsigned * newval = malloc(abs(size) * sizeof(unsigned));
 
-    for (int i = 0; i < absize; i++)
+    for (int i = 0; i < abs(size); i++)
         newval[i] = value[i];
 
-    return makeInt(newval, absize, -intsign(size));
+    return makeInt(newval, abs(size), -intsign(size));
 }
 
 Object * __disp___int(int argc, Object ** argv)
@@ -475,9 +504,9 @@ Object * __disp___int(int argc, Object ** argv)
     unsigned * value = argv[0]->values[0];
     int size = *(int *)argv[0]->values[1];
 
-    if (size == 1)
+    if (size == 1 && *value <= INT_MAX)
         return makeString(intToStr(value[0]), 1);
-    if (size == -1)
+    if (size == -1 && *value <= INT_MAX)
         return makeString(intToStr(-value[0]), 1);
 
     char * s = string_from_qint(argv[0], 10);
@@ -614,49 +643,6 @@ Object * qint_addition(Object * a, Object * b)
         sign_b = sign_temp;
     }
 
-    // printf("%d === %d\n", sign_a, sign_b);
-
-    // // Realign expression if negatives are found
-    // if (sign_a < 0 && sign_b >= 0)
-    // {
-    //     int size_a_old = *(int *)a->values[1];
-    //     *(int *)a->values[1] = abs(size_a_old);
-
-    //     z = qint_subtraction(b, a);
-
-    //     *(int *)a->values[1] = size_a_old;
-
-    //     return z;
-    // }
-    // else if (sign_a >= 0 && sign_b < 0)
-    // {
-    //     int size_b_old = *(int *)b->values[1];
-    //     *(int *)b->values[1] = abs(size_b_old);
-
-    //     z = qint_subtraction(a, b);
-
-    //     *(int *)b->values[1] = size_b_old;
-
-    //     return z;
-    // }
-    // else if (sign_a < 0 && sign_b < 0)
-    // {
-    //     int size_a_old = *(int *)a->values[1];
-    //     *(int *)a->values[1] = abs(size_a_old);
-
-    //     int size_b_old = *(int *)b->values[1];
-    //     *(int *)b->values[1] = abs(size_b_old);
-
-    //     z = qint_subtraction(a, b);
-
-    //     *(int *)a->values[1] = size_a_old;
-    //     *(int *)b->values[1] = size_b_old;
-
-    //     return z;
-    // }
-
-    // printf("%d\n", *(int *)z->values[1] * sign_a * sign_b);
-
     z = makeIntRaw(
         malloc((size_a + 1) * sizeof(unsigned)),
         size_a + 1,
@@ -775,6 +761,269 @@ Object * qint_subtraction(Object * a, Object * b)
     return z;
 }
 
+// Divrem algorithm
+Object * qint_divrem_alg(Object * a, Object * b, Object ** remptr)
+{
+    int size_a = *(int *)a->values[1];
+    int size_b = *(int *)b->values[1];
+
+    unsigned * value_a = a->values[0];
+    unsigned * value_b = b->values[0];
+
+    long d = BASE / (value_b[size_b - 1] + 1);
+
+	Object * a2 = mul1(a, d);
+	Object * b2 = mul1(b, d);
+	Object * z;
+
+    int j;
+	int k;
+
+	if (a == NULL || b == NULL)
+    {
+		// Py_XDECREF(v);
+		// Py_XDECREF(w);
+		return NULL;
+	}
+	
+	// assert(size_v >= size_w && size_w > 1); /* Assert checks by div() */
+	// assert(v->ob_refcnt == 1); /* Since v will be used as accumulator! */
+	// assert(size_w == ABS(w->ob_size)); /* That's how d was calculated */
+	
+	size_a = abs(size_a);
+	a = makeIntRaw(
+        malloc((size_a - size_b + 1) * sizeof(unsigned)),
+        1,
+        1);
+	
+	for (j = size_a, k = size_a - 1; a != NULL && k >= 0; --j, --k)
+    {
+		int vj = (j >= size_a) ? 0 : value_a[j];
+		long q;
+		long carry = 0;
+		int i;
+		
+		// SIGCHECK({
+		// 	Py_DECREF(a);
+		// 	a = NULL;
+		// 	break;
+		// })
+
+		if (vj == value_b[size_a - 1])
+			q = MASK;
+		else
+			q = (((long)vj << SHIFT) + value_a[j - 1]) /
+				value_b[size_b - 1];
+		
+		while (value_b[size_b - 2] * q >
+				((
+					((long)vj << SHIFT)
+					+ value_a[j - 1]
+					- q * (value_b[size_b - 1])
+				 ) << SHIFT)
+				+ value_a[j - 2])
+			--q;
+		
+		for (i = 0; i < size_b && i + k < size_a; ++i) {
+			long z = value_b[i] * q;
+			int zz = (int)(z >> SHIFT);
+			carry += value_a[i + k] - z
+				+ ((long)zz << SHIFT);
+			value_a[i + k] = carry & MASK;
+			carry = (carry >> SHIFT) - zz;
+		}
+		
+		if (i + k < size_a)
+        {
+			carry += value_a[i + k];
+			value_a[i + k] = 0;
+		}
+		
+		if (carry == 0)
+			((unsigned *)a2->values[0])[k] = (long)q;
+		else
+        {
+			// assert(carry == -1);
+			((unsigned *)a2->values[0])[k] = (long)q - 1;
+			carry = 0;
+
+			for (i = 0; i < size_a && i + k < size_a; ++i)
+            {
+				carry += value_a[i + k] + value_b[i];
+				value_a[i+k] = carry & MASK;
+				carry >>= SHIFT;
+			}
+		}
+	} /* for j, k */
+	
+	if (a == NULL)
+		*remptr = NULL;
+	else
+    {
+		qint_normalise(a2);
+
+		*remptr = qint_divrem1(a, d, &d);
+
+		/* d receives the (unused) remainder */
+		if (*remptr == NULL)
+        {
+			// Py_DECREF(a);
+			a = NULL;
+		}
+	}
+
+	// Py_DECREF(v);
+	// Py_DECREF(w);
+
+	return a;
+}
+
+int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr)
+{
+    Object * z;
+
+    int size_a = abs(*(int *)a->values[1]);
+    int size_b = abs(*(int *)b->values[1]);
+
+    unsigned * value_a = a->values[0];
+    unsigned * value_b = b->values[0];
+
+    z = makeIntRaw(
+        malloc((size_a + size_b) * sizeof(unsigned)),
+        size_a + size_b, // ?????????????
+        1);
+
+	if (size_b == 0)
+    {
+        println("can't divide by zero");
+        exit(1);
+		// PyErr_SetString(PyExc_ZeroDivisionError,
+		// 		"long division or modulo");
+		return -1;
+	}
+
+	if (size_a < size_b ||
+	   (size_a == size_b &&
+	    value_a[size_a - 1] < value_b[size_b - 1]))
+    {
+		/* |a| < |b|. */
+		*divptr = getIntConst(0);
+		// Py_INCREF(a);
+		*remptr = a;
+		return 0;
+	}
+
+	if (size_b == 1)
+    {
+		_Function_ignore_lock_checking_ rem = 0;
+
+		z = qint_divrem1(a, value_b[0], &rem);
+		if (z == NULL)
+			return -1;
+
+		*remptr = makeIntRaw(makeIntPtr(rem), 1, 1);
+	}
+	else
+    {
+		z = qint_divrem_alg(a, b, remptr);
+		if (z == NULL)
+			return -1;
+	}
+
+    int size_z = *(int *)z->values[1];
+
+	/* Set the signs.
+	   The quotient z has the sign of a*b;
+	   the remainder r has the sign of a,
+	   so a = b*z + r. */
+	if ((size_a < 0) != (size_b < 0))
+		size_z = -(size_z);
+	if (size_a < 0 && *(int *)((*remptr)->values[1]) != 0)
+		*(int *)((*remptr)->values[1]) = -(*(int *)((*remptr)->values[1]));
+
+	*divptr = z;
+
+	return 0;
+}
+
+int qint_divmod(Object * a, Object * b, Object ** divptr, Object ** modptr)
+{
+    Object * div;
+    Object * mod;
+
+    int size_a = *(int *)a->values[0];
+    int size_b = *(int *)b->values[0];
+
+    unsigned * value_a = a->values[0];
+    unsigned * value_b = b->values[0];
+
+    long carry = 0;
+
+    div = makeIntRaw(
+        malloc((size_a + 1) * sizeof(unsigned)),
+        size_a + 1,
+        1);
+
+    mod = makeIntRaw(
+        malloc((size_a + 1) * sizeof(unsigned)),
+        size_a + 1,
+        1);
+	
+	if (qint_divrem(a, b, &div, &mod) < 0)
+    {
+        println("THIS SHOULDN'T HAPPEN??");
+		return -1;
+    }
+
+	if (
+        (*(int *)mod->values[1] < 0 && *(int *)b->values[1] > 0) ||
+	    (*(int *)mod->values[1] > 0 && *(int *)b->values[1] < 0)
+    )
+    {
+
+		Object * temp;
+		Object * one;
+		temp = qint_addition(mod, b);
+
+		// Py_DECREF(mod);
+
+		mod = temp;
+
+		if (mod == NULL)
+        {
+			// Py_DECREF(div);
+			return -1;
+		}
+
+		one = getIntConst(1);
+
+		if (one == NULL ||
+		    (temp = qint_subtraction(div, one)) == NULL)
+        {
+
+			// Py_DECREF(mod);
+			// Py_DECREF(div);
+			// Py_XDECREF(one);
+
+            println("THIS ALSO SHOULDN'T HAPPEN??");
+			return -1;
+		}
+
+		// Py_DECREF(one);
+		// Py_DECREF(div);
+
+		div = temp;
+	}
+
+    qint_normalise(div);
+    qint_normalise(mod);
+
+	*divptr = div;
+	*modptr = mod;
+
+	return 0;
+}
+
 Object * qint_muladd1(Object * obj, int n, int extra)
 {
     int size = *(int *)obj->values[1]; // Old digit count
@@ -849,8 +1098,6 @@ Object * qint_from_string(char * str, int base)
             break;
 
         qint_muladd1(obj, base, k);
-        // objUnref(obj);
-        // obj = newobj;
     }
 
     for ( ; i < est_len; i++)
@@ -863,22 +1110,10 @@ Object * qint_from_string(char * str, int base)
         return NULL;
     }
 
-    // int digit_count = *(int *)obj->values[1];
-    // isummary(obj->values[0], digit_count);
-    // printf("(BASE %lld)\n", BASE);
-
-    // if (sign < 0 && z != NULL && z->ob_size != 0)
-    //     z->ob_size = -(z->ob_size);
-
     return obj;
-
-    // unsigned * digits;
-    // int len = stringToDigitArray(str, &digits);
-
-    // return makeIntRaw(digits, 1, len);
 }
 
-Object * qint_divrem1(Object * obj, int n, int * remptr)
+Object * qint_divrem1(Object * obj, int n, long * remptr)
 {
     unsigned * value = obj->values[0];
     int size = *(int *)obj->values[1];
@@ -1006,7 +1241,7 @@ char * string_from_qint(Object * obj, int base)
 
         while (*(int *)a->values[1] != 0)
         {
-            int rem;
+            long rem;
 
             qint_divrem1(a, base, &rem);
             // Object * temp = qint_divrem1(a, base, &rem);
@@ -1024,7 +1259,7 @@ char * string_from_qint(Object * obj, int base)
                 rem += 'A' - 10;
 
             if (!(p > str))
-                error("integer-to-string error", line_num);
+                error("int to string error", line_num);
 
             // assert(p > PyString_AS_STRING(str));
 
@@ -1059,7 +1294,7 @@ char * string_from_qint(Object * obj, int base)
         char * q = str;
 
         if (!(p > q))
-            error("integer-to-string error", line_num);
+            error("int to string error", line_num);
 
         while ((*q++ = *p++) != '\0');
         q--;

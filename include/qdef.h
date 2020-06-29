@@ -143,8 +143,10 @@ Object * makeInt(int * value, int digits, int mult);
 Object * makeIntRaw(int * value, int digits, int mult);
 
 int intsign(int size);
+void qint_normalise(Object * obj);
 Object * qint_addition(Object * a, Object * b);
 Object * qint_subtraction(Object * a, Object * b);
+Object * qint_divrem1(Object * obj, int n, long * remptr);
 char * string_from_qint(Object * obj, int base);
 
 // list
