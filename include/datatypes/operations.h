@@ -3,8 +3,6 @@ void * objOperPos(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__pos___int;
-    if (!strcmp(obj->name, "long"))
-        return &__pos___long;
 
     void * func = objectGetAttr(obj, "__pos__");
 
@@ -25,8 +23,6 @@ void * objOperNeg(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__neg___int;
-    if (!strcmp(obj->name, "long"))
-        return &__neg___long;
     if (!strcmp(obj->name, "file"))
         return &__neg___file;
 
@@ -49,8 +45,6 @@ void * objOperAdd(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__add___int;
-    if (!strcmp(obj->name, "long"))
-        return &__add___long;
     if (!strcmp(obj->name, "string"))
         return &__add___string;
     if (!strcmp(obj->name, "list"))
@@ -75,8 +69,6 @@ void * objOperSub(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__sub___int;
-    if (!strcmp(obj->name, "long"))
-        return &__sub___long;
 
     void * func = objectGetAttr(obj, "__sub__");
 
@@ -97,8 +89,6 @@ void * objOperMul(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__mul___int;
-    if (!strcmp(obj->name, "long"))
-        return &__mul___long;
     if (!strcmp(obj->name, "string"))
         return &__mul___string;
 
@@ -121,8 +111,6 @@ void * objOperDiv(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__div___int;
-    if (!strcmp(obj->name, "long"))
-        return &__div___long;
 
     void * func = objectGetAttr(obj, "__div__");
 
@@ -143,8 +131,6 @@ void * objOperPow(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__pow___int;
-    if (!strcmp(obj->name, "long"))
-        return &__pow___long;
 
     void * func = objectGetAttr(obj, "__pow__");
 
@@ -165,8 +151,6 @@ void * objOperMod(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__mod___int;
-    if (!strcmp(obj->name, "long"))
-        return &__mod___long;
 
     void * func = objectGetAttr(obj, "__mod__");
 
@@ -187,8 +171,6 @@ void * objOperXor(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__xor___int;
-    if (!strcmp(obj->name, "long"))
-        return &__xor___long;
 
     void * func = objectGetAttr(obj, "__xor__");
 
@@ -209,8 +191,6 @@ void * objOperLshift(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__lshift___int;
-    if (!strcmp(obj->name, "long"))
-        return &__lshift___long;
 
     void * func = objectGetAttr(obj, "__lshift__");
 
@@ -231,8 +211,6 @@ void * objOperRshift(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__rshift___int;
-    if (!strcmp(obj->name, "long"))
-        return &__rshift___long;
 
     void * func = objectGetAttr(obj, "__rshift__");
 
@@ -282,8 +260,6 @@ void * objOperEq(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__eq___int;
-    if (!strcmp(obj->name, "long"))
-        return &__eq___long;
     if (!strcmp(obj->name, "string"))
         return &__eq___string;
 
@@ -306,8 +282,6 @@ void * objOperLt(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__lt___int;
-    if (!strcmp(obj->name, "long"))
-        return &__lt___long;
 
     void * func = objectGetAttr(obj, "__lt__");
 
@@ -328,8 +302,6 @@ void * objOperGt(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__gt___int;
-    if (!strcmp(obj->name, "long"))
-        return &__gt___long;
 
     void * func = objectGetAttr(obj, "__gt__");
 
@@ -350,8 +322,6 @@ void * objOperLe(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__le___int;
-    if (!strcmp(obj->name, "long"))
-        return &__le___long;
 
     void * func = objectGetAttr(obj, "__le__");
 
@@ -372,8 +342,6 @@ void * objOperGe(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__ge___int;
-    if (!strcmp(obj->name, "long"))
-        return &__ge___long;
 
     void * func = objectGetAttr(obj, "__ge__");
 
@@ -471,8 +439,6 @@ void * objOperBool(Object * obj)
         return &__bool___null;
     if (!strcmp(obj->name, "int"))
         return &__bool___int;
-    if (!strcmp(obj->name, "long"))
-        return &__bool___long;
     if (!strcmp(obj->name, "string"))
         return &__bool___string;
     if (!strcmp(obj->name, "list"))
@@ -486,8 +452,6 @@ void * objOperBool(Object * obj)
 // Retrieve __int__ method from an Object
 void * objOperInt(Object * obj)
 {
-    if (!strcmp(obj->name, "long"))
-        return &__int___long;
     if (!strcmp(obj->name, "string"))
         return &__int___string;
 
@@ -521,8 +485,6 @@ void * objOperDisp(Object * obj)
         return &__disp___null;
     if (!strcmp(obj->name, "int"))
         return &__disp___int;
-    if (!strcmp(obj->name, "long"))
-        return &__disp___long;
     if (!strcmp(obj->name, "string"))
         return &__disp___string;
     if (!strcmp(obj->name, "list"))
@@ -547,8 +509,6 @@ void * objOperSizeof(Object * obj)
 {
     if (!strcmp(obj->name, "int"))
         return &__sizeof___int;
-    if (!strcmp(obj->name, "long"))
-        return &__sizeof___long;
     if (!strcmp(obj->name, "string"))
         return &__sizeof___string;
     if (!strcmp(obj->name, "list"))
@@ -568,6 +528,8 @@ void * objOperFree(Object * obj)
         return &__free___file;
     if (!strcmp(obj->name, "function"))
         return &__free___function;
+    if (!strcmp(obj->name, "int"))
+        return &__free___int;
     if (!strcmp(obj->name, "list"))
         return &__free___list;
     if (!strcmp(obj->name, "module"))

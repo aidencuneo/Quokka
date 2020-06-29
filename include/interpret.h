@@ -194,7 +194,7 @@ void interp_init()
 
     addGVar("string", makeCFunction(&q_function_string, 1, 1));
     addGVar("int", makeCFunction(&q_function_int, 1, 1));
-    addGVar("long", makeCFunction(&q_function_long, 1, 1));
+    // addGVar("long", makeCFunction(&q_function_long, 1, 1));
     addGVar("bool", makeCFunction(&q_function_bool, 1, 1));
     addGVar("type", makeCFunction(&q_function_type, 1, 1));
     addGVar("disp", makeCFunction(&q_function_display, 1, 1));

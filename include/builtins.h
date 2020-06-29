@@ -99,18 +99,23 @@ Object * q_function_println(int argc, Object ** argv)
 
     for (int i = 0; i < argc; i++)
     {
-        Object * obj = argv[i];
         void * func;
 
-        if ((func = objOperString(obj)) != NULL)
+        if ((func = objOperString(argv[i])) != NULL)
         {
+            Object * temp = argv[0];
+            argv[0] = argv[i];
+
             Object * strtext = ((standard_func_def)func)(1, argv);
+
+            argv[i] = argv[0];
+            argv[0] = temp;
 
             if (strcmp(strtext->name, "string"))
             {
-                char * err = malloc(27 + strlen(obj->name) + 27 + 1);
+                char * err = malloc(27 + strlen(argv[i]->name) + 27 + 1);
                 strcpy(err, "__string__ method of type '");
-                strcat(err, argv[0]->name);
+                strcat(err, argv[i]->name);
                 strcat(err, "' must return type 'string'");
                 error(err, line_num);
             }
@@ -121,15 +126,21 @@ Object * q_function_println(int argc, Object ** argv)
 
             freeObject(strtext);
         }
-        else if ((func = objOperDisp(obj)) != NULL)
+        else if ((func = objOperDisp(argv[i])) != NULL)
         {
+            Object * temp = argv[0];
+            argv[0] = argv[i];
+
             Object * strtext = ((standard_func_def)func)(1, argv);
+
+            argv[i] = argv[0];
+            argv[0] = temp;
 
             if (strcmp(strtext->name, "string"))
             {
-                char * err = malloc(25 + strlen(obj->name) + 27 + 1);
+                char * err = malloc(25 + strlen(argv[i]->name) + 27 + 1);
                 strcpy(err, "__disp__ method of type '");
-                strcat(err, argv[0]->name);
+                strcat(err, argv[i]->name);
                 strcat(err, "' must return type 'string'");
                 error(err, line_num);
             }
@@ -142,7 +153,7 @@ Object * q_function_println(int argc, Object ** argv)
         }
         else
         {
-            char * text = neatObjAddress(obj);
+            char * text = neatObjAddress(argv[i]);
             printf("%s", text);
             free(text);
         }
@@ -261,56 +272,56 @@ Object * q_function_int(int argc, Object ** argv)
     return ret;
 }
 
-Object * q_function_long(int argc, Object ** argv)
-{
-    if (!strcmp(argv[0]->name, "long"))
-        return argv[0];
+// Object * q_function_long(int argc, Object ** argv)
+// {
+//     if (!strcmp(argv[0]->name, "long"))
+//         return argv[0];
 
-    void * func;
+//     void * func;
 
-    // Try __long__
-    func = objOperLong(argv[0]);
-    if (func != NULL)
-    {
-        Object * ret = ((standard_func_def)func)(1, argv);
+//     // Try __long__
+//     func = objOperLong(argv[0]);
+//     if (func != NULL)
+//     {
+//         Object * ret = ((standard_func_def)func)(1, argv);
 
-        if (strcmp(ret->name, "long"))
-        {
-            char * err = malloc(25 + strlen(argv[0]->name) + 25 + 1);
-            strcpy(err, "__long__ method of type '");
-            strcat(err, argv[0]->name);
-            strcat(err, "' must return type 'long'");
-            error(err, line_num);
-        }
+//         if (strcmp(ret->name, "long"))
+//         {
+//             char * err = malloc(25 + strlen(argv[0]->name) + 25 + 1);
+//             strcpy(err, "__long__ method of type '");
+//             strcat(err, argv[0]->name);
+//             strcat(err, "' must return type 'long'");
+//             error(err, line_num);
+//         }
 
-        return ret;
-    }
-    // Try __int__ if __long__ can't be found
-    func = objOperInt(argv[0]);
-    if (func != NULL)
-    {
-        Object * ret = ((standard_func_def)func)(1, argv);
+//         return ret;
+//     }
+//     // Try __int__ if __long__ can't be found
+//     func = objOperInt(argv[0]);
+//     if (func != NULL)
+//     {
+//         Object * ret = ((standard_func_def)func)(1, argv);
 
-        if (strcmp(ret->name, "int"))
-        {
-            char * err = malloc(24 + strlen(argv[0]->name) + 24 + 1);
-            strcpy(err, "__int__ method of type '");
-            strcat(err, argv[0]->name);
-            strcat(err, "' must return type 'int'");
-            error(err, line_num);
-        }
+//         if (strcmp(ret->name, "int"))
+//         {
+//             char * err = malloc(24 + strlen(argv[0]->name) + 24 + 1);
+//             strcpy(err, "__int__ method of type '");
+//             strcat(err, argv[0]->name);
+//             strcat(err, "' must return type 'int'");
+//             error(err, line_num);
+//         }
 
-        return ret;
-    }
+//         return ret;
+//     }
 
-    char * err = malloc(6 + strlen(argv[0]->name) + 34 + 1);
-    strcpy(err, "type '");
-    strcat(err, argv[0]->name);
-    strcat(err, "' can not be converted into a long");
-    error(err, line_num);
+//     char * err = malloc(6 + strlen(argv[0]->name) + 34 + 1);
+//     strcpy(err, "type '");
+//     strcat(err, argv[0]->name);
+//     strcat(err, "' can not be converted into a long");
+//     error(err, line_num);
 
-    return makeNull();
-}
+//     return makeNull();
+// }
 
 Object * q_function_type(int argc, Object ** argv)
 {

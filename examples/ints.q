@@ -1,8 +1,6 @@
-// INT   MAX 4294967295
+// INT   MAX 4294967296
 // LLONG MAX 18446744073709551615
 
-i = 100000
-while i
-    println(i)
-    i--
-end
+println('1 + 1       =', 1 + 1)
+println('1 + -1      =', 1 + -1)
+println('1e11 - 1e10 =', 8589934592 - 1000)

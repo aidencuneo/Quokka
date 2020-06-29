@@ -12,7 +12,36 @@ void isummary(unsigned * arr, int len)
 Object * __add___int(int argc, Object ** argv)
 {
     if (!strcmp(argv[1]->name, "int"))
+    {
+        Object * res;
+
+        int size_first = *(int *)argv[0]->values[1];
+        int size_secnd = *(int *)argv[1]->values[1];
+
+        if (size_first < 0)
+        {
+            if (size_secnd < 0)
+            {
+                res = qint_addition(argv[0], argv[1]);
+                if (*(int *)res->values[1])
+                    // If this number is real, invert it
+                    *(int *)res->values[1] = -(*(int *)res->values[1]);
+            }
+            else
+                res = qint_subtraction(argv[1], argv[0]);
+        }
+        else
+        {
+            if (size_secnd < 0)
+                res = qint_subtraction(argv[0], argv[1]);
+            else
+                res = qint_addition(argv[0], argv[1]);
+        }
+
+        return res;
+
         return qint_addition(argv[0], argv[1]);
+    }
 
     // else if (!strcmp(argv[1]->name, "long"))
     // {
@@ -296,15 +325,15 @@ Object * __lt___int(int argc, Object ** argv)
             return makeInt(&truePtr, 0, 1);
         return makeInt(&falsePtr, 0, 1);
     }
-    else if (!strcmp(argv[1]->name, "long"))
-    {
-        int * first = objectGetAttr(argv[0], "value");
-        long long * secnd = objectGetAttr(argv[1], "value");
+    // else if (!strcmp(argv[1]->name, "long"))
+    // {
+    //     int * first = objectGetAttr(argv[0], "value");
+    //     long long * secnd = objectGetAttr(argv[1], "value");
 
-        if (first[0] < secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
-    }
+    //     if (first[0] < secnd[0])
+    //         return makeInt(&truePtr, 0, 1);
+    //     return makeInt(&falsePtr, 0, 1);
+    // }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
     strcpy(err, "types 'int' and '");
@@ -430,23 +459,26 @@ Object * __pos___int(int argc, Object ** argv)
 Object * __neg___int(int argc, Object ** argv)
 {
     unsigned * value = argv[0]->values[0];
-    int * info = argv[0]->values[1];
+    int size = *(int *)argv[0]->values[1];
+    int absize = abs(size);
 
-    unsigned * newval = malloc(info[0] * sizeof(unsigned));
+    unsigned * newval = malloc(absize * sizeof(unsigned));
 
-    for (int i = 0; i < info[0]; i++)
+    for (int i = 0; i < absize; i++)
         newval[i] = value[i];
 
-    return makeInt((int *)newval, info[0], -info[1]);
+    return makeInt(newval, absize, -intsign(size));
 }
 
 Object * __disp___int(int argc, Object ** argv)
 {
     unsigned * value = argv[0]->values[0];
-    int * info = argv[0]->values[1];
+    int size = *(int *)argv[0]->values[1];
 
-    if (info[0] == 1)
+    if (size == 1)
         return makeString(intToStr(value[0]), 1);
+    if (size == -1)
+        return makeString(intToStr(-value[0]), 1);
 
     char * s = string_from_qint(argv[0], 10);
     return makeString(s, 1);
@@ -469,9 +501,9 @@ Object * __disp___int(int argc, Object ** argv)
 Object * __bool___int(int argc, Object ** argv)
 {
     unsigned * value = argv[0]->values[0];
-    int digits = *(int *)argv[0]->values[1];
+    int size = *(int *)argv[0]->values[1];
 
-    for (int i = 0; i < digits; i++)
+    for (int i = 0; i < size; i++)
         if (value[i])
             return getIntConst(1);
 
@@ -488,10 +520,10 @@ Object * __long___int(int argc, Object ** argv)
 Object * __free___int(int argc, Object ** argv)
 {
     unsigned * value = argv[0]->values[0];
-    int * info = argv[0]->values[1];
+    int * size = argv[0]->values[1];
 
     free(value);
-    free(info);
+    free(size);
 
     return NULL;
 }
@@ -511,65 +543,62 @@ Object * makeInt(int * value, int digits, int mult)
 
 Object * makeIntRaw(int * value, int digits, int mult)
 {
-    int * info = malloc(2 * sizeof(int));
-    info[0] = digits;
-    info[1] = mult;
-
     Object * self = objectPointer();
 
     self->name = "int";
 
     // 3 Attributes
-    self->names = malloc(3 * sizeof(char *));
-    self->values = malloc(3 * sizeof(void *));
+    self->names = malloc(2 * sizeof(char *));
+    self->values = malloc(2 * sizeof(void *));
 
     self = objectAddAttr(self, "value", value);
-    self = objectAddAttr(self, "info", info);
+    self = objectAddAttr(self, "size", makeIntPtr(digits * mult));
 
-    // self.info will always be [digit_count, multiplier]
+    // self.size will always be (digit_count * multiplier)
     // where digit_count is the number of digits in this
     // integer, and multiplier is either 1 or -1, which
     // signifies the 'sign' (+ or -) of this integer.
 
-    // __free__
-    self = objectAddAttr(self, "__free__", &__free___int);
-
     return self;
+}
+
+// Return qint sign using qint size
+int intsign(int size)
+{
+    return size < 0 ? -1 : 1;
 }
 
 // Remove trailing 0's from a qint
 void qint_normalise(Object * obj)
 {
-    int digit_c = *(int *)obj->values[1];
-    int * digits = obj->values[0];
+    int * value = obj->values[0];
+    int size = *(int *)obj->values[1];
 
     int i;
-    for (i = digit_c - 1; i >= 0; i--)
-        if (digits[i])
+    for (i = abs(size) - 1; i >= 0; i--)
+        if (value[i])
             break;
 
-    *(int *)obj->values[1] = i + 1;
+    *(int *)obj->values[1] = intsign(size) * (i + 1);
 }
 
 Object * qint_addition(Object * a, Object * b)
 {
     Object * z;
 
-    int * info_a = a->values[1];
-    int * info_b = b->values[1];
+    int size_a = abs(*(int *)a->values[1]);
+    int size_b = abs(*(int *)b->values[1]);
 
-    int size_a = info_a[0];
-    int size_b = info_b[0];
+    int sign_a = intsign(*(int *)a->values[1]);
+    int sign_b = intsign(*(int *)b->values[1]);
 
-    unsigned * dig_a = a->values[0];
-    unsigned * dig_b = b->values[0];
-
-    long carry = 0;
+    unsigned * value_a = a->values[0];
+    unsigned * value_b = b->values[0];
 
     // isummary(dig_a, size_a);
     // isummary(dig_a, size_b);
 
-    // If b is larger than a, swap a and b
+    // Make sure a is the largest
     if (size_a < size_b)
     {
         Object * temp = a;
@@ -579,29 +608,80 @@ Object * qint_addition(Object * a, Object * b)
         int size_temp = size_a;
         size_a = size_b;
         size_b = size_temp;
+
+        int sign_temp = sign_a;
+        sign_a = sign_b;
+        sign_b = sign_temp;
     }
+
+    // printf("%d === %d\n", sign_a, sign_b);
+
+    // // Realign expression if negatives are found
+    // if (sign_a < 0 && sign_b >= 0)
+    // {
+    //     int size_a_old = *(int *)a->values[1];
+    //     *(int *)a->values[1] = abs(size_a_old);
+
+    //     z = qint_subtraction(b, a);
+
+    //     *(int *)a->values[1] = size_a_old;
+
+    //     return z;
+    // }
+    // else if (sign_a >= 0 && sign_b < 0)
+    // {
+    //     int size_b_old = *(int *)b->values[1];
+    //     *(int *)b->values[1] = abs(size_b_old);
+
+    //     z = qint_subtraction(a, b);
+
+    //     *(int *)b->values[1] = size_b_old;
+
+    //     return z;
+    // }
+    // else if (sign_a < 0 && sign_b < 0)
+    // {
+    //     int size_a_old = *(int *)a->values[1];
+    //     *(int *)a->values[1] = abs(size_a_old);
+
+    //     int size_b_old = *(int *)b->values[1];
+    //     *(int *)b->values[1] = abs(size_b_old);
+
+    //     z = qint_subtraction(a, b);
+
+    //     *(int *)a->values[1] = size_a_old;
+    //     *(int *)b->values[1] = size_b_old;
+
+    //     return z;
+    // }
+
+    // printf("%d\n", *(int *)z->values[1] * sign_a * sign_b);
 
     z = makeIntRaw(
         malloc((size_a + 1) * sizeof(unsigned)),
         size_a + 1,
         1);
 
+    long carry = 0;
+
     int i;
     for (i = 0; i < size_b; i++)
     {
-        carry += (info_a[1] * dig_a[i]) + (info_b[1] * dig_b[i]);
+        carry += value_a[i] + value_b[i];
         ((unsigned *)z->values[0])[i] = carry & MASK;
         carry >>= SHIFT;
     }
 
     for ( ; i < size_a; i++)
     {
-        carry += info_a[1] * dig_a[i];
+        carry += value_a[i];
         ((unsigned *)z->values[0])[i] = carry & MASK;
         carry >>= SHIFT;
     }
 
     ((unsigned *)z->values[0])[i] = carry;
+
+    // printf("%d - %d\n", sign_a, sign_b);
 
     // isummary(((unsigned *)z->values[0]), size_a + 1);
 
@@ -613,26 +693,24 @@ Object * qint_subtraction(Object * a, Object * b)
 {
     Object * z;
 
-    int * info_a = a->values[1];
-    int * info_b = b->values[1];
+    int size_a = abs(*(int *)a->values[1]);
+    int size_b = abs(*(int *)b->values[1]);
 
-    int size_a = info_a[0];
-    int size_b = info_b[0];
+    int sign_a = intsign(*(int *)a->values[1]);
+    int sign_b = intsign(*(int *)b->values[1]);
 
-    unsigned * dig_a = a->values[0];
-    unsigned * dig_b = b->values[0];
+    unsigned * value_a = a->values[0];
+    unsigned * value_b = b->values[0];
 
-    // isummary(dig_a, size_a);
-    // isummary(dig_a, size_b);
-
-    long carry = 0;
+    long borrow = 0;
     int sign = 1;
-    int borrow = 0;
     int i;
 
-    // If b is larger than a, swap a and b
+    // Make sure a is the largest
     if (size_a < size_b)
     {
+        sign = -1;
+
         Object * temp = a;
         a = b;
         b = temp;
@@ -640,18 +718,22 @@ Object * qint_subtraction(Object * a, Object * b)
         int size_temp = size_a;
         size_a = size_b;
         size_b = size_temp;
+
+        int sign_temp = sign_a;
+        sign_a = sign_b;
+        sign_b = sign_temp;
     }
     else if (size_a == size_b)
     {
         // Find highest digit where a and b differ:
         i = size_a;
 
-        while (--i >= 0 && dig_a[i] == dig_b[i]);
+        while (--i >= 0 && value_a[i] == value_b[i]);
 
         if (i < 0)
             return int_consts[0];
 
-        if (dig_a[i] < dig_b[i])
+        if (value_a[i] < value_b[i])
         {
             sign = -1;
 
@@ -668,26 +750,26 @@ Object * qint_subtraction(Object * a, Object * b)
         size_a + 1,
         1);
 
-    for (i = 0; i < size_b; ++i)
+    for (i = 0; i < size_a + 1; i++)
+        ((unsigned *)z->values[0])[i] = 0;
+
+    for (i = 0; i < size_b; i++)
     {
-        borrow = (info_a[1] * dig_a[i]) - (info_b[1] * dig_b[i]) - borrow;
+        borrow = (long)value_a[i] - value_b[i] - borrow;
         ((unsigned *)z->values[0])[i] = borrow & MASK;
         borrow >>= SHIFT;
         borrow &= 1; // Keep only one sign bit
     }
 
-    for ( ; i < size_a; ++i)
+    for ( ; i < size_a; i++)
     {
-        borrow = dig_b[i] - borrow;
+        borrow = (long)value_a[i] - borrow;
         ((unsigned *)z->values[0])[i] = borrow & MASK;
         borrow >>= SHIFT;
         borrow &= 1; // Keep only one sign bit
     }
 
-    ((unsigned *)z->values[0])[i] = carry;
-    ((int *)z->values[1])[1] = sign;
-
-    // isummary(((unsigned *)z->values[0]), size_a + 1);
+    *(int *)z->values[1] = sign_a * (size_a + 1);
 
     qint_normalise(z);
     return z;
@@ -695,11 +777,15 @@ Object * qint_subtraction(Object * a, Object * b)
 
 Object * qint_muladd1(Object * obj, int n, int extra)
 {
-    int * info = obj->values[1];
-    int digit_c = (*info)++; // Old digit count (increment it)
-    // Object * newobj = makeIntRaw(obj->values[0], 0, digit_c + 1);
+    int size = *(int *)obj->values[1]; // Old digit count
 
-    unsigned * digits = obj->values[0];
+    // Increment digit count
+    if (size < 0)
+        (*(int *)obj->values[1])--;
+    else
+        (*(int *)obj->values[1])++;
+
+    unsigned * value = obj->values[0];
 
     long carry = extra;
 
@@ -707,14 +793,14 @@ Object * qint_muladd1(Object * obj, int n, int extra)
         return NULL;
 
     int i;
-    for (i = 0; i < digit_c; i++)
+    for (i = 0; i < abs(size); i++)
     {
-        carry += (long)digits[i] * n;
-        digits[i] = (carry & MASK);
+        carry += (long)value[i] * n;
+        value[i] = carry & MASK;
         carry >>= SHIFT;
     }
 
-    digits[i] = carry;
+    value[i] = carry;
 
     qint_normalise(obj);
     return obj;
@@ -794,11 +880,8 @@ Object * qint_from_string(char * str, int base)
 
 Object * qint_divrem1(Object * obj, int n, int * remptr)
 {
-    // Object * newobj;
-
-    unsigned * digits = obj->values[0];
-    int * info = obj->values[1];
-    int size = info[0];
+    unsigned * value = obj->values[0];
+    int size = *(int *)obj->values[1];
 
     long rem = 0;
 
@@ -810,10 +893,10 @@ Object * qint_divrem1(Object * obj, int n, int * remptr)
     if (obj == NULL)
         return NULL;
 
-    int i;
-    for (i = size; --i >= 0; ) {
-        rem = (rem << SHIFT) + digits[i];
-        ((unsigned *)obj->values[0])[i] = rem / n;
+    for (int i = abs(size); --i >= 0; )
+    {
+        rem = (rem << SHIFT) + value[i];
+        value[i] = rem / n;
         rem %= n;
     }
 
@@ -829,8 +912,8 @@ char * string_from_qint(Object * obj, int base)
     char * str;
 
     unsigned * digits = a->values[0];
-    int * info = a->values[1];
-    int size_a = info[0];
+    int size = *(int *)a->values[1];
+    int size_a = abs(size);
 
     int i;
     char * p;
@@ -864,7 +947,7 @@ char * string_from_qint(Object * obj, int base)
     p = str + i;
     *p = '\0';
 
-    if (info[1] < 0)
+    if (size < 0)
         sign = '-';
 
     // if (a->ob_size < 0)
@@ -880,6 +963,7 @@ char * string_from_qint(Object * obj, int base)
         int rem;
         int last = *(int *)a->values[1];
         int basebits = 1;
+
         i = base;
         while ((i >>= 1) > 1) ++basebits;
 
