@@ -144,9 +144,17 @@ Object * makeIntRaw(int * value, int digits, int mult);
 
 int intsign(int size);
 void qint_normalise(Object * obj);
+
 Object * qint_addition(Object * a, Object * b);
 Object * qint_subtraction(Object * a, Object * b);
+Object * qint_division(Object * a, Object * b);
+
+Object * qint_mul1(Object * a, long n);
+Object * qint_muladd1(Object * obj, long n, int extra);
+Object * qint_from_string(char * str, int base);
 Object * qint_divrem1(Object * obj, int n, long * remptr);
+int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr);
+int qint_divmod(Object * a, Object * b, Object ** divptr, Object ** modptr);
 char * string_from_qint(Object * obj, int base);
 
 // list

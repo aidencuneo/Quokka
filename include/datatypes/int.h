@@ -168,7 +168,12 @@ Object * __div___int(int argc, Object ** argv)
 {
     if (!strcmp(argv[1]->name, "int"))
     {
-        return NULL;
+        Object * res = qint_division(argv[0], argv[1]);
+
+        if (res == NULL)
+            return getIntConst(0);
+
+        return res;
     }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
@@ -761,6 +766,19 @@ Object * qint_subtraction(Object * a, Object * b)
     return z;
 }
 
+Object * qint_division(Object * a, Object * b)
+{
+	Object * div;
+    Object * mod;
+
+	if (qint_divmod(a, b, &div, &mod) < 0)
+		return NULL;
+
+	// Py_DECREF(mod);
+
+	return div;
+}
+
 // Divrem algorithm
 Object * qint_divrem_alg(Object * a, Object * b, Object ** remptr)
 {
@@ -770,11 +788,13 @@ Object * qint_divrem_alg(Object * a, Object * b, Object ** remptr)
     unsigned * value_a = a->values[0];
     unsigned * value_b = b->values[0];
 
-    long d = BASE / (value_b[size_b - 1] + 1);
+    unsigned b_last = value_b[size_b - 1];
+    if (b_last >= UINT_MAX - 1) // If b_last + 1 would cause an overflow, decrement it
+        --b_last;
+    long d = BASE / (b_last + 1);
 
-	Object * a2 = mul1(a, d);
-	Object * b2 = mul1(b, d);
-	Object * z;
+	Object * a2 = qint_mul1(a, d);
+	Object * b2 = qint_mul1(b, d);
 
     int j;
 	int k;
@@ -793,42 +813,47 @@ Object * qint_divrem_alg(Object * a, Object * b, Object ** remptr)
 	size_a = abs(size_a);
 	a = makeIntRaw(
         malloc((size_a - size_b + 1) * sizeof(unsigned)),
-        1,
+        size_a - size_b + 1,
         1);
+
+    // Clear a
+    for (int i = 0; i < size_a - size_b + 1; i++)
+        ((unsigned *)a->values[0])[i] = 0;
 	
-	for (j = size_a, k = size_a - 1; a != NULL && k >= 0; --j, --k)
+	for (j = size_a, k = size_a - 1; a != NULL && k >= 0; j--, k--)
     {
 		int vj = (j >= size_a) ? 0 : value_a[j];
-		long q;
-		long carry = 0;
+		unsigned q;
+		unsigned carry = 0;
 		int i;
 		
 		// SIGCHECK({
-		// 	Py_DECREF(a);
-		// 	a = NULL;
+		// 	Py_DECREF(a2);
+		// 	a2 = NULL;
 		// 	break;
 		// })
 
 		if (vj == value_b[size_a - 1])
 			q = MASK;
 		else
-			q = (((long)vj << SHIFT) + value_a[j - 1]) /
+			q = (((unsigned)vj << SHIFT) + value_a[j - 1]) /
 				value_b[size_b - 1];
 		
 		while (value_b[size_b - 2] * q >
 				((
-					((long)vj << SHIFT)
+					((unsigned)vj << SHIFT)
 					+ value_a[j - 1]
 					- q * (value_b[size_b - 1])
 				 ) << SHIFT)
 				+ value_a[j - 2])
 			--q;
 		
-		for (i = 0; i < size_b && i + k < size_a; ++i) {
-			long z = value_b[i] * q;
+		for (i = 0; i < size_b && i + k < size_a; i++)
+        {
+			unsigned z = value_b[i] * q;
 			int zz = (int)(z >> SHIFT);
 			carry += value_a[i + k] - z
-				+ ((long)zz << SHIFT);
+				+ ((unsigned)zz << SHIFT);
 			value_a[i + k] = carry & MASK;
 			carry = (carry >> SHIFT) - zz;
 		}
@@ -840,17 +865,17 @@ Object * qint_divrem_alg(Object * a, Object * b, Object ** remptr)
 		}
 		
 		if (carry == 0)
-			((unsigned *)a2->values[0])[k] = (long)q;
+			((unsigned *)a2->values[0])[k] = (unsigned)q;
 		else
         {
 			// assert(carry == -1);
-			((unsigned *)a2->values[0])[k] = (long)q - 1;
+			((unsigned *)a2->values[0])[k] = (unsigned)q - 1;
 			carry = 0;
 
-			for (i = 0; i < size_a && i + k < size_a; ++i)
+			for (i = 0; i < size_a && i + k < size_a; i++)
             {
 				carry += value_a[i + k] + value_b[i];
-				value_a[i+k] = carry & MASK;
+				value_a[i + k] = carry & MASK;
 				carry >>= SHIFT;
 			}
 		}
@@ -867,13 +892,13 @@ Object * qint_divrem_alg(Object * a, Object * b, Object ** remptr)
 		/* d receives the (unused) remainder */
 		if (*remptr == NULL)
         {
-			// Py_DECREF(a);
+			// Py_DECREF(a2);
 			a = NULL;
 		}
 	}
 
-	// Py_DECREF(v);
-	// Py_DECREF(w);
+	// Py_DECREF(a);
+	// Py_DECREF(b);
 
 	return a;
 }
@@ -890,13 +915,12 @@ int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr)
 
     z = makeIntRaw(
         malloc((size_a + size_b) * sizeof(unsigned)),
-        size_a + size_b, // ?????????????
+        0, // ?????????????
         1);
 
-	if (size_b == 0)
+	if ((size_b == 1 || size_b == -1) && !*value_b)
     {
-        println("can't divide by zero");
-        exit(1);
+        error("attempted division by zero", line_num);
 		// PyErr_SetString(PyExc_ZeroDivisionError,
 		// 		"long division or modulo");
 		return -1;
@@ -910,12 +934,13 @@ int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr)
 		*divptr = getIntConst(0);
 		// Py_INCREF(a);
 		*remptr = a;
+
 		return 0;
 	}
 
 	if (size_b == 1)
     {
-		_Function_ignore_lock_checking_ rem = 0;
+		long rem = 0;
 
 		z = qint_divrem1(a, value_b[0], &rem);
 		if (z == NULL)
@@ -932,10 +957,15 @@ int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr)
 
     int size_z = *(int *)z->values[1];
 
+    println("All of my bad parts...");
+    isummary(*z->values, size_z);
+    println("But it's all too clear...");
+
 	/* Set the signs.
 	   The quotient z has the sign of a*b;
 	   the remainder r has the sign of a,
 	   so a = b*z + r. */
+
 	if ((size_a < 0) != (size_b < 0))
 		size_z = -(size_z);
 	if (size_a < 0 && *(int *)((*remptr)->values[1]) != 0)
@@ -951,22 +981,24 @@ int qint_divmod(Object * a, Object * b, Object ** divptr, Object ** modptr)
     Object * div;
     Object * mod;
 
-    int size_a = *(int *)a->values[0];
-    int size_b = *(int *)b->values[0];
+    int size_a = *(int *)a->values[1];
+    int size_b = *(int *)b->values[1];
 
     unsigned * value_a = a->values[0];
     unsigned * value_b = b->values[0];
 
     long carry = 0;
 
+    println(abs(size_a));
+
     div = makeIntRaw(
-        malloc((size_a + 1) * sizeof(unsigned)),
-        size_a + 1,
+        malloc((abs(size_a) + 1) * sizeof(unsigned)),
+        0,
         1);
 
     mod = makeIntRaw(
-        malloc((size_a + 1) * sizeof(unsigned)),
-        size_a + 1,
+        malloc((abs(size_a) + 1) * sizeof(unsigned)),
+        0,
         1);
 	
 	if (qint_divrem(a, b, &div, &mod) < 0)
@@ -1021,10 +1053,19 @@ int qint_divmod(Object * a, Object * b, Object ** divptr, Object ** modptr)
 	*divptr = div;
 	*modptr = mod;
 
+    println("---");
+    isummary(div->values[0], abs(*(int *)div->values[1]) + 1);
+    println("---");
+
 	return 0;
 }
 
-Object * qint_muladd1(Object * obj, int n, int extra)
+Object * qint_mul1(Object * a, long n)
+{
+	return qint_muladd1(a, n, 0);
+}
+
+Object * qint_muladd1(Object * obj, long n, int extra)
 {
     int size = *(int *)obj->values[1]; // Old digit count
 
@@ -1080,7 +1121,10 @@ Object * qint_from_string(char * str, int base)
     //     str += 2;
 
     int est_len = len / 2 + 1;
-    obj = makeIntRaw(malloc(est_len * sizeof(unsigned)), 0, 1);
+    obj = makeIntRaw(
+        malloc(est_len * sizeof(unsigned)),
+        0,
+        1);
 
     // start = str;
     int i;
@@ -1121,7 +1165,7 @@ Object * qint_divrem1(Object * obj, int n, long * remptr)
     long rem = 0;
 
     if (!(n > 0 && n <= MASK))
-        error("nooo", line_num);
+        error("qint contains digits that are out of range", line_num);
 
     // assert(n > 0 && n <= MASK);
 
