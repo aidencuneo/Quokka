@@ -598,6 +598,21 @@ Object * makeIntRaw(int * value, int digits, int mult)
     return self;
 }
 
+Object * makeIntDupe(Object * old)
+{
+    int size = *(int *)old->values[1];
+    int absize = abs(size);
+    int sign = intsign(size);
+
+    unsigned * oldvalue = old->values[0];
+    unsigned * value = malloc(absize * sizeof(unsigned));
+
+    for (int i = 0; i < absize; i++)
+        value[i] = oldvalue[i];
+
+    return makeIntRaw(value, absize, sign);
+}
+
 // Return qint sign using qint size
 int intsign(int size)
 {
@@ -776,6 +791,8 @@ Object * qint_division(Object * a, Object * b)
 	if (qint_divmod(a, b, &div, &mod) < 0)
 		return NULL;
 
+    objUnref(mod);
+
 	return div;
 }
 
@@ -795,18 +812,18 @@ Object * qint_divrem_alg(Object * v1, Object * w1, Object ** remptr)
         --b_last;
     long d = BASE / (b_last + 1);
 
-    println("========");
-    isummary(value_v, size_v);
-    isummary(value_w, size_w);
-    println("========");
+    // println("========");
+    // isummary(value_v, size_v);
+    // isummary(value_w, size_w);
+    // println("========");
 
 	Object * v = qint_mul1(v1, d);
 	Object * w = qint_mul1(w1, d);
     Object * a;
 
-    isummary(v->values[0], *(int *)v->values[1]);
-    isummary(w->values[0], *(int *)w->values[1]);
-    println("========");
+    // isummary(v->values[0], *(int *)v->values[1]);
+    // isummary(w->values[0], *(int *)w->values[1]);
+    // println("========");
 
     int j;
 	int k;
@@ -826,7 +843,8 @@ Object * qint_divrem_alg(Object * v1, Object * w1, Object ** remptr)
 	
 	size_v = abs(*(int *)v->values[1]);
     size_a = abs(size_v) - abs(size_w) + 1;
-    printf("SIZE [%d]-----------------\n", size_a);
+
+    // printf("SIZE [%d]-----------------\n", size_a);
 
 	a = makeIntRaw(
         malloc(size_a * sizeof(unsigned)),
@@ -854,7 +872,7 @@ Object * qint_divrem_alg(Object * v1, Object * w1, Object ** remptr)
 		// 	break;
 		// })
 
-        printf("(1 : carry) %ld\n", carry);
+        // printf("(1 : carry) %ld\n", carry);
 
 		if (vj == value_w[size_w - 1])
 			q = MASK;
@@ -871,7 +889,7 @@ Object * qint_divrem_alg(Object * v1, Object * w1, Object ** remptr)
 				+ value_v[j - 2])
 			--q;
 
-        printf("(2 : carry) %ld\n", carry);
+        // printf("(2 : carry) %ld\n", carry);
 		
 		for (i = 0; i < size_w && i + k < size_v; i++)
         {
@@ -879,13 +897,13 @@ Object * qint_divrem_alg(Object * v1, Object * w1, Object ** remptr)
 			unsigned zz = (unsigned)(z >> SHIFT);
 			carry += value_v[i + k] - z
 				+ ((unsigned long)zz << SHIFT);
-        printf("(2.5 : carry) %ld\n", carry);
+        // printf("(2.5 : carry) %ld\n", carry);
 			value_v[i + k] = carry & MASK;
         // printf("value_v[i + k] = %u\n", value_v[i + k]);
 			carry = (carry >> SHIFT) - zz;
 		}
 
-        printf("(3 : carry) %ld\n", carry);
+        // printf("(3 : carry) %ld\n", carry);
 
 		if (i + k < size_v)
         {
@@ -893,7 +911,7 @@ Object * qint_divrem_alg(Object * v1, Object * w1, Object ** remptr)
 			value_v[i + k] = 0;
 		}
 
-        printf("(--: carry) %ld\n", carry);
+        // printf("(--: carry) %ld\n", carry);
 
 		if (carry == 0)
 			value_a[k] = (unsigned)q; // Probably should be (unsigned)q
@@ -912,9 +930,9 @@ Object * qint_divrem_alg(Object * v1, Object * w1, Object ** remptr)
 		}
 	} /* for j, k */
 
-    println("ENDING:");
-    isummary(value_a, *(int *)a->values[1]);
-    println("ENDING-");
+    // println("ENDING:");
+    // isummary(value_a, *(int *)a->values[1]);
+    // println("ENDING-");
 
 	if (a == NULL)
 		*remptr = NULL;
@@ -922,7 +940,7 @@ Object * qint_divrem_alg(Object * v1, Object * w1, Object ** remptr)
     {
 		qint_normalise(a);
 
-		*remptr = qint_divrem1(v, d, &d);
+		*remptr = qint_divrem1_d(v, d, &d);
 
 		// d receives the (unused) remainder
 		if (*remptr == NULL)
@@ -975,28 +993,34 @@ int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr)
 		return 0;
 	}
 
+    if (size_b > 1)
+    {
+        size_b = 1;
+        *value_b = INT_MAX;
+    }
+
 	if (size_b == 1)
     {
 		long rem = 0;
 
-		z = qint_divrem1(a, value_b[0], &rem);
+		z = qint_divrem1_d(a, value_b[0], &rem);
 		if (z == NULL)
 			return -1;
 
 		*remptr = makeIntRaw(makeIntPtr(rem), 1, 1);
 	}
-	else
-    {
-		z = qint_divrem_alg(a, b, remptr);
-		if (z == NULL)
-			return -1;
-	}
+    // else
+    // {
+    //     z = qint_divrem_alg(a, b, remptr);
+    //     if (z == NULL)
+    //         return -1;
+    // }
 
     size_z = *(int *)z->values[1];
 
-    println("- Division algorithm returned this (size + 1):");
-    isummary(*z->values, size_z + 1);
-    println("..............................................");
+    // println("- Division algorithm returned this (size + 1):");
+    // isummary(*z->values, size_z + 1);
+    // println("..............................................");
 
 	/* Set the signs.
 	   The quotient z has the sign of a*b;
@@ -1026,18 +1050,18 @@ int qint_divmod(Object * a, Object * b, Object ** divptr, Object ** modptr)
 
     long carry = 0;
 
-    println(abs(size_a));
+    // println(abs(size_a));
 
-    div = makeIntRaw(
-        malloc((abs(size_a) + 1) * sizeof(unsigned)),
-        0,
-        1);
+    // div = makeIntRaw(
+    //     malloc((abs(size_a) + 1) * sizeof(unsigned)),
+    //     0,
+    //     1);
 
-    mod = makeIntRaw(
-        malloc((abs(size_a) + 1) * sizeof(unsigned)),
-        0,
-        1);
-	
+    // mod = makeIntRaw(
+    //     malloc((abs(size_a) + 1) * sizeof(unsigned)),
+    //     0,
+    //     1);
+
 	if (qint_divrem(a, b, &div, &mod) < 0)
     {
         println("THIS SHOULDN'T HAPPEN??");
@@ -1090,9 +1114,9 @@ int qint_divmod(Object * a, Object * b, Object ** divptr, Object ** modptr)
 	*divptr = div;
 	*modptr = mod;
 
-    println("---");
-    isummary(div->values[0], abs(*(int *)div->values[1]) + 1);
-    println("---");
+    // println("---");
+    // isummary(div->values[0], abs(*(int *)div->values[1]) + 1);
+    // println("---");
 
 	return 0;
 }
@@ -1100,10 +1124,12 @@ int qint_divmod(Object * a, Object * b, Object ** divptr, Object ** modptr)
 // Doesn't modify argument 1
 Object * qint_mul1(Object * a, long n)
 {
-    Object * a2 = makeIntRaw(
-        a->values[0],
-        abs(*(int *)a->values[1]),
-        intsign(*(int *)a->values[1]));
+    Object * a2 = makeIntDupe(a);
+
+    // Object * a2 = makeIntRaw(
+    //     a->values[0],
+    //     abs(*(int *)a->values[1]),
+    //     intsign(*(int *)a->values[1]));
 
 	qint_muladd1(a2, n, 0);
     return a2;
@@ -1203,7 +1229,39 @@ Object * qint_from_string(char * str, int base)
     return obj;
 }
 
-Object * qint_divrem1(Object * obj, int n, long * remptr)
+// Doesn't modify argument 1
+Object * qint_divrem1_d(Object * obj, int n, long * remptr)
+{
+    Object * z = makeIntDupe(obj);
+
+    unsigned * value = z->values[0];
+    int size = *(int *)z->values[1];
+
+    long rem = 0;
+
+    if (!(n > 0 && n <= MASK))
+        error("qint contains digits that are out of range", line_num);
+
+    // assert(n > 0 && n <= MASK);
+
+    if (z == NULL)
+        return NULL;
+
+    for (int i = abs(size); --i >= 0; )
+    {
+        rem = (rem << SHIFT) + value[i];
+        value[i] = rem / n;
+        rem %= n;
+    }
+
+    *remptr = rem;
+
+    qint_normalise(z);
+    return z;
+}
+
+// Modifies argument 1
+void qint_divrem1(Object * obj, int n, long * remptr)
 {
     unsigned * value = obj->values[0];
     int size = *(int *)obj->values[1];
@@ -1216,7 +1274,7 @@ Object * qint_divrem1(Object * obj, int n, long * remptr)
     // assert(n > 0 && n <= MASK);
 
     if (obj == NULL)
-        return NULL;
+        return;
 
     for (int i = abs(size); --i >= 0; )
     {
@@ -1228,7 +1286,6 @@ Object * qint_divrem1(Object * obj, int n, long * remptr)
     *remptr = rem;
 
     qint_normalise(obj);
-    return obj;
 }
 
 char * string_from_qint(Object * obj, int base)
