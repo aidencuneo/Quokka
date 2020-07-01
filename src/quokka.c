@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <inttypes.h>
 #include <errno.h>
+#include <assert.h>
 
 // CLI options (bools):
 int verbose = 0;

@@ -1,274 +1,368 @@
-==1160== Memcheck, a memory error detector
-==1160== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==1160== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
-==1160== Command: bin/quokka examples/ints.q
-==1160== Parent PID: 1154
-==1160== 
-==1160== error calling PR_SET_PTRACER, vgdb might block
-==1160== Invalid read of size 4
-==1160==    at 0x11D167: qint_divrem_alg (int.h:848)
-==1160==    by 0x11D651: qint_divrem (int.h:953)
-==1160==    by 0x11D86F: qint_divmod (int.h:1004)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160==  Address 0x4a9e88c is 4 bytes before a block of size 40 alloc'd
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x11DC6A: qint_from_string (int.h:1125)
-==1160==    by 0x125794: quokka_interpret_line_tokens (interpret.h:925)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 
-==1160== HEAP SUMMARY:
-==1160==     in use at exit: 544 bytes in 35 blocks
-==1160==   total heap usage: 3,835 allocs, 3,800 frees, 115,578 bytes allocated
-==1160== 
-==1160== 4 bytes in 1 blocks are indirectly lost in loss record 1 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x1096F3: makeIntPtr (qdef.h:20)
-==1160==    by 0x11D61F: qint_divrem (int.h:949)
-==1160==    by 0x11D86F: qint_divmod (int.h:1004)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 4 bytes in 1 blocks are indirectly lost in loss record 2 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x1096F3: makeIntPtr (qdef.h:20)
-==1160==    by 0x11C631: makeIntRaw (int.h:589)
-==1160==    by 0x11D631: qint_divrem (int.h:949)
-==1160==    by 0x11D86F: qint_divmod (int.h:1004)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 8 bytes in 2 blocks are indirectly lost in loss record 3 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x1096F3: makeIntPtr (qdef.h:20)
-==1160==    by 0x11C631: makeIntRaw (int.h:589)
-==1160==    by 0x11D811: qint_divmod (int.h:994)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 8 bytes in 2 blocks are indirectly lost in loss record 4 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x1096F3: makeIntPtr (qdef.h:20)
-==1160==    by 0x11C631: makeIntRaw (int.h:589)
-==1160==    by 0x11D853: qint_divmod (int.h:999)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 8 bytes in 2 blocks are indirectly lost in loss record 5 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x1096F3: makeIntPtr (qdef.h:20)
-==1160==    by 0x11C631: makeIntRaw (int.h:589)
-==1160==    by 0x11D539: qint_divrem (int.h:916)
-==1160==    by 0x11D86F: qint_divmod (int.h:1004)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 16 bytes in 1 blocks are indirectly lost in loss record 6 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x11C5E4: makeIntRaw (int.h:585)
-==1160==    by 0x11D631: qint_divrem (int.h:949)
-==1160==    by 0x11D86F: qint_divmod (int.h:1004)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 16 bytes in 1 blocks are indirectly lost in loss record 7 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x11C5F9: makeIntRaw (int.h:586)
-==1160==    by 0x11D631: qint_divrem (int.h:949)
-==1160==    by 0x11D86F: qint_divmod (int.h:1004)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 20 bytes in 2 blocks are indirectly lost in loss record 8 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x11D7FF: qint_divmod (int.h:995)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 20 bytes in 2 blocks are indirectly lost in loss record 9 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x11D841: qint_divmod (int.h:1000)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 24 bytes in 2 blocks are indirectly lost in loss record 10 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x11D527: qint_divrem (int.h:917)
-==1160==    by 0x11D86F: qint_divmod (int.h:1004)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 32 bytes in 2 blocks are indirectly lost in loss record 11 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x11C5E4: makeIntRaw (int.h:585)
-==1160==    by 0x11D811: qint_divmod (int.h:994)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 32 bytes in 2 blocks are indirectly lost in loss record 12 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x11C5F9: makeIntRaw (int.h:586)
-==1160==    by 0x11D811: qint_divmod (int.h:994)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 32 bytes in 2 blocks are indirectly lost in loss record 13 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x11C5E4: makeIntRaw (int.h:585)
-==1160==    by 0x11D853: qint_divmod (int.h:999)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 32 bytes in 2 blocks are indirectly lost in loss record 14 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x11C5F9: makeIntRaw (int.h:586)
-==1160==    by 0x11D853: qint_divmod (int.h:999)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 32 bytes in 2 blocks are indirectly lost in loss record 15 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x11C5E4: makeIntRaw (int.h:585)
-==1160==    by 0x11D539: qint_divrem (int.h:916)
-==1160==    by 0x11D86F: qint_divmod (int.h:1004)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 32 bytes in 2 blocks are indirectly lost in loss record 16 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x11C5F9: makeIntRaw (int.h:586)
-==1160==    by 0x11D539: qint_divrem (int.h:916)
-==1160==    by 0x11D86F: qint_divmod (int.h:1004)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 72 (32 direct, 40 indirect) bytes in 1 blocks are definitely lost in loss record 17 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x117E11: objectPointer (interpret.h:224)
-==1160==    by 0x11C5C8: makeIntRaw (int.h:580)
-==1160==    by 0x11D631: qint_divrem (int.h:949)
-==1160==    by 0x11D86F: qint_divmod (int.h:1004)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 156 (64 direct, 92 indirect) bytes in 2 blocks are definitely lost in loss record 18 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x117E11: objectPointer (interpret.h:224)
-==1160==    by 0x11C5C8: makeIntRaw (int.h:580)
-==1160==    by 0x11D811: qint_divmod (int.h:994)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 156 (64 direct, 92 indirect) bytes in 2 blocks are definitely lost in loss record 19 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x117E11: objectPointer (interpret.h:224)
-==1160==    by 0x11C5C8: makeIntRaw (int.h:580)
-==1160==    by 0x11D853: qint_divmod (int.h:999)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== 160 (64 direct, 96 indirect) bytes in 2 blocks are definitely lost in loss record 20 of 20
-==1160==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1160==    by 0x117E11: objectPointer (interpret.h:224)
-==1160==    by 0x11C5C8: makeIntRaw (int.h:580)
-==1160==    by 0x11D539: qint_divrem (int.h:916)
-==1160==    by 0x11D86F: qint_divmod (int.h:1004)
-==1160==    by 0x11CE37: qint_division (int.h:774)
-==1160==    by 0x11ABA4: __div___int (int.h:171)
-==1160==    by 0x1276B3: quokka_interpret_line_tokens (interpret.h:1468)
-==1160==    by 0x129B80: quokka_interpret_tokens (interpret.h:2248)
-==1160==    by 0x129C08: _quokka_interpret (interpret.h:2265)
-==1160==    by 0x12A4A0: main (quokka.c:153)
-==1160== 
-==1160== LEAK SUMMARY:
-==1160==    definitely lost: 224 bytes in 7 blocks
-==1160==    indirectly lost: 320 bytes in 28 blocks
-==1160==      possibly lost: 0 bytes in 0 blocks
-==1160==    still reachable: 0 bytes in 0 blocks
-==1160==         suppressed: 0 bytes in 0 blocks
-==1160== 
-==1160== For lists of detected and suppressed errors, rerun with: -s
-==1160== ERROR SUMMARY: 5 errors from 5 contexts (suppressed: 0 from 0)
+==10744== Memcheck, a memory error detector
+==10744== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==10744== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==10744== Command: bin/quokka examples/ints.q
+==10744== Parent PID: 10738
+==10744== 
+==10744== error calling PR_SET_PTRACER, vgdb might block
+==10744== 
+==10744== HEAP SUMMARY:
+==10744==     in use at exit: 680 bytes in 43 blocks
+==10744==   total heap usage: 3,880 allocs, 3,837 frees, 130,357 bytes allocated
+==10744== 
+==10744== 4 bytes in 1 blocks are indirectly lost in loss record 1 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x109713: makeIntPtr (qdef.h:20)
+==10744==    by 0x11D958: qint_divrem (int.h:986)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 4 bytes in 1 blocks are indirectly lost in loss record 2 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x109713: makeIntPtr (qdef.h:20)
+==10744==    by 0x11C66D: makeIntRaw (int.h:591)
+==10744==    by 0x11D96A: qint_divrem (int.h:986)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 4 bytes in 1 blocks are indirectly lost in loss record 3 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x109713: makeIntPtr (qdef.h:20)
+==10744==    by 0x11C66D: makeIntRaw (int.h:591)
+==10744==    by 0x11DDB7: qint_mul1 (int.h:1103)
+==10744==    by 0x11CFE9: qint_divrem_alg (int.h:803)
+==10744==    by 0x11D98A: qint_divrem (int.h:990)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744== 
+==10744== 4 bytes in 1 blocks are indirectly lost in loss record 4 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x109713: makeIntPtr (qdef.h:20)
+==10744==    by 0x11C66D: makeIntRaw (int.h:591)
+==10744==    by 0x11DDB7: qint_mul1 (int.h:1103)
+==10744==    by 0x11D003: qint_divrem_alg (int.h:804)
+==10744==    by 0x11D98A: qint_divrem (int.h:990)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744== 
+==10744== 8 bytes in 2 blocks are indirectly lost in loss record 5 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x109713: makeIntPtr (qdef.h:20)
+==10744==    by 0x11C66D: makeIntRaw (int.h:591)
+==10744==    by 0x11DB56: qint_divmod (int.h:1031)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 8 bytes in 2 blocks are indirectly lost in loss record 6 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x109713: makeIntPtr (qdef.h:20)
+==10744==    by 0x11C66D: makeIntRaw (int.h:591)
+==10744==    by 0x11DB98: qint_divmod (int.h:1036)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 8 bytes in 2 blocks are indirectly lost in loss record 7 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x109713: makeIntPtr (qdef.h:20)
+==10744==    by 0x11C66D: makeIntRaw (int.h:591)
+==10744==    by 0x11D86C: qint_divrem (int.h:953)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 16 bytes in 1 blocks are indirectly lost in loss record 8 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x11C620: makeIntRaw (int.h:587)
+==10744==    by 0x11D96A: qint_divrem (int.h:986)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 16 bytes in 1 blocks are indirectly lost in loss record 9 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x11C635: makeIntRaw (int.h:588)
+==10744==    by 0x11D96A: qint_divrem (int.h:986)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 16 bytes in 1 blocks are indirectly lost in loss record 10 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x11C620: makeIntRaw (int.h:587)
+==10744==    by 0x11DDB7: qint_mul1 (int.h:1103)
+==10744==    by 0x11CFE9: qint_divrem_alg (int.h:803)
+==10744==    by 0x11D98A: qint_divrem (int.h:990)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 16 bytes in 1 blocks are indirectly lost in loss record 11 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x11C635: makeIntRaw (int.h:588)
+==10744==    by 0x11DDB7: qint_mul1 (int.h:1103)
+==10744==    by 0x11CFE9: qint_divrem_alg (int.h:803)
+==10744==    by 0x11D98A: qint_divrem (int.h:990)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 16 bytes in 1 blocks are indirectly lost in loss record 12 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x11C620: makeIntRaw (int.h:587)
+==10744==    by 0x11DDB7: qint_mul1 (int.h:1103)
+==10744==    by 0x11D003: qint_divrem_alg (int.h:804)
+==10744==    by 0x11D98A: qint_divrem (int.h:990)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 16 bytes in 1 blocks are indirectly lost in loss record 13 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x11C635: makeIntRaw (int.h:588)
+==10744==    by 0x11DDB7: qint_mul1 (int.h:1103)
+==10744==    by 0x11D003: qint_divrem_alg (int.h:804)
+==10744==    by 0x11D98A: qint_divrem (int.h:990)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 20 bytes in 2 blocks are indirectly lost in loss record 14 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x11DB44: qint_divmod (int.h:1032)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 20 bytes in 2 blocks are indirectly lost in loss record 15 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x11DB86: qint_divmod (int.h:1037)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 24 bytes in 2 blocks are indirectly lost in loss record 16 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x11D85A: qint_divrem (int.h:954)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 32 bytes in 2 blocks are indirectly lost in loss record 17 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x11C620: makeIntRaw (int.h:587)
+==10744==    by 0x11DB56: qint_divmod (int.h:1031)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 32 bytes in 2 blocks are indirectly lost in loss record 18 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x11C635: makeIntRaw (int.h:588)
+==10744==    by 0x11DB56: qint_divmod (int.h:1031)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 32 bytes in 2 blocks are indirectly lost in loss record 19 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x11C620: makeIntRaw (int.h:587)
+==10744==    by 0x11DB98: qint_divmod (int.h:1036)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 32 bytes in 2 blocks are indirectly lost in loss record 20 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x11C635: makeIntRaw (int.h:588)
+==10744==    by 0x11DB98: qint_divmod (int.h:1036)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 32 bytes in 2 blocks are indirectly lost in loss record 21 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x11C620: makeIntRaw (int.h:587)
+==10744==    by 0x11D86C: qint_divrem (int.h:953)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 32 bytes in 2 blocks are indirectly lost in loss record 22 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x11C635: makeIntRaw (int.h:588)
+==10744==    by 0x11D86C: qint_divrem (int.h:953)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 68 (32 direct, 36 indirect) bytes in 1 blocks are definitely lost in loss record 23 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x117E31: objectPointer (interpret.h:224)
+==10744==    by 0x11C604: makeIntRaw (int.h:582)
+==10744==    by 0x11DDB7: qint_mul1 (int.h:1103)
+==10744==    by 0x11CFE9: qint_divrem_alg (int.h:803)
+==10744==    by 0x11D98A: qint_divrem (int.h:990)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744== 
+==10744== 68 (32 direct, 36 indirect) bytes in 1 blocks are definitely lost in loss record 24 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x117E31: objectPointer (interpret.h:224)
+==10744==    by 0x11C604: makeIntRaw (int.h:582)
+==10744==    by 0x11DDB7: qint_mul1 (int.h:1103)
+==10744==    by 0x11D003: qint_divrem_alg (int.h:804)
+==10744==    by 0x11D98A: qint_divrem (int.h:990)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744== 
+==10744== 72 (32 direct, 40 indirect) bytes in 1 blocks are definitely lost in loss record 25 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x117E31: objectPointer (interpret.h:224)
+==10744==    by 0x11C604: makeIntRaw (int.h:582)
+==10744==    by 0x11D96A: qint_divrem (int.h:986)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 156 (64 direct, 92 indirect) bytes in 2 blocks are definitely lost in loss record 26 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x117E31: objectPointer (interpret.h:224)
+==10744==    by 0x11C604: makeIntRaw (int.h:582)
+==10744==    by 0x11DB56: qint_divmod (int.h:1031)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 156 (64 direct, 92 indirect) bytes in 2 blocks are definitely lost in loss record 27 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x117E31: objectPointer (interpret.h:224)
+==10744==    by 0x11C604: makeIntRaw (int.h:582)
+==10744==    by 0x11DB98: qint_divmod (int.h:1036)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== 160 (64 direct, 96 indirect) bytes in 2 blocks are definitely lost in loss record 28 of 28
+==10744==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==10744==    by 0x117E31: objectPointer (interpret.h:224)
+==10744==    by 0x11C604: makeIntRaw (int.h:582)
+==10744==    by 0x11D86C: qint_divrem (int.h:953)
+==10744==    by 0x11DBB4: qint_divmod (int.h:1041)
+==10744==    by 0x11CE73: qint_division (int.h:776)
+==10744==    by 0x11ABC4: __div___int (int.h:171)
+==10744==    by 0x127A4E: quokka_interpret_line_tokens (interpret.h:1468)
+==10744==    by 0x129F1B: quokka_interpret_tokens (interpret.h:2248)
+==10744==    by 0x129FA3: _quokka_interpret (interpret.h:2265)
+==10744==    by 0x12A83B: main (quokka.c:154)
+==10744== 
+==10744== LEAK SUMMARY:
+==10744==    definitely lost: 288 bytes in 9 blocks
+==10744==    indirectly lost: 392 bytes in 34 blocks
+==10744==      possibly lost: 0 bytes in 0 blocks
+==10744==    still reachable: 0 bytes in 0 blocks
+==10744==         suppressed: 0 bytes in 0 blocks
+==10744== 
+==10744== For lists of detected and suppressed errors, rerun with: -s
+==10744== ERROR SUMMARY: 6 errors from 6 contexts (suppressed: 0 from 0)

@@ -279,10 +279,8 @@ int charCount(char * st, char ch)
     int count = 0;
 
     for (int i = 0; st[i]; i++)
-    {
         if (st[i] == ch)
             count++;
-    }
 
     return count;
 }

@@ -509,6 +509,8 @@ Object * __disp___int(int argc, Object ** argv)
     unsigned * value = argv[0]->values[0];
     int size = *(int *)argv[0]->values[1];
 
+    if (!size)
+        return makeString("0", 0);
     if (size == 1 && *value <= INT_MAX)
         return makeString(intToStr(value[0]), 1);
     if (size == -1 && *value <= INT_MAX)
@@ -774,125 +776,159 @@ Object * qint_division(Object * a, Object * b)
 	if (qint_divmod(a, b, &div, &mod) < 0)
 		return NULL;
 
-	// Py_DECREF(mod);
-
 	return div;
 }
 
 // Divrem algorithm
-Object * qint_divrem_alg(Object * a, Object * b, Object ** remptr)
+Object * qint_divrem_alg(Object * v1, Object * w1, Object ** remptr)
 {
-    int size_a = *(int *)a->values[1];
-    int size_b = *(int *)b->values[1];
+    int size_v = abs(*(int *)v1->values[1]);
+    int size_w = abs(*(int *)w1->values[1]);
+    int size_a;
 
-    unsigned * value_a = a->values[0];
-    unsigned * value_b = b->values[0];
+    unsigned * value_v = v1->values[0];
+    unsigned * value_w = w1->values[0];
+    unsigned * value_a;
 
-    unsigned b_last = value_b[size_b - 1];
+    unsigned b_last = value_w[size_w - 1];
     if (b_last >= UINT_MAX - 1) // If b_last + 1 would cause an overflow, decrement it
         --b_last;
     long d = BASE / (b_last + 1);
 
-	Object * a2 = qint_mul1(a, d);
-	Object * b2 = qint_mul1(b, d);
+    println("========");
+    isummary(value_v, size_v);
+    isummary(value_w, size_w);
+    println("========");
+
+	Object * v = qint_mul1(v1, d);
+	Object * w = qint_mul1(w1, d);
+    Object * a;
+
+    isummary(v->values[0], *(int *)v->values[1]);
+    isummary(w->values[0], *(int *)w->values[1]);
+    println("========");
 
     int j;
 	int k;
 
-	if (a == NULL || b == NULL)
+	if (v == NULL || w == NULL)
     {
 		// Py_XDECREF(v);
 		// Py_XDECREF(w);
 		return NULL;
 	}
+
+    v->refs = 1;
+
+	assert(size_v >= size_w && size_w > 1); /* Assert checks by div() */
+	assert(v->refs == 1); /* Since v will be used as accumulator! */
+	assert(size_w == abs(*(int *)w->values[1])); /* That's how d was calculated */
 	
-	// assert(size_v >= size_w && size_w > 1); /* Assert checks by div() */
-	// assert(v->ob_refcnt == 1); /* Since v will be used as accumulator! */
-	// assert(size_w == ABS(w->ob_size)); /* That's how d was calculated */
-	
-	size_a = abs(size_a);
+	size_v = abs(*(int *)v->values[1]);
+    size_a = abs(size_v) - abs(size_w) + 1;
+    printf("SIZE [%d]-----------------\n", size_a);
+
 	a = makeIntRaw(
-        malloc((size_a - size_b + 1) * sizeof(unsigned)),
-        size_a - size_b + 1,
+        malloc(size_a * sizeof(unsigned)),
+        size_a,
         1);
 
+    value_v = v->values[0];
+    value_w = w->values[0];
+    value_a = a->values[0];
+
     // Clear a
-    for (int i = 0; i < size_a - size_b + 1; i++)
-        ((unsigned *)a->values[0])[i] = 0;
-	
-	for (j = size_a, k = size_a - 1; a != NULL && k >= 0; j--, k--)
+    // for (int i = 0; i < size_v - size_w + 1; i++)
+    //     ((unsigned *)a->values[0])[i] = 0;
+
+	for (j = size_v, k = size_a - 1; a != NULL && k >= 0; j--, k--)
     {
-		int vj = (j >= size_a) ? 0 : value_a[j];
-		unsigned q;
-		unsigned carry = 0;
+		unsigned vj = (j >= size_v) ? 0 : value_v[j];
+		unsigned long q;
+		long carry = 0;
 		int i;
-		
+
 		// SIGCHECK({
 		// 	Py_DECREF(a2);
 		// 	a2 = NULL;
 		// 	break;
 		// })
 
-		if (vj == value_b[size_a - 1])
+        printf("(1 : carry) %ld\n", carry);
+
+		if (vj == value_w[size_w - 1])
 			q = MASK;
 		else
-			q = (((unsigned)vj << SHIFT) + value_a[j - 1]) /
-				value_b[size_b - 1];
-		
-		while (value_b[size_b - 2] * q >
+			q = ((unsigned)vj << SHIFT) + value_v[j - 1] /
+				value_w[size_w - 1];
+
+		while (value_w[size_w - 2] * q >
 				((
 					((unsigned)vj << SHIFT)
-					+ value_a[j - 1]
-					- q * (value_b[size_b - 1])
-				 ) << SHIFT)
-				+ value_a[j - 2])
+					+ value_v[j - 1]
+					- q * value_w[size_w - 1]
+				                ) << SHIFT)
+				+ value_v[j - 2])
 			--q;
+
+        printf("(2 : carry) %ld\n", carry);
 		
-		for (i = 0; i < size_b && i + k < size_a; i++)
+		for (i = 0; i < size_w && i + k < size_v; i++)
         {
-			unsigned z = value_b[i] * q;
-			int zz = (int)(z >> SHIFT);
-			carry += value_a[i + k] - z
-				+ ((unsigned)zz << SHIFT);
-			value_a[i + k] = carry & MASK;
+            unsigned long z = value_w[i] * q;
+			unsigned zz = (unsigned)(z >> SHIFT);
+			carry += value_v[i + k] - z
+				+ ((unsigned long)zz << SHIFT);
+        printf("(2.5 : carry) %ld\n", carry);
+			value_v[i + k] = carry & MASK;
+        // printf("value_v[i + k] = %u\n", value_v[i + k]);
 			carry = (carry >> SHIFT) - zz;
 		}
-		
-		if (i + k < size_a)
+
+        printf("(3 : carry) %ld\n", carry);
+
+		if (i + k < size_v)
         {
-			carry += value_a[i + k];
-			value_a[i + k] = 0;
+			carry += value_v[i + k];
+			value_v[i + k] = 0;
 		}
-		
+
+        printf("(--: carry) %ld\n", carry);
+
 		if (carry == 0)
-			((unsigned *)a2->values[0])[k] = (unsigned)q;
+			value_a[k] = (unsigned)q; // Probably should be (unsigned)q
 		else
         {
 			// assert(carry == -1);
-			((unsigned *)a2->values[0])[k] = (unsigned)q - 1;
-			carry = 0;
+			value_a[k] = (unsigned)q - 1;
+			// carry = 0;
 
-			for (i = 0; i < size_a && i + k < size_a; i++)
+			for (i = 0; i < size_w && i + k < size_v; i++)
             {
-				carry += value_a[i + k] + value_b[i];
-				value_a[i + k] = carry & MASK;
+				carry += value_v[i + k] + value_w[i];
+				value_v[i + k] = carry & MASK;
 				carry >>= SHIFT;
 			}
 		}
 	} /* for j, k */
-	
+
+    println("ENDING:");
+    isummary(value_a, *(int *)a->values[1]);
+    println("ENDING-");
+
 	if (a == NULL)
 		*remptr = NULL;
 	else
     {
-		qint_normalise(a2);
+		qint_normalise(a);
 
-		*remptr = qint_divrem1(a, d, &d);
+		*remptr = qint_divrem1(v, d, &d);
 
-		/* d receives the (unused) remainder */
+		// d receives the (unused) remainder
 		if (*remptr == NULL)
         {
-			// Py_DECREF(a2);
+            objUnref(a);
+			// Py_DECREF(a);
 			a = NULL;
 		}
 	}
@@ -909,6 +945,7 @@ int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr)
 
     int size_a = abs(*(int *)a->values[1]);
     int size_b = abs(*(int *)b->values[1]);
+    int size_z;
 
     unsigned * value_a = a->values[0];
     unsigned * value_b = b->values[0];
@@ -918,7 +955,7 @@ int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr)
         0, // ?????????????
         1);
 
-	if ((size_b == 1 || size_b == -1) && !*value_b)
+	if ((size_b == 1 || size_b == -1 || !size_b) && !*value_b)
     {
         error("attempted division by zero", line_num);
 		// PyErr_SetString(PyExc_ZeroDivisionError,
@@ -955,11 +992,11 @@ int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr)
 			return -1;
 	}
 
-    int size_z = *(int *)z->values[1];
+    size_z = *(int *)z->values[1];
 
-    println("All of my bad parts...");
-    isummary(*z->values, size_z);
-    println("But it's all too clear...");
+    println("- Division algorithm returned this (size + 1):");
+    isummary(*z->values, size_z + 1);
+    println("..............................................");
 
 	/* Set the signs.
 	   The quotient z has the sign of a*b;
@@ -1060,12 +1097,20 @@ int qint_divmod(Object * a, Object * b, Object ** divptr, Object ** modptr)
 	return 0;
 }
 
+// Doesn't modify argument 1
 Object * qint_mul1(Object * a, long n)
 {
-	return qint_muladd1(a, n, 0);
+    Object * a2 = makeIntRaw(
+        a->values[0],
+        abs(*(int *)a->values[1]),
+        intsign(*(int *)a->values[1]));
+
+	qint_muladd1(a2, n, 0);
+    return a2;
 }
 
-Object * qint_muladd1(Object * obj, long n, int extra)
+// Modifies argument 1
+void qint_muladd1(Object * obj, long n, int extra)
 {
     int size = *(int *)obj->values[1]; // Old digit count
 
@@ -1080,12 +1125,14 @@ Object * qint_muladd1(Object * obj, long n, int extra)
     long carry = extra;
 
     if (obj == NULL)
-        return NULL;
+        return;
+
+    size = abs(size);
 
     int i;
-    for (i = 0; i < abs(size); i++)
+    for (i = 0; i < size; i++)
     {
-        carry += (long)value[i] * n;
+        carry += (unsigned long)value[i] * n;
         value[i] = carry & MASK;
         carry >>= SHIFT;
     }
@@ -1093,7 +1140,6 @@ Object * qint_muladd1(Object * obj, long n, int extra)
     value[i] = carry;
 
     qint_normalise(obj);
-    return obj;
 }
 
 Object * qint_from_string(char * str, int base)
