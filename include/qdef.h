@@ -149,7 +149,7 @@ Object * qint_addition(Object * a, Object * b);
 Object * qint_subtraction(Object * a, Object * b);
 Object * qint_division(Object * a, Object * b);
 
-Object * qint_mul1(Object * a, long n);
+Object * qint_mul1_d(Object * a, long n);
 void qint_muladd1(Object * obj, long n, int extra);
 Object * qint_from_string(char * str, int base);
 Object * qint_divrem1_d(Object * obj, int n, long * remptr);

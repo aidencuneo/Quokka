@@ -197,8 +197,8 @@ Object * __bool___list(int argc, Object ** argv)
     int length = ((int *)objectGetAttr(argv[0], "length"))[0];
 
     if (length)
-        return makeInt(&truePtr, 0, 1);
-    return makeInt(&falsePtr, 0, 1);
+        return getIntConst(1);
+    return getIntConst(0);
 }
 
 Object * __disp___list(int argc, Object ** argv)

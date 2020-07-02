@@ -1,6 +1,6 @@
-INT_MAX  = +(2**32L/2)
-UINT_MAX = 2**32L
-LONG_MAX = 2**62L*2-1
+// INT_MAX  = +(2**32L/2)
+// UINT_MAX = 2**32L
+// LONG_MAX = 2**62L*2-1
 
 
 // Left Pad (Align list items to left)

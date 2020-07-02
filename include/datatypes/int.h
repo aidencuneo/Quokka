@@ -103,8 +103,8 @@ Object * __mul___int(int argc, Object ** argv)
         unsigned * value_b = argv[1]->values[0];
         unsigned * value_z;
 
-        int size_a = *(int *)argv[0]->values[1];
-        int size_b = *(int *)argv[1]->values[1];
+        int size_a = abs(*(int *)argv[0]->values[1]);
+        int size_b = abs(*(int *)argv[1]->values[1]);
         int size_z = size_a + size_b;
 
         value_z = malloc(size_z * sizeof(unsigned));
@@ -119,7 +119,7 @@ Object * __mul___int(int argc, Object ** argv)
         for (i = 0; i < size_z; i++)
             value_z[i] = 0;
 
-        isummary(value_z, size_z);
+        // isummary(value_z, size_z);
 
         for (i = 0; i < size_a; i++)
         {
@@ -149,7 +149,7 @@ Object * __mul___int(int argc, Object ** argv)
         if (size_b < 0)
             size_z = -(size_z);
 
-        isummary(value_z, abs(size_z));
+        // isummary(value_z, abs(size_z));
 
         qint_normalise(z);
         return z;
@@ -325,18 +325,18 @@ Object * __eq___int(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] == secnd[0])
-            return makeInt(&truePtr, 0, 0);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
-    else if (!strcmp(argv[1]->name, "long"))
-    {
-        int * first = objectGetAttr(argv[0], "value");
-        long long * secnd = objectGetAttr(argv[1], "value");
+    // else if (!strcmp(argv[1]->name, "long"))
+    // {
+    //     int * first = objectGetAttr(argv[0], "value");
+    //     long long * secnd = objectGetAttr(argv[1], "value");
 
-        if (first[0] == secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
-    }
+    //     if (first[0] == secnd[0])
+    //         return getIntConst(1);
+    //     return getIntConst(0);
+    // }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
     strcpy(err, "types 'int' and '");
@@ -351,12 +351,38 @@ Object * __lt___int(int argc, Object ** argv)
 {
     if (!strcmp(argv[1]->name, "int"))
     {
-        int * first = objectGetAttr(argv[0], "value");
-        int * secnd = objectGetAttr(argv[1], "value");
+        unsigned * value_a = objectGetAttr(argv[0], "value");
+        unsigned * value_b = objectGetAttr(argv[1], "value");
 
-        if (first[0] < secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+        int size_a = *(int *)argv[0]->values[1];
+        int size_b = *(int *)argv[1]->values[1];
+
+        if (size_a < size_b)
+            return getIntConst(1);
+        else if (size_a > size_b)
+            return getIntConst(0);
+
+        assert(size_a == size_b);
+
+        unsigned long carry = 0;
+
+        for (int i = size_a - 1; i >= 0; i--)
+        {
+            // printf("%u < %u?\n", value_a[i], value_b[i]);
+
+            if (value_a[i] < value_b[i])
+                return getIntConst(1);
+            else if (value_a[i] > value_b[i])
+                return getIntConst(0);
+            else
+            {
+                assert(value_a[i] == value_b[i]);
+
+                // printf("%u == %u\n", value_a[i], value_b[i]);
+            }
+        }
+
+        return getIntConst(0);
     }
     // else if (!strcmp(argv[1]->name, "long"))
     // {
@@ -364,8 +390,8 @@ Object * __lt___int(int argc, Object ** argv)
     //     long long * secnd = objectGetAttr(argv[1], "value");
 
     //     if (first[0] < secnd[0])
-    //         return makeInt(&truePtr, 0, 1);
-    //     return makeInt(&falsePtr, 0, 1);
+    //         return getIntConst(1);
+    //     return getIntConst(0);
     // }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
@@ -385,18 +411,18 @@ Object * __le___int(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] <= secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
-    else if (!strcmp(argv[1]->name, "long"))
-    {
-        int * first = objectGetAttr(argv[0], "value");
-        long long * secnd = objectGetAttr(argv[1], "value");
+    // else if (!strcmp(argv[1]->name, "long"))
+    // {
+    //     int * first = objectGetAttr(argv[0], "value");
+    //     long long * secnd = objectGetAttr(argv[1], "value");
 
-        if (first[0] <= secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
-    }
+    //     if (first[0] <= secnd[0])
+    //         return getIntConst(1);
+    //     return getIntConst(0);
+    // }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
     strcpy(err, "types 'int' and '");
@@ -415,8 +441,8 @@ Object * __gt___int(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] > secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
     else if (!strcmp(argv[1]->name, "long"))
     {
@@ -424,8 +450,8 @@ Object * __gt___int(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] > secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
@@ -445,8 +471,8 @@ Object * __ge___int(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] >= secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
     else if (!strcmp(argv[1]->name, "long"))
     {
@@ -454,8 +480,8 @@ Object * __ge___int(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] >= secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
@@ -791,6 +817,8 @@ Object * qint_division(Object * a, Object * b)
 	if (qint_divmod(a, b, &div, &mod) < 0)
 		return NULL;
 
+    println(div->refs);
+    println(mod->refs);
     objUnref(mod);
 
 	return div;
@@ -817,8 +845,8 @@ Object * qint_divrem_alg(Object * v1, Object * w1, Object ** remptr)
     // isummary(value_w, size_w);
     // println("========");
 
-	Object * v = qint_mul1(v1, d);
-	Object * w = qint_mul1(w1, d);
+	Object * v = qint_mul1_d(v1, d);
+	Object * w = qint_mul1_d(w1, d);
     Object * a;
 
     // isummary(v->values[0], *(int *)v->values[1]);
@@ -973,6 +1001,8 @@ int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr)
         0, // ?????????????
         1);
 
+    z->refs++;
+
 	if ((size_b == 1 || size_b == -1 || !size_b) && !*value_b)
     {
         error("attempted division by zero", line_num);
@@ -986,8 +1016,10 @@ int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr)
 	    value_a[size_a - 1] < value_b[size_b - 1]))
     {
 		/* |a| < |b|. */
-		*divptr = getIntConst(0);
-		// Py_INCREF(a);
+
+        objUnref(z);
+		*divptr = makeIntDupe(getIntConst(0)); // Because this will be freed eventually
+        a->refs++;
 		*remptr = a;
 
 		return 0;
@@ -1003,6 +1035,8 @@ int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr)
     {
 		long rem = 0;
 
+        objUnref(z);
+
 		z = qint_divrem1_d(a, value_b[0], &rem);
 		if (z == NULL)
 			return -1;
@@ -1011,6 +1045,7 @@ int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr)
 	}
     // else
     // {
+    //     objUnref(z);
     //     z = qint_divrem_alg(a, b, remptr);
     //     if (z == NULL)
     //         return -1;
@@ -1079,24 +1114,27 @@ int qint_divmod(Object * a, Object * b, Object ** divptr, Object ** modptr)
 		temp = qint_addition(mod, b);
 
 		// Py_DECREF(mod);
+        objUnref(mod);
 
 		mod = temp;
 
 		if (mod == NULL)
         {
-			// Py_DECREF(div);
+            objUnref(div);
 			return -1;
 		}
 
 		one = getIntConst(1);
 
-		if (one == NULL ||
-		    (temp = qint_subtraction(div, one)) == NULL)
+		if ((temp = qint_subtraction(div, one)) == NULL)
         {
 
 			// Py_DECREF(mod);
 			// Py_DECREF(div);
 			// Py_XDECREF(one);
+
+            objUnref(mod);
+            objUnref(div);
 
             println("THIS ALSO SHOULDN'T HAPPEN??");
 			return -1;
@@ -1104,6 +1142,8 @@ int qint_divmod(Object * a, Object * b, Object ** divptr, Object ** modptr)
 
 		// Py_DECREF(one);
 		// Py_DECREF(div);
+
+        objUnref(div);
 
 		div = temp;
 	}
@@ -1122,7 +1162,7 @@ int qint_divmod(Object * a, Object * b, Object ** divptr, Object ** modptr)
 }
 
 // Doesn't modify argument 1
-Object * qint_mul1(Object * a, long n)
+Object * qint_mul1_d(Object * a, long n)
 {
     Object * a2 = makeIntDupe(a);
 
@@ -1290,7 +1330,9 @@ void qint_divrem1(Object * obj, int n, long * remptr)
 
 char * string_from_qint(Object * obj, int base)
 {
-    register Object * a = obj;
+    // The given object will be destroyed by the end of this function
+    register Object * a = makeIntDupe(obj);
+
     char * str;
 
     unsigned * digits = a->values[0];
@@ -1304,8 +1346,11 @@ char * string_from_qint(Object * obj, int base)
     char sign = 0;
 
     if (a == NULL) // if (a == NULL || !PyLong_Check(a))
+    {
         // PyErr_BadInternalCall();
+        objUnref(a);
         return NULL;
+    }
 
     if (base < 2 || base > 36)
         error("invalid base for qint", line_num);
@@ -1446,6 +1491,8 @@ char * string_from_qint(Object * obj, int base)
         while ((*q++ = *p++) != '\0');
         q--;
     }
+
+    objUnref(a);
 
     return str;
 }

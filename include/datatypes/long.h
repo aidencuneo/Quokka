@@ -96,7 +96,7 @@ Object * __div___long(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (!secnd[0])
-            return makeInt(&falsePtr, 0, 1);
+            return getIntConst(0);
 
         long long * third = makeLLPtr(first[0] / secnd[0]);
 
@@ -108,7 +108,7 @@ Object * __div___long(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         if (!secnd[0])
-            return makeInt(&falsePtr, 0, 1);
+            return getIntConst(0);
 
         long long * third = makeLLPtr(first[0] / secnd[0]);
 
@@ -264,8 +264,8 @@ Object * __eq___long(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] == secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
     else if (!strcmp(argv[1]->name, "long"))
     {
@@ -273,8 +273,8 @@ Object * __eq___long(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] == secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
 
     char * err = malloc(18 + strlen(argv[1]->name) + 31 + 1);
@@ -294,8 +294,8 @@ Object * __lt___long(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] < secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
     else if (!strcmp(argv[1]->name, "long"))
     {
@@ -303,8 +303,8 @@ Object * __lt___long(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] < secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
 
     char * err = malloc(18 + strlen(argv[1]->name) + 30 + 1);
@@ -324,8 +324,8 @@ Object * __le___long(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] <= secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
     else if (!strcmp(argv[1]->name, "long"))
     {
@@ -333,8 +333,8 @@ Object * __le___long(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] <= secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
 
     char * err = malloc(18 + strlen(argv[1]->name) + 31 + 1);
@@ -354,8 +354,8 @@ Object * __gt___long(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] > secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
     else if (!strcmp(argv[1]->name, "long"))
     {
@@ -363,8 +363,8 @@ Object * __gt___long(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] > secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
 
     char * err = malloc(18 + strlen(argv[1]->name) + 30 + 1);
@@ -384,8 +384,8 @@ Object * __ge___long(int argc, Object ** argv)
         int * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] >= secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
     else if (!strcmp(argv[1]->name, "long"))
     {
@@ -393,8 +393,8 @@ Object * __ge___long(int argc, Object ** argv)
         long long * secnd = objectGetAttr(argv[1], "value");
 
         if (first[0] >= secnd[0])
-            return makeInt(&truePtr, 0, 1);
-        return makeInt(&falsePtr, 0, 1);
+            return getIntConst(1);
+        return getIntConst(0);
     }
 
     char * err = malloc(18 + strlen(argv[1]->name) + 31 + 1);
@@ -456,8 +456,8 @@ Object * __bool___long(int argc, Object ** argv)
     long long * thisvalue = objectGetAttr(argv[0], "value");
 
     if (thisvalue[0])
-        return makeInt(&truePtr, 0, 1);
-    return makeInt(&falsePtr, 0, 1);
+        return getIntConst(1);
+    return getIntConst(0);
 }
 
 Object * __int___long(int argc, Object ** argv)

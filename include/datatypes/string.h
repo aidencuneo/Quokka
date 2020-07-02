@@ -110,8 +110,8 @@ Object * __eq___string(int argc, Object ** argv)
     char * secnd = objectGetAttr(argv[1], "value");
 
     if (!strcmp(first, secnd))
-        return makeInt(&truePtr, 0, 1);
-    return makeInt(&falsePtr, 0, 1);
+        return getIntConst(1);
+    return getIntConst(0);
 }
 
 Object * __index___string(int argc, Object ** argv)
@@ -195,8 +195,8 @@ Object * __bool___string(int argc, Object ** argv)
     char * thisvalue = ((char *)objectGetAttr(argv[0], "value"));
 
     if (strlen(thisvalue))
-        return makeInt(&truePtr, 0, 1);
-    return makeInt(&falsePtr, 0, 1);
+        return getIntConst(1);
+    return getIntConst(0);
 }
 
 Object * __int___string(int argc, Object ** argv)
@@ -301,9 +301,9 @@ Object * isupper_string(int argc, Object ** argv)
 
     for (int i = 0; i < len; i++)
         if (islower(thisvalue[i])) // If anything is lower, return false
-            return makeInt(&falsePtr, 0, 1);
+            return getIntConst(0);
 
-    return makeInt(&truePtr, 0, 1);
+    return getIntConst(1);
 }
 
 Object * islower_string(int argc, Object ** argv)
@@ -313,9 +313,9 @@ Object * islower_string(int argc, Object ** argv)
 
     for (int i = 0; i < len; i++)
         if (isupper(thisvalue[i])) // If anything is upper, return false
-            return makeInt(&falsePtr, 0, 1);
+            return getIntConst(0);
 
-    return makeInt(&truePtr, 0, 1);
+    return getIntConst(1);
 }
 
 Object * makeString(char * value, int is_malloc_ptr)
