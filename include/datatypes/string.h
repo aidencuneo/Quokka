@@ -208,14 +208,14 @@ Object * __int___string(int argc, Object ** argv)
     return makeInt(toint, 1, 1);
 }
 
-Object * __long___string(int argc, Object ** argv)
-{
-    char * thisvalue = ((char *)objectGetAttr(argv[0], "value"));
+// Object * __long___string(int argc, Object ** argv)
+// {
+//     char * thisvalue = ((char *)objectGetAttr(argv[0], "value"));
 
-    long long * tolong = makeLLPtr(strtoll(thisvalue, NULL, 10));
+//     long long * tolong = makeLLPtr(strtoll(thisvalue, NULL, 10));
 
-    return makeLong(tolong, 1);
-}
+//     return makeLong(tolong, 1);
+// }
 
 Object * __string___string(int argc, Object ** argv)
 {
@@ -233,31 +233,10 @@ Object * __string___string(int argc, Object ** argv)
 
 Object * __free___string(int argc, Object ** argv)
 {
-    int method_start = objectGetAttrIndex(argv[0], "upper");
-    if (method_start == -1)
-        return makeNull();
-
-    for (int i = method_start; i < argv[0]->value_count; i++)
-    {
-        char * name = ((Object *)argv[0]->values[i])->name;
-
-        // If current value is not a method, exit loop
-        if (strcmp(name, "method") &&
-            strcmp(name, "cmethod"))
-            break;
-
-        freeObject(argv[0]->values[i]);
-    }
-
-    return makeNull();
-}
-
-Object * __free_malloc___string(int argc, Object ** argv)
-{
     char * thisvalue = objectGetAttr(argv[0], "value");
     free(thisvalue);
 
-    return __free___string(argc, argv);
+    return NULL;
 }
 
 Object * upper_string(int argc, Object ** argv)
@@ -337,18 +316,23 @@ Object * makeStringRaw(char * value, int is_malloc_ptr)
 
     self->name = "string";
 
-    // 2 Attributes
-    int attr_count = 2;
-    self->names = malloc(attr_count * sizeof(char *));
-    self->values = malloc(attr_count * sizeof(void *));
+    // 1 to 2 Attributes
+    int max_attr_count = 2;
+    if (is_malloc_ptr)
+    {
+        self->names = malloc(max_attr_count * sizeof(char *));
+        self->values = malloc(max_attr_count * sizeof(void *));
+    }
+    else
+    {
+        self->names = malloc((max_attr_count - 1) * sizeof(char *));
+        self->values = malloc((max_attr_count - 1) * sizeof(void *));
+    }
 
     self = objectAddAttr(self, "value", value);
 
+    // __free__
     if (is_malloc_ptr)
-        // __free__
-        self = objectAddAttr(self, "__free__", &__free_malloc___string);
-    else
-        // __free__
         self = objectAddAttr(self, "__free__", &__free___string);
 
     // Regular methods (must go at end)

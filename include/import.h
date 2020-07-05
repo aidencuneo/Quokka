@@ -6,7 +6,18 @@ Object * quokka_import_module(char ** module_name, char * path)
     if (!endswith(path, ".q"))
         strcat(import_path_rel, ".q");
 
-    char * import_path = getrealpath(import_path_rel);
+    // Try all directories in Quokka Path
+    char * olddir = getrealpath(".");
+    char * import_path = NULL;
+
+    for (int i = 0; !import_path && i < quokka_path_len; i++)
+    {
+        chdir(quokka_path[i]);
+        import_path = getrealpath(import_path_rel);
+    }
+
+    chdir(olddir);
+    free(olddir);
 
     // IMPORT FAILED, RETURN NULL
     if (!import_path)
@@ -76,7 +87,18 @@ void quokka_import_standard(char * path)
     if (!endswith(path, ".q"))
         strcat(import_path_rel, ".q");
 
-    char * import_path = getrealpath(import_path_rel);
+    // Try all directories in Quokka Path
+    char * olddir = getrealpath(".");
+    char * import_path = NULL;
+
+    for (int i = 0; !import_path && i < quokka_path_len; i++)
+    {
+        chdir(quokka_path[i]);
+        import_path = getrealpath(import_path_rel);
+    }
+
+    chdir(olddir);
+    free(olddir);
 
     if (!import_path)
     {
@@ -84,6 +106,10 @@ void quokka_import_standard(char * path)
         strcpy(err, "(import) file path not found or not accessible: '");
         strcat(err, import_path_rel);
         strcat(err, "'");
+
+        free(import_path);
+        free(import_path_rel);
+
         error(err, line_num);
     }
 
@@ -95,7 +121,7 @@ void quokka_import_standard(char * path)
     char * imported_bytecode = quokka_compile_fname(import_path);
 
     // Interpret the imported file
-    quokka_interpret(imported_bytecode);
+    _quokka_interpret(imported_bytecode);
 
     free(imported_bytecode);
 
@@ -110,6 +136,8 @@ Object * builtin_import_module(char * name)
     // Go through all built-in modules, in alphabetical order
     if (!strcmp(name, "os"))
         return _os_import_module();
+    if (!strcmp(name, "strutil"))
+        return _strutil_import_module();
     // if (!strcmp(name, "math"))
     //     return _math_import_module();
 

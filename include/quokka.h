@@ -3,11 +3,14 @@
 
 // Defines
 #define LN10 2.3025850929940456840179914546844
+#define QUOKKA_PATH_MAX 64 // Maximum number of paths in Quokka Path
 
 // Global file stuff
 char * current_file;
 char * cli_current_line;
 int in_cli_mode = 0;
+char ** quokka_path;
+int quokka_path_len = 0;
 
 //
 /// OS-related definitions

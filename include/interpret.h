@@ -136,11 +136,27 @@ void freeVars()
     freeLocals();
 }
 
+// Quokka Path
+void freeQuokkaPath()
+{
+    for (int i = 0; i < quokka_path_len; i++)
+        free(quokka_path[i]);
+
+    free(quokka_path);
+}
+
 // Cleanup (ONLY called on a sudden exit)
 void cleanupAll()
 {
     // free(bytecode_constants);
     // free(file_tokens);
+
+    for (int i = 0; bc_tokens[i] != NULL; i++)
+    {
+        for (int j = 0; bc_tokens[i][j] != NULL; j++)
+            free(bc_tokens[i][j]);
+        free(bc_tokens[i]);
+    }
     free(bc_tokens);
 
     free(scpstk);
@@ -148,8 +164,8 @@ void cleanupAll()
     free(scplines);
 
     free(full_file_name);
-    free(full_dir_name);
     free(main_bytecode);
+    freeQuokkaPath();
 
     freeStack();
     freeRetStack();
@@ -178,8 +194,8 @@ void interp_init()
     /* Global Variables */
 
     addGVar("_", makeNullRaw());
-    addGVar("false", int_consts[0]);
-    addGVar("true", int_consts[1]);
+    addGVar("false", getIntConst(0));
+    addGVar("true", getIntConst(1));
 
     /* Argc : any */
 
@@ -686,6 +702,20 @@ void delLVarIndex(int index)
     locals.count--;
 }
 
+/*
+
+Quokka Path
+
+*/
+
+void addQuokkaPath(char * path)
+{
+    if (quokka_path_len + 1 >= QUOKKA_PATH_MAX)
+        error("quokka path maximum size exceeded", line_num);
+
+    quokka_path[quokka_path_len++] = path;
+}
+
 // Retrieve and reference an int const
 // (no protection against out of bounds indexes)
 Object * getIntConst(int ind)
@@ -728,7 +758,6 @@ Object ** makeDoubleArglist(Object * first, Object * secnd)
 #include "datatypes/file.h"
 #include "datatypes/function.h"
 #include "datatypes/int.h"
-#include "datatypes/long.h"
 #include "datatypes/string.h"
 #include "datatypes/list.h"
 #include "datatypes/null.h"
@@ -741,6 +770,7 @@ Object ** makeDoubleArglist(Object * first, Object * secnd)
 //
 
 #include "modules/os.h"
+#include "modules/strutil.h"
 
 #include "import.h"
 
@@ -1009,7 +1039,7 @@ void quokka_interpret_line_tokens(char ** line)
 
         char * filepath_dupe = strndup(current_file, strlen(current_file));
 
-        addGVar(line[1], makeFunction(filepath_dupe, &f_code, argmin, argmax));
+        addGVar(strdup(line[1]), makeFunction(filepath_dupe, &f_code, argmin, argmax));
     }
     else if (!strcmp(line[0], "DEL_VAR"))
     {
@@ -1320,18 +1350,18 @@ void quokka_interpret_line_tokens(char ** line)
         // Get pointer address as an int
         unsigned long firstaddr = intObjAddress(first);
 
-        pushTop(makeLong(makeLLPtr(firstaddr), 1));
+        pushTop(makeInt(makeIntPtr(firstaddr), 1, 1));
 
         objUnref(first);
     }
     else if (!strcmp(line[0], "INCREMENT"))
     {
-        Object * first = getVar(line[1]);
-        Object * secnd = int_consts[1]; // int(1) in Quokka
+        Object * first = getVar(line[1]); // Don't unreference this
+        Object * secnd = getIntConst(1); // int(1) in Quokka
 
         Object ** arglist;
 
-        void * func = objectGetAttr(first, "__inadd__");
+        void * func = objOperInadd(first);
         if (func != NULL)
         {
             arglist = makeDoubleArglist(first, secnd);
@@ -1349,17 +1379,16 @@ void quokka_interpret_line_tokens(char ** line)
             // Don't unreference the constant for 1
         }
 
-        objUnref(first);
         free(arglist);
     }
     else if (!strcmp(line[0], "DECREMENT"))
     {
-        Object * first = popTop();
-        Object * secnd = int_consts[1]; // int(1) in Quokka
+        Object * first = popTop(); // Don't unreference this
+        Object * secnd = getIntConst(1); // int(1) in Quokka
 
         Object ** arglist;
 
-        void * func = objectGetAttr(first, "__insub__");
+        void * func = objOperInsub(first);
         if (func != NULL)
         {
             arglist = makeDoubleArglist(first, secnd);
@@ -1377,7 +1406,6 @@ void quokka_interpret_line_tokens(char ** line)
             // Don't unreference the constant for 1
         }
 
-        objUnref(first);
         free(arglist);
     }
     else if (!strcmp(line[0], "UNARY_ADD"))
@@ -1554,7 +1582,7 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "INPLACE_ADD"))
     {
-        Object * first = getVar(line[1]);
+        Object * first = getVar(line[1]); // Don't unreference this
         Object * secnd = popTop();
 
         void * func = objOperInadd(first);
@@ -1583,7 +1611,7 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "INPLACE_SUB"))
     {
-        Object * first = getVar(line[1]);
+        Object * first = getVar(line[1]); // Don't unreference this
         Object * secnd = popTop();
 
         void * func = objOperInsub(first);
@@ -1612,7 +1640,7 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "INPLACE_MUL"))
     {
-        Object * first = getVar(line[1]);
+        Object * first = getVar(line[1]); // Don't unreference this
         Object * secnd = popTop();
 
         void * func = objOperInmul(first);
@@ -1641,7 +1669,7 @@ void quokka_interpret_line_tokens(char ** line)
     }
     else if (!strcmp(line[0], "INPLACE_DIV"))
     {
-        Object * first = getVar(line[1]);
+        Object * first = getVar(line[1]); // Don't unreference this
         Object * secnd = popTop();
 
         void * func = objOperIndiv(first);
@@ -1697,9 +1725,9 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Check if both Objects are IDENTICAL
         if (firstaddr == secndaddr)
-            pushTop(int_consts[1]);
+            pushTop(getIntConst(1));
         else
-            pushTop(int_consts[0]);
+            pushTop(getIntConst(0));
 
         objUnref(first);
         objUnref(secnd);
@@ -1814,9 +1842,9 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Perform Boolean NOT
         if (!firstbool)
-            pushTop(int_consts[1]);
+            pushTop(getIntConst(1));
         else
-            pushTop(int_consts[0]);
+            pushTop(getIntConst(0));
 
         objUnref(first);
     }
@@ -1850,9 +1878,9 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Perform Inclusive OR
         if (firstbool || secndbool)
-            pushTop(int_consts[1]);
+            pushTop(getIntConst(1));
         else
-            pushTop(int_consts[0]);
+            pushTop(getIntConst(0));
 
         objUnref(first);
         objUnref(secnd);
@@ -1887,9 +1915,9 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Perform Exclusive OR
         if (!!firstbool != !!secndbool)
-            pushTop(int_consts[1]);
+            pushTop(getIntConst(1));
         else
-            pushTop(int_consts[0]);
+            pushTop(getIntConst(0));
 
         objUnref(first);
         objUnref(secnd);
@@ -1924,9 +1952,9 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Perform Boolean AND
         if (firstbool && secndbool)
-            pushTop(int_consts[1]);
+            pushTop(getIntConst(1));
         else
-            pushTop(int_consts[0]);
+            pushTop(getIntConst(0));
 
         objUnref(first);
         objUnref(secnd);

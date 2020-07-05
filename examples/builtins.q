@@ -3,8 +3,8 @@
 // LONG_MAX = 2**62L*2-1
 
 
-// Left Pad (Align list items to left)
-fun lpad 1 2
+// Right Pad (Align list items to right)
+fun rpad 1 2
     if argc == 1
         pad = ' '
         lst = argv[0]
@@ -87,7 +87,7 @@ fun map 1 *
         j = 0
         m = argc - 1
         while j < m
-            item = argv[j](item)
+            item = argv[j] is null ? item : argv[j](item)
             j++
         end
 

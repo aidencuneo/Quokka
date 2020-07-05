@@ -459,15 +459,15 @@ void * objOperInt(Object * obj)
 }
 
 // Retrieve __long__ method from an Object
-void * objOperLong(Object * obj)
-{
-    if (!strcmp(obj->name, "int"))
-        return &__long___int;
-    if (!strcmp(obj->name, "string"))
-        return &__long___string;
+// void * objOperLong(Object * obj)
+// {
+//     if (!strcmp(obj->name, "int"))
+//         return &__long___int;
+//     if (!strcmp(obj->name, "string"))
+//         return &__long___string;
 
-    return objectGetAttr(obj, "__long__");
-}
+//     return objectGetAttr(obj, "__long__");
+// }
 
 // Retrieve __string__ method from an Object
 void * objOperString(Object * obj)

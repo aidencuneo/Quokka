@@ -84,22 +84,22 @@ Object * _os_import_module()
     // chdir
     Object * _os_chdir_method = makeCMethod(_os_module, &_os_chdir, 1, 1);
     _os_chdir_method->refs++;
-    _os_chdir_method = objectAddAttr(_os_module, "chdir", _os_chdir_method);
+    objectAddAttr(_os_module, "chdir", _os_chdir_method);
 
     // cls
     Object * _os_cls_method = makeCMethod(_os_module, &_os_cls, 0, 0);
     _os_cls_method->refs++;
-    _os_cls_method = objectAddAttr(_os_module, "cls", _os_cls_method);
+    objectAddAttr(_os_module, "cls", _os_cls_method);
 
     // cwd
     Object * _os_cwd_method = makeCMethod(_os_module, &_os_cwd, 0, 0);
     _os_cwd_method->refs++;
-    _os_cwd_method = objectAddAttr(_os_module, "cwd", _os_cwd_method);
+    objectAddAttr(_os_module, "cwd", _os_cwd_method);
 
     // system
     Object * _os_system_method = makeCMethod(_os_module, &_os_system, 1, 1);
     _os_system_method->refs++;
-    _os_system_method = objectAddAttr(_os_module, "system", _os_system_method);
+    objectAddAttr(_os_module, "system", _os_system_method);
 
     return _os_module;
 }

@@ -39,9 +39,8 @@ Object * __add___int(int argc, Object ** argv)
                 res = qint_addition(argv[0], argv[1]);
         }
 
+        res->refs = 0;
         return res;
-
-        return qint_addition(argv[0], argv[1]);
     }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
@@ -113,6 +112,7 @@ Object * __mul___int(int argc, Object ** argv)
             value_z,
             size_z,
             1);
+        z->refs++;
 
         int i;
 
@@ -196,15 +196,15 @@ Object * __pow___int(int argc, Object ** argv)
 
         return makeInt(third, 1, 1);
     }
-    else if (!strcmp(argv[1]->name, "long"))
-    {
-        int * first = objectGetAttr(argv[0], "value");
-        long long * secnd = objectGetAttr(argv[1], "value");
+    // else if (!strcmp(argv[1]->name, "long"))
+    // {
+    //     int * first = objectGetAttr(argv[0], "value");
+    //     long long * secnd = objectGetAttr(argv[1], "value");
 
-        long long * third = makeLLPtr(lpowMath(first[0], secnd[0]));
+    //     long long * third = makeLLPtr(lpowMath(first[0], secnd[0]));
 
-        return makeLong(third, 1);
-    }
+    //     return makeLong(third, 1);
+    // }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
     strcpy(err, "types 'int' and '");
@@ -226,15 +226,15 @@ Object * __mod___int(int argc, Object ** argv)
 
         return makeInt(third, 1, 1);
     }
-    else if (!strcmp(argv[1]->name, "long"))
-    {
-        int * first = objectGetAttr(argv[0], "value");
-        long long * secnd = objectGetAttr(argv[1], "value");
+    // else if (!strcmp(argv[1]->name, "long"))
+    // {
+    //     int * first = objectGetAttr(argv[0], "value");
+    //     long long * secnd = objectGetAttr(argv[1], "value");
 
-        int * third = makeIntPtr(first[0] % secnd[0]);
+    //     int * third = makeIntPtr(first[0] % secnd[0]);
 
-        return makeInt(third, 1, 1);
-    }
+    //     return makeInt(third, 1, 1);
+    // }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
     strcpy(err, "types 'int' and '");
@@ -256,15 +256,15 @@ Object * __xor___int(int argc, Object ** argv)
 
         return makeInt(third, 1, 1);
     }
-    else if (!strcmp(argv[1]->name, "long"))
-    {
-        int * first = objectGetAttr(argv[0], "value");
-        long long * secnd = objectGetAttr(argv[1], "value");
+    // else if (!strcmp(argv[1]->name, "long"))
+    // {
+    //     int * first = objectGetAttr(argv[0], "value");
+    //     long long * secnd = objectGetAttr(argv[1], "value");
 
-        long long * third = makeLLPtr(first[0] ^ secnd[0]);
+    //     long long * third = makeLLPtr(first[0] ^ secnd[0]);
 
-        return makeLong(third, 1);
-    }
+    //     return makeLong(third, 1);
+    // }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
     strcpy(err, "types 'int' and '");
@@ -572,12 +572,12 @@ Object * __bool___int(int argc, Object ** argv)
     return getIntConst(0);
 }
 
-Object * __long___int(int argc, Object ** argv)
-{
-    int * first = objectGetAttr(argv[0], "value");
+// Object * __long___int(int argc, Object ** argv)
+// {
+//     int * first = objectGetAttr(argv[0], "value");
 
-    return makeLong(makeLLPtr(first[0]), 1);
-}
+//     return makeLong(makeLLPtr(first[0]), 1);
+// }
 
 Object * __free___int(int argc, Object ** argv)
 {
@@ -695,6 +695,7 @@ Object * qint_addition(Object * a, Object * b)
         malloc((size_a + 1) * sizeof(unsigned)),
         size_a + 1,
         1);
+    z->refs++;
 
     long carry = 0;
 

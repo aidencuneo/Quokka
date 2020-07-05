@@ -74,7 +74,7 @@ int main(int argc, char ** argv)
         else
         {
             args[newargc] = argv[i];
-            newargc++;
+            ++newargc;
         }
     }
 
@@ -103,9 +103,14 @@ int main(int argc, char ** argv)
     // File name of first file to compile (no full_dir_name)
     char * fname = strrchr(full_file_name, '/') + 1;
 
-    current_file = fname;
+    current_file = full_file_name;
 
-    chdir(full_dir_name);
+    // Don't chdir into the directory of the current running script, add it
+    // to the Quokka Path instead.
+    // chdir(full_dir_name);
+    quokka_path = malloc(QUOKKA_PATH_MAX * sizeof(char *));
+    addQuokkaPath(getrealpath("."));
+    addQuokkaPath(full_dir_name);
 
     // Free CLI args
     free(args);
@@ -113,13 +118,13 @@ int main(int argc, char ** argv)
     // If an already compiled .qc file is entered as the first argument,
     // then just retrieve the bytecode and interpret it
     if (endswith(fname, ".qc"))
-        main_bytecode = readfile(fname);
+        main_bytecode = readfile(current_file);
     else
     {
         resetTrash();
 
         // Compile Quokka script into Quokka bytecode
-        main_bytecode = quokka_compile_fname(fname);
+        main_bytecode = quokka_compile_fname(current_file);
 
         emptyTrash();
     }
@@ -170,8 +175,8 @@ int main(int argc, char ** argv)
     free(scplines);
 
     free(full_file_name);
-    free(full_dir_name);
     free(main_bytecode);
+    freeQuokkaPath();
 
     return 0;
 }
