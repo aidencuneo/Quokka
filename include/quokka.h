@@ -1,11 +1,14 @@
 // VERSION STUFF
-#define VERSION "0.6.2"
+#define VERSION "0.6.3"
 
 // Defines
 #define LN10 2.3025850929940456840179914546844
 #define QUOKKA_PATH_MAX 64 // Maximum number of paths in Quokka Path
 #ifndef max
     #define max(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+#ifndef min
+    #define min(a, b) (((a) < (b)) ? (a) : (b))
 #endif
 
 // Global file stuff

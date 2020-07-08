@@ -2475,7 +2475,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
         int base = isinteger(line[0]);
-        printf("%d\n", base);
 
         // // Clear leading 0's on integers
         // while (startswith(line[0], "0") && strlen(line[0]) > 1)

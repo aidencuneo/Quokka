@@ -620,11 +620,25 @@ Object * getVar(char * name)
         if (!strcmp(globals.names[i], name))
             return globals.values[i];
 
-    char * err = malloc(1 + strlen(name) + 16 + 1);
-    strcpy(err, "'");
-    strcat(err, name);
-    strcat(err, "' is not defined");
-    error(err, line_num);
+    char * suggestion = findSimilarVarname(name, 10);
+    if (suggestion)
+    {
+        char * err = malloc(1 + strlen(name) + 32 + strlen(suggestion) + 2 + 1);
+        strcpy(err, "'");
+        strcat(err, name);
+        strcat(err, "' is not defined, did you mean '");
+        strcat(err, suggestion);
+        strcat(err, "'?");
+        error(err, line_num);
+    }
+    else
+    {
+        char * err = malloc(1 + strlen(name) + 16 + 1);
+        strcpy(err, "'");
+        strcat(err, name);
+        strcat(err, "' is not defined");
+        error(err, line_num);
+    }
 
     return makeNull();
 }
@@ -677,6 +691,31 @@ int getVarIndex(char * name)
             return i;
 
     return -1;
+}
+
+// Find a similar variable name using an identifier
+// (Threshold is usually 10)
+char * findSimilarVarname(char * name, int threshold)
+{
+    int namelen = strlen(name);
+
+    for (int i = locals.count - 1; i >= locals.offset; i--)
+    {
+        int varlen = strlen(locals.names[i]);
+        int len = min(namelen, varlen);
+        int margin = (max(namelen, varlen) - len) * 4; // Margin of error
+
+        for (int a = 0; a < len; a++)
+        {
+            // printf("[%d]\n", abs(name[a] - locals.names[i][a]) / 10);
+            margin += abs(name[a] - locals.names[i][a]) / 10;
+        }
+
+        if (margin < threshold)
+            return locals.names[i];
+    }
+
+    return NULL;
 }
 
 void delGVarIndex(int index)

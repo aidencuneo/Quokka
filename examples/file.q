@@ -1,18 +1,7 @@
-// import * (
-//     'builtins',
-// )
+string_thingo_var = 'thing'
+string_return_function = 'string'
+other_string = 'other'
+another_variable = 10
+somemorethings = [1, 2, 3]
 
-import (
-    'strutil',
-    'time',
-)
-
-fun str
-    ret 'String'
-end
-
-i = 0x0
-until!
-    println('It has been', ++i, '(' + (+i) + ')', 'seconds')
-    time.sleep(1)
-end
+println(stringnaretutrfunction)
