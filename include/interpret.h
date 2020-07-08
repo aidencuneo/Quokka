@@ -88,7 +88,7 @@ void initIntConsts()
     for (int i = 0; i < int_const_count; i++)
     {
         int * ptr = makeIntPtr(i);
-        int_consts[i] = makeIntRaw(ptr, 1, 1);
+        int_consts[i] = makeIntRaw(ptr, 1, 10);
         int_consts[i]->refs++;
     }
 }
@@ -151,13 +151,16 @@ void cleanupAll()
     // free(bytecode_constants);
     // free(file_tokens);
 
-    for (int i = 0; bc_tokens[i] != NULL; i++)
+    if (bc_tokens)
     {
-        for (int j = 0; bc_tokens[i][j] != NULL; j++)
-            free(bc_tokens[i][j]);
-        free(bc_tokens[i]);
+        for (int i = 0; bc_tokens[i] != NULL; i++)
+        {
+            for (int j = 0; bc_tokens[i][j] != NULL; j++)
+                free(bc_tokens[i][j]);
+            free(bc_tokens[i]);
+        }
+        free(bc_tokens);
     }
-    free(bc_tokens);
 
     free(scpstk);
     free(scps);
@@ -769,8 +772,9 @@ Object ** makeDoubleArglist(Object * first, Object * secnd)
 /// Modules
 //
 
-#include "modules/os.h"
-#include "modules/strutil.h"
+#include "modules/os.c"
+#include "modules/strutil.c"
+#include "modules/time.c"
 
 #include "import.h"
 
@@ -930,23 +934,17 @@ void quokka_interpret_line_tokens(char ** line)
 
         pushConst(makeStringRaw(literal_str, 1));
     }
+    else if (!strcmp(line[0], "LOAD_INT_BIN"))
+    {
+        pushConst(qint_from_string(line[1], 2));
+    }
     else if (!strcmp(line[0], "LOAD_INT"))
     {
         pushConst(qint_from_string(line[1], 10));
-
-        // long long temp = strtoll(line[1], NULL, 10);
-        // if (temp > INT_MAX)
-        // {
-        //     long long * llptr = makeLLPtrFromStr(line[1]);
-
-        //     pushConst(makeLong(llptr, 1));
-        // }
-        // else
-        // {
-        //     int * intptr = makeIntPtrFromStr(line[1]);
-
-        //     pushConst(makeIntRaw(intptr, 1));
-        // }
+    }
+    else if (!strcmp(line[0], "LOAD_INT_HEX"))
+    {
+        pushConst(qint_from_string(line[1], 16));
     }
     else if (!strcmp(line[0], "LOAD_LONG"))
     {
@@ -2139,7 +2137,13 @@ void quokka_interpret_line_tokens(char ** line)
 
         if (!strcmp(func->name, "cfunction"))
         {
-            pushTop(((standard_func_def)call_attr)(argcount, arglist));
+            Object * ret = ((standard_func_def)call_attr)(argcount, arglist);
+
+            // Make sure NULL isn't directly pushed into the stack
+            if (ret == NULL)
+                pushTop(makeNull());
+            else
+                pushTop(ret);
 
             // Unreference all arguments passed into this function
             for (int i = 0; i < argcount; i++)
@@ -2163,7 +2167,13 @@ void quokka_interpret_line_tokens(char ** line)
                 arglist[i + 1] = arglist[i];
             arglist[0] = func;
 
-            pushTop(((standard_func_def)call_attr)(argcount, arglist));
+            Object * ret = ((standard_func_def)call_attr)(argcount, arglist);
+
+            // Make sure NULL isn't directly pushed into the stack
+            if (ret == NULL)
+                pushTop(makeNull());
+            else
+                pushTop(ret);
 
             // Unreference all arguments passed into this function (not including the function itself)
             for (int i = 1; i < argcount + 1; i++)

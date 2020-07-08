@@ -106,12 +106,14 @@ Object * __mul___int(int argc, Object ** argv)
         int size_b = abs(*(int *)argv[1]->values[1]);
         int size_z = size_a + size_b;
 
+        int base = ((int *)argv[0]->values[1])[1];
+
         value_z = malloc(size_z * sizeof(unsigned));
 
         z = makeIntRaw(
             value_z,
             size_z,
-            1);
+            base);
         z->refs++;
 
         int i;
@@ -187,15 +189,15 @@ Object * __div___int(int argc, Object ** argv)
 
 Object * __pow___int(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1]->name, "int"))
-    {
-        int * first = objectGetAttr(argv[0], "value");
-        int * secnd = objectGetAttr(argv[1], "value");
+    // if (!strcmp(argv[1]->name, "int"))
+    // {
+    //     int * first = objectGetAttr(argv[0], "value");
+    //     int * secnd = objectGetAttr(argv[1], "value");
 
-        int * third = makeIntPtr(ipowMath(first[0], secnd[0]));
+    //     int * third = makeIntPtr(ipowMath(first[0], secnd[0]));
 
-        return makeInt(third, 1, 1);
-    }
+    //     return makeInt(third, 1, 1);
+    // }
     // else if (!strcmp(argv[1]->name, "long"))
     // {
     //     int * first = objectGetAttr(argv[0], "value");
@@ -217,15 +219,15 @@ Object * __pow___int(int argc, Object ** argv)
 
 Object * __mod___int(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1]->name, "int"))
-    {
-        int * first = objectGetAttr(argv[0], "value");
-        int * secnd = objectGetAttr(argv[1], "value");
+    // if (!strcmp(argv[1]->name, "int"))
+    // {
+    //     int * first = objectGetAttr(argv[0], "value");
+    //     int * secnd = objectGetAttr(argv[1], "value");
 
-        int * third = makeIntPtr(first[0] % secnd[0]);
+    //     int * third = makeIntPtr(first[0] % secnd[0]);
 
-        return makeInt(third, 1, 1);
-    }
+    //     return makeInt(third, 1, 1);
+    // }
     // else if (!strcmp(argv[1]->name, "long"))
     // {
     //     int * first = objectGetAttr(argv[0], "value");
@@ -247,15 +249,15 @@ Object * __mod___int(int argc, Object ** argv)
 
 Object * __xor___int(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1]->name, "int"))
-    {
-        int * first = objectGetAttr(argv[0], "value");
-        int * secnd = objectGetAttr(argv[1], "value");
+    // if (!strcmp(argv[1]->name, "int"))
+    // {
+    //     int * first = objectGetAttr(argv[0], "value");
+    //     int * secnd = objectGetAttr(argv[1], "value");
 
-        int * third = makeIntPtr(first[0] ^ secnd[0]);
+    //     int * third = makeIntPtr(first[0] ^ secnd[0]);
 
-        return makeInt(third, 1, 1);
-    }
+    //     return makeInt(third, 1, 1);
+    // }
     // else if (!strcmp(argv[1]->name, "long"))
     // {
     //     int * first = objectGetAttr(argv[0], "value");
@@ -277,15 +279,15 @@ Object * __xor___int(int argc, Object ** argv)
 
 Object * __lshift___int(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1]->name, "int"))
-    {
-        int * first = objectGetAttr(argv[0], "value");
-        int * secnd = objectGetAttr(argv[1], "value");
+    // if (!strcmp(argv[1]->name, "int"))
+    // {
+    //     int * first = objectGetAttr(argv[0], "value");
+    //     int * secnd = objectGetAttr(argv[1], "value");
 
-        int * third = makeIntPtr(first[0] << secnd[0]);
+    //     int * third = makeIntPtr(first[0] << secnd[0]);
 
-        return makeInt(third, 1, 0);
-    }
+    //     return makeInt(third, 1, 0);
+    // }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
     strcpy(err, "types 'int' and '");
@@ -298,15 +300,15 @@ Object * __lshift___int(int argc, Object ** argv)
 
 Object * __rshift___int(int argc, Object ** argv)
 {
-    if (!strcmp(argv[1]->name, "int"))
-    {
-        int * first = objectGetAttr(argv[0], "value");
-        int * secnd = objectGetAttr(argv[1], "value");
+    // if (!strcmp(argv[1]->name, "int"))
+    // {
+    //     int * first = objectGetAttr(argv[0], "value");
+    //     int * secnd = objectGetAttr(argv[1], "value");
 
-        int * third = makeIntPtr(first[0] >> secnd[0]);
+    //     int * third = makeIntPtr(first[0] >> secnd[0]);
 
-        return makeInt(third, 1, 0);
-    }
+    //     return makeInt(third, 1, 0);
+    // }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
     strcpy(err, "types 'int' and '");
@@ -508,13 +510,15 @@ Object * __pos___int(int argc, Object ** argv)
 {
     unsigned * value = argv[0]->values[0];
     int size = *(int *)argv[0]->values[1];
+    int absize = abs(size);
+    int base = ((int *)argv[0]->values[1])[1];
 
-    unsigned * newval = malloc(abs(size) * sizeof(unsigned));
+    unsigned * newval = malloc(absize * sizeof(unsigned));
 
-    for (int i = 0; i < abs(size); i++)
+    for (int i = 0; i < absize; i++)
         newval[i] = value[i];
 
-    return makeInt(newval, abs(size), intsign(size));
+    return makeInt(newval, size, 10);
 }
 
 Object * __neg___int(int argc, Object ** argv)
@@ -534,15 +538,25 @@ Object * __disp___int(int argc, Object ** argv)
 {
     unsigned * value = argv[0]->values[0];
     int size = *(int *)argv[0]->values[1];
+    int base = ((int *)argv[0]->values[1])[1];
 
     if (!size)
-        return makeString("0", 0);
+    {
+        if (base == 2)
+            return makeString("b0", 0);
+        if (base == 8)
+            return makeString("0o0", 0);
+        if (base == 10)
+            return makeString("0", 0);
+        if (base == 16)
+            return makeString("0x0", 0);
+    }
     if (size == 1 && *value <= INT_MAX)
-        return makeString(intToStr(value[0]), 1);
+        return makeString(intToStrBase(value[0], base), 1);
     if (size == -1 && *value <= INT_MAX)
-        return makeString(intToStr(-value[0]), 1);
+        return makeString(intToStrBase(-value[0], base), 1);
 
-    char * s = string_from_qint(argv[0], 10);
+    char * s = string_from_qint(argv[0], base);
     return makeString(s, 1);
 
     // char * intstr = malloc(Q_INT_DIGIT_LEN * digits + 1);
@@ -590,21 +604,30 @@ Object * __free___int(int argc, Object ** argv)
     return NULL;
 }
 
-Object * makeInt(int * value, int digits, int mult)
+Object * makeInt(int * value, int size, int base)
 {
+    if (!size && base == 10)
+        return getIntConst(0);
+
+    int sign = intsign(size);
+
     // If 0 <= value < int_const_count, return the constant for this number
-    if (value[0] * mult >= 0 && value[0] * mult < int_const_count && digits == 1)
+    if (value[0] * sign >= 0 && value[0] * sign < int_const_count && abs(size) == 1 && base == 10)
     {
-        int ind = value[0] * mult;
+        int ind = value[0];
         free(value);
-        return int_consts[ind];
+        return getIntConst(ind);
     }
 
-    return makeIntRaw(value, digits, mult);
+    return makeIntRaw(value, size, base);
 }
 
-Object * makeIntRaw(int * value, int digits, int mult)
+Object * makeIntRaw(int * value, int size, int base)
 {
+    int * sizeptr = malloc(2 * sizeof(int));
+    sizeptr[0] = size; // Can be negative for negative integers
+    sizeptr[1] = base;
+
     Object * self = objectPointer();
 
     self->name = "int";
@@ -614,7 +637,7 @@ Object * makeIntRaw(int * value, int digits, int mult)
     self->values = malloc(2 * sizeof(void *));
 
     self = objectAddAttr(self, "value", value);
-    self = objectAddAttr(self, "size", makeIntPtr(digits * mult));
+    self = objectAddAttr(self, "size", sizeptr);
 
     // self.size will always be (digit_count * multiplier)
     // where digit_count is the number of digits in this
@@ -628,7 +651,6 @@ Object * makeIntDupe(Object * old)
 {
     int size = *(int *)old->values[1];
     int absize = abs(size);
-    int sign = intsign(size);
 
     unsigned * oldvalue = old->values[0];
     unsigned * value = malloc(absize * sizeof(unsigned));
@@ -636,7 +658,7 @@ Object * makeIntDupe(Object * old)
     for (int i = 0; i < absize; i++)
         value[i] = oldvalue[i];
 
-    return makeIntRaw(value, absize, sign);
+    return makeIntRaw(value, size, ((int *)old->values[1])[1]);
 }
 
 // Return qint sign using qint size
@@ -672,6 +694,8 @@ Object * qint_addition(Object * a, Object * b)
     unsigned * value_a = a->values[0];
     unsigned * value_b = b->values[0];
 
+    int base = ((int *)a->values[1])[1];
+
     // isummary(dig_a, size_a);
     // isummary(dig_a, size_b);
 
@@ -681,6 +705,10 @@ Object * qint_addition(Object * a, Object * b)
         Object * temp = a;
         a = b;
         b = temp;
+
+        int * value_temp = value_a;
+        value_a = value_b;
+        value_b = value_temp;
 
         int size_temp = size_a;
         size_a = size_b;
@@ -694,7 +722,7 @@ Object * qint_addition(Object * a, Object * b)
     z = makeIntRaw(
         malloc((size_a + 1) * sizeof(unsigned)),
         size_a + 1,
-        1);
+        base);
     z->refs++;
 
     long carry = 0;
@@ -736,6 +764,8 @@ Object * qint_subtraction(Object * a, Object * b)
 
     unsigned * value_a = a->values[0];
     unsigned * value_b = b->values[0];
+
+    int base = ((int *)a->values[1])[1];
 
     long borrow = 0;
     int sign = 1;
@@ -783,7 +813,7 @@ Object * qint_subtraction(Object * a, Object * b)
     z = makeIntRaw(
         malloc((size_a + 1) * sizeof(unsigned)),
         size_a + 1,
-        1);
+        base);
 
     for (i = 0; i < size_a + 1; i++)
         ((unsigned *)z->values[0])[i] = 0;
@@ -997,10 +1027,12 @@ int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr)
     unsigned * value_a = a->values[0];
     unsigned * value_b = b->values[0];
 
+    int base = ((int *)a->values[1])[1];
+
     z = makeIntRaw(
         malloc((size_a + size_b) * sizeof(unsigned)),
         0, // ?????????????
-        1);
+        base);
 
     z->refs++;
 
@@ -1042,7 +1074,7 @@ int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr)
 		if (z == NULL)
 			return -1;
 
-		*remptr = makeIntRaw(makeIntPtr(rem), 1, 1);
+		*remptr = makeIntRaw(makeIntPtr(rem), 1, base);
 	}
     // else
     // {
@@ -1230,14 +1262,14 @@ Object * qint_from_string(char * str, int base)
         else
             base = 8;
     }
-    // if (base == 16 && str[0] == '0' && (str[1] == 'x' || str[1] == 'X'))
-    //     str += 2;
+    if (base == 16 && str[0] == '0' && (str[1] == 'x' || str[1] == 'X'))
+        str += 2;
 
     int est_len = len / 2 + 1;
     obj = makeIntRaw(
         malloc(est_len * sizeof(unsigned)),
         0,
-        1);
+        base);
 
     // start = str;
     int i;
@@ -1266,6 +1298,9 @@ Object * qint_from_string(char * str, int base)
         error("no digits in integer", line_num);
         return NULL;
     }
+
+    if (base == 16)
+        str -= 2;
 
     return obj;
 }
@@ -1496,4 +1531,28 @@ char * string_from_qint(Object * obj, int base)
     objUnref(a);
 
     return str;
+}
+
+// Raises a conversion error when qint can not be
+// converted without overflow
+long long_from_qint(Object * a)
+{
+    unsigned * value_a = a->values[0];
+    int size_a = *(int *)a->values[1];
+
+    int sign = intsign(size_a);
+    size_a = abs(size_a);
+
+    long result = 0;
+    unsigned long base = 1;
+
+    for (int i = 0; i < size_a; i++)
+    {
+        if (value_a[i] * base < 0)
+            error("could not convert qint to C long", line_num);
+        result += value_a[i] * base;
+        base *= BASE;
+    }
+
+    return result * sign;
 }

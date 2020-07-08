@@ -85,9 +85,8 @@ fun map 1 *
         item = lst[i]
 
         j = 0
-        m = argc - 1
-        while j < m
-            item = argv[j] is null ? item : argv[j](item)
+        while j < argc - 1
+            item = argv[j](item)
             j++
         end
 

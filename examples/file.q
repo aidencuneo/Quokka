@@ -1,15 +1,18 @@
-i = 32489789
-i++
-println(i)
-
 // import * (
 //     'builtins',
 // )
 
-// import (
-//     'strutil',
-// )
+import (
+    'strutil',
+    'time',
+)
 
-// println(strutil.letters)
-// println(map(int, strutil.digits))
-// println(map(null, strutil.digits))
+fun str
+    ret 'String'
+end
+
+i = 0x0
+until!
+    println('It has been', ++i, '(' + (+i) + ')', 'seconds')
+    time.sleep(1)
+end

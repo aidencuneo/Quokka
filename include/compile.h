@@ -164,20 +164,52 @@ int isidentifier(char * word)
     return 1;
 }
 
+// Returns the base of the integer if the given string is in
+// fact an integer, otherwise returns 0.
 int isinteger(char * word)
 {
+    int base;
     int size = strlen(word);
 
     if (!size)
         return 0;
 
+    if (startswith(word, "b") || startswith(word, "B"))
+        base = 2;
+    else if (startswith(word, "0x") || startswith(word, "0X"))
+        base = 16;
+    else if (isdigit(*word))
+        base = 10;
+    else
+        return 0;
+
     for (int i = 0; i < size; i++)
     {
-        if (!isdigit(word[i]))
-            return 0;
+        if (base == 2)
+            if (word[i] != '0' && word[i] != '1')
+                return 0;
+        else if (base == 10)
+            if (!isdigit(word[i]))
+                return 0;
+        else if (base == 16)
+            if (!isdigit(word[i])
+                && word[i] != 'a'
+                && word[i] != 'b'
+                && word[i] != 'c'
+                && word[i] != 'd'
+                && word[i] != 'e'
+                && word[i] != 'f'
+                && word[i] != 'A'
+                && word[i] != 'B'
+                && word[i] != 'C'
+                && word[i] != 'D'
+                && word[i] != 'E'
+                && word[i] != 'F'
+            )
+                return 0;
     }
 
-    return 1;
+    return base;
 }
 
 int islong(char * word)
@@ -1777,18 +1809,41 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (!isInline)
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
-        // Load var
+        // Load original value
         mstrcatline(&bytecode,
             "LOAD_NAME",
             SEPARATOR,
             line[0],
             INSTRUCTION_END);
 
-        // Increment and return original value
+        // Increment (original value is also loaded)
         mstrcatline(&bytecode,
             "INCREMENT",
             SEPARATOR,
             line[0],
+            INSTRUCTION_END);
+    }
+    else if (!strcmp(line[0], "+") && !strcmp(line[1], "+") && isidentifier(line[2]))
+    {
+        if (len > 3)
+            error("invalid syntax", num - 1);
+
+        // Set new line
+        if (!isInline)
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        // Increment (new value will be loaded)
+        mstrcatline(&bytecode,
+            "INCREMENT",
+            SEPARATOR,
+            line[2],
+            INSTRUCTION_END);
+
+        // Load new value
+        mstrcatline(&bytecode,
+            "LOAD_NAME",
+            SEPARATOR,
+            line[2],
             INSTRUCTION_END);
     }
     else if (isidentifier(line[0]) && !strcmp(line[1], "-") && !strcmp(line[2], "-"))
@@ -2165,6 +2220,39 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             mstrcat(&bytecode, "BOOLEAN_NOT" INSTRUCTION_END);
         }
     }
+    else if (startswith(line[len - 1], "[") && endswith(line[len - 1], "]") && len > 1)
+    {
+        // Set new line
+        if (!isInline)
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        char * indexarg = strndup(line[len - 1], strlen(line[len - 1]));
+
+        char * temp = quokka_compile_line_tokens(line, num, len - 1, 1);
+
+        mstrcat(&bytecode, temp);
+
+        free(temp);
+
+        // If index received an item, for example: [0]
+        if (strlen(indexarg) > 2)
+        {
+            char * sliced = strSlice(indexarg, 1, 1);
+            char * temp = quokka_compile_line(sliced, num, -1, 1);
+
+            mstrcat(&bytecode, temp);
+
+            free(sliced);
+            free(temp);
+
+            mstrcat(&bytecode, "GET_INDEX" SEPARATOR "1" INSTRUCTION_END);
+        }
+        // If nothing was given, for example: []
+        else
+            mstrcat(&bytecode, "GET_INDEX" SEPARATOR "*" INSTRUCTION_END);
+
+        free(indexarg);
+    }
     else if (stringInList(line, ".", len))
     {
         char * latestvalue = malloc(1);
@@ -2386,9 +2474,12 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (!isInline)
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
-        // Clear leading 0's on integers
-        while (startswith(line[0], "0") && strlen(line[0]) > 1)
-            line[0]++;
+        int base = isinteger(line[0]);
+        printf("%d\n", base);
+
+        // // Clear leading 0's on integers
+        // while (startswith(line[0], "0") && strlen(line[0]) > 1)
+        //     line[0]++;
 
         // If number is more than 10 digits, make a long
         if (strlen(line[0]) > 10)
@@ -2412,7 +2503,13 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 mstrcat(&bytecode, "LOAD_INT_CONST" SEPARATOR "1" INSTRUCTION_END);
             else
             {
-                int ind = addBytecodeConstant("LOAD_INT", line[0]);
+                int ind;
+                if (base == 2)
+                    ind = addBytecodeConstant("LOAD_INT_BIN", line[0]);
+                else if (base == 10)
+                    ind = addBytecodeConstant("LOAD_INT", line[0]);
+                else if (base == 16)
+                    ind = addBytecodeConstant("LOAD_INT_HEX", line[0]);
 
                 char * intstr = intToStr(ind);
 
@@ -2472,39 +2569,6 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         mstrcat(&bytecode, SEPARATOR);
         mstrcat(&bytecode, line[0]);
         mstrcat(&bytecode, INSTRUCTION_END);
-    }
-    else if (startswith(line[len - 1], "[") && endswith(line[len - 1], "]") && len > 1)
-    {
-        // Set new line
-        if (!isInline)
-            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
-
-        char * indexarg = strndup(line[len - 1], strlen(line[len - 1]));
-
-        char * temp = quokka_compile_line_tokens(line, num, len - 1, 1);
-
-        mstrcat(&bytecode, temp);
-
-        free(temp);
-
-        // If index received an item, for example: [0]
-        if (strlen(indexarg) > 2)
-        {
-            char * sliced = strSlice(indexarg, 1, 1);
-            char * temp = quokka_compile_line(sliced, num, -1, 1);
-
-            mstrcat(&bytecode, temp);
-
-            free(sliced);
-            free(temp);
-
-            mstrcat(&bytecode, "GET_INDEX" SEPARATOR "1" INSTRUCTION_END);
-        }
-        // If nothing was given, for example: []
-        else
-            mstrcat(&bytecode, "GET_INDEX" SEPARATOR "*" INSTRUCTION_END);
-
-        free(indexarg);
     }
     else if (startswith(line[0], "[") && endswith(line[0], "]"))
     {
@@ -2880,13 +2944,11 @@ char ** quokka_tok(char * line, char ** waste)
         ) && !(
             q == 'A' && c == '_' // Second part to the line above.
         ) && !(
-            t == '_' && c == '_' // Join together double underscores `__`
-        ) && !(
             q == 'A' && p == 'D' // Join alphabetical and numerical characters.
         ) && !(
             p == 'A' && q == 'D' // Second part to the line above.
         ) && !(
-            q == 'D' && (c == 'l' || c == 'L') // Join integers with `l` and `L` for long numbers
+            t == '_' && c == '_' // Join together all `_` tokens.
         ) && !(
             t == '.' && c == '.' // Join together all `.` tokens.
         ) && !(

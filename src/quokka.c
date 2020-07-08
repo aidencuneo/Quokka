@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <errno.h>
 #include <assert.h>
+#include <time.h>
 
 // CLI options (bools):
 int verbose = 0;

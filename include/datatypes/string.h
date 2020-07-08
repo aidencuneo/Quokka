@@ -163,7 +163,7 @@ Object * __sizeof___string(int argc, Object ** argv)
 
     int * size = makeIntPtr(sizeof(argv[0]) + strlen(thisvalue));
 
-    return makeInt(size, 1, 1);
+    return makeInt(size, 1, 10);
 }
 
 Object * __copy___string(int argc, Object ** argv)
@@ -179,7 +179,7 @@ Object * __len___string(int argc, Object ** argv)
 
     int * size = makeIntPtr(len);
 
-    return makeInt(size, 1, 1);
+    return makeInt(size, 1, 10);
 }
 
 Object * __disp___string(int argc, Object ** argv)
@@ -205,7 +205,7 @@ Object * __int___string(int argc, Object ** argv)
 
     int * toint = makeIntPtr(strtol(thisvalue, NULL, 10));
 
-    return makeInt(toint, 1, 1);
+    return makeInt(toint, 1, 10);
 }
 
 // Object * __long___string(int argc, Object ** argv)

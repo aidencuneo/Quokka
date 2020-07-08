@@ -1,9 +1,12 @@
 // VERSION STUFF
-#define VERSION "0.6.0"
+#define VERSION "0.6.2"
 
 // Defines
 #define LN10 2.3025850929940456840179914546844
 #define QUOKKA_PATH_MAX 64 // Maximum number of paths in Quokka Path
+#ifndef max
+    #define max(a, b) (((a) > (b)) ? (a) : (b))
+#endif
 
 // Global file stuff
 char * current_file;
@@ -17,6 +20,7 @@ int quokka_path_len = 0;
 //
 
 #ifdef _WIN32
+    #include <Windows.h>
     #include <direct.h>
     // #include <conio.h>
     #define chdir(value) _chdir(value)
@@ -460,6 +464,62 @@ double log10(double x)
     return log10LN(x) / LN10;
 }
 
+char * intToBinary(int n)
+{
+    int sign = intsign(n);
+    n = abs(n);
+
+    char * res = malloc(snprintf(NULL, 0, "%d", n) + (sign < 0) + 1);
+
+    int base = 1;
+    int i = 0;
+
+    if (sign < 0)
+        res[i++] = '-';
+
+    while (n > 0)
+    {
+        res[i] = n % 2;
+        n /= 2;
+    }
+
+    return res;
+}
+
+// Only needs to support the following bases:
+//   2, 8, 10, 16
+char * intToStrBase(int value, int base)
+{
+    if (base == 2)
+        return intToBinary(value);
+
+    char * format = "";
+
+    if (base == 8)
+        format = "0o%o";
+    else if (base == 10)
+        format = "%d";
+    else if (base == 16)
+        format = "0x%" PRIXPTR;
+
+    int length = snprintf(NULL, 0, format, value);
+
+    if (!length)
+    {
+        char * empty = malloc(1);
+        empty[0] = 0;
+
+        return empty;
+    }
+
+    char * newval = malloc(length + 1);
+    strcpy(newval, "");
+
+    sprintf(newval, format, value);
+
+    return newval;
+}
+
 char * intToStr(int value)
 {
     int length = snprintf(NULL, 0, "%d", value);
@@ -467,7 +527,7 @@ char * intToStr(int value)
     if (!length)
     {
         char * empty = malloc(1);
-        empty[0] = '\0';
+        empty[0] = 0;
 
         return empty;
     }

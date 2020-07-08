@@ -138,6 +138,8 @@ Object * builtin_import_module(char * name)
         return _os_import_module();
     if (!strcmp(name, "strutil"))
         return _strutil_import_module();
+    if (!strcmp(name, "time"))
+        return _time_import_module();
     // if (!strcmp(name, "math"))
     //     return _math_import_module();
 

@@ -55,7 +55,7 @@ Object * _os_system(int argc, Object ** argv)
     {
         char * text = objectGetAttr(argv[1], "value");
 
-        return makeInt(makeIntPtr(system(text)), 1, 1);
+        return makeInt(makeIntPtr(system(text)), 1, 10);
     }
 
     // If first argument is not a string, try to convert it into one
@@ -65,7 +65,7 @@ Object * _os_system(int argc, Object ** argv)
 
     char * text = objectGetAttr(tostring, "value");
 
-    Object * exit_code = makeInt(makeIntPtr(system(text)), 1, 1);
+    Object * exit_code = makeInt(makeIntPtr(system(text)), 1, 10);
 
     freeObject(tostring);
 

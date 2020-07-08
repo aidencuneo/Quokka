@@ -140,10 +140,11 @@ Object * makeFile(char * path, char * mode);
 Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax);
 
 // int
-Object * makeInt(int * value, int digits, int mult);
-Object * makeIntRaw(int * value, int digits, int mult);
+Object * makeInt(int * value, int size, int base);
+Object * makeIntRaw(int * value, int digits, int base);
 
 int intsign(int size);
+int get_best_base(int _base1, int _base2);
 void qint_normalise(Object * obj);
 
 Object * qint_addition(Object * a, Object * b);
