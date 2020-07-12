@@ -791,7 +791,15 @@ Object ** makeDoubleArglist(Object * first, Object * secnd)
 // }
 
 //
-/// Datatypes & Includes
+/// Headers
+//
+
+#include "modules/os.h"
+#include "modules/strutil.h"
+#include "modules/time.h"
+
+//
+/// Datatypes
 //
 
 #include "datatypes/cfunction.h"
@@ -940,23 +948,17 @@ void quokka_interpret_line(char * linetext)
     free(line);
 }
 
-/* Temporary */
+/* For debugging */
 void STACK()
 {
     print("STACK : ");
     for (int i = 0; i < stack_size; i++)
     {
-        Object ** arglist = makeArglist(stack[i]);
-
-        freeObject(q_function_print(1, arglist));
-        free(arglist);
-
-        print(" : ");
-        print(stack[i]->refs);
-
-        print(", ");
+        // q_function_print(1, &stack[i]);
+        printf("%s, ", stack[i]->name);
     }
-    println("");
+
+    printf("\n");
 }
 
 void quokka_interpret_line_tokens(char ** line)
@@ -1223,6 +1225,8 @@ void quokka_interpret_line_tokens(char ** line)
                 invalid = 1;
             else
             {
+                gotten = 1;
+
                 if (!strcmp(line[1], "value"))
                     pushTop(obj);
                 else if (!strcmp(line[1], "mode"))
@@ -1235,8 +1239,8 @@ void quokka_interpret_line_tokens(char ** line)
                     pushTop(makeCMethod(obj, &read_file, 0, 0));
                 else if (!strcmp(line[1], "close"))
                     pushTop(makeCMethod(obj, &close_file, 0, 0));
-
-                gotten = 1;
+                else
+                    gotten = 0;
             }
         }
         else if (!strcmp(obj->name, "function"))
@@ -1293,17 +1297,17 @@ void quokka_interpret_line_tokens(char ** line)
             else if (startswith(line[1], "__"))
                 invalid = 1;
         }
-        else if (!strcmp(obj->name, "long"))
-        {
-            if (!strcmp(line[1], "value"))
-            {
-                pushTop(obj);
+        // else if (!strcmp(obj->name, "long"))
+        // {
+        //     if (!strcmp(line[1], "value"))
+        //     {
+        //         pushTop(obj);
 
-                gotten = 1;
-            }
-            else if (startswith(line[1], "__"))
-                invalid = 1;
-        }
+        //         gotten = 1;
+        //     }
+        //     else if (startswith(line[1], "__"))
+        //         invalid = 1;
+        // }
         else if (!strcmp(obj->name, "module"))
         {
             if (!strcmp(line[1], "value"))
@@ -1336,6 +1340,7 @@ void quokka_interpret_line_tokens(char ** line)
                 invalid = 1;
             else
             {
+                gotten = 1;
                 if (!strcmp(line[1], "value"))
                     pushTop(obj);
                 else if (!strcmp(line[1], "upper"))
@@ -1346,8 +1351,10 @@ void quokka_interpret_line_tokens(char ** line)
                     pushTop(makeCMethod(obj, &isupper_string, 0, 0));
                 else if (!strcmp(line[1], "islower"))
                     pushTop(makeCMethod(obj, &islower_string, 0, 0));
-
-                gotten = 1;
+                else if (!strcmp(line[1], "strip"))
+                    pushTop(makeCMethod(obj, &strip_string, 0, 1));
+                else
+                    gotten = 0;
             }
         }
 
@@ -2337,7 +2344,7 @@ void _quokka_interpret(char * bytecode)
     char *** old_bc_tokens = bc_tokens;
 
     /* Main */
-    bc_tokens = quokka_bc_file_tok(bytecode);
+    bc_tokens = quokka_bc_file_tok(bytecode); // Bytecode will be destroyed
 
     quokka_interpret_tokens(bc_tokens);
 

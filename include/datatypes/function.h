@@ -3,6 +3,7 @@ Object * __call___function(int argc, Object ** argv)
     // Get function code
     char * filepath = objectGetAttr(argv[0], "filepath");
     char * code = objectGetAttr(argv[0], "value");
+    char * codedupe = strdup(code);
 
     // Set up the environment for the function call
     char * old_file = current_file;
@@ -35,7 +36,8 @@ Object * __call___function(int argc, Object ** argv)
     free(arglist);
 
     // Interpret
-    quokka_interpret(code);
+    quokka_interpret(codedupe);
+    free(codedupe);
 
     // Clear argc and argv
     // addVar("argc", makeNull());
@@ -74,19 +76,18 @@ Object * __free___function(int argc, Object ** argv)
     free(value);
     free(filepath);
 
-    int * argminptr = objectGetAttr(argv[0], "__call__argmin");
-    int * argmaxptr = objectGetAttr(argv[0], "__call__argmax");
+    int * argcptr = objectGetAttr(argv[0], "argc");
 
-    free(argminptr);
-    free(argmaxptr);
+    free(argcptr);
 
     return makeNull();
 }
 
 Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax)
 {
-    int * argminptr = makeIntPtr(argmin);
-    int * argmaxptr = makeIntPtr(argmax);
+    int * argcptr = malloc(2 * sizeof(int));
+    argcptr[0] = argmin;
+    argcptr[1] = argmax;
 
     Object * self = objectPointer();
 
@@ -100,11 +101,10 @@ Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax)
     // Values
     self = objectAddAttr(self, "value", *bytecode);
     self = objectAddAttr(self, "filepath", filepath);
+    self = objectAddAttr(self, "argc", argcptr);
 
     // __call__
     self = objectAddAttr(self, "__call__", &__call___function);
-    self = objectAddAttr(self, "__call__argmin", argminptr);
-    self = objectAddAttr(self, "__call__argmax", argmaxptr);
 
     return self;
 }

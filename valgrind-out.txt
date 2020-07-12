@@ -1,29 +1,29 @@
-==273== Memcheck, a memory error detector
-==273== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==273== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
-==273== Command: bin/quokka examples/file.q
-==273== Parent PID: 267
-==273== 
-==273== error calling PR_SET_PTRACER, vgdb might block
-==273== 
-==273== HEAP SUMMARY:
-==273==     in use at exit: 80 bytes in 1 blocks
-==273==   total heap usage: 2,437 allocs, 2,436 frees, 75,273 bytes allocated
-==273== 
-==273== 80 bytes in 1 blocks are still reachable in loss record 1 of 1
-==273==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==273==    by 0x11A61C: getVar (interpret.h:626)
-==273==    by 0x1258CB: quokka_interpret_line_tokens (interpret.h:1012)
-==273==    by 0x129BA4: quokka_interpret_tokens (interpret.h:2325)
-==273==    by 0x129C2C: _quokka_interpret (interpret.h:2342)
-==273==    by 0x12A4F2: main (quokka.c:160)
-==273== 
-==273== LEAK SUMMARY:
-==273==    definitely lost: 0 bytes in 0 blocks
-==273==    indirectly lost: 0 bytes in 0 blocks
-==273==      possibly lost: 0 bytes in 0 blocks
-==273==    still reachable: 80 bytes in 1 blocks
-==273==         suppressed: 0 bytes in 0 blocks
-==273== 
-==273== For lists of detected and suppressed errors, rerun with: -s
-==273== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==994== Memcheck, a memory error detector
+==994== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==994== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==994== Command: bin/quokka examples/file.q -c
+==994== Parent PID: 988
+==994== 
+==994== error calling PR_SET_PTRACER, vgdb might block
+==994== 
+==994== HEAP SUMMARY:
+==994==     in use at exit: 28 bytes in 5 blocks
+==994==   total heap usage: 5,502 allocs, 5,497 frees, 266,581 bytes allocated
+==994== 
+==994== 28 bytes in 5 blocks are definitely lost in loss record 1 of 1
+==994==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==994==    by 0x48F650E: strdup (strdup.c:42)
+==994==    by 0x125C32: quokka_interpret_line_tokens (interpret.h:1081)
+==994==    by 0x129B07: quokka_interpret_tokens (interpret.h:2332)
+==994==    by 0x129B8F: _quokka_interpret (interpret.h:2349)
+==994==    by 0x12A455: main (quokka.c:160)
+==994== 
+==994== LEAK SUMMARY:
+==994==    definitely lost: 28 bytes in 5 blocks
+==994==    indirectly lost: 0 bytes in 0 blocks
+==994==      possibly lost: 0 bytes in 0 blocks
+==994==    still reachable: 0 bytes in 0 blocks
+==994==         suppressed: 0 bytes in 0 blocks
+==994== 
+==994== For lists of detected and suppressed errors, rerun with: -s
+==994== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)

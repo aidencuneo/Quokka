@@ -328,25 +328,9 @@ Object * __eq___int(int argc, Object ** argv)
 
         if (first[0] == secnd[0])
             return getIntConst(1);
-        return getIntConst(0);
     }
-    // else if (!strcmp(argv[1]->name, "long"))
-    // {
-    //     int * first = objectGetAttr(argv[0], "value");
-    //     long long * secnd = objectGetAttr(argv[1], "value");
 
-    //     if (first[0] == secnd[0])
-    //         return getIntConst(1);
-    //     return getIntConst(0);
-    // }
-
-    char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
-    strcpy(err, "types 'int' and '");
-    strcat(err, argv[1]->name);
-    strcat(err, "' can not be compared with '=='");
-    error(err, line_num);
-
-    return makeNull();
+    return getIntConst(0);
 }
 
 Object * __lt___int(int argc, Object ** argv)
@@ -383,26 +367,9 @@ Object * __lt___int(int argc, Object ** argv)
                 // printf("%u == %u\n", value_a[i], value_b[i]);
             }
         }
-
-        return getIntConst(0);
     }
-    // else if (!strcmp(argv[1]->name, "long"))
-    // {
-    //     int * first = objectGetAttr(argv[0], "value");
-    //     long long * secnd = objectGetAttr(argv[1], "value");
 
-    //     if (first[0] < secnd[0])
-    //         return getIntConst(1);
-    //     return getIntConst(0);
-    // }
-
-    char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
-    strcpy(err, "types 'int' and '");
-    strcat(err, argv[1]->name);
-    strcat(err, "' can not be compared with '<'");
-    error(err, line_num);
-
-    return makeNull();
+    return getIntConst(0);
 }
 
 Object * __le___int(int argc, Object ** argv)
@@ -444,25 +411,9 @@ Object * __gt___int(int argc, Object ** argv)
 
         if (first[0] > secnd[0])
             return getIntConst(1);
-        return getIntConst(0);
-    }
-    else if (!strcmp(argv[1]->name, "long"))
-    {
-        int * first = objectGetAttr(argv[0], "value");
-        long long * secnd = objectGetAttr(argv[1], "value");
-
-        if (first[0] > secnd[0])
-            return getIntConst(1);
-        return getIntConst(0);
     }
 
-    char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
-    strcpy(err, "types 'int' and '");
-    strcat(err, argv[1]->name);
-    strcat(err, "' can not be compared with '>'");
-    error(err, line_num);
-
-    return makeNull();
+    return getIntConst(0);
 }
 
 Object * __ge___int(int argc, Object ** argv)
@@ -474,25 +425,9 @@ Object * __ge___int(int argc, Object ** argv)
 
         if (first[0] >= secnd[0])
             return getIntConst(1);
-        return getIntConst(0);
-    }
-    else if (!strcmp(argv[1]->name, "long"))
-    {
-        int * first = objectGetAttr(argv[0], "value");
-        long long * secnd = objectGetAttr(argv[1], "value");
-
-        if (first[0] >= secnd[0])
-            return getIntConst(1);
-        return getIntConst(0);
     }
 
-    char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
-    strcpy(err, "types 'int' and '");
-    strcat(err, argv[1]->name);
-    strcat(err, "' can not be compared with '>='");
-    error(err, line_num);
-
-    return makeNull();
+    return getIntConst(0);
 }
 
 Object * __sizeof___int(int argc, Object ** argv)

@@ -655,7 +655,7 @@ void set_bytecode_constants()
     bytecode_constants[0] = 0;
 
     // Integers are no longer included in bytecode constants because
-    // integers 0 through to 65535 are created during program execution
+    // integers 0 through to 256 are created during program execution
     strcat(bytecode_constants, "LOAD_NULL");
     strcat(bytecode_constants, INSTRUCTION_END);
 
@@ -1862,11 +1862,34 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
             line[0],
             INSTRUCTION_END);
 
-        // Increment and return original value
+        // Decrement and return original value
         mstrcatline(&bytecode,
             "DECREMENT",
             SEPARATOR,
             line[0],
+            INSTRUCTION_END);
+    }
+    else if (!strcmp(line[0], "-") && !strcmp(line[1], "-") && isidentifier(line[2]))
+    {
+        if (len > 3)
+            error("invalid syntax", num - 1);
+
+        // Set new line
+        if (!isInline)
+            mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
+
+        // Decrement (new value will be loaded)
+        mstrcatline(&bytecode,
+            "DECREMENT",
+            SEPARATOR,
+            line[2],
+            INSTRUCTION_END);
+
+        // Load new value
+        mstrcatline(&bytecode,
+            "LOAD_NAME",
+            SEPARATOR,
+            line[2],
             INSTRUCTION_END);
     }
     else if (stringInList(line, "+", len) ||
@@ -2389,44 +2412,42 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         if (!isInline)
             mstrcattrip(&bytecode, str_line_num, INSTRUCTION_END);
 
-        char * temp = quokka_compile_line_tokens(line, num, len - 1, 1);
+        char * temp;
+
+        temp = quokka_compile_line_tokens(line, num, len - 1, 1);
+        mstrcat(&bytecode, temp);
+        free(temp);
+
+        // Split up the argument list into it's elements
+        char * sliced = strSlice(line[len - 1], 1, 1);
+
+        char ** templine;
+        int templen = compile_comma_list_string(&templine, sliced);
+
+        temp = quokka_compile_line_tokens(templine, num, templen, 1);
 
         mstrcat(&bytecode, temp);
 
+        free(sliced);
         free(temp);
 
-        // If arguments were given to the function
-        if (strlen(line[len - 1]) > 2)
-        {
-            // Split up the argument list into it's elements
-            char * sliced = strSlice(line[len - 1], 1, 1);
+        int argc = stringCountUntil(templine, ",", templen);
 
-            char ** templine;
-            int templen = compile_comma_list_string(&templine, sliced);
+        int has_args = 0;
+        for (int i = 0; i < templen; i++)
+            if (strlen(templine[i]))
+                has_args = 1;
 
-            char * temp = quokka_compile_line_tokens(templine, num, templen, 1);
+        char * argcount = intToStr(has_args ? argc + 1 : 0);
 
-            mstrcat(&bytecode, temp);
+        mstrcatline(&bytecode,
+            "CALL",
+            SEPARATOR,
+            argcount,
+            INSTRUCTION_END);
 
-            free(sliced);
-            free(temp);
-
-            char * argcount = intToStr(stringCountUntil(templine, ",", templen) + 1);
-
-            mstrcatline(&bytecode,
-                "CALL",
-                SEPARATOR,
-                argcount,
-                INSTRUCTION_END);
-
-            free(templine);
-            free(argcount);
-        }
-        // If no arguments were given
-        else
-        {
-            mstrcat(&bytecode, "CALL" SEPARATOR "0" INSTRUCTION_END);
-        }
+        free(templine);
+        free(argcount);
     }
     else if (startswith(line[0], "(") && endswith(line[0], ")") && len == 1)
     {

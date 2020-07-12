@@ -497,11 +497,7 @@ Object * q_function_charcode(int argc, Object ** argv)
 Object * q_function_input(int argc, Object ** argv)
 {
     if (argc)
-    {
-        Object ** arglist = makeArglist(argv[0]);
-        objUnref(q_function_print(1, arglist));
-        free(arglist);
-    }
+        q_function_print(1, &argv[0]);
 
     char * buffer = malloc(1);
     strcpy(buffer, "");

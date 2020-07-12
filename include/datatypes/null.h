@@ -5,7 +5,7 @@ Object * __disp___null(int argc, Object ** argv)
 
 Object * __bool___null(int argc, Object ** argv)
 {
-    return int_consts[0];
+    return getIntConst(0);
 }
 
 Object * makeNull()

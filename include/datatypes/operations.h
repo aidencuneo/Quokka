@@ -229,8 +229,6 @@ void * objOperRshift(Object * obj)
 // Retrieve __inadd__ method from an Object (no error raising)
 void * objOperInadd(Object * obj)
 {
-    if (!strcmp(obj->name, "string"))
-        return &__inadd___string;
     if (!strcmp(obj->name, "list"))
         return &__inadd___list;
 
@@ -452,6 +450,8 @@ void * objOperBool(Object * obj)
 // Retrieve __int__ method from an Object
 void * objOperInt(Object * obj)
 {
+    if (!strcmp(obj->name, "null"))
+        return &__bool___null; // Same as bool(null)
     if (!strcmp(obj->name, "string"))
         return &__int___string;
 
