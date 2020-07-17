@@ -211,13 +211,9 @@ Object * __disp___list(int argc, Object ** argv)
 
     for (int p = 0; p < lstlen; p++)
     {
-        Object ** arglist = makeArglist(lst[p]);
+        Object * disp = q_function_display(1, &lst[p]);
 
-        Object * disp = q_function_display(1, arglist);
-
-        free(arglist);
-
-        mstrcat(&out, objectGetAttr(disp, "value"));
+        mstrcat(&out, disp->values[0]);
         if (p + 1 < lstlen)
             mstrcat(&out, ", ");
 

@@ -8,8 +8,7 @@ Object * q_function_display(int argc, Object ** argv)
     void * func = objOperDisp(argv[0]);
     if (func != NULL)
     {
-        Object ** arglist = makeArglist(argv[0]);
-        Object * strtext = ((standard_func_def)func)(1, arglist);
+        Object * strtext = ((standard_func_def)func)(1, &argv[0]);
 
         if (strcmp(strtext->name, "string"))
         {
@@ -19,8 +18,6 @@ Object * q_function_display(int argc, Object ** argv)
             strcat(err, "' must return type 'string'");
             error(err, line_num);
         }
-
-        free(arglist);
 
         out = strdup(strtext->values[0]);
 
@@ -387,7 +384,7 @@ Object * q_function_exit(int argc, Object ** argv)
     cleanupAll();
     exit(1);
 
-    // The following line is simply to prevent a warning that may
+    // The following line is just to prevent a warning that may
     // appear when compiling Quokka with some GCC or Clang versions
     return makeNull();
 }
@@ -404,7 +401,7 @@ Object * q_function_min(int argc, Object ** argv)
     }
 
     Object ** lst = argv[0]->values[0];
-    int lstlen = ((int *)objectGetAttr(argv[0], "length"))[0];
+    int lstlen = *(int *)objectGetAttr(argv[0], "length");
 
     int smallest = 0;
 
@@ -413,13 +410,9 @@ Object * q_function_min(int argc, Object ** argv)
         Object * item = lst[i];
 
         if (strcmp(item->name, "int"))
-        {
-            Object ** arglist = makeArglist(item);
-            item = q_function_int(1, arglist);
-            free(arglist);
-        }
+            item = q_function_int(1, &item);
 
-        int itemint = ((int *)objectGetAttr(item, "value"))[0];
+        int itemint = *(int *)objectGetAttr(item, "value");
 
         if (itemint < smallest || !i)
             smallest = itemint;
@@ -451,11 +444,7 @@ Object * q_function_max(int argc, Object ** argv)
         Object * item = lst[i];
 
         if (strcmp(item->name, "int"))
-        {
-            Object ** arglist = makeArglist(item);
-            item = q_function_int(1, arglist);
-            free(arglist);
-        }
+            item = q_function_int(1, &item);
 
         int itemint = ((int *)objectGetAttr(item, "value"))[0];
 

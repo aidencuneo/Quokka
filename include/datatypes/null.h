@@ -1,3 +1,8 @@
+Object * __eq___null(int argc, Object ** argv)
+{
+    return getIntConst(0);
+}
+
 Object * __disp___null(int argc, Object ** argv)
 {
     return makeString("null", 0);

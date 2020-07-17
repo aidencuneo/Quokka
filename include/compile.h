@@ -64,12 +64,12 @@ void error(char * text, int line)
     else
         fullfile = readfile(current_file);
 
-    char * lineprevious = malloc(MAXLINE);
-    char * linepreview = malloc(MAXLINE);
+    char * lineprev = malloc(MAXLINE);
+    char * linemid = malloc(MAXLINE);
     char * linenext = malloc(MAXLINE);
 
-    strcpy(lineprevious, "");
-    strcpy(linepreview, "");
+    strcpy(lineprev, "");
+    strcpy(linemid, "");
     strcpy(linenext, "");
 
     int c = 0;
@@ -77,10 +77,10 @@ void error(char * text, int line)
     {
         if (fullfile[i] == '\n')
             c++;
-        else if (c == line - 1 && strlen(lineprevious) < MAXLINE && fullfile[i] != 10 && fullfile[i] != 13)
-            strncat(lineprevious, &fullfile[i], 1);
-        else if (c == line && strlen(linepreview) < MAXLINE && fullfile[i] != 10 && fullfile[i] != 13)
-            strncat(linepreview, &fullfile[i], 1);
+        else if (c == line - 1 && strlen(lineprev) < MAXLINE && fullfile[i] != 10 && fullfile[i] != 13)
+            strncat(lineprev, &fullfile[i], 1);
+        else if (c == line && strlen(linemid) < MAXLINE && fullfile[i] != 10 && fullfile[i] != 13)
+            strncat(linemid, &fullfile[i], 1);
         else if (c == line + 1 && strlen(linenext) < MAXLINE && fullfile[i] != 10 && fullfile[i] != 13)
             strncat(linenext, &fullfile[i], 1);
         if (c > line + 1)
@@ -89,25 +89,39 @@ void error(char * text, int line)
 
     line++;
 
+    char * num_lineprev = intToStr(line - 1);
+    char * num_linemid = intToStr(line);
+    char * num_linenext = intToStr(line + 1);
+    int pad = strlen(num_linenext);
+
+    if (strlen(num_linemid) < pad)
+        num_linemid = lpadfree(num_linemid, pad, ' ');
+
+    if (strlen(num_lineprev) < pad)
+        num_lineprev = lpadfree(num_lineprev, pad, ' ');
+
     println("\nProgram execution terminated:\n");
 
     printf("At %s : Line %d\n\n", current_file, line);
 
     if (line - 1 > 0)
-        printf("  %d | %s\n", line - 1, lineprevious);
-    printf("> %d | %s\n", line, linepreview);
+        printf("  %s | %s\n", num_lineprev, lineprev);
+    printf("> %s | %s\n", num_linemid, linemid);
     if (line < charCount(fullfile, '\n') + 1)
-        printf("  %d | %s\n", line + 1, linenext);
-    print("\n");
+        printf("  %s | %s\n", num_linenext, linenext);
 
-    printf("Error: %s\n\n", text);
+    printf("\nError: %s\n\n", text);
 
     if (!in_cli_mode)
         free(fullfile);
 
-    free(lineprevious);
-    free(linepreview);
+    free(lineprev);
+    free(linemid);
     free(linenext);
+
+    free(num_lineprev);
+    free(num_linemid);
+    free(num_linenext);
 
     // Exit and free the stack (if not in CLI mode)
     if (!in_cli_mode)
@@ -718,6 +732,8 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
 
     if (len < 2 && line[1] == NULL)
         line[1] = "";
+    if (len < 3 && line[2] == NULL)
+        line[2] = "";
 
     if (verbose) println(line[0]);
 

@@ -1,8 +1,23 @@
+Object * __disp___function(int argc, Object ** argv)
+{
+    char * filepath = argv[0]->values[1];
+    char * name = argv[0]->values[2];
+
+    char * func_text = malloc(2 + strlen(name) + 16 + strlen(filepath) + 1 + 1);
+    strcpy(func_text, "<'");
+    strcat(func_text, name);
+    strcat(func_text, "' function from ");
+    strcat(func_text, filepath);
+    strcat(func_text, ">");
+
+    return makeString(func_text, 1);
+}
+
 Object * __call___function(int argc, Object ** argv)
 {
-    // Get function code
-    char * filepath = objectGetAttr(argv[0], "filepath");
-    char * code = objectGetAttr(argv[0], "value");
+    // Get function data
+    char * code = argv[0]->values[0];
+    char * filepath = argv[0]->values[1];
     char * codedupe = strdup(code);
 
     // Set up the environment for the function call
@@ -20,7 +35,7 @@ Object * __call___function(int argc, Object ** argv)
     // Arguments
     int * intptr = makeIntPtr(argc);
 
-    addVar("argc", makeInt(intptr, 1, 1));
+    addVar("argc", makeInt(intptr, 1, 10));
     int argc_var = locals.count - 1;
 
     Object ** arglist = malloc(argc * sizeof(Object *));
@@ -70,11 +85,15 @@ Object * __call___function(int argc, Object ** argv)
 
 Object * __free___function(int argc, Object ** argv)
 {
-    char * value = objectGetAttr(argv[0], "value");
-    char * filepath = objectGetAttr(argv[0], "filepath");
+    // These references are only possible if the values
+    // are assigned exactly in this order in makeFunction()
+    char * value = argv[0]->values[0];
+    char * filepath = argv[0]->values[1];
+    char * name = argv[0]->values[2];
 
     free(value);
     free(filepath);
+    free(name);
 
     int * argcptr = objectGetAttr(argv[0], "argc");
 
@@ -83,7 +102,7 @@ Object * __free___function(int argc, Object ** argv)
     return makeNull();
 }
 
-Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax)
+Object * makeFunction(char * name, char * filepath, char ** bytecode, int argmin, int argmax)
 {
     int * argcptr = malloc(2 * sizeof(int));
     argcptr[0] = argmin;
@@ -96,15 +115,15 @@ Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax)
     // 5 Attributes
     self->names = malloc(5 * sizeof(char *));
     self->values = malloc(5 * sizeof(void *));
-    self->value_count = 0;
 
     // Values
-    self = objectAddAttr(self, "value", *bytecode);
-    self = objectAddAttr(self, "filepath", filepath);
-    self = objectAddAttr(self, "argc", argcptr);
+    objectAddAttr(self, "value", *bytecode);   // 0
+    objectAddAttr(self, "filepath", filepath); // 1
+    objectAddAttr(self, "name", name);         // 2
+    objectAddAttr(self, "argc", argcptr);
 
     // __call__
-    self = objectAddAttr(self, "__call__", &__call___function);
+    objectAddAttr(self, "__call__", &__call___function);
 
     return self;
 }

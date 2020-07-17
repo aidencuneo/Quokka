@@ -108,7 +108,6 @@ int getVarIndex(char * name);
 char * findSimilarVarname(char * name, int threshold);
 
 Object * getIntConst(int ind);
-Object ** makeArglist(Object * obj);
 Object ** makeDoubleArglist(Object * first, Object * secnd);
 
 //
@@ -139,7 +138,7 @@ Object * makeCMethod(Object * parent, void * method_pointer, int argmin, int arg
 Object * makeFile(char * path, char * mode);
 
 // function
-Object * makeFunction(char * filepath, char ** bytecode, int argmin, int argmax);
+Object * makeFunction(char * name, char * filepath, char ** bytecode, int argmin, int argmax);
 
 // int
 Object * makeInt(int * value, int size, int base);

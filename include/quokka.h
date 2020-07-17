@@ -1,5 +1,5 @@
 // VERSION STUFF
-#define VERSION "0.6.4"
+#define VERSION "0.6.5"
 
 // Defines
 #define LN10 2.3025850929940456840179914546844
@@ -242,7 +242,7 @@ char * nstrtok(char * string, char const * delimiter)
 
     if ((p = strpbrk(source, delimiter)) != NULL)
     {
-        * p = 0;
+        *p = 0;
         ret = source;
         source = ++p;
     }
@@ -264,11 +264,11 @@ char * cpstrip(char * s)
         return s;
 
     end = s + size - 1;
-    while (end >= s && isspace(* end))
+    while (end >= s && isspace(*end))
         end--;
     *(end + 1) = '\0';
 
-    while (* s && isspace( * s))
+    while (*s && isspace(*s))
         s++;
 
     return s;
@@ -695,6 +695,25 @@ void strInsertStart(char ** st, char * newstr)
     strcat(*st, temp);
 
     free(temp);
+}
+
+// Appends characters to the left of a given string
+// until it's length matches a given number
+// (The original string is free'd)
+char * lpadfree(char * st, int n, char ch)
+{
+    char * res = malloc(n + 1);
+    strcpy(res, "");
+
+    int len = strlen(st);
+
+    for (int i = 0; i < n - len; i++)
+        strncat(res, &ch, 1);
+
+    strcat(res, st);
+    free(st);
+
+    return res;
 }
 
 char * getinput()

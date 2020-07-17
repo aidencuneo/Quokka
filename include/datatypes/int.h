@@ -39,7 +39,8 @@ Object * __add___int(int argc, Object ** argv)
                 res = qint_addition(argv[0], argv[1]);
         }
 
-        res->refs = 0;
+        assert(res->refs > 0);
+        res->refs--;
         return res;
     }
 
@@ -383,15 +384,6 @@ Object * __le___int(int argc, Object ** argv)
             return getIntConst(1);
         return getIntConst(0);
     }
-    // else if (!strcmp(argv[1]->name, "long"))
-    // {
-    //     int * first = objectGetAttr(argv[0], "value");
-    //     long long * secnd = objectGetAttr(argv[1], "value");
-
-    //     if (first[0] <= secnd[0])
-    //         return getIntConst(1);
-    //     return getIntConst(0);
-    // }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
     strcpy(err, "types 'int' and '");
@@ -446,7 +438,6 @@ Object * __pos___int(int argc, Object ** argv)
     unsigned * value = argv[0]->values[0];
     int size = *(int *)argv[0]->values[1];
     int absize = abs(size);
-    int base = ((int *)argv[0]->values[1])[1];
 
     unsigned * newval = malloc(absize * sizeof(unsigned));
 
@@ -460,13 +451,14 @@ Object * __neg___int(int argc, Object ** argv)
 {
     unsigned * value = argv[0]->values[0];
     int size = *(int *)argv[0]->values[1];
+    int base = ((int *)argv[0]->values[1])[1];
 
     unsigned * newval = malloc(abs(size) * sizeof(unsigned));
 
     for (int i = 0; i < abs(size); i++)
         newval[i] = value[i];
 
-    return makeInt(newval, abs(size), -intsign(size));
+    return makeInt(newval, -size, base);
 }
 
 Object * __disp___int(int argc, Object ** argv)
@@ -521,13 +513,6 @@ Object * __bool___int(int argc, Object ** argv)
     return getIntConst(0);
 }
 
-// Object * __long___int(int argc, Object ** argv)
-// {
-//     int * first = objectGetAttr(argv[0], "value");
-
-//     return makeLong(makeLLPtr(first[0]), 1);
-// }
-
 Object * __free___int(int argc, Object ** argv)
 {
     unsigned * value = argv[0]->values[0];
@@ -547,7 +532,7 @@ Object * makeInt(int * value, int size, int base)
     int sign = intsign(size);
 
     // If 0 <= value < int_const_count, return the constant for this number
-    if (value[0] * sign >= 0 && value[0] * sign < int_const_count && abs(size) == 1 && base == 10)
+    if (size >= 0 && value[0] * sign < int_const_count && abs(size) == 1 && base == 10)
     {
         int ind = value[0];
         free(value);
@@ -731,7 +716,7 @@ Object * qint_subtraction(Object * a, Object * b)
         while (--i >= 0 && value_a[i] == value_b[i]);
 
         if (i < 0)
-            return int_consts[0];
+            return getIntConst(0);
 
         if (value_a[i] < value_b[i])
         {
@@ -749,6 +734,7 @@ Object * qint_subtraction(Object * a, Object * b)
         malloc((size_a + 1) * sizeof(unsigned)),
         size_a + 1,
         base);
+    z->refs++;
 
     for (i = 0; i < size_a + 1; i++)
         ((unsigned *)z->values[0])[i] = 0;

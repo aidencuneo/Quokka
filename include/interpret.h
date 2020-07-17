@@ -87,8 +87,7 @@ void initIntConsts()
 
     for (int i = 0; i < int_const_count; i++)
     {
-        int * ptr = makeIntPtr(i);
-        int_consts[i] = makeIntRaw(ptr, 1, 10);
+        int_consts[i] = makeIntRaw(makeIntPtr(i), !!i, 10);
         int_consts[i]->refs++;
     }
 }
@@ -379,11 +378,7 @@ void freeObject(Object * obj)
     // Call the obj.__free__ function to properly free it
     void * func = objOperFree(obj);
     if (func != NULL)
-    {
-        Object ** arglist = makeArglist(obj);
-        ((standard_func_def)func)(1, arglist);
-        free(arglist);
-    }
+        ((standard_func_def)func)(1, &obj);
 
     free(obj->names);
     free(obj->values);
@@ -766,14 +761,6 @@ Object * getIntConst(int ind)
     return int_consts[ind];
 }
 
-Object ** makeArglist(Object * obj)
-{
-    Object ** arglist = malloc(sizeof(Object *));
-    arglist[0] = obj;
-
-    return arglist;
-}
-
 Object ** makeDoubleArglist(Object * first, Object * secnd)
 {
     Object ** arglist = malloc(2 * sizeof(Object *));
@@ -867,15 +854,12 @@ void quokka_run_cli_interpreter()
                 {
                     if (strcmp(stack[stack_size - 1]->name, "null"))
                     {
-                        // Get top of stack
-                        Object ** arglist = makeArglist(stack[stack_size - 1]);
+                        // Get top of stack's __disp__ method
+                        Object * disp = q_function_display(1, &stack[stack_size - 1]);
 
-                        // Print it
-                        Object * disp = q_function_display(1, arglist);
-
+                        // Print top of stack
                         printf("%s", (char *)objectGetAttr(disp, "value"));
 
-                        free(arglist);
                         freeObject(disp);
                     }
 
@@ -918,15 +902,12 @@ void quokka_run_cli_interpreter()
             {
                 if (strcmp(stack[stack_size - 1]->name, "null"))
                 {
-                    // Get top of stack
-                    Object ** arglist = makeArglist(stack[stack_size - 1]);
+                    // Get top of stack's __disp__ method
+                    Object * disp = q_function_display(1, &stack[stack_size - 1]);
 
-                    // Print it
-                    Object * disp = q_function_display(1, arglist);
-
+                    // Print top of stack
                     printf("%s", (char *)objectGetAttr(disp, "value"));
 
-                    free(arglist);
                     freeObject(disp);
                 }
 
@@ -1007,7 +988,7 @@ void quokka_interpret_line_tokens(char ** line)
     {
         int ind = strtol(line[1], NULL, 10);
 
-        pushTop(int_consts[ind]);
+        pushTopM(getIntConst(ind));
     }
     else if (!strcmp(line[0], "LOAD_NAME"))
     {
@@ -1054,11 +1035,13 @@ void quokka_interpret_line_tokens(char ** line)
         else
             argmax = strtol(line[2], NULL, 10);
 
-        char * f_code = expandSBrackExp(line[3]);
+        char * name = malloc(8 + 1);
+        strcpy(name, "<lambda>");
 
         char * filepath_dupe = strndup(current_file, strlen(current_file));
+        char * f_code = expandSBrackExp(line[3]);
 
-        pushTop(makeFunction(filepath_dupe, &f_code, argmin, argmax));
+        pushTop(makeFunction(name, filepath_dupe, &f_code, argmin, argmax));
     }
     else if (!strcmp(line[0], "DEFINE_FUNCTION"))
     {
@@ -1074,11 +1057,12 @@ void quokka_interpret_line_tokens(char ** line)
         else
             argmax = strtol(line[3], NULL, 10);
 
+        char * name = strdup(line[1]);
         char * f_code = expandSBrackExp(line[4]);
-
         char * filepath_dupe = strndup(current_file, strlen(current_file));
 
-        addGVar(strdup(line[1]), makeFunction(filepath_dupe, &f_code, argmin, argmax));
+        addGVar(name,
+            makeFunction(name, filepath_dupe, &f_code, argmin, argmax));
     }
     else if (!strcmp(line[0], "DEL_VAR"))
     {
@@ -1401,7 +1385,7 @@ void quokka_interpret_line_tokens(char ** line)
     else if (!strcmp(line[0], "INCREMENT"))
     {
         Object * first = getVar(line[1]); // Don't unreference this
-        Object * secnd = getIntConst(1); // int(1) in Quokka
+        Object * secnd = int_consts[1];   // int(1) in Quokka
 
         Object ** arglist;
 
@@ -1458,13 +1442,9 @@ void quokka_interpret_line_tokens(char ** line)
 
         void * func = objOperPos(first);
 
-        Object ** arglist = makeArglist(first);
-
-        pushTop(((standard_func_def)func)(1, arglist));
+        pushTop(((standard_func_def)func)(1, &first));
 
         objUnref(first);
-
-        free(arglist);
     }
     else if (!strcmp(line[0], "UNARY_SUB"))
     {
@@ -1472,13 +1452,9 @@ void quokka_interpret_line_tokens(char ** line)
 
         void * func = objOperNeg(first);
 
-        Object ** arglist = makeArglist(first);
-
-        pushTop(((standard_func_def)func)(1, arglist));
+        pushTop(((standard_func_def)func)(1, &first));
 
         objUnref(first);
-
-        free(arglist);
     }
     else if (!strcmp(line[0], "BINARY_ADD"))
     {
@@ -1797,7 +1773,7 @@ void quokka_interpret_line_tokens(char ** line)
         // Flip it, then push it to stack
         int i = !(*(int *)objectGetAttr(conditionbool, "value"));
 
-        pushTop(int_consts[i]);
+        pushTop(getIntConst(i));
 
         objUnref(first);
         objUnref(secnd);
@@ -1876,11 +1852,7 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Convert first to bool
         if (objOperBool(first) != NULL)
-        {
-            Object ** arglist = makeArglist(first);
-            firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
-            free(arglist);
-        }
+            firstbool = *(int *)q_function_bool(1, &first)->values[1];
         else
             firstbool = 0;
 
@@ -1902,20 +1874,14 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Convert first to bool
         if (objOperBool(first) != NULL)
-        {
-            Object ** arglist = makeArglist(first);
-            firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
-            free(arglist);
-        }
+            firstbool = *(int *)q_function_bool(1, &first)->values[1];
         else
             firstbool = 0;
 
         // Convert secnd to bool
         if (objOperBool(secnd) != NULL)
         {
-            Object ** arglist = makeArglist(secnd);
-            secndbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
-            free(arglist);
+            secndbool = *(int *)q_function_bool(1, &secnd)->values[1];
         }
         else
             secndbool = 0;
@@ -1939,21 +1905,13 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Convert first to bool
         if (objOperBool(first) != NULL)
-        {
-            Object ** arglist = makeArglist(first);
-            firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
-            free(arglist);
-        }
+            firstbool = *(int *)q_function_bool(1, &first)->values[1];
         else
             firstbool = 0;
 
         // Convert secnd to bool
         if (objOperBool(secnd) != NULL)
-        {
-            Object ** arglist = makeArglist(secnd);
-            secndbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
-            free(arglist);
-        }
+            secndbool = *(int *)q_function_bool(1, &secnd)->values[1];
         else
             secndbool = 0;
 
@@ -1976,21 +1934,13 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Convert first to bool
         if (objOperBool(first) != NULL)
-        {
-            Object ** arglist = makeArglist(first);
-            firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
-            free(arglist);
-        }
+            firstbool = *(int *)q_function_bool(1, &first)->values[1];
         else
             firstbool = 0;
 
         // Convert secnd to bool
         if (objOperBool(secnd) != NULL)
-        {
-            Object ** arglist = makeArglist(secnd);
-            secndbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
-            free(arglist);
-        }
+            secndbool = *(int *)q_function_bool(1, &secnd)->values[1];
         else
             secndbool = 0;
 
@@ -2011,11 +1961,7 @@ void quokka_interpret_line_tokens(char ** line)
 
         // Convert first to bool
         if (objOperBool(first) != NULL)
-        {
-            Object ** arglist = makeArglist(first);
-            firstbool = ((int *)objectGetAttr(q_function_bool(1, arglist), "value"))[0];
-            free(arglist);
-        }
+            firstbool = *(int *)q_function_bool(1, &first)->values[1];
         else
             firstbool = 0;
 
@@ -2075,12 +2021,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         if (objOperBool(obj) != NULL)
         {
-            Object ** arglist = makeArglist(obj);
-            Object * conditionobj = q_function_bool(1, arglist);
-            free(arglist);
-
+            Object * conditionobj = q_function_bool(1, &obj);
             condition = *(int *)conditionobj->values[0];
-
             objUnref(conditionobj);
         }
 
@@ -2106,12 +2048,8 @@ void quokka_interpret_line_tokens(char ** line)
 
         if (objOperBool(obj) != NULL)
         {
-            Object ** arglist = makeArglist(obj);
-            Object * conditionobj = q_function_bool(1, arglist);
-            free(arglist);
-
+            Object * conditionobj = q_function_bool(1, &obj);
             condition = *(int *)conditionobj->values[0];
-
             objUnref(conditionobj);
         }
 
@@ -2251,12 +2189,7 @@ void quokka_interpret_line_tokens(char ** line)
             Object * obj = popTop();
 
             void * copy_attr = objOperCopy(obj);
-
-            Object ** arglist = makeArglist(obj);
-
-            pushTop(((standard_func_def)copy_attr)(1, arglist));
-
-            free(arglist);
+            pushTop(((standard_func_def)copy_attr)(1, &obj));
 
             return;
         }

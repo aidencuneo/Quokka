@@ -3,8 +3,8 @@
 // LONG_MAX = 2**62L*2-1
 
 
-// Right Pad (Align list items to right)
-fun rpad 1 2
+// Left Pad (Align list items to the right by padding on the left)
+fun lpad 1 2
     if argc == 1
         pad = ' '
         lst = argv[0]
@@ -28,7 +28,7 @@ fun rpad 1 2
 end
 
 
-// Centre Pad (Align list items to centre)
+// Centre Pad (Align list items to the centre)
 fun cpad 1 2
     if argc == 1
         pad = ' '

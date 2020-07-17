@@ -82,9 +82,7 @@ Object * write_file(int argc, Object ** argv)
     int * opened = objectGetAttr(argv[0], "opened");
     char * mode = objectGetAttr(argv[0], "mode");
 
-    Object ** arglist = makeArglist(argv[1]);
-    Object * strtext = q_function_string(1, arglist);
-    free(arglist);
+    Object * strtext = q_function_string(1, &argv[1]);
 
     if (!f)
         opened[0] = 0;

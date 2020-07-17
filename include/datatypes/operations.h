@@ -256,6 +256,8 @@ void * objOperIndiv(Object * obj)
 // Retrieve __eq__ method from an Object
 void * objOperEq(Object * obj)
 {
+    if (!strcmp(obj->name, "null"))
+        return &__eq___null;
     if (!strcmp(obj->name, "int"))
         return &__eq___int;
     if (!strcmp(obj->name, "string"))
@@ -458,17 +460,6 @@ void * objOperInt(Object * obj)
     return objectGetAttr(obj, "__int__");
 }
 
-// Retrieve __long__ method from an Object
-// void * objOperLong(Object * obj)
-// {
-//     if (!strcmp(obj->name, "int"))
-//         return &__long___int;
-//     if (!strcmp(obj->name, "string"))
-//         return &__long___string;
-
-//     return objectGetAttr(obj, "__long__");
-// }
-
 // Retrieve __string__ method from an Object
 void * objOperString(Object * obj)
 {
@@ -483,12 +474,14 @@ void * objOperDisp(Object * obj)
 {
     if (!strcmp(obj->name, "null"))
         return &__disp___null;
+    if (!strcmp(obj->name, "function"))
+        return &__disp___function;
     if (!strcmp(obj->name, "int"))
         return &__disp___int;
-    if (!strcmp(obj->name, "string"))
-        return &__disp___string;
     if (!strcmp(obj->name, "list"))
         return &__disp___list;
+    if (!strcmp(obj->name, "string"))
+        return &__disp___string;
 
     return objectGetAttr(obj, "__disp__");
 }

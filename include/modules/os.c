@@ -5,11 +5,9 @@ Object * _os_chdir(int argc, Object ** argv)
     // If first argument is not a string, try to convert it into one
     if (strcmp(argv[1]->name, "string"))
     {
-        Object ** arglist = makeArglist(argv[1]);
-        Object * tostring = q_function_string(1, arglist);
-        free(arglist);
-
+        Object * tostring = q_function_string(1, &argv[1]);
         text = objectGetAttr(tostring, "value");
+        // free(tostring);
     }
     else
     {
@@ -59,11 +57,9 @@ Object * _os_system(int argc, Object ** argv)
     }
 
     // If first argument is not a string, try to convert it into one
-    Object ** arglist = makeArglist(argv[1]);
-    Object * tostring = q_function_string(1, arglist);
-    free(arglist);
+    Object * tostring = q_function_string(1, &argv[1]);
 
-    char * text = objectGetAttr(tostring, "value");
+    char * text = tostring->values[0];
 
     Object * exit_code = makeInt(makeIntPtr(system(text)), 1, 10);
 

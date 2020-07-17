@@ -43,9 +43,7 @@ Object * __mul___string(int argc, Object ** argv)
         strcpy(third, "");
 
         for (int i = 0; i < secnd[0]; i++)
-        {
             mstrcat(&third, first);
-        }
 
         return makeString(third, 1);
     }
@@ -268,9 +266,7 @@ Object * strip_string(int argc, Object ** argv)
         stop--;
 
     for (int i = start; i <= stop; i++)
-    {
         newval[ind++] = thisvalue[i];
-    }
 
     newval[ind] = 0;
 
