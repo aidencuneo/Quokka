@@ -15,7 +15,7 @@ end
 
 
 fun rand
-    num = 65536L ** 3
+    num = 65536 ** 3
     ret int(slice(string(&num), 3, -1))
 end
 

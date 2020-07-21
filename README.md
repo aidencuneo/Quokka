@@ -18,7 +18,7 @@ Arithmetic between integers will soon be majorly improved, and we're hoping to b
 
 ## Breadcrumbs/Traceback system
 
-Currently, 
+Currently, a traceback consists of one error, which means errors can not be traced back to whichever scopes they were originally called from, so in the near future I'm aiming to create a much better breadcrumbs/traceback system to make sure errors and exceptions can be traced backwards in a chain to give developers a better debugging experience when writing programs in Quokka.
 
 ## User-defined Class Creation
 
