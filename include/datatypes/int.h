@@ -1,5 +1,5 @@
 int SHIFT = 32;
-#define BASE  ((long long)1 << SHIFT)
+#define BASE  ((long)1 << SHIFT)
 #define MASK  (BASE - 1)
 
 // For debugging
@@ -324,11 +324,22 @@ Object * __eq___int(int argc, Object ** argv)
 {
     if (!strcmp(argv[1]->name, "int"))
     {
-        int * first = objectGetAttr(argv[0], "value");
-        int * secnd = objectGetAttr(argv[1], "value");
+        unsigned * value_a = objectGetAttr(argv[0], "value");
+        unsigned * value_b = objectGetAttr(argv[1], "value");
 
-        if (first[0] == secnd[0])
-            return getIntConst(1);
+        int size_a = *(int *)argv[0]->values[1];
+        int size_b = *(int *)argv[1]->values[1];
+
+        if (size_a != size_b)
+            return getIntConst(0);
+
+        assert(size_a == size_b);
+
+        for (int i = abs(size_a) - 1; i >= 0; i--)
+            if (value_a[i] != value_b[i])
+                return getIntConst(0);
+
+        return getIntConst(1);
     }
 
     return getIntConst(0);
@@ -351,22 +362,12 @@ Object * __lt___int(int argc, Object ** argv)
 
         assert(size_a == size_b);
 
-        unsigned long carry = 0;
-
-        for (int i = size_a - 1; i >= 0; i--)
+        for (int i = abs(size_a) - 1; i >= 0; i--)
         {
-            // printf("%u < %u?\n", value_a[i], value_b[i]);
-
             if (value_a[i] < value_b[i])
-                return getIntConst(1);
+                return getIntConst(size_a > -1);
             else if (value_a[i] > value_b[i])
-                return getIntConst(0);
-            else
-            {
-                assert(value_a[i] == value_b[i]);
-
-                // printf("%u == %u\n", value_a[i], value_b[i]);
-            }
+                return getIntConst(size_a < 0);
         }
     }
 
@@ -377,32 +378,57 @@ Object * __le___int(int argc, Object ** argv)
 {
     if (!strcmp(argv[1]->name, "int"))
     {
-        int * first = objectGetAttr(argv[0], "value");
-        int * secnd = objectGetAttr(argv[1], "value");
+        unsigned * value_a = objectGetAttr(argv[0], "value");
+        unsigned * value_b = objectGetAttr(argv[1], "value");
 
-        if (first[0] <= secnd[0])
+        int size_a = *(int *)argv[0]->values[1];
+        int size_b = *(int *)argv[1]->values[1];
+
+        if (size_a < size_b)
             return getIntConst(1);
-        return getIntConst(0);
+        else if (size_a > size_b)
+            return getIntConst(0);
+
+        assert(size_a == size_b);
+
+        for (int i = abs(size_a) - 1; i >= 0; i--)
+        {
+            if (value_a[i] < value_b[i])
+                return getIntConst(size_a > -1);
+            else if (value_a[i] > value_b[i])
+                return getIntConst(size_a < 0);
+        }
+
+        return getIntConst(1);
     }
 
-    char * err = malloc(17 + strlen(argv[1]->name) + 31 + 1);
-    strcpy(err, "types 'int' and '");
-    strcat(err, argv[1]->name);
-    strcat(err, "' can not be compared with '<='");
-    error(err, line_num);
-
-    return makeNull();
+    return getIntConst(0);
 }
 
 Object * __gt___int(int argc, Object ** argv)
 {
     if (!strcmp(argv[1]->name, "int"))
     {
-        int * first = objectGetAttr(argv[0], "value");
-        int * secnd = objectGetAttr(argv[1], "value");
+        unsigned * value_a = objectGetAttr(argv[0], "value");
+        unsigned * value_b = objectGetAttr(argv[1], "value");
 
-        if (first[0] > secnd[0])
+        int size_a = *(int *)argv[0]->values[1];
+        int size_b = *(int *)argv[1]->values[1];
+
+        if (size_a > size_b)
             return getIntConst(1);
+        else if (size_a < size_b)
+            return getIntConst(0);
+
+        assert(size_a == size_b);
+
+        for (int i = abs(size_a) - 1; i >= 0; i--)
+        {
+            if (value_a[i] > value_b[i])
+                return getIntConst(size_a > -1);
+            else if (value_a[i] < value_b[i])
+                return getIntConst(size_a < 0);
+        }
     }
 
     return getIntConst(0);
@@ -412,11 +438,28 @@ Object * __ge___int(int argc, Object ** argv)
 {
     if (!strcmp(argv[1]->name, "int"))
     {
-        int * first = objectGetAttr(argv[0], "value");
-        int * secnd = objectGetAttr(argv[1], "value");
+        unsigned * value_a = objectGetAttr(argv[0], "value");
+        unsigned * value_b = objectGetAttr(argv[1], "value");
 
-        if (first[0] >= secnd[0])
+        int size_a = *(int *)argv[0]->values[1];
+        int size_b = *(int *)argv[1]->values[1];
+
+        if (size_a > size_b)
             return getIntConst(1);
+        else if (size_a < size_b)
+            return getIntConst(0);
+
+        assert(size_a == size_b);
+
+        for (int i = abs(size_a) - 1; i >= 0; i--)
+        {
+            if (value_a[i] > value_b[i])
+                return getIntConst(size_a > -1);
+            else if (value_a[i] < value_b[i])
+                return getIntConst(size_a < 0);
+        }
+
+        return getIntConst(1);
     }
 
     return getIntConst(0);
@@ -616,8 +659,10 @@ Object * qint_addition(Object * a, Object * b)
 
     int base = ((int *)a->values[1])[1];
 
-    // isummary(dig_a, size_a);
-    // isummary(dig_a, size_b);
+    printf("a: ");
+    isummary(value_a, size_a);
+    printf("b: ");
+    isummary(value_b, size_b);
 
     // Make sure a is the largest
     if (size_a < size_b)
@@ -645,10 +690,10 @@ Object * qint_addition(Object * a, Object * b)
         base);
     z->refs++;
 
-    long carry = 0;
+    unsigned carry = 0;
 
-    int i;
-    for (i = 0; i < size_b; i++)
+    int i = 0;
+    for ( ; i < size_b; i++)
     {
         carry += value_a[i] + value_b[i];
         ((unsigned *)z->values[0])[i] = carry & MASK;
@@ -666,7 +711,7 @@ Object * qint_addition(Object * a, Object * b)
 
     // printf("%d - %d\n", sign_a, sign_b);
 
-    // isummary(((unsigned *)z->values[0]), size_a + 1);
+    isummary(((unsigned *)z->values[0]), size_a + 1);
 
     qint_normalise(z);
     return z;
