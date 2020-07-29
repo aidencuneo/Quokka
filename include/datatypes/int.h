@@ -1,4 +1,4 @@
-int SHIFT = 32;
+int SHIFT = 31;
 #define BASE  ((long)1 << SHIFT)
 #define MASK  (BASE - 1)
 
@@ -659,11 +659,6 @@ Object * qint_addition(Object * a, Object * b)
 
     int base = ((int *)a->values[1])[1];
 
-    printf("a: ");
-    isummary(value_a, size_a);
-    printf("b: ");
-    isummary(value_b, size_b);
-
     // Make sure a is the largest
     if (size_a < size_b)
     {
@@ -709,9 +704,7 @@ Object * qint_addition(Object * a, Object * b)
 
     ((unsigned *)z->values[0])[i] = carry;
 
-    // printf("%d - %d\n", sign_a, sign_b);
-
-    isummary(((unsigned *)z->values[0]), size_a + 1);
+    // isummary(((unsigned *)z->values[0]), size_a + 1);
 
     qint_normalise(z);
     return z;
