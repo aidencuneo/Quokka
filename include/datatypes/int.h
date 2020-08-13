@@ -567,7 +567,7 @@ Object * __free___int(int argc, Object ** argv)
     return NULL;
 }
 
-Object * makeInt(int * value, int size, int base)
+Object * makeInt(unsigned * value, int size, int base)
 {
     if (!size && base == 10)
         return getIntConst(0);
@@ -585,7 +585,7 @@ Object * makeInt(int * value, int size, int base)
     return makeIntRaw(value, size, base);
 }
 
-Object * makeIntRaw(int * value, int size, int base)
+Object * makeIntRaw(unsigned * value, int size, int base)
 {
     int * sizeptr = malloc(2 * sizeof(int));
     sizeptr[0] = size; // Can be negative for negative integers
