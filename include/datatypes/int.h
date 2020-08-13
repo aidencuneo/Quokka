@@ -666,7 +666,7 @@ Object * qint_addition(Object * a, Object * b)
         a = b;
         b = temp;
 
-        int * value_temp = value_a;
+        unsigned * value_temp = value_a;
         value_a = value_b;
         value_b = value_temp;
 
