@@ -903,12 +903,13 @@ void quokka_run_cli_interpreter()
                 if (strcmp(stack[stack_size - 1]->name, "null"))
                 {
                     // Get top of stack's __disp__ method
-                    Object * disp = q_function_display(1, &stack[stack_size - 1]);
+                    freeObject(q_function_print(1, &stack[stack_size - 1]));
+                    // Object * disp = q_function_display(1, &stack[stack_size - 1]);
 
                     // Print top of stack
-                    printf("%s", (char *)objectGetAttr(disp, "value"));
+                    // printf("%s", (char *)objectGetAttr(disp, "value"));
 
-                    freeObject(disp);
+                    // freeObject(disp);
                 }
 
                 resetStack();

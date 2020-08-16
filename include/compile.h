@@ -200,11 +200,15 @@ int isinteger(char * word)
     for (int i = 0; i < size; i++)
     {
         if (base == 2)
+        {
             if (word[i] != '0' && word[i] != '1')
                 return 0;
+        }
         else if (base == 10)
+        {
             if (!isdigit(word[i]))
                 return 0;
+        }
         else if (base == 16)
             if (!isdigit(word[i])
                 && word[i] != 'a'
