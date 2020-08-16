@@ -1378,7 +1378,7 @@ void quokka_interpret_line_tokens(char ** line)
         // Get pointer address as an int
         unsigned long firstaddr = intObjAddress(first);
 
-        pushTop(makeInt(makeIntPtr(firstaddr), 1, 1));
+        pushTop(makeInt(makeIntPtr(firstaddr), 1, 10));
 
         objUnref(first);
     }

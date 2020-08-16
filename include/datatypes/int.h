@@ -1,5 +1,5 @@
 int SHIFT = 31;
-#define BASE  ((long)1 << SHIFT)
+#define BASE  ((unsigned)1 << SHIFT)
 #define MASK  (BASE - 1)
 
 // For debugging
@@ -79,9 +79,10 @@ Object * __sub___int(int argc, Object ** argv)
             else
                 res = qint_subtraction(argv[0], argv[1]);
         }
-        return res;
 
-        return qint_subtraction(argv[0], argv[1]);
+        assert(res->refs > 0);
+        res->refs--;
+        return res;
     }
 
     char * err = malloc(17 + strlen(argv[1]->name) + 30 + 1);
@@ -155,6 +156,9 @@ Object * __mul___int(int argc, Object ** argv)
         // isummary(value_z, abs(size_z));
 
         qint_normalise(z);
+
+        assert(z->refs > 0);
+        z->refs--;
         return z;
     }
 
@@ -725,7 +729,7 @@ Object * qint_subtraction(Object * a, Object * b)
 
     int base = ((int *)a->values[1])[1];
 
-    long borrow = 0;
+    unsigned borrow = 0;
     int sign = 1;
     int i;
 
@@ -779,7 +783,7 @@ Object * qint_subtraction(Object * a, Object * b)
 
     for (i = 0; i < size_b; i++)
     {
-        borrow = (long)value_a[i] - value_b[i] - borrow;
+        borrow = value_a[i] - value_b[i] - borrow;
         ((unsigned *)z->values[0])[i] = borrow & MASK;
         borrow >>= SHIFT;
         borrow &= 1; // Keep only one sign bit
@@ -787,13 +791,18 @@ Object * qint_subtraction(Object * a, Object * b)
 
     for ( ; i < size_a; i++)
     {
-        borrow = (long)value_a[i] - borrow;
+        borrow = value_a[i] - borrow;
         ((unsigned *)z->values[0])[i] = borrow & MASK;
         borrow >>= SHIFT;
         borrow &= 1; // Keep only one sign bit
     }
 
-    *(int *)z->values[1] = sign_a * (size_a + 1);
+    // printf("{}%u\n", borrow);
+    // assert(!borrow);
+
+    // ((unsigned *)z->values[0])[i + 1] = borrow;
+    *(int *)z->values[1] = sign;
+    ((int *)z->values[1])[1] = size_a + 1;
 
     qint_normalise(z);
     return z;
