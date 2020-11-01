@@ -674,17 +674,17 @@ void set_bytecode_constants()
 
     // Integers are no longer included in bytecode constants because
     // integers 0 through to 256 are created during program execution
-    strcat(bytecode_constants, "LOAD_NULL");
-    strcat(bytecode_constants, INSTRUCTION_END);
+    strcat(bytecode_constants, "LOAD_NULL" INSTRUCTION_END);
+    // strcat(bytecode_constants, INSTRUCTION_END);
 
-    strcat(bytecode_constants, "LOAD_STRING");
-    strcat(bytecode_constants, SEPARATOR);
-    strcat(bytecode_constants, "''");
-    strcat(bytecode_constants, INSTRUCTION_END);
+    strcat(bytecode_constants, "LOAD_STRING" SEPARATOR "''" INSTRUCTION_END);
+    // strcat(bytecode_constants, SEPARATOR);
+    // strcat(bytecode_constants, "''");
+    // strcat(bytecode_constants, INSTRUCTION_END);
 
     // Remember to update this number to match the
     // constant count that the program begins with
-    bytecode_constant_count += 2;
+    bytecode_constant_count = 2;
 }
 
 void compile_init()

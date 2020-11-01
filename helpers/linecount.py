@@ -25,8 +25,11 @@ def count(path):
     global linecount
     if not os.path.isfile(path):
         return
-    with open(path) as f:
-        d = f.read()
+    try:
+        with open(path) as f:
+            d = f.read()
+    except Exception:
+        d = ''
     print(path)
     linecount += d.count('\n') + 1
 

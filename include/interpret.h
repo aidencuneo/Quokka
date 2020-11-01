@@ -825,8 +825,8 @@ void quokka_run_cli_interpreter()
     compile_init();
     interp_init(); // Test it without these init lines
 
-    // Interpret initial bytecode constants
-    _quokka_interpret(bytecode_constants);
+    // Interpret initial bytecode constants (duplicate of bytecode_constants will be destroyed)
+    _quokka_interpret(strdup(bytecode_constants));
 
     int in_compound_line = 0;
     for (;;)
@@ -847,6 +847,7 @@ void quokka_run_cli_interpreter()
                 resetConsts();
                 char * bytecode = quokka_compile_raw(cli_current_line, 0);
 
+                set_bytecode_constants();
                 _quokka_interpret(bytecode_constants);
                 _quokka_interpret(bytecode);
 
@@ -893,6 +894,7 @@ void quokka_run_cli_interpreter()
             resetStack();
             resetRetStack();
             resetConsts();
+            set_bytecode_constants();
             char * bytecode = quokka_compile_line(line, 0, -1, 0);
 
             _quokka_interpret(bytecode_constants);
@@ -903,13 +905,21 @@ void quokka_run_cli_interpreter()
                 if (strcmp(stack[stack_size - 1]->name, "null"))
                 {
                     // Get top of stack's __disp__ method
-                    freeObject(q_function_print(1, &stack[stack_size - 1]));
-                    // Object * disp = q_function_display(1, &stack[stack_size - 1]);
+                    if (!strcmp(stack[stack_size - 1]->name, "cfunction"))
+                    {
+                        Object * obj = stack[stack_size - 1];
+                        Object * func = objOperCall(obj);
+                        if (func != NULL)
+                            ((standard_func_def)func)(1, NULL);
+                    }
+
+                    // q_function_println(1, &stack[stack_size - 1]);
+                    Object * disp = q_function_display(1, &stack[stack_size - 1]);
 
                     // Print top of stack
-                    // printf("%s", (char *)objectGetAttr(disp, "value"));
+                    printf("%s\n", (char *)objectGetAttr(disp, "value"));
 
-                    // freeObject(disp);
+                    freeObject(disp);
                 }
 
                 resetStack();
@@ -933,11 +943,23 @@ void quokka_interpret_line(char * linetext)
 /* For debugging */
 void STACK()
 {
-    print("STACK : ");
+    printf("STACK (%d) : ", stack_size);
     for (int i = 0; i < stack_size; i++)
     {
         // q_function_print(1, &stack[i]);
         printf("%s, ", stack[i]->name);
+    }
+
+    printf("\n");
+}
+
+void CONSTS()
+{
+    printf("CONSTS (%d) : ", constant_count);
+    for (int i = 0; i < constant_count; i++)
+    {
+        // q_function_print(1, &stack[i]);
+        printf("%s, ", constants[i]->name);
     }
 
     printf("\n");
