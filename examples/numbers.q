@@ -1,26 +1,9 @@
-fun title
-    print('|' + ('-' * 5) + 'INT'  + ('-' * 5))
-    print('|' + ('-' * 9) + 'LONG' + ('-' * 9))
-    print('|\n')
+fun
+    
 end
 
-num = 1L
-count = 60
-
-title()
-
-a = 0
-until a == count
-    num *= 2
-
-    lpadding = ' ' * int(11 - len(string(+num)))
-    rpadding = ' ' * int(20 - len(string(num)))
-
-    print('|')
-    print(lpadding, +num, '|')
-    print(rpadding, num, '|\n')
-
-    a += 1
+i = 0
+while i < 50
+    println(i)
+    ++i
 end
-
-title()
