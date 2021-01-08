@@ -1,5 +1,7 @@
 # Quokka
 
+If you're looking for Quokka (author: Aiden Blishen Cuneo), this is it.
+
 An Object Oriented programming language with a neat, complexity-free syntax.
 Quokka compiles code into a simple bytecode format which is then interpreted for extra fast code interpretation, with a tested code execution speed of over 4 times faster than Python 3.8.
 
