@@ -33,7 +33,7 @@ Object * quokka_import_module(char ** module_name, char * path)
     current_file = import_path;
 
     // Compile imported file
-    char * imported_bytecode = quokka_compile_fname(import_path);
+    char * imported_bytecode = quokka_compile_fname(import_path, 0);
 
     // Variables
     int old_locals_count = locals.count;
@@ -118,7 +118,7 @@ void quokka_import_standard(char * path)
     current_file = import_path;
 
     // Compile imported file
-    char * imported_bytecode = quokka_compile_fname(import_path);
+    char * imported_bytecode = quokka_compile_fname(import_path, 0);
 
     // Interpret the imported file
     _quokka_interpret(imported_bytecode);

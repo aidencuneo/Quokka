@@ -816,8 +816,8 @@ Object * qint_division(Object * a, Object * b)
 	if (qint_divmod(a, b, &div, &mod) < 0)
 		return NULL;
 
-    println(div->refs);
-    println(mod->refs);
+    // println(div->refs);
+    // println(mod->refs);
     objUnref(mod);
 
 	return div;
@@ -1019,7 +1019,8 @@ int qint_divrem(Object * a, Object * b, Object ** divptr, Object ** remptr)
 		/* |a| < |b|. */
 
         objUnref(z);
-		*divptr = makeIntDupe(getIntConst(0)); // Because this will be freed eventually
+        *divptr = getIntConst(0);
+		// *divptr = makeIntDupe(getIntConst(0)); // Because this will be freed eventually
         a->refs++;
 		*remptr = a;
 

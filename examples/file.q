@@ -1,20 +1,8 @@
-l = [0x, 0x1]
-until l[0] > 10000
-    println(l[0])
-    l = [l[1], l[0] + l[1]]
-end
+import * 'builtins'
 
-// println(
-//     'QUOKKA',
-//     9227465 + 14930352,
-//     9227465 + 14930352 == 24157817 ?
-//         'true' : 'false')
+lst = ['hello', 'one hundred', 'two hundred', 'thirty']
+cpad_lst = cpad(lst)
+println(lst)
+println(cpad_lst)
 
-// println(
-//     'QUOKKA',
-//     1836311903 + 2971215073,
-//     1836311903 + 2971215073 == 4807526976 ?
-//         'true' : 'false')
-
-// println('QUOKKA',
-//     4807526976)
+map(println, cpad_lst)

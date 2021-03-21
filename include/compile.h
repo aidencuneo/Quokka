@@ -43,7 +43,7 @@ char * quokka_compile_line(char * linetext, int num, int lineLen, int isInline);
 char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInline);
 char * quokka_compile_tokens(char ** tokens, int isInline);
 char * quokka_compile_raw(char * rawtext, int isInline);
-char * quokka_compile_fname(char * filename);
+char * quokka_compile_fname(char * filename, int isInitFile);
 
 char ** quokka_file_tok(char * text);
 char ** quokka_tok(char * line, char ** waste);
@@ -2543,7 +2543,7 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
                 mstrcat(&bytecode, "LOAD_INT_CONST" SEPARATOR "1" INSTRUCTION_END);
             else
             {
-                int ind;
+                int ind = 0;
                 if (base == 2)
                     ind = addBytecodeConstant("LOAD_INT_BIN", line[0]);
                 else if (base == 10)
@@ -2743,7 +2743,7 @@ char * quokka_compile_raw(char * rawtext, int isInline)
     return quokka_compile_tokens(file_tokens, isInline);
 }
 
-char * quokka_compile_fname(char * filename)
+char * quokka_compile_fname(char * filename, int isInitFile)
 {
     /* Start */
     char * buffer = readfile(filename);
@@ -2751,7 +2751,26 @@ char * quokka_compile_fname(char * filename)
     if (!buffer)
         return 0;
 
-    set_bytecode_constants();
+    // If this is the main file being compiled, set bytecode constants
+    // as normal
+    if (isInitFile)
+        set_bytecode_constants();
+    // You don't want the bytecode constant count to reset during an import
+    else
+    {
+        // Save the bytecode constant count
+        int old_bytecode_constant_count = bytecode_constant_count;
+
+        // Reset the bytecode constants completely, but not the count
+        // (Assuming bytecode_constants IS in fact already malloc'd)
+        free(bytecode_constants);
+        bytecode_constants = malloc(1);
+        bytecode_constants[0] = 0;
+
+        // Maintain the bytecode constant count during imports
+        bytecode_constant_count = old_bytecode_constant_count;
+    }
+
     compile_init();
 
     pushTrash(buffer);
@@ -2760,7 +2779,6 @@ char * quokka_compile_fname(char * filename)
     char * res = quokka_compile_raw(buffer, 0);
 
     /* End */
-    free(bytecode_constants);
     free(file_tokens);
 
     return res;

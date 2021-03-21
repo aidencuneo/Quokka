@@ -1,82 +1,16 @@
-==11283== Memcheck, a memory error detector
-==11283== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==11283== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
-==11283== Command: bin/quokka
-==11283== Parent PID: 11277
-==11283== 
-==11283== error calling PR_SET_PTRACER, vgdb might block
-==11283== Invalid read of size 4
-==11283==    at 0x119CBA: objUnref (interpret.h:391)
-==11283==    by 0x12954F: quokka_interpret_line_tokens (interpret.h:2191)
-==11283==    by 0x12997E: quokka_interpret_tokens (interpret.h:2288)
-==11283==    by 0x129A06: _quokka_interpret (interpret.h:2305)
-==11283==    by 0x12531F: quokka_run_cli_interpreter (interpret.h:901)
-==11283==    by 0x129FD7: main (quokka.c:87)
-==11283==  Address 0x4a69cfc is 28 bytes inside a block of size 32 free'd
-==11283==    at 0x483CA3F: free (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==11283==    by 0x119CA2: freeObject (interpret.h:385)
-==11283==    by 0x119D12: objDeref (interpret.h:408)
-==11283==    by 0x118E66: freeConsts (interpret.h:61)
-==11283==    by 0x118EA5: resetConsts (interpret.h:68)
-==11283==    by 0x1252DB: quokka_run_cli_interpreter (interpret.h:896)
-==11283==    by 0x129FD7: main (quokka.c:87)
-==11283==  Block was alloc'd at
-==11283==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==11283==    by 0x1196D2: objectPointer (interpret.h:242)
-==11283==    by 0x121E01: makeNullRaw (null.h:23)
-==11283==    by 0x125784: quokka_interpret_line_tokens (interpret.h:1002)
-==11283==    by 0x12997E: quokka_interpret_tokens (interpret.h:2288)
-==11283==    by 0x129A06: _quokka_interpret (interpret.h:2305)
-==11283==    by 0x125313: quokka_run_cli_interpreter (interpret.h:900)
-==11283==    by 0x129FD7: main (quokka.c:87)
-==11283== 
-==11283== Invalid write of size 4
-==11283==    at 0x119CCF: objUnref (interpret.h:391)
-==11283==    by 0x12954F: quokka_interpret_line_tokens (interpret.h:2191)
-==11283==    by 0x12997E: quokka_interpret_tokens (interpret.h:2288)
-==11283==    by 0x129A06: _quokka_interpret (interpret.h:2305)
-==11283==    by 0x12531F: quokka_run_cli_interpreter (interpret.h:901)
-==11283==    by 0x129FD7: main (quokka.c:87)
-==11283==  Address 0x4a69cfc is 28 bytes inside a block of size 32 free'd
-==11283==    at 0x483CA3F: free (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==11283==    by 0x119CA2: freeObject (interpret.h:385)
-==11283==    by 0x119D12: objDeref (interpret.h:408)
-==11283==    by 0x118E66: freeConsts (interpret.h:61)
-==11283==    by 0x118EA5: resetConsts (interpret.h:68)
-==11283==    by 0x1252DB: quokka_run_cli_interpreter (interpret.h:896)
-==11283==    by 0x129FD7: main (quokka.c:87)
-==11283==  Block was alloc'd at
-==11283==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==11283==    by 0x1196D2: objectPointer (interpret.h:242)
-==11283==    by 0x121E01: makeNullRaw (null.h:23)
-==11283==    by 0x125784: quokka_interpret_line_tokens (interpret.h:1002)
-==11283==    by 0x12997E: quokka_interpret_tokens (interpret.h:2288)
-==11283==    by 0x129A06: _quokka_interpret (interpret.h:2305)
-==11283==    by 0x125313: quokka_run_cli_interpreter (interpret.h:900)
-==11283==    by 0x129FD7: main (quokka.c:87)
-==11283== 
-==11283== Invalid read of size 4
-==11283==    at 0x119CD6: objUnref (interpret.h:393)
-==11283==    by 0x12954F: quokka_interpret_line_tokens (interpret.h:2191)
-==11283==    by 0x12997E: quokka_interpret_tokens (interpret.h:2288)
-==11283==    by 0x129A06: _quokka_interpret (interpret.h:2305)
-==11283==    by 0x12531F: quokka_run_cli_interpreter (interpret.h:901)
-==11283==    by 0x129FD7: main (quokka.c:87)
-==11283==  Address 0x4a69cfc is 28 bytes inside a block of size 32 free'd
-==11283==    at 0x483CA3F: free (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==11283==    by 0x119CA2: freeObject (interpret.h:385)
-==11283==    by 0x119D12: objDeref (interpret.h:408)
-==11283==    by 0x118E66: freeConsts (interpret.h:61)
-==11283==    by 0x118EA5: resetConsts (interpret.h:68)
-==11283==    by 0x1252DB: quokka_run_cli_interpreter (interpret.h:896)
-==11283==    by 0x129FD7: main (quokka.c:87)
-==11283==  Block was alloc'd at
-==11283==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==11283==    by 0x1196D2: objectPointer (interpret.h:242)
-==11283==    by 0x121E01: makeNullRaw (null.h:23)
-==11283==    by 0x125784: quokka_interpret_line_tokens (interpret.h:1002)
-==11283==    by 0x12997E: quokka_interpret_tokens (interpret.h:2288)
-==11283==    by 0x129A06: _quokka_interpret (interpret.h:2305)
-==11283==    by 0x125313: quokka_run_cli_interpreter (interpret.h:900)
-==11283==    by 0x129FD7: main (quokka.c:87)
-==11283== 
+==1057== Memcheck, a memory error detector
+==1057== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==1057== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==1057== Command: bin/quokka examples/file.q
+==1057== Parent PID: 1051
+==1057== 
+==1057== error calling PR_SET_PTRACER, vgdb might block
+==1057== 
+==1057== HEAP SUMMARY:
+==1057==     in use at exit: 0 bytes in 0 blocks
+==1057==   total heap usage: 22,407 allocs, 22,407 frees, 5,734,568 bytes allocated
+==1057== 
+==1057== All heap blocks were freed -- no leaks are possible
+==1057== 
+==1057== For lists of detected and suppressed errors, rerun with: -s
+==1057== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
