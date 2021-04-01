@@ -1231,8 +1231,12 @@ Object * qint_from_string(char * str, int base)
         else
             base = 8;
     }
+
+    // Trim identifying letters from the beginning of the number
     if (base == 16 && str[0] == '0' && (str[1] == 'x' || str[1] == 'X'))
         str += 2;
+    else if (base == 2 && (str[0] == 'b' || str[0] == 'B'))
+        str++;
 
     int est_len = len / 2 + 1;
     obj = makeIntRaw(
@@ -1258,7 +1262,7 @@ Object * qint_from_string(char * str, int base)
         qint_muladd1(obj, base, k);
     }
 
-    for ( ; i < est_len; i++)
+    for (; i < est_len; i++)
         ((unsigned *)obj->values[0])[i] = 0;
 
     if (!i) // str == start
@@ -1268,8 +1272,13 @@ Object * qint_from_string(char * str, int base)
         return NULL;
     }
 
+    // Undo the trimming from the start of this function
     if (base == 16)
         str -= 2;
+    else if (base == 2)
+        str--;
+
+    // printf("[%d]\n", ((int *)obj->values[1])[0]);
 
     return obj;
 }

@@ -199,6 +199,23 @@ int endswith(const char * str, const char * suffix)
     return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 }
 
+char * string_reverse(char * str)
+{
+    char * p1, * p2;
+
+    if (!str || !str[0])
+        return str;
+
+    for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; p1++, p2--)
+    {
+        *p1 ^= *p2;
+        *p2 ^= *p1;
+        *p1 ^= *p2;
+    }
+
+    return str;
+}
+
 char * readfile(char * fname)
 {
     char * buffer;
@@ -443,6 +460,8 @@ char * convertLiterals(char * str)
 
 double log10LN(double x)
 {
+    // printf("{%f}\n", x);
+
     double old_sum = 0.0;
     double xmlxpl = (x - 1) / (x + 1);
     double xmlxpl_2 = xmlxpl * xmlxpl;
@@ -457,6 +476,7 @@ double log10LN(double x)
         denom += 2.0;
         frac *= xmlxpl_2;
         sum += frac / denom;
+        // printf("[%f] [%f]\n", old_sum, sum);
     }
 
     return 2.0 * sum;
@@ -467,24 +487,75 @@ double log10(double x)
     return log10LN(x) / LN10;
 }
 
+// double log(int b, double n)
+// {
+//     double val = 0;
+
+//     int i = 0;
+//     int accurate = 10;
+//     int reps = 0;
+
+//     while (n != 1 && accurate >= 0)
+//     {
+//         for (i = 0; n >= b; i++)
+//             n /= b;
+
+//         n = pow(n, 10);
+//         val = 10 * (val + i);
+//         accurate--;
+//         reps++;
+//     }
+
+//     return (double)val / pow(10, reps);
+// }
+
+int countDigitsInBase(int n, int base)
+{
+    // Calculating log using the base changing property, then taking it's
+    // floor, and adding 1 at the end
+    double res = log10(10000);
+    println(n);
+    printf("{%f}\n", res);
+
+    return (int)(log10(n) / log10(base) + 1);
+}
+
 char * intToBinary(int n)
 {
+    println("Checkpoint 0");
+
     int sign = intsign(n);
     n = abs(n);
+    println(n);
 
-    char * res = malloc(snprintf(NULL, 0, "%d", n) + (sign < 0) + 1);
+    char * res = malloc(countDigitsInBase(n, 2) + (sign < 0) + 1 + 1);
 
-    int base = 1;
+    println("Checkpoint 1");
+
     int i = 0;
+    while (n > 0)
+    {
+        res[i++] = (!!(n % 2)) + '0';
+        n /= 2;
+    }
+
+    // Prefix each binary number with 'b' to show that it's in binary
+    // (Everything here is happening in reverse because the result string will
+    // be reversed)
+    res[i++] = 'b';
 
     if (sign < 0)
         res[i++] = '-';
 
-    while (n > 0)
-    {
-        res[i] = n % 2;
-        n /= 2;
-    }
+    // Null byte
+    res[i] = 0;
+
+    println("Checkpoint -1");
+
+    // Reverse the result string
+    res = string_reverse(res);
+
+    println("Checkpoint not 1");
 
     return res;
 }
@@ -493,6 +564,9 @@ char * intToBinary(int n)
 //   2, 8, 10, 16
 char * intToStrBase(int value, int base)
 {
+    print("P ");
+    println(value);
+
     if (base == 2)
         return intToBinary(value);
 
