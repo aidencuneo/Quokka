@@ -208,3 +208,27 @@ fun pf 1
     end
     ret s + '](' + string(len(obj)) + ')'
 end
+
+
+fun sum 1
+    summed = 0
+    i = 0
+    lstlen = len(argv[0])
+    while i < lstlen
+        summed += argv[0][i++]
+    end
+    ret summed
+end
+
+
+fun count 2
+    result = 0
+    i = 0
+    lstlen = len(argv[0])
+    while i < lstlen
+        if argv[0][i++] == argv[1]
+            result++
+        end
+    end
+    ret result
+end

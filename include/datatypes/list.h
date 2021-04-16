@@ -152,7 +152,7 @@ Object * __index___list(int argc, Object ** argv)
     int ind = ((int *)objectGetAttr(argv[1], "value"))[0];
     int length = ((int *)objectGetAttr(argv[0], "length"))[0];
 
-    // If index is -1, retrieve length - 1
+    // If index is -1, retrieve length - 1, etc
     if (ind < 0)
         ind = length + ind;
 
@@ -240,6 +240,54 @@ Object * __free___list(int argc, Object ** argv)
     free(length);
 
     return makeNull();
+}
+
+Object * remove_index_list(int argc, Object ** argv)
+{
+    if (strcmp(argv[1]->name, "int"))
+    {
+        char * err = malloc(47 + strlen(argv[1]->name) + 1 + 1);
+        strcpy(err, "list remove_index argument must be 'int', not '");
+        strcat(err, argv[1]->name);
+        strcat(err, "'");
+        error(err, line_num);
+    }
+
+    Object ** thisvalue = objectGetAttr(argv[0], "value");
+    int * length = objectGetAttr(argv[0], "length");
+
+    // Get index to remove
+    int ind = ((int *)objectGetAttr(argv[1], "value"))[0];
+
+    // If index is -1, retrieve length - 1, etc
+    if (ind < 0)
+        ind = length + ind;
+
+    // Check bounds
+    if (ind >= length)
+        return getIntConst(0);
+    if (ind < 0)
+        return getIntConst(0);
+
+    Object * obj = ((Object **)objectGetAttr(argv[0], "value"))[ind];
+
+    return obj;
+
+    // Unreference the item to remove
+    objUnref(thisvalue[ind]);
+
+    // Move each item downwards
+    for (int i = ind; i < length - 1; i++)
+        thisvalue[i] = thisvalue[i + 1];
+
+    // Assign the new length to the list and free the old length
+    int * newlen = makeIntPtr(length - 1);
+    int lenind = objectGetAttrIndex(argv[0], "length");
+
+    free(argv[0]->values[lenind]);
+    argv[0]->values[lenind] = newlen;
+
+    return getIntConst(1);
 }
 
 Object * makeList(int length, Object ** value, int flipped)

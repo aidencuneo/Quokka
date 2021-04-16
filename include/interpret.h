@@ -1288,21 +1288,31 @@ void quokka_interpret_line_tokens(char ** line)
         }
         else if (!strcmp(obj->name, "list"))
         {
-            if (!strcmp(line[1], "value"))
-            {
-                pushTop(obj);
-
-                gotten = 1;
-            }
-            else if (!strcmp(line[1], "length"))
-            {
-                int * lstlen = objectGetAttr(obj, "length");
-                pushTop(makeInt(lstlen, 0, 1));
-
-                gotten = 1;
-            }
-            else if (startswith(line[1], "__"))
+            if (startswith(line[1], "__"))
                 invalid = 1;
+            else
+            {
+                gotten = 1;
+                if (!strcmp(line[1], "value"))
+                    pushTop(obj);
+                else if (!strcmp(line[1], "length"))
+                {
+                    int * lstlen = objectGetAttr(obj, "length");
+                    pushTop(makeInt(lstlen, 0, 1));
+                }
+                else if (!strcmp(line[1], "upper"))
+                    pushTop(makeCMethod(obj, &upper_string, 0, 0));
+                else if (!strcmp(line[1], "lower"))
+                    pushTop(makeCMethod(obj, &lower_string, 0, 0));
+                else if (!strcmp(line[1], "isupper"))
+                    pushTop(makeCMethod(obj, &isupper_string, 0, 0));
+                else if (!strcmp(line[1], "islower"))
+                    pushTop(makeCMethod(obj, &islower_string, 0, 0));
+                else if (!strcmp(line[1], "strip"))
+                    pushTop(makeCMethod(obj, &strip_string, 0, 1));
+                else
+                    gotten = 0;
+            }
         }
         // else if (!strcmp(obj->name, "long"))
         // {
