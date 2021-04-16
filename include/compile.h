@@ -197,34 +197,31 @@ int isinteger(char * word)
     else
         return 0;
 
-    for (int i = 0; i < size; i++)
+    int i = 0;
+
+    // Start from a different position if the number begins with any characters
+    // used to identify it (b, 0x)
+    if (base == 2)
+        i = 1;
+    else if (base == 16)
+        i = 2;
+
+    for (; i < size; i++)
     {
         if (base == 2)
-        {
             if (word[i] != '0' && word[i] != '1')
                 return 0;
-        }
         else if (base == 10)
-        {
             if (!isdigit(word[i]))
                 return 0;
-        }
         else if (base == 16)
+        {
+            char c = tolower(word[i]);
             if (!isdigit(word[i])
-                && word[i] != 'a'
-                && word[i] != 'b'
-                && word[i] != 'c'
-                && word[i] != 'd'
-                && word[i] != 'e'
-                && word[i] != 'f'
-                && word[i] != 'A'
-                && word[i] != 'B'
-                && word[i] != 'C'
-                && word[i] != 'D'
-                && word[i] != 'E'
-                && word[i] != 'F'
-            )
+                // Outside the bounds of 'a' and 'f'
+                || (c < 'a' && c > 'f'))
                 return 0;
+        }
     }
 
     return base;
@@ -241,10 +238,8 @@ int islong(char * word)
         return 0;
 
     for (int i = 0; i < size - 1; i++)
-    {
         if (!isdigit(word[i]))
             return 0;
-    }
 
     return 1;
 }
@@ -2521,8 +2516,9 @@ char * quokka_compile_line_tokens(char ** line, int num, int lineLen, int isInli
         // while (startswith(line[0], "0") && strlen(line[0]) > 1)
         //     line[0]++;
 
-        // If number is more than 10 digits, make a long
-        if (strlen(line[0]) > 10)
+        // If number is more than 10 digits, AND the number's base is 10,
+        // make a long instead of an integer
+        if (strlen(line[0]) > 10 && base == 10)
         {
             int ind = addBytecodeConstant("LOAD_LONG", line[0]);
 
