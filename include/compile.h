@@ -2809,7 +2809,9 @@ char ** quokka_file_tok(char * text)
     // Set initial char type
     if (isalnum(text[0]))
         p = 'A';
-    else if (isdigit(text[0]))
+    else if (isdigit(text[0])) // isalnum conflicts with this? Check this out at some point
+                               // Previous line might need isalpha instead
+                               // Otherwise, the 'D' char type might need to be removed
         p = 'D';
     else if (ispunct(text[0]))
         p = 'S';
