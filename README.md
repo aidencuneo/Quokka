@@ -9,7 +9,7 @@ Quokka currently features a few main built-in datatypes (it will feature many mo
 
 ~~In the future, integers and longs will be combined into one `int` datatype, which will be able to hold numbers with no arbitrary length. But for now and the near future, we have the two datatypes: `int` and `long`.~~
 
-The `int` datatype can now hold numbers with no arbitrary length. Arithmetic operations on the `int` datatype are currently in an experimental stage, but improvements will constantly be made until the `int` datatype is able to be used at a much more suitable level.
+The `int` datatype can now hold numbers of any length. Arithmetic operations on the `int` datatype are currently in an experimental stage, but improvements will constantly be made until the `int` datatype is able to be used at a much more suitable level.
 
 
 # Features that are on their way
