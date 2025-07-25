@@ -16,7 +16,7 @@ The `int` datatype can now hold numbers of any length. Arithmetic operations on 
 
 ## Improved Arithmetic Operations
 
-Arithmetic between integers will soon be majorly improved, and we're hoping to be able to perform mathematical operations on all types of natural numbers with 100% accuracy in the near future.
+Arithmetic between integers will soon be majorly improved, and we're hoping to be able to perform mathematical operations on a wider range of numbers with high accuracy in the near future.
 
 ## Breadcrumbs/Traceback system
 
